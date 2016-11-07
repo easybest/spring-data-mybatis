@@ -1,0 +1,12 @@
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.springframework.data.mybatis
+Bundle-Name: ${project.name}
+Bundle-Vendor: Jarvis Song
+Bundle-Version: ${project.version}
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Export-Template:
+ org.springframework.data.mybatis.*;version="${project.version}"
+Import-Template:
+ org.slf4j.*;version="${slf4j:[=.=.=,+1.0.0)}",
+ org.springframework.*;version="${spring:[=.=.=.=,+1.0.0)}",
+ org.springframework.data.*;version="${springdata.commons:[=.=.=.=,+1.0.0)}"
