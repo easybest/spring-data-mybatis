@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="_PUBLIC">
+
+    <sql id="ALIAS_QUOTA" databaseId="mysql"><![CDATA[`]]></sql>
+    <sql id="ALIAS_QUOTA" databaseId="h2"><![CDATA[`]]></sql>
+    <sql id="ALIAS_QUOTA"><![CDATA["]]></sql>
+
+    <sql id="CURRENT_DATE_TIME" databaseId="mysql">
+		now()
+	</sql>
+    <sql id="CURRENT_DATE_TIME" databaseId="sqlserver">
+		getDate()
+	</sql>
+    <sql id="CURRENT_DATE_TIME" databaseId="h2">
+		CURRENT_TIMESTAMP()
+	</sql>
+    <sql id="CURRENT_DATE_TIME" databaseId="oracle">
+		sysdate
+	</sql>
+    <sql id="CURRENT_TIMESTAMP" databaseId="mysql">
+		(unix_timestamp()*1000)
+	</sql>
+    <sql id="CURRENT_TIMESTAMP" databaseId="sqlserver">
+		(CONVERT(BIGINT, (DATEDIFF(s, '1970-01-01 00:00:00', GETUTCDATE()))) * 1000)
+	</sql>
+    <sql id="CURRENT_TIMESTAMP" databaseId="h2">
+		((DATEDIFF(s, '1970-01-01 00:00:00', CURRENT_TIMESTAMP()) - 3600*8 ) * 1000)
+	</sql>
+    <sql id="CURRENT_TIMESTAMP" databaseId="oracle">
+		(floor((sysdate- to_date('1970-1-1','yyyy-mm-dd')) * 86400- TO_NUMBER(SUBSTR(TZ_OFFSET(sessiontimezone),1,3)) * 3600) * 1000)
+	</sql>
+    <sql id="SELECT_KEY" databaseId="mysql">
+		SELECT LAST_INSERT_ID() AS ID
+	</sql>
+    <sql id="SELECT_KEY" databaseId="h2">
+		SELECT IDENTITY() AS ID
+	</sql>
+    <sql id="SELECT_KEY" databaseId="sqlserver">
+		SELECT @@identity
+	</sql>
+
+    <!--Pager Start-->
+	<sql id="PAGER_BEFORE" databaseId="oracle" lang="beetl">
+		SELECT * FROM (SELECT ROW_.*,ROWNUM ROWNUM_ FROM (
+	</sql>
+	<sql id="PAGER_AFTER" databaseId="oracle" lang="beetl">
+		<![CDATA[
+        ) ROW_ WHERE ROWNUM <= #param(_parameter.offsetEnd,'NUMERIC')#) WHERE ROWNUM_ > #param(_parameter.offset,'NUMERIC')#
+        ]]>
+	</sql>
+	<sql id="PAGER_BEFORE" databaseId="h2"  lang="beetl"></sql>
+	<sql id="PAGER_AFTER" databaseId="h2" lang="beetl">
+		LIMIT #param(_parameter.offset,'NUMERIC')#,#param(_parameter.pageSize,'NUMERIC')#
+	</sql>
+	<sql id="PAGER_BEFORE" databaseId="mysql" lang="beetl"></sql>
+	<sql id="PAGER_AFTER" databaseId="mysql" lang="beetl">
+		LIMIT #param(_parameter.offset,'NUMERIC')#,#param(_parameter.pageSize,'NUMERIC')#
+	</sql>
+
+	<sql id="PAGER_BEFORE" databaseId="sqlserver" lang="beetl">
+		SELECT * FROM (
+	</sql>
+	<sql id="PAGER_AFTER" databaseId="sqlserver" lang="beetl">
+		<![CDATA[
+        ) T WHERE T.ROW_NUM > #param(_parameter.offset,'NUMERIC')# AND T.ROW_NUM <= #param(_parameter.offsetEnd,'NUMERIC')#
+        ]]>
+	</sql>
+	<sql id="ROW_NUMBER_OVER" databaseId="sqlserver">,ROW_NUMBER() OVER(</sql>
+	<sql id="AS_ROW_NUM" databaseId="sqlserver">) AS ROW_NUM </sql>
+	<!--Pager End-->
+
+
+
+</mapper>
