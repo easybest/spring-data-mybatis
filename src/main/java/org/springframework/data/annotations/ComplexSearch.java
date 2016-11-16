@@ -18,7 +18,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface ComplexSearch {
 
     /**
-     * 搜索条件.
+     * Search condition.
      */
     Searchable[] value() default {};
 }
