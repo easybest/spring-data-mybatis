@@ -5,9 +5,9 @@ import javax.persistence.MappedSuperclass;
 import java.io.Serializable;
 
 /**
- * 审计实体基类.
+ * Auditable Basic Entity.
  *
- * @param <PK> 主键类型
+ * @param <PK> Primary key's type.
  * @author jarvis@caomeitu.com
  * @since 15/9/29
  */
