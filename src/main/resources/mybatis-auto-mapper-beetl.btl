@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="#namespace#">
+
+    @var QUOTA='<include refid="_PUBLIC.ALIAS_QUOTA"/>';
+
+    @if(!@_this.isFragmentExist('TABLE_NAME')){
+        <sql id="TABLE_NAME">#tableName#</sql>
+    @}
+
+    @if(!@_this.isFragmentExist('SEQUENCE')){
+        <sql id="SEQUENCE">SELECT #sequence#.NEXTVAL FROM DUAL</sql>
+    @}
+
+    @if(!@_this.isFragmentExist('SELECT_CONDITION_INNER')){
+        <sql id="SELECT_CONDITION_INNER" lang="#lang#"></sql>
+    @}
+
+    @if(!@_this.isFragmentExist('OTHER_COLUMNS')){
+        <sql id="OTHER_COLUMNS" lang="#lang#"></sql>
+    @}
+
+    @if(!@_this.isFragmentExist('ASSOCIATE_TABLE')){
+        <sql id="ASSOCIATE_TABLE" lang="#lang#"></sql>
+    @}
+
+    @if(!@_this.isFragmentExist('EXTENDED_COLUMNS')){
+        <sql id="EXTENDED_COLUMNS" lang="#lang#"></sql>
+    @}
+
+    <!--ResultMap Start-->
+    @if(!@_this.isResultMapExist('ResultMap')){
+    <resultMap id="ResultMap" type="#domainType#">
+        @for(entry in model.primaryKeys){
+            <id property="#entry.value.name#" column="#entry.value.name#" javaType="#entry.value.clz.name#" jdbcType="#entry.value.jdbcType#"/>
+        @}
+        @for(entry in model.columns){
+            <result property="#entry.value.name#" column="#entry.value.name#" javaType="#entry.value.clz.name#" jdbcType="#entry.value.jdbcType#"/>
+        @}
+        @for(entry in model.oneToOnes){
+            <association property="#entry.key#" javaType="#entry.value.clz.name#">
+                @for(subEntry in entry.value.primaryKeys){
+                <id property="#subEntry.value.name#" column="#entry.key#.#subEntry.value.name#" javaType="#subEntry.value.clz.name#" jdbcType="#subEntry.value.jdbcType#"/>
+                @}
+                @for(subEntry in entry.value.columns){
+                <result property="#subEntry.value.name#" column="#entry.key#.#subEntry.value.name#" javaType="#subEntry.value.clz.name#" jdbcType="#subEntry.value.jdbcType#"/>
+                @}
+                @for(subEntry in entry.value.joinColumns){
+                <association property="#subEntry.value.parent.name#" javaType="#subEntry.value.parent.clz.name#">
+                    <result property="#strutil.replace(subEntry.value.name,subEntry.value.parent.name+'.','')#" column="#entry.value.name#.#subEntry.value.name#" javaType="#subEntry.value.clz.name#" jdbcType="#subEntry.value.jdbcType#"/>
+                </association>
+                @}
+            </association>
+        @}
+        @for(entry in model.manyToOnes){
+            <association property="#entry.key#" javaType="#entry.value.clz.name#">
+                @for(subEntry in entry.value.primaryKeys){
+                <id property="#subEntry.value.name#" column="#entry.key#.#subEntry.value.name#" javaType="#subEntry.value.clz.name#" jdbcType="#subEntry.value.jdbcType#"/>
+                @}
+                @for(subEntry in entry.value.columns){
+                <result property="#subEntry.value.name#" column="#entry.key#.#subEntry.value.name#" javaType="#subEntry.value.clz.name#" jdbcType="#subEntry.value.jdbcType#"/>
+                @}
+                @for(subEntry in entry.value.joinColumns){
+                <association property="#subEntry.value.parent.name#" javaType="#subEntry.value.parent.clz.name#">
+                    <result property="#strutil.replace(subEntry.value.name,subEntry.value.parent.name+'.','')#" column="#entry.value.name#.#subEntry.value.name#" javaType="#subEntry.value.clz.name#" jdbcType="#subEntry.value.jdbcType#"/>
+                </association>
+                @}
+            </association>
+        @}
+        @for(entry in model.oneToManys){
+            <collection property="#entry.key#" ofType="#entry.value.clz.name#">
+            </collection>
+        @}
+    </resultMap>
+    @}
+    <!--ResultMap End-->
+
+    <!--Select Pre Start-->
+    @if(!@_this.isFragmentExist('SELECT_BASIC_PRE')){
+        <sql id="SELECT_BASIC_PRE" lang="#lang#">
+            SELECT
+            @trim(){
+                @for(entry in model.primaryKeys){
+                    #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
+                @}
+                @for(entry in model.columns){
+                    #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
+                @}
+                @for(entry in model.joinColumns){
+                    #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
+                @}
+            @}
+        </sql>
+    @}
+    @if(!@_this.isFragmentExist('SELECT_PRE')){
+        <sql id="SELECT_PRE" lang="#lang#">
+            SELECT
+            @trim(){
+                @for(entry in model.primaryKeys){
+                    #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
+                @}
+                @for(entry in model.columns){
+                    #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
+                @}
+                @for(entry in model.joinColumns){
+                    #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
+                @}
+                @for(entry in model.oneToOnes){
+                    @for(ent in entry.value.primaryKeys){
+                        #QUOTA+model.name+'.'+entry.key+QUOTA#.#ent.value.nameInDatabase# AS #QUOTA+entry.key+'.'+ent.value.name+QUOTA#,
+                    @}
+                    @for(ent in entry.value.columns){
+                        #QUOTA+model.name+'.'+entry.key+QUOTA#.#ent.value.nameInDatabase# AS #QUOTA+entry.key+'.'+ent.value.name+QUOTA#,
+                    @}
+                    @for(ent in entry.value.joinColumns){
+                        #QUOTA+model.name+'.'+entry.key+QUOTA#.#ent.value.nameInDatabase# AS #QUOTA+entry.key+'.'+ent.value.name+QUOTA#,
+                    @}
+                @}
+                @for(entry in model.manyToOnes){
+                    @for(ent in entry.value.primaryKeys){
+                        #QUOTA+model.name+'.'+entry.key+QUOTA#.#ent.value.nameInDatabase# AS #QUOTA+entry.key+'.'+ent.value.name+QUOTA#,
+                    @}
+                    @for(ent in entry.value.columns){
+                        #QUOTA+model.name+'.'+entry.key+QUOTA#.#ent.value.nameInDatabase# AS #QUOTA+entry.key+'.'+ent.value.name+QUOTA#,
+                    @}
+                    @for(ent in entry.value.joinColumns){
+                        #QUOTA+model.name+'.'+entry.key+QUOTA#.#ent.value.nameInDatabase# AS #QUOTA+entry.key+'.'+ent.value.name+QUOTA#,
+                    @}
+                @}
+            @}
+        </sql>
+    @}
+    <!--Select Pre End-->
+
+    <!--Select Condition Strat-->
+    @if(!@_this.isFragmentExist('SELECT_CONDITION')){
+    <sql id="SELECT_CONDITION" lang="#lang#">
+        \@trim({prefix:" WHERE ",prefixOverrides:" AND| OR"}){
+            @for(sm in model.searchModels){
+                \@if(isNotEmpty(_parameter.condition.#sm.propertyName#)){
+                    AND #QUOTA+(sm.alias==null?model.name:sm.alias)+QUOTA+'.'+sm.columnName# <![CDATA[#sm.oper#]]>
+                    @if(sm.operate == 'IN' || sm.operate == 'NOTIN'){
+                        ( \#join(_parameter.condition.#sm.propertyName#)\# )
+                    @} else {
+                        \##(sm.operate=='LIKE'||sm.operate=='LLIKE')?'\'%\'+':''#_parameter.condition.#sm.propertyName##(sm.operate=='LIKE'||sm.operate=='RLIKE')?'+\'%\'':''#\#
+                    @}
+                \@}
+            @}
+            <include refid="SELECT_CONDITION_INNER" />
+        \@}
+    </sql>
+    @}
+    <!--Select Condition End-->
+
+    <!--Insert Start-->
+    @if(!@_this.isFragmentExist('INSERT_SQL')){
+        <sql id="INSERT_SQL" lang="#lang#">
+            <![CDATA[
+                INSERT INTO #model.nameInDatabase#(
+                    \@trim(){
+                        @for(entry in model.primaryKeys){
+                            #entry.value.nameInDatabase#,
+                        @}
+                        @for(entry in model.columns){
+                            \@if(_parameter.#entry.value.name# != null){
+                                #entry.value.nameInDatabase#,
+                            \@}
+                        @}
+                        @for(entry in model.joinColumns){
+                            \@if(_parameter.#entry.value.name#! != null){
+                                #entry.value.nameInDatabase#,
+                            \@}
+                        @}
+                    \@}
+                ) VALUES (
+                    \@trim(){
+                        @for(entry in model.primaryKeys){
+                            @if(entry.value.generatedValue){
+                                @if(_databaseId=='oracle' || _databaseId=='h2'){
+                                    \#_parameter.#entry.value.name!#\#,
+                                @} else {
+                                    NULL,
+                                @}
+                            @} else {
+                                \#_parameter.#entry.value.name!#\#,
+                            @}
+                        @}
+                        @for(entry in model.columns){
+                            \@if(_parameter.#entry.value.name# != null){
+                                \#_parameter.#entry.value.name#\#,
+                            \@}
+                        @}
+                        @for(entry in model.joinColumns){
+                            \@if(_parameter.#entry.value.name#! != null){
+                                \#_parameter.#entry.value.name#\#,
+                            \@}
+                        @}
+                    \@}
+                )
+            ]]>
+        </sql>
+    @}
+    @if(!@_this.isFragmentExist('_insert')){
+        <insert id="_insert" parameterType="#model.clz.name#"
+                @if(isNotEmpty(model.primaryKey) && !model.compositeId){
+                    keyProperty="#model.primaryKey.name!#" keyColumn="#model.primaryKey.nameInDatabase!#"
+                @}
+                lang="#lang#" databaseId="oracle">
+            @if(isNotEmpty(model.primaryKey) && !model.compositeId){
+                <selectKey keyProperty="#model.primaryKey.name#" resultType="#model.primaryKey.clz.name!#" order="BEFORE">
+                    <include refid="SEQUENCE" />
+                </selectKey>
+            @}
+            <include refid="INSERT_SQL" />
+        </insert>
+        <insert id="_insert" parameterType="#model.clz.name#"
+                @if(isNotEmpty(model.primaryKey) && !model.compositeId){
+                    keyProperty="#model.primaryKey.name!#" keyColumn="#model.primaryKey.nameInDatabase!#"
+                @}
+                lang="#lang#">
+            @if(isNotEmpty(model.primaryKey) && !model.compositeId){
+                <selectKey keyProperty="#model.primaryKey.name#" resultType="#model.primaryKey.clz.name!#" order="AFTER">
+                    <include refid="_PUBLIC.SELECT_KEY" />
+                </selectKey>
+            @}
+            <include refid="INSERT_SQL" />
+        </insert>
+    @}
+    <!--Insert End-->
+
+    <!--Update Start-->
+    @if(!@_this.isFragmentExist('_update')){
+        <update id="_update" parameterType="#model.clz.name#" lang="#lang#">
+            <![CDATA[
+                UPDATE #model.nameInDatabase# SET
+                \@trim(){
+                    @for(entry in model.columns){
+                        \@if(_parameter.#entry.value.name# != null){
+                            #entry.value.nameInDatabase#=\#_parameter.#entry.value.name#\#,
+                        \@}
+                    @}
+                    @for(entry in model.joinColumns){
+                        \@if(_parameter.#entry.value.name#! != null){
+                            #entry.value.nameInDatabase#=\#_parameter.#entry.value.name#\#,
+                        \@}
+                    @}
+                \@}
+                @trim({prefix:" WHERE ",prefixOverrides:" AND| OR"}){
+                    @for(entry in model.primaryKeys){
+                        AND #entry.value.nameInDatabase# = \#_parameter.#entry.value.name#\#
+                    @}
+                @}
+            ]]>
+        </update>
+    @}
+    <!--Update End-->
+
+    <!--Get By Id Start-->
+    @if(isNotEmpty(model.primaryKey) && !@_this.isFragmentExist('_getBasicById')){
+    <select id="_getBasicById" parameterType="#model.primaryKey.clz.name!#" resultMap="ResultMap" lang="#lang#">
+        <include refid="SELECT_BASIC_PRE"/>
+        FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+        @trim({prefix:" WHERE ",prefixOverrides:" AND| OR"}){
+            @for(entry in model.primaryKeys){
+                AND #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# =
+                @if(model.compositeId){
+                    \#_parameter.#entry.value.name#\#
+                @} else {
+                    \#_parameter\#
+                @}
+            @}
+        @}
+    </select>
+    @}
+    @if(isNotEmpty(model.primaryKey) && !@_this.isFragmentExist('_getById')){
+        <select id="_getById" parameterType="#model.primaryKey.clz.name!#" resultMap="ResultMap" lang="#lang#">
+            <include refid="SELECT_PRE"/>
+            FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+            @for(entry in model.manyToOnes){
+                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#
+            @}
+            @for(entry in model.oneToOnes){
+                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#
+            @}
+            @trim({prefix:" WHERE ",prefixOverrides:" AND| OR"}){
+                @for(entry in model.primaryKeys){
+                    AND #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# =
+                    @if(model.compositeId){
+                        \#_parameter.#entry.value.name#\#
+                    @} else {
+                        \#_parameter\#
+                    @}
+                @}
+            @}
+        </select>
+    @}
+    <!--Get By Id End-->
+
+    <!--Delete By Id Start-->
+    @if(isNotEmpty(model.primaryKey) && !@_this.isStatementExist('_deleteById')){
+        <delete id="_deleteById" parameterType="#model.primaryKey.clz.name!#" lang="#lang#">
+            DELETE FROM #model.nameInDatabase#
+            @trim({prefix:" WHERE ",prefixOverrides:" AND| OR"}){
+                @for(entry in model.primaryKeys){
+                    AND #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# =
+                    @if(model.compositeId){
+                        \#_parameter.#entry.value.name#\#
+                    @} else {
+                        \#_parameter\#
+                    @}
+                @}
+            @}
+        </delete>
+    @}
+    <!--Delete By Id End-->
+
+    <!--Delete All Start-->
+    @if(!@_this.isStatementExist('_deleteAll')){
+        <delete id="_deleteAll">
+            TRUNCATE TABLE #model.nameInDatabase#
+        </delete>
+    @}
+    <!--Delete All End-->
+
+    <!--Delete By Condition Start-->
+    @if(!@_this.isStatementExist('_deleteByCondition')){
+        <delete id="_deleteByCondition" lang="#lang#" databaseId="mysql">
+            DELETE #QUOTA+model.name+QUOTA# FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+            <include refid="SELECT_CONDITION" />
+        </delete>
+        <delete id="_deleteByCondition" lang="#lang#">
+            DELETE FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+            <include refid="SELECT_CONDITION" />
+        </delete>
+    @}
+    <!--Delete By Condition End-->
+
+    <!--Select By Ids Start-->
+    @if(isNotEmpty(model.primaryKey) && !model.compositeId && !@_this.isStatementExist('_selectByIds')){
+        <select id="_selectByIds" resultMap="ResultMap" lang="#lang#">
+            <include refid="SELECT_BASIC_PRE"/>
+            FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+            WHERE #QUOTA+model.name+QUOTA#.#model.primaryKey.nameInDatabase# IN (\#join(_parameter.ids)\#)
+        </select>
+    @}
+    <!--Select By Ids End-->
+
+    @if(!@_this.isStatementExist('_selectBasicByPager')){
+    <select id="_selectBasicByPager" resultMap="ResultMap" lang="#lang#">
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.PAGER_BEFORE" />
+        \@}
+        <include refid="SELECT_BASIC_PRE"/>
+        FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+        <include refid="ASSOCIATE_TABLE" />
+        <include refid="SELECT_CONDITION" />
+        \#orderBy(_parameter.sorts,' ORDER BY <include refid="_PUBLIC.ALIAS_QUOTA"/>id<include refid="_PUBLIC.ALIAS_QUOTA"/> DESC')\#
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.PAGER_AFTER" />
+        \@}
+    </select>
+    <select id="_selectBasicByPager" resultMap="ResultMap" databaseId="sqlserver" lang="#lang#">
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.PAGER_BEFORE" />
+        \@}
+        <include refid="SELECT_BASIC_PRE"/>
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.ROW_NUMBER_OVER" />
+            \#orderBy(_parameter.sorts,' ORDER BY <include refid="_PUBLIC.ALIAS_QUOTA"/>id<include refid="_PUBLIC.ALIAS_QUOTA"/> DESC')\#
+            <include refid="_PUBLIC.AS_ROW_NUM" />
+        \@}
+        FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+        <include refid="ASSOCIATE_TABLE" />
+        <include refid="SELECT_CONDITION"/>
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.PAGER_AFTER" />
+        \@} else {
+            \#orderBy(_parameter.sorts,' ORDER BY <include refid="_PUBLIC.ALIAS_QUOTA"/>id<include refid="_PUBLIC.ALIAS_QUOTA"/> DESC')\#
+        \@}
+    </select>
+    @}
+    @if(!@_this.isStatementExist('_selectByPager')){
+    <select id="_selectByPager" resultMap="ResultMap" lang="#lang#">
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.PAGER_BEFORE" />
+        \@}
+        <include refid="SELECT_PRE"/>
+        FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+        @for(entry in model.manyToOnes){
+            LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#
+        @}
+        @for(entry in model.oneToOnes){
+            LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#
+        @}
+        <include refid="ASSOCIATE_TABLE" />
+        <include refid="SELECT_CONDITION" />
+        \#orderBy(_parameter.sorts,' ORDER BY <include refid="_PUBLIC.ALIAS_QUOTA"/>id<include refid="_PUBLIC.ALIAS_QUOTA"/> DESC')\#
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.PAGER_AFTER" />
+        \@}
+    </select>
+    <select id="_selectByPager" resultMap="ResultMap" databaseId="sqlserver" lang="#lang#">
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.PAGER_BEFORE" />
+        \@}
+        <include refid="SELECT_PRE"/>
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.ROW_NUMBER_OVER" />
+            \#orderBy(_parameter.sorts,' ORDER BY <include refid="_PUBLIC.ALIAS_QUOTA"/>id<include refid="_PUBLIC.ALIAS_QUOTA"/> DESC')\#
+            <include refid="_PUBLIC.AS_ROW_NUM" />
+        \@}
+        FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+        @for(entry in model.manyToOnes){
+            LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#
+        @}
+        @for(entry in model.oneToOnes){
+            LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#
+        @}
+        <include refid="ASSOCIATE_TABLE" />
+        <include refid="SELECT_CONDITION"/>
+        \@if(isNotEmpty(_parameter.offset)){
+            <include refid="_PUBLIC.PAGER_AFTER" />
+        \@} else {
+            \#orderBy(_parameter.sorts,' ORDER BY <include refid="_PUBLIC.ALIAS_QUOTA"/>id<include refid="_PUBLIC.ALIAS_QUOTA"/> DESC')\#
+        \@}
+    </select>
+    @}
+    @if(!@_this.isStatementExist('_countBasicByPager')){
+    <select id="_countBasicByPager" resultType="long" lang="#lang#">
+        SELECT COUNT(*) FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+        <include refid="ASSOCIATE_TABLE" />
+        <include refid="SELECT_CONDITION" />
+    </select>
+    @}
+    @if(!@_this.isStatementExist('_countByPager')){
+    <select id="_countByPager" resultType="long" lang="#lang#">
+        SELECT COUNT(*) FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA#
+        @for(entry in model.manyToOnes){
+            LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#
+        @}
+        @for(entry in model.oneToOnes){
+            LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#
+        @}
+        <include refid="ASSOCIATE_TABLE" />
+        <include refid="SELECT_CONDITION" />
+    </select>
+    @}
+</mapper>
