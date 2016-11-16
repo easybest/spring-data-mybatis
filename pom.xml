@@ -6,7 +6,7 @@
 
     <groupId>org.springframework.data</groupId>
     <artifactId>spring-data-mybatis</artifactId>
-    <version>1.2.3.BUILD-SNAPSHOT</version>
+    <version>1.0.1.BUILD-SNAPSHOT</version>
 
     <name>Spring Data MyBatis</name>
 
@@ -17,8 +17,8 @@
     </parent>
 
     <properties>
-        <!--<springdata.commons>1.13.0.BUILD-SNAPSHOT</springdata.commons>-->
-        <springdata.commons>1.12.5.RELEASE</springdata.commons>
+        <springdata.commons>1.13.0.BUILD-SNAPSHOT</springdata.commons>
+        <!--<springdata.commons>1.12.5.RELEASE</springdata.commons>-->
     </properties>
 
     <dependencies>
