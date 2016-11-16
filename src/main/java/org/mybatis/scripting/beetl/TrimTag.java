@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * 实现mybatis trim. <code>
+ * Implementation of mybatis trim. <code>
  * &lt;trim prefix="WHERE" prefixOverrides="AND |OR"&gt; &lt;/trim&gt;
  * &lt;trim prefix="SET" suffixOverrides=","&gt;&lt;/trim&gt;
  * </code>

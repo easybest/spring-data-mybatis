@@ -4,7 +4,7 @@ import org.beetl.core.Context;
 import org.beetl.core.Function;
 
 /**
- * 站位符号调用此函数将直接输出文本而不是？
+ * Station Symbol Call This function will output the text directly instead of ？
  *
  * @author joelli
  */
