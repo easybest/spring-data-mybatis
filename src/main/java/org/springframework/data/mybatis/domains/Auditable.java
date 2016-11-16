@@ -6,9 +6,9 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 审计实体接口.
+ * Auditable Interface.
  *
- * @param <ID> 主键类型.
+ * @param <ID> Primary key's type.
  * @author jarvis@caomeitu.com
  * @since 15/10/11
  */
