@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 审计实体仅时间基类.
+ * Auditable Basic Entity Only DateTime.
  *
  * @param <PK> 主键类型.
  * @author jarvis@caomeitu.com
