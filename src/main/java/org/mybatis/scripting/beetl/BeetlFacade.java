@@ -50,7 +50,7 @@ public final class BeetlFacade {
     }
 
     /**
-     * 加载默认配置.
+     * load default configuration.
      *
      * @return Properties
      */
@@ -70,7 +70,7 @@ public final class BeetlFacade {
     }
 
     /**
-     * 加载扩展配置.
+     * load ext configuration.
      *
      * @return Properties
      */
