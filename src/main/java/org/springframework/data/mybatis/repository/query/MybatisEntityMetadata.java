@@ -29,7 +29,7 @@ public interface MybatisEntityMetadata<T> extends EntityMetadata<T> {
     /**
      * Returns the name of the entity.
      *
-     * @return
+     * @return entity's name
      */
     String getEntityName();
 }
