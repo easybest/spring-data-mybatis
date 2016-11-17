@@ -1,3 +1,21 @@
+/*
+ *
+ *   Copyright 2016 the original author or authors.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ */
+
 package org.mybatis.scripting.beetl;
 
 import org.beetl.core.Tag;
@@ -103,29 +121,29 @@ public class TrimTag extends Tag {
         boolean isSqlBlank = this.isSqlBlank(sql);
         if (!isSqlBlank) {
             // prefix
-            if (StringKit.isNotBlank(this.prefix)) {
+            if (StringUtils.isNotBlank(this.prefix)) {
                 appendSql(sb, this.prefix);
             }
             // prefixOverrides
-            String trimSql = " " + StringKit.trim(sql);
+            String trimSql = " " + StringUtils.trim(sql);
             if (this.prefixOverrides != null && this.prefixOverrides.length > 0) {
                 for (String prefixOverride : this.prefixOverrides) {
-                    if (StringKit.startsWith(trimSql, prefixOverride, true)) {
-                        trimSql = StringKit.substringAfter(trimSql, prefixOverride);
+                    if (StringUtils.startsWith(trimSql, prefixOverride, true)) {
+                        trimSql = StringUtils.substringAfter(trimSql, prefixOverride);
                     }
                 }
             }
             // suffixOverrides
             if (this.suffixOverrides != null && this.suffixOverrides.length > 0) {
                 for (String suffixOverride : this.suffixOverrides) {
-                    if (StringKit.endsWith(trimSql, suffixOverride, true)) {
-                        trimSql = StringKit.substringBeforeLast(trimSql, suffixOverride);
+                    if (StringUtils.endsWith(trimSql, suffixOverride, true)) {
+                        trimSql = StringUtils.substringBeforeLast(trimSql, suffixOverride);
                     }
                 }
             }
             this.appendSql(sb, trimSql);
             // suffix
-            if (StringKit.isNotBlank(this.suffix)) {
+            if (StringUtils.isNotBlank(this.suffix)) {
                 appendSql(sb, this.suffix);
             }
         }
@@ -133,7 +151,7 @@ public class TrimTag extends Tag {
     }
 
     /**
-     * 初始化参数.
+     * init param.
      *
      * @param args the args
      */
@@ -149,10 +167,10 @@ public class TrimTag extends Tag {
                     this.suffix = (String) params.get(SUFFIX);
                 }
                 if (params.containsKey(PREFIX_OVERRIDES)) {
-                    this.prefixOverrides = StringKit.split((String) params.get(PREFIX_OVERRIDES), SEPARATOR_CHAR);
+                    this.prefixOverrides = StringUtils.split((String) params.get(PREFIX_OVERRIDES), SEPARATOR_CHAR);
                 }
                 if (params.containsKey(SUFFIX_OVERRIDES)) {
-                    this.suffixOverrides = StringKit.split((String) params.get(SUFFIX_OVERRIDES), SEPARATOR_CHAR);
+                    this.suffixOverrides = StringUtils.split((String) params.get(SUFFIX_OVERRIDES), SEPARATOR_CHAR);
                 }
             }
         }
@@ -165,7 +183,7 @@ public class TrimTag extends Tag {
      * @param sql the sql
      */
     protected void appendSql(StringBuilder sb, String sql) {
-        if (StringKit.isNotBlank(sql)) {
+        if (StringUtils.isNotBlank(sql)) {
             sb.append(SPACE).append(sql).append(SPACE);
         }
     }
@@ -177,10 +195,10 @@ public class TrimTag extends Tag {
      * @return true, if checks if is sql blank
      */
     protected boolean isSqlBlank(String sql) {
-        if (StringKit.isBlank(sql)) {
+        if (StringUtils.isBlank(sql)) {
             return true;
         }
-        return StringKit.trim(sql).isEmpty();
+        return StringUtils.trim(sql).isEmpty();
     }
 
 
