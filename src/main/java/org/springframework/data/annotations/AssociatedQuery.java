@@ -16,16 +16,24 @@
  *
  */
 
-package org.springframework.data.mybatis.test.repositories;
+package org.springframework.data.annotations;
 
-import org.springframework.data.mybatis.repository.MybatisRepository;
-import org.springframework.data.mybatis.test.domains.Role;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Created by songjiawei on 2016/11/10.
+ * Annotated to decide whether include association query.
+ *
+ * @author Jarvis Song
  */
-public interface RoleRepository extends MybatisRepository<Role, Long> {
+@Target({METHOD, TYPE})
+@Retention(RUNTIME)
+public @interface AssociatedQuery {
 
-    Role getByName(String name);
+    boolean value() default true;
 
 }

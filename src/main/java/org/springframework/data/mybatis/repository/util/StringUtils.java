@@ -1,55 +1,48 @@
+/*
+ *
+ *   Copyright 2016 the original author or authors.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ */
+
 package org.springframework.data.mybatis.repository.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by songjiawei on 2016/11/13.
+ * stirng utils.
+ *
+ * @author Jarvis Song
  */
 public abstract class StringUtils {
 
-    /**
-     * 下划线字符
-     */
+
     public static final char UNDERLINE = '_';
 
-    /**
-     * 空字符串
-     */
     public static final String EMPTY_STRING = "";
 
-    /**
-     * <p>
-     * 判断字符串是否为空
-     * </p>
-     *
-     * @param str 需要判断字符串
-     * @return 判断结果
-     */
+
     public static boolean isEmpty(String str) {
         return str == null || EMPTY_STRING.equals(str.trim());
     }
 
-    /**
-     * <p>
-     * 判断字符串是否不为空
-     * </p>
-     *
-     * @param str 需要判断字符串
-     * @return 判断结果
-     */
     public static boolean isNotEmpty(String str) {
         return !isEmpty(str);
     }
 
-    /**
-     * <p>
-     * 字符串驼峰转下划线格式
-     * </p>
-     *
-     * @param param 需要转换的字符串
-     * @return 转换好的字符串
-     */
+
     public static String camelToUnderline(String param) {
         if (isEmpty(param)) {
             return EMPTY_STRING;
@@ -66,14 +59,7 @@ public abstract class StringUtils {
         return sb.toString();
     }
 
-    /**
-     * <p>
-     * 字符串下划线转驼峰格式
-     * </p>
-     *
-     * @param param 需要转换的字符串
-     * @return 转换好的字符串
-     */
+
     public static String underlineToCamel(String param) {
         if (isEmpty(param)) {
             return EMPTY_STRING;
@@ -93,27 +79,11 @@ public abstract class StringUtils {
         return sb.toString();
     }
 
-    /**
-     * <p>
-     * 判断字符串是否为纯大写字母
-     * </p>
-     *
-     * @param str 要匹配的字符串
-     * @return
-     */
     public static boolean isUpperCase(String str) {
         return match("^[A-Z]+$", str);
     }
 
-    /**
-     * <p>
-     * 正则表达式匹配
-     * </p>
-     *
-     * @param regex 正则表达式字符串
-     * @param str   要匹配的字符串
-     * @return 如果str 符合 regex的正则表达式格式,返回true, 否则返回 false;
-     */
+
     public static boolean match(String regex, String str) {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(str);
