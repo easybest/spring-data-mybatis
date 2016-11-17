@@ -1,3 +1,21 @@
+/*
+ *
+ *   Copyright 2016 the original author or authors.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ */
+
 package org.springframework.data.mybatis.repository.util;
 
 import javax.persistence.Transient;
@@ -7,7 +25,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created by songjiawei on 2016/11/13.
+ * entity utils.
+ *
+ * @author Jarvis Song
  */
 public abstract class EntityUtils {
 
@@ -16,17 +36,17 @@ public abstract class EntityUtils {
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
 
-			/* 过滤静态属性 */
+			/* filter static property */
             if (Modifier.isStatic(field.getModifiers())) {
                 continue;
             }
 
-			/* 过滤 transient关键字修饰的属性 */
+			/* filter transient property */
             if (Modifier.isTransient(field.getModifiers())) {
                 continue;
             }
 
-			/* 过滤注解非表字段属性 */
+			/* filter transient property */
             if (null != field.getAnnotation(Transient.class) || null != field.getAnnotation(org.springframework.data.annotation.Transient.class)) {
                 continue;
             }
@@ -35,7 +55,7 @@ public abstract class EntityUtils {
 
         }
 
-		/* 处理父类字段 */
+		/* process super class */
         Class<?> superClass = clazz.getSuperclass();
         if (superClass.equals(Object.class)) {
             return result;

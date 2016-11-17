@@ -1,16 +1,38 @@
+/*
+ *
+ *   Copyright 2016 the original author or authors.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ */
+
 package org.mybatis.scripting.beetl;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class StringKit {
+/**
+ * String util.
+ *
+ * @author Jarvis Song
+ */
+public class StringUtils {
     public static final String EMPTY = "";
 
     public static final int INDEX_NOT_FOUND = -1;
 
     public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-    // 首字母转小写
     public static String toLowerCaseFirstOne(String s) {
         if (Character.isLowerCase(s.charAt(0)))
             return s;
@@ -20,7 +42,6 @@ public class StringKit {
                     .append(s.substring(1)).toString();
     }
 
-    // 首字母转大写
     public static String toUpperCaseFirstOne(String s) {
         if (Character.isUpperCase(s.charAt(0)))
             return s;
@@ -30,7 +51,6 @@ public class StringKit {
                     .append(s.substring(1)).toString();
     }
 
-    // 大写字母前面加上下划线并转为全小写
     public static String enCodeUnderlined(String s) {
         char[] chars = toLowerCaseFirstOne(s).toCharArray();
         StringBuilder temp = new StringBuilder();
@@ -43,7 +63,6 @@ public class StringKit {
         return temp.toString();
     }
 
-    // 删除下划线并转把后一个字母转成大写
     public static String deCodeUnderlined(String str) {
 
         String[] splitArr = str.split("_");
@@ -63,8 +82,6 @@ public class StringKit {
 
 
     /**
-     * 去空格
-     *
      * @param str
      * @return
      */
