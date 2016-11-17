@@ -81,10 +81,6 @@ public class StringUtils {
     }
 
 
-    /**
-     * @param str
-     * @return
-     */
     public static String trimAllWhitespace(String str) {
         if (!((CharSequence) str != null && ((CharSequence) str).length() > 0)) {
             return str;

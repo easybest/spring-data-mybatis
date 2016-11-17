@@ -34,14 +34,14 @@ public interface MybatisEntityInformation<T, ID extends Serializable> extends En
     /**
      * Returns the id attribute of the entity.
      *
-     * @return
+     * @return SingularAttribute
      */
     SingularAttribute<? super T, ?> getIdAttribute();
 
     /**
      * Returns {@literal true} if the entity has a composite id.
      *
-     * @return
+     * @return hasCompositeId
      */
     boolean hasCompositeId();
 
@@ -49,7 +49,7 @@ public interface MybatisEntityInformation<T, ID extends Serializable> extends En
      * Returns the attribute names of the id attributes. If the entity has a composite id, then all id attribute names are
      * returned. If the entity has a single id attribute then this single attribute name is returned.
      *
-     * @return
+     * @return IdAttributeNames
      */
     Iterable<String> getIdAttributeNames();
 
@@ -58,7 +58,7 @@ public interface MybatisEntityInformation<T, ID extends Serializable> extends En
      *
      * @param id
      * @param idAttribute
-     * @return
+     * @return CompositeIdAttributeValue
      */
     Object getCompositeIdAttributeValue(Serializable id, String idAttribute);
 
