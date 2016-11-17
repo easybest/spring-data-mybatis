@@ -26,7 +26,6 @@ import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.persistence.EntityManagerFactory;
 import java.lang.annotation.*;
 
 /**
@@ -78,7 +77,7 @@ public @interface EnableMybatisRepositories {
      * for a repository named {@code PersonRepository} the corresponding implementation class will be looked up scanning
      * for {@code PersonRepositoryImpl}.
      *
-     * @return
+     * @return repositoryImplementationPostfix
      */
     String repositoryImplementationPostfix() default "Impl";
 
@@ -86,7 +85,7 @@ public @interface EnableMybatisRepositories {
      * Configures the location of where to find the Spring Data named queries properties file. Will default to
      * {@code META-INF/mybatis-named-queries.properties}.
      *
-     * @return
+     * @return namedQueriesLocation
      */
     String namedQueriesLocation() default "";
 
@@ -94,7 +93,7 @@ public @interface EnableMybatisRepositories {
      * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query methods. Defaults to
      * {@link QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
      *
-     * @return
+     * @return QueryLookupStrategy.Key
      */
     QueryLookupStrategy.Key queryLookupStrategy() default QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND;
 
@@ -102,24 +101,23 @@ public @interface EnableMybatisRepositories {
      * Returns the {@link FactoryBean} class to be used for each repository instance. Defaults to
      * {@link MybatisRepositoryFactoryBean}.
      *
-     * @return
+     * @return repositoryFactoryBeanClass
      */
     Class<?> repositoryFactoryBeanClass() default MybatisRepositoryFactoryBean.class;
 
     /**
      * Configure the repository base class to be used to create repository proxies for this particular configuration.
      *
-     * @return
-     * @since 1.9
+     * @return repositoryBaseClass
      */
     Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
 
 
     /**
-     * Configures the name of the {@link EntityManagerFactory} bean definition to be used to create repositories
+     * Configures the name of the {@link org.apache.ibatis.session.SqlSessionFactory} bean definition to be used to create repositories
      * discovered through this annotation. Defaults to {@code entityManagerFactory}.
      *
-     * @return
+     * @return sqlSessionFactoryRef
      */
     String sqlSessionFactoryRef() default "sqlSessionFactory";
 
@@ -127,7 +125,7 @@ public @interface EnableMybatisRepositories {
      * Configures the name of the {@link PlatformTransactionManager} bean definition to be used to create repositories
      * discovered through this annotation. Defaults to {@code transactionManager}.
      *
-     * @return
+     * @return transactionManagerRef
      */
     String transactionManagerRef() default "transactionManager";
 
