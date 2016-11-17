@@ -56,7 +56,7 @@ public abstract class SqlSessionRepositorySupport {
     /**
      * Sub class can override this method.
      *
-     * @return
+     * @return Namespace
      */
     protected abstract String getNamespace();
 
@@ -64,7 +64,7 @@ public abstract class SqlSessionRepositorySupport {
      * get the mapper statement include namespace.
      *
      * @param partStatement
-     * @return
+     * @return Statement
      */
     protected String getStatement(String partStatement) {
         return getNamespace() + DOT + partStatement;
@@ -75,7 +75,7 @@ public abstract class SqlSessionRepositorySupport {
      *
      * @param statement
      * @param <T>
-     * @return
+     * @return result
      */
     protected <T> T selectOne(String statement) {
         return getSqlSession().selectOne(getStatement(statement));
