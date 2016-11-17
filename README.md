@@ -38,7 +38,7 @@ public class AppConfig {
 
     @Bean
     public DataSource dataSource() {
-        return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).addScript("classpath:/test-init.sql").build();
+        return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).build();
     }
 
     @Bean
@@ -61,11 +61,8 @@ Create an entity:
 
 ```java
 @Entity
-public class User {
+public class User extends LongId {
 
-  @Id
-  @GeneratedValue
-  private Integer id;
   private String firstname;
   private String lastname;
        
@@ -80,7 +77,8 @@ Create a repository interface in `com.example.repositories`:
 
 ```java
 public interface UserRepository extends CrudRepository<User, Long> {
-  List<User> findByLastname(String lastname);
+  List<User> findByLastname(String lastname);  
+  
 }
 
 ```
