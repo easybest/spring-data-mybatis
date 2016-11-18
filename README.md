@@ -11,6 +11,7 @@ This module deals with enhanced support for MyBatis based data access layers.
 * Support for transparent auditing (created, last changed)
 * Possibility to integrate custom repository code
 * Easy Spring integration with custom namespace
+* Now we can support MySQL, Oracle, Sql Server, H2, etc.
 
 
 ## Getting Help ##
@@ -114,3 +115,7 @@ public class UserRepositoryIntegrationTest {
 Here are some ways for you to get involved in the community:
 
 * Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](http://help.github.com/forking/). 
+
+## Help me better - Donation
+[![paypal](https://www.paypal.com/en_US/i/btn/x-click-butcc-donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W7PLNCBK5K8JS)
+
