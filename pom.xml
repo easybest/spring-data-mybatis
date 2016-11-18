@@ -10,7 +10,7 @@
         <version>1.8.5.RELEASE</version>
     </parent>
 
-    <groupId>org.springframework.data</groupId>
+    <groupId>com.ifrabbit</groupId>
     <artifactId>spring-data-mybatis</artifactId>
     <version>1.0.1.BUILD-SNAPSHOT</version>
 
