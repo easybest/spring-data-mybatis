@@ -80,6 +80,63 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         return statementName;
     }
 
+    private String doCreatePageQueryStatementForSqlServer() {
+        Class<?> returnedObjectType = method.getReturnedObjectType();
+        if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
+            throw new IllegalArgumentException("return object type must be or assignable from " + domainClass);
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append("<select id=\"" + getStatementName() + "\" lang=\"#lang#\" resultMap=\"ResultMap\">");
+        builder.append("<include refid=\"_PUBLIC.PAGER_BEFORE\" />\n");
+        if (isBasicQuery()) {
+            builder.append("<include refid=\"SELECT_BASIC_PRE\"/>");
+        } else {
+            builder.append("<include refid=\"SELECT_PRE\"/>");
+        }
+
+        builder.append("\n<include refid=\"_PUBLIC.ROW_NUMBER_OVER\" />\n");
+        builder.append(createQuerySort(true));
+        builder.append("\n<include refid=\"_PUBLIC.AS_ROW_NUM\" />\n");
+
+        builder.append("\n FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA# \n");
+
+        if (!isBasicQuery()) {
+            builder.append("@for(entry in model.manyToOnes){\n" +
+                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
+                    "            @}\n" +
+                    "            @for(entry in model.oneToOnes){\n" +
+                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
+                    "            @}\n");
+        }
+        builder.append(createQueryCondition());
+        builder.append("<include refid=\"_PUBLIC.PAGER_AFTER\" />");
+        builder.append("</select>\n");
+
+        builder.append(doCreateCountQueryStatement("count_" + getStatementName()));
+        return builder.toString();
+
+    }
+
+    private String doCreateCountQueryStatement(String statementName) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<select id=\"" + statementName + "\" lang=\"#lang#\" resultType=\"long\">");
+
+        builder.append("SELECT COUNT(*) FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA# \n");
+
+        if (!isBasicQuery()) {
+            builder.append("@for(entry in model.manyToOnes){\n" +
+                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
+                    "            @}\n" +
+                    "            @for(entry in model.oneToOnes){\n" +
+                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
+                    "            @}\n");
+        }
+        builder.append(createQueryCondition());
+
+        builder.append("</select>\n");
+        return builder.toString();
+    }
+
     private String doCreatePageQueryStatement() {
         Class<?> returnedObjectType = method.getReturnedObjectType();
         if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
@@ -110,22 +167,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         builder.append("<include refid=\"_PUBLIC.PAGER_AFTER\" />");
         builder.append("</select>\n");
 
-        builder.append("<select id=\"count_" + getStatementName() + "\" lang=\"#lang#\" resultType=\"long\">");
+        builder.append(doCreateCountQueryStatement("count_" + getStatementName()));
 
-        builder.append("SELECT COUNT(*) FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA# \n");
-
-        if (!isBasicQuery()) {
-            builder.append("@for(entry in model.manyToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n" +
-                    "            @for(entry in model.oneToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n");
-        }
-        builder.append(createQueryCondition());
-
-
-        builder.append("</select>");
 
         return builder.toString();
     }
@@ -252,7 +295,11 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         if (method.isCollectionQuery()) {
             statementXML = doCreateCollectionQueryStatement();
         } else if (method.isPageQuery()) {
-            statementXML = doCreatePageQueryStatement();
+            if ("sqlserver".equals(configuration.getDatabaseId())) {
+                statementXML = doCreatePageQueryStatementForSqlServer();
+            } else {
+                statementXML = doCreatePageQueryStatement();
+            }
         }
 
 
