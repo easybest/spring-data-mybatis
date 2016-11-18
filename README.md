@@ -11,6 +11,7 @@ This module deals with enhanced support for MyBatis based data access layers.
 * Support for transparent auditing (created, last changed)
 * Possibility to integrate custom repository code
 * Easy Spring integration with custom namespace
+* Now we can support MySQL, Oracle, Sql Server, H2, etc.
 
 
 ## Getting Help ##
@@ -114,3 +115,22 @@ public class UserRepositoryIntegrationTest {
 Here are some ways for you to get involved in the community:
 
 * Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](http://help.github.com/forking/). 
+
+## Help me better - Donation
+
+
+<form target="paypal" action="https://www.paypal.com/cgi-bin/webscr" method="post" style="border:none;">
+<input type="hidden" name="cmd" value="_s-xclick">
+<input type="hidden" name="hosted_button_id" value="W7PLNCBK5K8JS">
+<table style="border:none;">
+<tr><td  style="border:none;"><input type="hidden" name="on0" value="donate"></td></tr><tr><td  style="border:none;"><select name="os0">
+	<option value="$1">$1 $ 1.00 USD</option>
+	<option value="$5">$5 $ 5.00 USD</option>
+	<option value="$10">$10 $ 10.00 USD</option>
+	<option value="$100">$100 $ 100.00 USD</option>
+</select> </td></tr>
+</table>
+<input type="hidden" name="currency_code" value="USD">
+<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit">
+<img alt="" border="0" src="https://www.paypalobjects.com/zh_XC/i/scr/pixel.gif" width="1" height="1">
+</form>
