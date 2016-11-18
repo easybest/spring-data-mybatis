@@ -7,18 +7,15 @@
 ----
 <dependencies>
   <dependency>
-    <groupId>org.springframework.data</groupId>
-    <artifactId>spring-data-jpa</artifactId>
+    <groupId>com.ifrabbit</groupId>
+    <artifactId>spring-data-mybatis</artifactId>
     <version>{version}</version>
   </dependency>
 <dependencies>
 ----
 ====
 
-[[dependencies.spring-boot]]
-== Dependency management with Spring Boot
 
-Spring Boot already selects a very recent version of Spring Data modules for you. In case you want to upgrade to a newer version nonetheless, simply configure the property `spring-data-releasetrain.version` to the <<dependencies.train-names,train name and iteration>> you'd like to use.
 
 [[dependencies.spring-framework]]
 == Spring Framework
