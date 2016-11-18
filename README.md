@@ -25,7 +25,7 @@ Download the jar through Maven:
 
 ```xml
 <dependency>
-  <groupId>org.springframework.data</groupId>
+  <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
   <version>${version}.RELEASE</version>
 </dependency>
