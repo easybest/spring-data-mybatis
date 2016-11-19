@@ -300,6 +300,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
             } else {
                 statementXML = doCreatePageQueryStatement();
             }
+        } else if (tree.isCountProjection()) {
+            statementXML = doCreateCountQueryStatement(getStatementName());
         }
 
 
