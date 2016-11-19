@@ -20,7 +20,7 @@ package org.springframework.data.mybatis.repository.config;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.data.mybatis.repository.MybatisRepository;
+import org.springframework.data.mybatis.repository.support.MybatisRepository;
 import org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
