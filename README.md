@@ -1,6 +1,6 @@
 # Spring Data MyBatis [![Build Status](https://travis-ci.org/hatunet/spring-data-mybatis.svg?branch=master)](https://travis-ci.org/hatunet/spring-data-mybatis) 
 
-[Simplified Chinese](README-CHS)
+[Simplified Chinese](README-CHS.md)
 
 The primary goal of the Spring Data project is to make it easier to build Spring-powered applications that use data access technologies. 
 This module deals with enhanced support for MyBatis based data access layers.
