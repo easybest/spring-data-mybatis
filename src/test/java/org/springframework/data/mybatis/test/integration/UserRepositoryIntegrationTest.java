@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.test.domains.User;
 import org.springframework.data.mybatis.test.repositories.UserRepository;
@@ -55,6 +56,18 @@ public class UserRepositoryIntegrationTest {
         User luke = new User("Luke", "Beauford");
         luke = repository.save(luke);
 
+        User tod = new User("Tod", "Eades");
+        tod = repository.save(tod);
+        User hahn = new User("Hahn", "Eades");
+        hahn = repository.save(hahn);
+        User macy = new User("Macy", "Eades");
+        macy = repository.save(macy);
+
+        User christy = new User("Christy", "Sach");
+        christy = repository.save(christy);
+        User hamlin = new User("Dave", "Sach");
+        hamlin = repository.save(hamlin);
+
         List<User> result = repository.findByLastnameOrderByFirstnameAsc("Matthews");
         assertThat(result.size(), is(1));
         assertThat(result, hasItem(dave));
@@ -67,9 +80,21 @@ public class UserRepositoryIntegrationTest {
 
         Page<User> page = repository.findByLastnameOrderByLastnameAsc("Beauford", new PageRequest(0, 1));
         assertThat(page.getSize(), is(1));
+        assertThat(page.getTotalElements(), is(2L));
 
         Long count = repository.countByLastname("Beauford");
         assertThat(count, is(2L));
 
+
+        Slice<User> slice = repository.findByFirstname("Dave", new PageRequest(0, 1));
+        assertThat(slice.getSize(),is(1));
+        assertThat(slice.getContent(),hasItem(hamlin));
+
+
+        Long deleteCount = repository.deleteByLastname("Eades");
+        assertThat(deleteCount, is(3L));
+
+        List<User> sachs = repository.removeByLastname("Sach");
+        assertThat(sachs.size(), is(2));
     }
 }
