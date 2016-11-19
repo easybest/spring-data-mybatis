@@ -1,12 +1,12 @@
 # Spring Data MyBatis [![Build Status](https://travis-ci.org/hatunet/spring-data-mybatis.svg?branch=master)](https://travis-ci.org/hatunet/spring-data-mybatis) 
 
-[Simplified Chinese](README-CHS)
+[English](README)
 
 The primary goal of the Spring Data project is to make it easier to build Spring-powered applications that use data access technologies. 
 This module deals with enhanced support for MyBatis based data access layers.
 
 
-## Features ##
+## 支持的特性 ##
 
 * Implementation of CRUD methods for normal Entities
 * Dynamic query generation from query method names
@@ -17,13 +17,13 @@ This module deals with enhanced support for MyBatis based data access layers.
 * Support MySQL, Oracle, Sql Server, H2, etc.
 
 
-## Getting Help ##
+## 获得帮助 ##
 This README as well as the [reference documentation](https://hatunet.github.io/spring-data-mybatis/) are the best places to start learning about Spring Data MyBatis. 
 
 If you have any question, please record a [issue](https://github.com/hatunet/spring-data-mybatis/issues) to me.
 
 
-## Quick Start ##
+## 快速开始 ##
 
 Download the jar through Maven:
 
@@ -113,12 +113,12 @@ public class UserRepositoryIntegrationTest {
 
 ```
 
-## Contributing to Spring Data MyBatis ##
+## 为 Spring Data MyBatis 贡献代码 ##
 
 Here are some ways for you to get involved in the community:
 
 * Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](http://help.github.com/forking/). 
 
-## Help me better - Donation
+## 捐赠
 [![paypal](https://www.paypal.com/en_US/i/btn/x-click-butcc-donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W7PLNCBK5K8JS)
 
