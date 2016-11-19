@@ -91,7 +91,7 @@ public @interface EnableMybatisRepositories {
 
     /**
      * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries for query methods. Defaults to
-     * {@link QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
+     * {@link org.springframework.data.repository.query.QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
      *
      * @return QueryLookupStrategy.Key
      */
