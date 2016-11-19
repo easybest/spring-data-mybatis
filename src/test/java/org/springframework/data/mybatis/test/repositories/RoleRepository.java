@@ -18,7 +18,7 @@
 
 package org.springframework.data.mybatis.test.repositories;
 
-import org.springframework.data.mybatis.repository.MybatisRepository;
+import org.springframework.data.mybatis.repository.support.MybatisRepository;
 import org.springframework.data.mybatis.test.domains.Role;
 
 /**

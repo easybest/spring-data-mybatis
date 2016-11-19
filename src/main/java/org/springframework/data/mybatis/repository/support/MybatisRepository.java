@@ -16,7 +16,7 @@
  *
  */
 
-package org.springframework.data.mybatis.repository;
+package org.springframework.data.mybatis.repository.support;
 
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
