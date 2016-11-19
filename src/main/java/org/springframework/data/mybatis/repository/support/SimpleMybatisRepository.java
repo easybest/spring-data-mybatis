@@ -21,7 +21,6 @@ package org.springframework.data.mybatis.repository.support;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.domain.*;
 import org.springframework.data.mybatis.domains.Auditable;
-import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
