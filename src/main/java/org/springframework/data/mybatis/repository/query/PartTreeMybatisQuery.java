@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mapping.model.MappingException;
+import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.DeleteExecution;
 import org.springframework.data.mybatis.repository.support.MybatisEntityInformationSupport;
 import org.springframework.data.mybatis.repository.support.MybatisEntityModel;
 import org.springframework.data.mybatis.repository.support.MybatisQueryException;
@@ -76,8 +77,31 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
     }
 
     @Override
+    protected MybatisQueryExecution getExecution() {
+        if (tree.isDelete()) {
+            return new DeleteExecution();
+        }
+        return super.getExecution();
+    }
+
+    @Override
     protected String getStatementName() {
         return statementName;
+    }
+
+    private String doCreateDeleteQueryStatement() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<delete id=\"" + getStatementName() + "\" lang=\"#lang#\">\n");
+        builder.append("DELETE FROM #model.nameInDatabase#\n");
+        builder.append(createQueryCondition());
+        builder.append("\n</delete>\n");
+
+        if (method.isCollectionQuery()) {
+            // query first, then delete
+            builder.append(doCreateSelectQueryStatement("query_" + getStatementName()));
+        }
+
+        return builder.toString();
     }
 
     private String doCreatePageQueryStatementForSqlServer() {
@@ -173,16 +197,10 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         return builder.toString();
     }
 
-    private String doCreateCollectionQueryStatement() {
-        Class<?> returnedObjectType = method.getReturnedObjectType();
-
-        if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
-            throw new IllegalArgumentException("return object type must be or assignable from " + domainClass);
-        }
-
+    private String doCreateSelectQueryStatement(String statementName) {
         StringBuilder builder = new StringBuilder();
 
-        builder.append("<select id=\"" + getStatementName() + "\" lang=\"#lang#\" resultMap=\"ResultMap\">");
+        builder.append("\n<select id=\"" + statementName + "\" lang=\"#lang#\" resultMap=\"ResultMap\">");
         if (isBasicQuery()) {
             builder.append("<include refid=\"SELECT_BASIC_PRE\"/>");
         } else {
@@ -203,8 +221,18 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         builder.append(createQueryCondition());
 
         builder.append(createQuerySort(false));
-        builder.append("</select>");
+        builder.append("</select>\n");
         return builder.toString();
+    }
+
+    private String doCreateCollectionQueryStatement() {
+        Class<?> returnedObjectType = method.getReturnedObjectType();
+
+        if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
+            throw new IllegalArgumentException("return object type must be or assignable from " + domainClass);
+        }
+
+        return doCreateSelectQueryStatement(getStatementName());
     }
 
     private String createQuerySort(boolean must) {
@@ -291,17 +319,20 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         }
 
         String statementXML = "";
-
-        if (method.isCollectionQuery()) {
-            statementXML = doCreateCollectionQueryStatement();
+        if (tree.isDelete()) {
+            statementXML = doCreateDeleteQueryStatement();
+        } else if (tree.isCountProjection()) {
+            statementXML = doCreateCountQueryStatement(getStatementName());
         } else if (method.isPageQuery()) {
             if ("sqlserver".equals(configuration.getDatabaseId())) {
                 statementXML = doCreatePageQueryStatementForSqlServer();
             } else {
                 statementXML = doCreatePageQueryStatement();
             }
-        } else if (tree.isCountProjection()) {
-            statementXML = doCreateCountQueryStatement(getStatementName());
+        } else if (method.isSliceQuery()) {
+        } else if (method.isStreamQuery()) {
+        } else if (method.isCollectionQuery()) {
+            statementXML = doCreateCollectionQueryStatement();
         }
 
 
