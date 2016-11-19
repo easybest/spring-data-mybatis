@@ -23,6 +23,7 @@ import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.mybatis.repository.query.MybatisParameters.MybatisParameter;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -112,12 +113,28 @@ public abstract class MybatisQueryExecution {
 
     static class SlicedExecution extends MybatisQueryExecution {
 
-        /*
-         * (non-Javadoc)
-         * @see org.springframework.data.jpa.repository.query.JpaQueryExecution#doExecute(org.springframework.data.jpa.repository.query.AbstractJpaQuery, java.lang.Object[])
-         */
+
         @Override
         protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
+            MybatisParameters parameters = query.getQueryMethod().getParameters();
+            Map<String, Object> parameter = new HashMap<String, Object>();
+            int c = 0;
+            for (MybatisParameter param : parameters.getBindableParameters()) {
+                parameter.put("p" + (c++), values[param.getIndex()]);
+            }
+
+            if (parameters.hasSortParameter()) {
+                parameter.put("sorts", values[parameters.getSortIndex()]);
+            }
+
+            Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
+            parameter.put("offset", pageable.getOffset());
+            parameter.put("pageSize", pageable.getPageSize());
+            parameter.put("offsetEnd", pageable.getOffset() + pageable.getPageSize());
+            List<Object> resultList = query.getSqlSessionTemplate().selectList(query.getStatementId(), parameter);
+
+            int pageSize = pageable.getPageSize();
+            boolean hasNext = resultList.size() > pageSize;
 
 //            ParametersParameterAccessor accessor = new ParametersParameterAccessor(parameters, values);
 //            Pageable pageable = accessor.getPageable();
@@ -129,8 +146,7 @@ public abstract class MybatisQueryExecution {
 //            List<Object> resultList = createQuery.getResultList();
 //            boolean hasNext = resultList.size() > pageSize;
 //
-//            return new SliceImpl<Object>(hasNext ? resultList.subList(0, pageSize) : resultList, pageable, hasNext);
-            return null;
+            return new SliceImpl<Object>(hasNext ? resultList.subList(0, pageSize) : resultList, pageable, hasNext);
         }
     }
 
@@ -203,6 +219,32 @@ public abstract class MybatisQueryExecution {
         protected Object doExecute(final AbstractMybatisQuery query, Object[] values) {
 
             return null;
+        }
+    }
+
+    static class DeleteExecution extends MybatisQueryExecution {
+        @Override
+        protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
+            MybatisParameters parameters = query.getQueryMethod().getParameters();
+            Map<String, Object> parameter = new HashMap<String, Object>();
+
+            int c = 0;
+            for (MybatisParameter param : parameters.getBindableParameters()) {
+                parameter.put("p" + (c++), values[param.getIndex()]);
+            }
+
+
+            boolean collectionQuery = query.getQueryMethod().isCollectionQuery();
+            Object result = null;
+            if (collectionQuery) {
+                result = query.getSqlSessionTemplate().selectList(query.getQueryForDeleteStatementId(), parameter);
+            }
+
+            int rows = query.getSqlSessionTemplate().delete(query.getStatementId(), parameter);
+            if (!collectionQuery) {
+                return rows;
+            }
+            return result;
         }
     }
 
