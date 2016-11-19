@@ -40,4 +40,6 @@ public interface UserRepository extends MybatisRepository<User, Long> {
 
     List<User> findByLastname(String lastname, Sort sort);
 
+    Long countByLastname(String lastname);
+
 }
