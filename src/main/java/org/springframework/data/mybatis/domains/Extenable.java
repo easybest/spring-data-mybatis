@@ -16,13 +16,20 @@
  *
  */
 
-package org.springframework.data.mybatis.test.repositories;
+package org.springframework.data.mybatis.domains;
 
-import org.springframework.data.mybatis.repository.support.MybatisRepository;
-import org.springframework.data.mybatis.test.domains.Department;
+import java.util.Map;
 
 /**
- * Created by songjiawei on 2016/11/15.
+ * extenable domain.
+ *
+ * @author Jarvis Song
  */
-public interface DepartmentRepository extends MybatisRepository<Department, Long> {
+public interface Extenable {
+    /**
+     * 获取扩展字段.
+     */
+    Map<String, Object> getExtendedFields();
+
+
 }
