@@ -96,6 +96,10 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
         return getNamespace() + ".count_" + getStatementName();
     }
 
+    protected String getQueryForDeleteStatementId() {
+        return getNamespace() + ".query_" + getStatementName();
+    }
+
     protected String getNamespace() {
         Query annotation = method.getQueryAnnotation();
         if (null == annotation || StringUtils.isEmpty(annotation.namespace())) {
@@ -134,12 +138,12 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
         if (method.isStreamQuery()) {
             return new StreamExecution();
-        } else if (method.isCollectionQuery()) {
-            return new CollectionExecution();
         } else if (method.isSliceQuery()) {
             return new SlicedExecution();
         } else if (method.isPageQuery()) {
             return new PagedExecution();
+        } else if (method.isCollectionQuery()) {
+            return new CollectionExecution();
         } else {
             return new SingleEntityExecution();
         }
