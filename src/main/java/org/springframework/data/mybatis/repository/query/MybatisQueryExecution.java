@@ -177,10 +177,19 @@ public abstract class MybatisQueryExecution {
     static class SingleEntityExecution extends MybatisQueryExecution {
 
         @Override
-        protected Object doExecute(final AbstractMybatisQuery repositoryQuery, final Object[] values) {
+        protected Object doExecute(final AbstractMybatisQuery query, final Object[] values) {
+            if (null == values || values.length == 0) {
+                return query.getSqlSessionTemplate().selectList(query.getStatementId());
+            }
+            MybatisParameters parameters = query.getQueryMethod().getParameters();
+            Map<String, Object> parameter = new HashMap<String, Object>();
 
+            int c = 0;
+            for (MybatisParameter param : parameters.getBindableParameters()) {
+                parameter.put("p" + (c++), values[param.getIndex()]);
+            }
 
-            return null;
+            return query.getSqlSessionTemplate().selectList(query.getStatementId(), parameter);
         }
     }
 
