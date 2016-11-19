@@ -37,9 +37,12 @@ public interface UserRepository extends MybatisRepository<User, Long> {
 
     User getByFirstnameAndLastname(String firstname, String lastname);
 
-
     List<User> findByLastname(String lastname, Sort sort);
 
     Long countByLastname(String lastname);
+
+    Long deleteByLastname(String lastname);
+
+    List<User> removeByLastname(String lastname);
 
 }
