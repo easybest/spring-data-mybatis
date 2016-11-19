@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.test.domains.User;
 import org.springframework.data.mybatis.test.repositories.UserRepository;
@@ -64,7 +65,7 @@ public class UserRepositoryIntegrationTest {
 
         User christy = new User("Christy", "Sach");
         christy = repository.save(christy);
-        User hamlin = new User("Hamlin", "Sach");
+        User hamlin = new User("Dave", "Sach");
         hamlin = repository.save(hamlin);
 
         List<User> result = repository.findByLastnameOrderByFirstnameAsc("Matthews");
@@ -83,6 +84,12 @@ public class UserRepositoryIntegrationTest {
 
         Long count = repository.countByLastname("Beauford");
         assertThat(count, is(2L));
+
+
+        Slice<User> slice = repository.findByFirstname("Dave", new PageRequest(0, 1));
+        assertThat(slice.getSize(),is(1));
+        assertThat(slice.getContent(),hasItem(hamlin));
+
 
         Long deleteCount = repository.deleteByLastname("Eades");
         assertThat(deleteCount, is(3L));
