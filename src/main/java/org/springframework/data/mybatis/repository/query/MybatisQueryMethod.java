@@ -99,6 +99,7 @@ public class MybatisQueryMethod extends QueryMethod {
 
     }
 
+
     Class<?> getReturnType() {
         return method.getReturnType();
     }

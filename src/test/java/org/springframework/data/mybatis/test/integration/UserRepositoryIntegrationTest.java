@@ -67,5 +67,9 @@ public class UserRepositoryIntegrationTest {
 
         Page<User> page = repository.findByLastnameOrderByLastnameAsc("Beauford", new PageRequest(0, 1));
         assertThat(page.getSize(), is(1));
+
+        Long count = repository.countByLastname("Beauford");
+        assertThat(count, is(2L));
+
     }
 }
