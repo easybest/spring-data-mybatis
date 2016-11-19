@@ -96,6 +96,10 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
         return getNamespace() + ".count_" + getStatementName();
     }
 
+    protected String getQueryForDeleteStatementId() {
+        return getNamespace() + ".query_" + getStatementName();
+    }
+
     protected String getNamespace() {
         Query annotation = method.getQueryAnnotation();
         if (null == annotation || StringUtils.isEmpty(annotation.namespace())) {

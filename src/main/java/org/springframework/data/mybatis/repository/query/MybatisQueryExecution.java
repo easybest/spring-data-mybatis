@@ -206,6 +206,32 @@ public abstract class MybatisQueryExecution {
         }
     }
 
+    static class DeleteExecution extends MybatisQueryExecution {
+        @Override
+        protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
+            MybatisParameters parameters = query.getQueryMethod().getParameters();
+            Map<String, Object> parameter = new HashMap<String, Object>();
+
+            int c = 0;
+            for (MybatisParameter param : parameters.getBindableParameters()) {
+                parameter.put("p" + (c++), values[param.getIndex()]);
+            }
+
+
+            boolean collectionQuery = query.getQueryMethod().isCollectionQuery();
+            Object result = null;
+            if (collectionQuery) {
+                result = query.getSqlSessionTemplate().selectList(query.getQueryForDeleteStatementId(), parameter);
+            }
+
+            int rows = query.getSqlSessionTemplate().delete(query.getStatementId(), parameter);
+            if (!collectionQuery) {
+                return rows;
+            }
+            return result;
+        }
+    }
+
     public static void potentiallyRemoveOptionalConverter(ConfigurableConversionService conversionService) {
 
         ClassLoader classLoader = MybatisQueryExecution.class.getClassLoader();
