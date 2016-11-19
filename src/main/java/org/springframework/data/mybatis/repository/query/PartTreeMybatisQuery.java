@@ -104,7 +104,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         return builder.toString();
     }
 
-    private String doCreatePageQueryStatementForSqlServer() {
+    private String doCreatePageQueryStatementForSqlServer(boolean includeCount) {
         Class<?> returnedObjectType = method.getReturnedObjectType();
         if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
             throw new IllegalArgumentException("return object type must be or assignable from " + domainClass);
@@ -135,8 +135,9 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         builder.append(createQueryCondition());
         builder.append("<include refid=\"_PUBLIC.PAGER_AFTER\" />");
         builder.append("</select>\n");
-
-        builder.append(doCreateCountQueryStatement("count_" + getStatementName()));
+        if (includeCount) {
+            builder.append(doCreateCountQueryStatement("count_" + getStatementName()));
+        }
         return builder.toString();
 
     }
@@ -161,7 +162,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         return builder.toString();
     }
 
-    private String doCreatePageQueryStatement() {
+    private String doCreatePageQueryStatement(boolean includeCount) {
         Class<?> returnedObjectType = method.getReturnedObjectType();
         if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
             throw new IllegalArgumentException("return object type must be or assignable from " + domainClass);
@@ -191,8 +192,9 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         builder.append("<include refid=\"_PUBLIC.PAGER_AFTER\" />");
         builder.append("</select>\n");
 
-        builder.append(doCreateCountQueryStatement("count_" + getStatementName()));
-
+        if (includeCount) {
+            builder.append(doCreateCountQueryStatement("count_" + getStatementName()));
+        }
 
         return builder.toString();
     }
@@ -249,7 +251,13 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         }
 
         if (must && sortSQL.length() == 0 && entityInformation.getModel().getPrimaryKeys().size() > 0) {
-            sortSQL.append(" ORDER BY <include refid=\"_PUBLIC.ALIAS_QUOTA\"/>" + entityInformation.getModel().getPrimaryKeys().get(0).getName() + "<include refid=\"_PUBLIC.ALIAS_QUOTA\"/> DESC");
+            sortSQL.append(" ORDER BY <include refid=\"_PUBLIC.ALIAS_QUOTA\"/>"
+                    + entityInformation
+                    .getModel()
+                    .getPrimaryKeys()
+                    .values().iterator().next()
+                    .getName()
+                    + "<include refid=\"_PUBLIC.ALIAS_QUOTA\"/> DESC");
         }
 
         if (must || parameters.hasSortParameter()) {
@@ -325,11 +333,16 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
             statementXML = doCreateCountQueryStatement(getStatementName());
         } else if (method.isPageQuery()) {
             if ("sqlserver".equals(configuration.getDatabaseId())) {
-                statementXML = doCreatePageQueryStatementForSqlServer();
+                statementXML = doCreatePageQueryStatementForSqlServer(true);
             } else {
-                statementXML = doCreatePageQueryStatement();
+                statementXML = doCreatePageQueryStatement(true);
             }
         } else if (method.isSliceQuery()) {
+            if ("sqlserver".equals(configuration.getDatabaseId())) {
+                statementXML = doCreatePageQueryStatementForSqlServer(false);
+            } else {
+                statementXML = doCreatePageQueryStatement(false);
+            }
         } else if (method.isStreamQuery()) {
         } else if (method.isCollectionQuery()) {
             statementXML = doCreateCollectionQueryStatement();

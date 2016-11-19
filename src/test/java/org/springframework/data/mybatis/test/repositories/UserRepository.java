@@ -20,6 +20,7 @@ package org.springframework.data.mybatis.test.repositories;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.test.domains.User;
@@ -44,5 +45,8 @@ public interface UserRepository extends MybatisRepository<User, Long> {
     Long deleteByLastname(String lastname);
 
     List<User> removeByLastname(String lastname);
+
+    Slice<User> findByFirstname(String firstname, Pageable pageable);
+
 
 }
