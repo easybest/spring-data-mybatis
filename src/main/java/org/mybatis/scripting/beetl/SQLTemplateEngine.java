@@ -32,7 +32,6 @@ import java.util.Map;
 /**
  * Template engine for mybatis's sql analysis.
  *
- * @author Jarvis Song
  */
 public class SQLTemplateEngine extends DefaultTemplateEngine {
 

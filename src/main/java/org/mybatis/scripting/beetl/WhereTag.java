@@ -28,7 +28,6 @@ import java.io.IOException;
 /**
  * where directive.
  *
- * @author Jarvis Song
  */
 public class WhereTag extends Tag {
     private transient static final Logger logger = LoggerFactory.getLogger(WhereTag.class);

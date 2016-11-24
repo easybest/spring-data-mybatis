@@ -20,10 +20,11 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.metamodel.SingularAttribute;
 import java.io.Serializable;
-import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * mybatis meta.
@@ -68,14 +69,12 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
         if (null == primaryKey) {
             return null;
         }
-
-        Field field = ReflectionUtils.findField(entity.getClass(), primaryKey.getName());
-        if (null == field) {
-            return null;
+        String methodName = "get" + StringUtils.capitalize(primaryKey.getName());
+        Method method = ReflectionUtils.findMethod(entity.getClass(), methodName);
+        if (null == method) {
+            throw new MybatisQueryException("can not find getter method for primary key filed: " + primaryKey.getName());
         }
-
-        return (ID) ReflectionUtils.getField(field, entity);
-
+        return (ID) ReflectionUtils.invokeMethod(method, entity);
     }
 
     @Override

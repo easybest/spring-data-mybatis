@@ -34,7 +34,6 @@ import java.util.Set;
 /**
  * beetl script sql placeholder ST.
  *
- * @author Jarvis Song
  */
 public class SQLPlaceholderST extends Statement {
 
