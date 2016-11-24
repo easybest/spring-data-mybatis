@@ -30,7 +30,6 @@ import java.util.Map;
 /**
  * param directive in sql.
  *
- * @author Jarvis Song.
  */
 public class ParameterHandlerFunction implements Function {
 

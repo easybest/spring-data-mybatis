@@ -53,9 +53,10 @@ public interface MybatisRepository<T, ID extends Serializable>
     @Override
     <S extends T> List<S> findAll(Example<S> example, Sort sort);
 
+    T findBasicOne(ID id, String... columns);
+
 
     /***  Query with association ***/
-    T findBasicOne(ID id, String... columns);
 
     <X extends T> T findOne(X condition, String... columns);
 

@@ -16,13 +16,13 @@
  *
  */
 
-package org.springframework.data.mybatis.test.repositories;
+package org.springframework.data.mybatis.repository.sample;
 
+import org.springframework.data.mybatis.domain.sample.Group;
 import org.springframework.data.mybatis.repository.support.MybatisRepository;
-import org.springframework.data.mybatis.test.domains.Department;
 
 /**
- * Created by songjiawei on 2016/11/15.
+ * @author Jarvis Song
  */
-public interface DepartmentRepository extends MybatisRepository<Department, Long> {
+public interface GroupRepository extends MybatisRepository<Group, Long> {
 }

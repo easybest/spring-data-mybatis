@@ -24,7 +24,6 @@ import org.beetl.core.statement.VarRef;
 /**
  * beetl var ref .
  *
- * @author Jarvis Song
  */
 public class SQLVarRef extends VarRef {
     private String attr;
