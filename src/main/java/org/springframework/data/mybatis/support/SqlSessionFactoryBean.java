@@ -77,6 +77,7 @@ public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryB
         resourceSet.add(applicationContext.getResource("classpath:org/springframework/data/mybatis/PublicMapper.xml"));
         super.setMapperLocations(resourceSet.toArray(new Resource[resourceSet.size()]));
 
+
         super.afterPropertiesSet();
     }
 

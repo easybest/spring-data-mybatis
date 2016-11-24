@@ -205,7 +205,7 @@ public abstract class MybatisQueryExecution {
                 parameter.put("p" + (c++), values[param.getIndex()]);
             }
 
-            return query.getSqlSessionTemplate().selectList(query.getStatementId(), parameter);
+            return query.getSqlSessionTemplate().selectOne(query.getStatementId(), parameter);
         }
     }
 

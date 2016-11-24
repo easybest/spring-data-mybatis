@@ -141,11 +141,11 @@ public abstract class SqlSessionRepositorySupport {
         params.put("pageSize", pager.getPageSize());
         params.put("offsetEnd", pager.getOffset() + pager.getPageSize());
         if (condition instanceof Sort) {
-            params.put("sorts", condition);
+            params.put("_sorts", condition);
         } else {
-            params.put("sorts", pager.getSort());
+            params.put("_sorts", pager.getSort());
         }
-        params.put("condition", condition);
+        params.put("_condition", condition);
 
         if (!CollectionUtils.isEmpty(otherParams)) {
             params.putAll(otherParams);
@@ -172,16 +172,15 @@ public abstract class SqlSessionRepositorySupport {
 
     protected <X, Y> Page<X> findByPager(Pageable pager, String selectStatement, String countStatement, Y condition, Map<String, Object> otherParams, String... columns) {
         Map<String, Object> params = new HashMap<String, Object>();
-        // params.put("pager", pager);
         params.put("offset", pager.getOffset());
         params.put("pageSize", pager.getPageSize());
         params.put("offsetEnd", pager.getOffset() + pager.getPageSize());
         if (condition instanceof Sort) {
-            params.put("sorts", condition);
+            params.put("_sorts", condition);
         } else {
-            params.put("sorts", pager.getSort());
+            params.put("_sorts", pager.getSort());
         }
-        params.put("condition", condition);
+        params.put("_condition", condition);
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
@@ -189,7 +188,6 @@ public abstract class SqlSessionRepositorySupport {
             params.putAll(otherParams);
         }
         List<X> result = selectList(selectStatement, params);
-
 
         long total = calculateTotal(pager, result);
         if (total < 0) {

@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mapping.model.MappingException;
+import org.springframework.data.mybatis.repository.localism.Localism;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.DeleteExecution;
 import org.springframework.data.mybatis.repository.support.MybatisEntityInformationSupport;
 import org.springframework.data.mybatis.repository.support.MybatisEntityModel;
@@ -56,6 +57,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
             "<mapper namespace=\"#namespace#\">\n@var QUOTA='<include refid=\"_PUBLIC.ALIAS_QUOTA\"/>';\n";
     private static final String MAPPER_END   = "</mapper>";
 
+    private final Localism                        localism;
     private final MybatisEntityInformationSupport entityInformation;
     private final Class<?>                        domainClass;
     private final PartTree                        tree;
@@ -63,9 +65,9 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
     private String statementName;
 
-    protected PartTreeMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
+    protected PartTreeMybatisQuery(SqlSessionTemplate sqlSessionTemplate, Localism localism, MybatisQueryMethod method) {
         super(sqlSessionTemplate, method);
-
+        this.localism = localism;
         this.entityInformation = method.getEntityInformation();
         this.domainClass = this.entityInformation.getJavaType();
         this.tree = new PartTree(method.getName(), domainClass);
@@ -112,10 +114,18 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         StringBuilder builder = new StringBuilder();
         builder.append("<select id=\"" + getStatementName() + "\" lang=\"#lang#\" resultMap=\"ResultMap\">");
         builder.append("<include refid=\"_PUBLIC.PAGER_BEFORE\" />\n");
+
+        builder.append("SELECT \n");
+
+        if (tree.isDistinct()) {
+            builder.append(" \n DISTINCT \n");
+        }
+
+
         if (isBasicQuery()) {
-            builder.append("<include refid=\"SELECT_BASIC_PRE\"/>");
+            builder.append("<include refid=\"SELECT_BASIC_COLUMNS\"/>");
         } else {
-            builder.append("<include refid=\"SELECT_PRE\"/>");
+            builder.append("<include refid=\"SELECT_SELECT_COLUMNS\"/>");
         }
 
         builder.append("\n<include refid=\"_PUBLIC.ROW_NUMBER_OVER\" />\n");
@@ -172,10 +182,16 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
         builder.append("<select id=\"" + getStatementName() + "\" lang=\"#lang#\" resultMap=\"ResultMap\">");
         builder.append("<include refid=\"_PUBLIC.PAGER_BEFORE\" />\n");
+        builder.append("SELECT \n");
+
+        if (tree.isDistinct()) {
+            builder.append(" \n DISTINCT \n");
+        }
+
         if (isBasicQuery()) {
-            builder.append("<include refid=\"SELECT_BASIC_PRE\"/>");
+            builder.append("<include refid=\"SELECT_BASIC_COLUMNS\"/>");
         } else {
-            builder.append("<include refid=\"SELECT_PRE\"/>");
+            builder.append("<include refid=\"SELECT_SELECT_COLUMNS\"/>");
         }
         builder.append("\n FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA# \n");
 
@@ -203,10 +219,16 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         StringBuilder builder = new StringBuilder();
 
         builder.append("\n<select id=\"" + statementName + "\" lang=\"#lang#\" resultMap=\"ResultMap\">");
+        builder.append("SELECT \n");
+
+        if (tree.isDistinct()) {
+            builder.append(" \n DISTINCT \n");
+        }
+
         if (isBasicQuery()) {
-            builder.append("<include refid=\"SELECT_BASIC_PRE\"/>");
+            builder.append("<include refid=\"SELECT_BASIC_COLUMNS\"/>");
         } else {
-            builder.append("<include refid=\"SELECT_PRE\"/>");
+            builder.append("<include refid=\"SELECT_SELECT_COLUMNS\"/>");
         }
         builder.append("\n FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA# \n");
 
@@ -346,6 +368,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         } else if (method.isStreamQuery()) {
         } else if (method.isCollectionQuery()) {
             statementXML = doCreateCollectionQueryStatement();
+        } else if (method.isQueryForEntity()) {
+            statementXML = doCreateSelectQueryStatement(getStatementName());
         }
 
 
