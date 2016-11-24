@@ -21,6 +21,8 @@ package org.springframework.data.mybatis.repository.support;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.domain.*;
 import org.springframework.data.mybatis.domains.Auditable;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
@@ -31,8 +33,8 @@ import java.util.*;
  *
  * @author Jarvis Song
  */
-//@Repository
-//@Transactional(readOnly = true)
+@Repository
+@Transactional(readOnly = true)
 public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSessionRepositorySupport
         implements MybatisRepository<T, ID> {
 
@@ -58,6 +60,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
 
     @Override
+    @Transactional
     public <S extends T> S save(S entity) {
         Assert.notNull(entity);
 
@@ -105,22 +108,25 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
     @Override
     public long count() {
-        return selectOne("_countByPager");
+        return selectOne("_count");
     }
 
     @Override
+    @Transactional
     public void delete(ID id) {
         Assert.notNull(id);
         super.delete(STATEMENT_DELETE_BY_ID, id);
     }
 
     @Override
+    @Transactional
     public void delete(T entity) {
         Assert.notNull(entity);
         delete(entityInformation.getId(entity));
     }
 
     @Override
+    @Transactional
     public void delete(Iterable<? extends T> entities) {
         if (null == entities) {
             return;
@@ -131,6 +137,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
     }
 
     @Override
+    @Transactional
     public void deleteAll() {
         super.delete("_deleteAll");
     }
@@ -144,8 +151,8 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
     @Override
     public List<T> findAll(Sort sort) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("sorts", sort);
-        return selectList("_selectByPager", params);
+        params.put("_sorts", sort);
+        return selectList("_findAll", params);
     }
 
     @Override
@@ -155,11 +162,12 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         }
 
         HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("ids", ids);
-        return selectList("_selectByIds", params);
+        params.put("_ids", ids);
+        return selectList("_findAll", params);
     }
 
     @Override
+    @Transactional
     public <S extends T> Iterable<S> save(Iterable<S> entities) {
         if (null == entities) return entities;
         for (S entity : entities) {
@@ -210,7 +218,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
-        return selectOne("_selectByPager", params);
+        return selectOne("_findAll", params);
     }
 
     @Override
@@ -220,7 +228,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
-        return selectList("_selectByPager", params);
+        return selectList("_findAll", params);
     }
 
     @Override
@@ -231,7 +239,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
-        return selectList("_selectByPager", params);
+        return selectList("_findAll", params);
     }
 
     @Override
@@ -240,7 +248,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         if (null != columns) {
             otherParam.put("_specifiedFields", columns);
         }
-        return findByPager(pageable, "_selectByPager", "_countByPager", condition, otherParam);
+        return findByPager(pageable, "_findByPager", "_countByCondition", condition, otherParam);
     }
 
     @Override

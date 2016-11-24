@@ -28,7 +28,6 @@ import java.util.Stack;
 /**
  * Place holder listener in beetl sql script.
  *
- * @author Jarvis Song.
  */
 public class PlaceHolderListener implements Listener {
     @Override

@@ -16,37 +16,13 @@
  *
  */
 
-package org.springframework.data.mybatis.test.domains;
+package org.springframework.data.mybatis.repository.sample;
 
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import org.springframework.data.mybatis.domain.sample.Department;
+import org.springframework.data.repository.PagingAndSortingRepository;
 
 /**
- * Created by songjiawei on 2016/11/10.
+ * Created by songjiawei on 2016/11/15.
  */
-@Entity
-public class Role {
-    @Id
-    @GeneratedValue
-    private Long id;
-
-    private String name;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+public interface DepartmentRepository extends PagingAndSortingRepository<Department, Long> {
 }

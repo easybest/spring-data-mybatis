@@ -31,7 +31,6 @@ import java.util.Map;
 /**
  * Join directive in sql.
  *
- * @author Jarvis Song.
  */
 public class JoinFunction implements Function {
     @Override

@@ -20,6 +20,7 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.apache.ibatis.session.Configuration;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.data.mybatis.repository.localism.Localism;
 import org.springframework.data.mybatis.repository.query.MybatisQueryLookupStrategy;
 import org.springframework.data.querydsl.QueryDslPredicateExecutor;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -42,9 +43,14 @@ import static org.springframework.data.querydsl.QueryDslUtils.QUERY_DSL_PRESENT;
 public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
     private final SqlSessionTemplate sessionTemplate;
+    private final Localism           localism;
 
-    public MybatisRepositoryFactory(final SqlSessionTemplate sessionTemplate) {
+    private static final String SCRIPT_LANG = "beetl";
+
+    public MybatisRepositoryFactory(final SqlSessionTemplate sessionTemplate, Localism localism) {
         Assert.notNull(sessionTemplate);
+        Assert.notNull(localism);
+        this.localism = localism;
         this.sessionTemplate = sessionTemplate;
     }
 
@@ -55,7 +61,7 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
     @Override
     protected Object getTargetRepository(RepositoryInformation information) {
-        return getTargetRepository(sessionTemplate, information);
+        return getTargetRepository(sessionTemplate, localism, information);
     }
 
     @Override
@@ -69,24 +75,21 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
     @Override
     protected QueryLookupStrategy getQueryLookupStrategy(Key key, EvaluationContextProvider evaluationContextProvider) {
-        return MybatisQueryLookupStrategy.create(sessionTemplate, key, evaluationContextProvider);
+        return MybatisQueryLookupStrategy.create(sessionTemplate, localism, key, evaluationContextProvider);
     }
 
     protected <T, ID extends Serializable> SimpleMybatisRepository<?, ?> getTargetRepository(
-            SqlSessionTemplate sessionTemplate, RepositoryInformation information) {
+            SqlSessionTemplate sessionTemplate, Localism localism, RepositoryInformation information) {
 
         MybatisEntityInformationSupport<?, Serializable> entityInformation = getEntityInformation(information.getDomainType());
 
-        generateMapper(sessionTemplate.getConfiguration(), entityInformation);
+        generateMapper(sessionTemplate.getConfiguration(), entityInformation, localism);
 
         return getTargetRepositoryViaReflection(information, entityInformation, sessionTemplate);
     }
 
-    private void generateMapper(Configuration configuration, MybatisEntityInformationSupport<?, ?> entityInformation) {
-
-        MybatisSimpleRepositoryMapperGenerator generator = new MybatisSimpleRepositoryMapperGenerator(
-                configuration, entityInformation.getModel(), entityInformation.getJavaType().getName(), "beetl");
-        generator.generate();
+    private void generateMapper(Configuration configuration, MybatisEntityInformationSupport<?, ?> entityInformation, Localism localism) {
+        new MybatisSimpleRepositoryMapperGenerator(configuration, entityInformation.getModel(), localism, SCRIPT_LANG).generate();
     }
 
 
