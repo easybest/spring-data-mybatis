@@ -117,10 +117,17 @@ public class Localism {
         throw new MappingException(getClass().getName() + " does not support sequences");
     }
 
+    public String getSelectSequenceNextValString(String sequenceName) throws MappingException {
+        throw new MappingException(getClass().getName() + " does not support sequences");
+    }
+
     public IdentityColumnSupport getIdentityColumnSupport() {
         return new IdentityColumnSupportImpl();
     }
 
+    public boolean supportsDeleteAlias() {
+        return false;
+    }
 
     @Override
     public String toString() {

@@ -50,14 +50,16 @@ public class MybatisEntityModel {
     private int types;
 
     private MybatisEntityModel parent; // parent entity. if this model is column, it's parent will be entity.
-    private Map<String, MybatisEntityModel> columns      = new LinkedHashMap<String, MybatisEntityModel>(); // property => column
-    private Map<String, MybatisEntityModel> primaryKeys  = new LinkedHashMap<String, MybatisEntityModel>();
-    private Map<String, MybatisEntityModel> oneToOnes    = new LinkedHashMap<String, MybatisEntityModel>();
-    private Map<String, MybatisEntityModel> manyToOnes   = new LinkedHashMap<String, MybatisEntityModel>();
-    private Map<String, MybatisEntityModel> oneToManys   = new LinkedHashMap<String, MybatisEntityModel>();
-    private Map<String, MybatisEntityModel> manyToManys  = new LinkedHashMap<String, MybatisEntityModel>();
-    private Map<String, MybatisEntityModel> joinColumns  = new LinkedHashMap<String, MybatisEntityModel>(); //BASIC use join columns
-    private List<SearchModel>               searchModels = new ArrayList<SearchModel>();
+    private Map<String, MybatisEntityModel> columns            = new LinkedHashMap<String, MybatisEntityModel>(); // property => column
+    private Map<String, MybatisEntityModel> primaryKeys        = new LinkedHashMap<String, MybatisEntityModel>();
+    private Map<String, MybatisEntityModel> embeddeds          = new LinkedHashMap<String, MybatisEntityModel>();
+    private Map<String, MybatisEntityModel> elementCollections = new LinkedHashMap<String, MybatisEntityModel>();
+    private Map<String, MybatisEntityModel> oneToOnes          = new LinkedHashMap<String, MybatisEntityModel>();
+    private Map<String, MybatisEntityModel> manyToOnes         = new LinkedHashMap<String, MybatisEntityModel>();
+    private Map<String, MybatisEntityModel> oneToManys         = new LinkedHashMap<String, MybatisEntityModel>();
+    private Map<String, MybatisEntityModel> manyToManys        = new LinkedHashMap<String, MybatisEntityModel>();
+    private Map<String, MybatisEntityModel> joinColumns        = new LinkedHashMap<String, MybatisEntityModel>(); //BASIC use join columns
+    private List<SearchModel>               searchModels       = new ArrayList<SearchModel>();
 
     private MybatisEntityModel primaryKey;
 
@@ -109,12 +111,29 @@ public class MybatisEntityModel {
                 continue; // transient
             }
 
+
             String pName = propertyDescriptor.getName();
             Method pMethod = propertyDescriptor.getReadMethod();
             Field pField = ReflectionUtils.findField(domainClass, pName);
 
+
             Class<?> type = getType(propertyDescriptor, pMethod, pField);
             String propertyName = getPropertyName(propertyDescriptor, pMethod, pField);
+
+
+            if (hasAnnotation(propertyDescriptor, Embedded.class)) {
+                MybatisEntityModel target = new MybatisEntityModel(this, type, false);
+
+                embeddeds.put(propertyName, target);
+                continue;
+            }
+
+            if (hasAnnotation(propertyDescriptor, ElementCollection.class)) {
+                // TODO
+                continue;
+            }
+
+
             String columnName;
             Column columnAnn = getAnnotation(pMethod, pField, Column.class);
             if (null == columnAnn || StringUtils.isEmpty(columnAnn.name())) {
@@ -154,13 +173,16 @@ public class MybatisEntityModel {
 
             // ManyToOne
             if (hasAnnotation(propertyDescriptor, ManyToOne.class)) {
+                if (null != parent && parent.getClz() == domainClass) {
+                    continue;
+                }
                 MybatisEntityModel target = new MybatisEntityModel(this, type, false);
 
                 processJoinColumnInNotIncludeRelation(pMethod, pField, propertyName, target);
                 if (!includeRelation) {
                     continue;
                 }
-                resolveJoinColumn(pMethod, pField, target);
+                resolveJoinColumn(pMethod, pField, propertyName, target);
 
                 manyToOnes.put(propertyName, target);
                 continue;
@@ -168,6 +190,9 @@ public class MybatisEntityModel {
 
             // OneToOne
             if (hasAnnotation(propertyDescriptor, OneToOne.class)) {
+                if (null != parent && parent.getClz() == domainClass) {
+                    continue;
+                }
                 MybatisEntityModel target = new MybatisEntityModel(this, type, false);
 
                 processJoinColumnInNotIncludeRelation(pMethod, pField, propertyName, target);
@@ -176,7 +201,7 @@ public class MybatisEntityModel {
                     continue;
                 }
 
-                resolveJoinColumn(pMethod, pField, target);
+                resolveJoinColumn(pMethod, pField, propertyName, target);
 
                 oneToOnes.put(propertyName, target);
                 continue;
@@ -201,8 +226,8 @@ public class MybatisEntityModel {
                     // TODO
                 }
 
-                MybatisEntityModel target = new MybatisEntityModel(this, type, false);
-                manyToManys.put(propertyName, target);
+//                MybatisEntityModel target = new MybatisEntityModel(this, type, false);
+//                manyToManys.put(propertyName, target);
                 continue;
             }
 
@@ -268,6 +293,10 @@ public class MybatisEntityModel {
             return JdbcType.TIMESTAMP;
         }
 
+        if (jt == byte[].class) {
+            return JdbcType.BINARY;
+        }
+
         throw new RuntimeException("No supported JdbcType for field :" + jt + "," + getClz());
     }
 
@@ -287,14 +316,28 @@ public class MybatisEntityModel {
     }
 
     public MybatisEntityModel findColumnByPropertyName(String segment) {
-
         MybatisEntityModel column = primaryKeys.get(segment);
         if (null != column) {
             return column;
         }
 
-        return columns.get(segment);
+        column = columns.get(segment);
+        if (null != column) {
+            return column;
+        }
+        return column;
     }
+
+    public MybatisEntityModel findOneToOneByPropertyName(String segment) {
+        MybatisEntityModel column = oneToOnes.get(segment);
+        return column;
+    }
+
+    public MybatisEntityModel findManyToOneByPropertyName(String segment) {
+        MybatisEntityModel column = manyToOnes.get(segment);
+        return column;
+    }
+
 
     /**
      * process join column in not include relation.
@@ -314,7 +357,7 @@ public class MybatisEntityModel {
             throw new MybatisRepositoryCreationException("when target model has no primary key , you should use @JoinColumn to assigin the join column.");
         }
 
-        String joinColumnName = StringUtils.camelToUnderline(dm.getName()).toUpperCase() + "_" + dm.getPrimaryKey().getNameInDatabase();
+        String joinColumnName = StringUtils.camelToUnderline(propertyName).toUpperCase() + "_" + dm.getPrimaryKey().getNameInDatabase();
         String joinReferencedName = dm.getPrimaryKey().getName();
         String joinReferencedColumnName;
         MybatisEntityModel referenceColumnModel = null;
@@ -349,8 +392,8 @@ public class MybatisEntityModel {
         joinColumns.put(column.getName(), column);
     }
 
-    private void resolveJoinColumn(Method method, Field field, MybatisEntityModel dm) {
-        String joinColumnName = StringUtils.camelToUnderline(dm.getName()).toUpperCase() + "_" + dm.getPrimaryKeys().values().iterator().next().getNameInDatabase();
+    private void resolveJoinColumn(Method method, Field field, String propertyName, MybatisEntityModel dm) {
+        String joinColumnName = StringUtils.camelToUnderline(propertyName).toUpperCase() + "_" + dm.getPrimaryKeys().values().iterator().next().getNameInDatabase();
         String joinReferencedColumnName = dm.getPrimaryKeys().values().iterator().next().getNameInDatabase();
         String joinReferencedName = dm.getPrimaryKeys().values().iterator().next().getName();
         JoinColumn joinColumn = getAnnotation(method, field, JoinColumn.class);

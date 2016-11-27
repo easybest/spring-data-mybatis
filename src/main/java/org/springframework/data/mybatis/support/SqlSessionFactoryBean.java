@@ -20,15 +20,12 @@ package org.springframework.data.mybatis.support;
 
 import org.apache.ibatis.mapping.DatabaseIdProvider;
 import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
-import org.mybatis.scripting.beetl.BeetlDriver;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
 
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * {@code FactoryBean} that creates an MyBatis {@code SqlSessionFactory}.
@@ -59,23 +56,6 @@ public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryB
         p.setProperty("H2", "h2");
         databaseIdProvider.setProperties(p);
         setDatabaseIdProvider(databaseIdProvider);
-
-        if (null == typeAliases) {
-            typeAliases = new Class<?>[0];
-        }
-        Class<?>[] newTypeAliases = new Class<?>[typeAliases.length + 1];
-        System.arraycopy(typeAliases, 0, newTypeAliases, 0, typeAliases.length);
-        newTypeAliases[newTypeAliases.length - 1] = BeetlDriver.class;
-        super.setTypeAliases(newTypeAliases);
-
-        Set<Resource> resourceSet = new HashSet<Resource>();
-        if (null != mapperLocations && mapperLocations.length > 0) {
-            for (Resource r : mapperLocations) {
-                resourceSet.add(r);
-            }
-        }
-        resourceSet.add(applicationContext.getResource("classpath:org/springframework/data/mybatis/PublicMapper.xml"));
-        super.setMapperLocations(resourceSet.toArray(new Resource[resourceSet.size()]));
 
 
         super.afterPropertiesSet();

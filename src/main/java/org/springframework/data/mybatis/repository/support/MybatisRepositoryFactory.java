@@ -45,8 +45,6 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
     private final SqlSessionTemplate sessionTemplate;
     private final Localism           localism;
 
-    private static final String SCRIPT_LANG = "beetl";
-
     public MybatisRepositoryFactory(final SqlSessionTemplate sessionTemplate, Localism localism) {
         Assert.notNull(sessionTemplate);
         Assert.notNull(localism);
@@ -89,7 +87,7 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
     }
 
     private void generateMapper(Configuration configuration, MybatisEntityInformationSupport<?, ?> entityInformation, Localism localism) {
-        new MybatisSimpleRepositoryMapperGenerator(configuration, entityInformation.getModel(), localism, SCRIPT_LANG).generate();
+        new MybatisSimpleRepositoryMapperGenerator(configuration, entityInformation.getModel(), localism).generate();
     }
 
 
