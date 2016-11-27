@@ -16,21 +16,15 @@
  *
  */
 
-package org.mybatis.scripting.beetl;
-
-import org.beetl.core.Context;
-import org.beetl.core.Function;
+package org.springframework.data.mybatis.repository.localism.identity;
 
 /**
- * Station Symbol Call This function will output the text directly instead of ？
- *
  * @author Jarvis Song
  */
-public class TextFunction implements Function {
-
+public class OracleIdentityColumnSupport extends IdentityColumnSupportImpl {
     @Override
-    public Object call(Object[] paras, Context ctx) {
-        return paras[0];
+    public boolean supportsIdentityColumns() {
+        return false;
     }
 
 

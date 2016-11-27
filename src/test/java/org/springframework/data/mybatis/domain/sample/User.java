@@ -46,12 +46,10 @@ public class User {
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<User> colleagues;
-
+    @ManyToOne
+    private User      manager;
     @ManyToMany
     private Set<Role> roles;
-
-    @ManyToOne
-    private User manager;
 
     @Embedded
     private Address address;
@@ -90,6 +88,14 @@ public class User {
         this.colleagues = new HashSet<User>();
         this.attributes = new HashSet<String>();
         this.createdAt = new Date();
+    }
+
+    public User getManager() {
+        return manager;
+    }
+
+    public void setManager(User manager) {
+        this.manager = manager;
     }
 
     /**
@@ -261,21 +267,6 @@ public class User {
         colleague.getColleagues().remove(this);
     }
 
-    /**
-     * @return the manager
-     */
-    public User getManager() {
-
-        return manager;
-    }
-
-    /**
-     * @param manager the manager to set
-     */
-    public void setManager(User manager) {
-
-        this.manager = manager;
-    }
 
     /**
      * @return the createdAt

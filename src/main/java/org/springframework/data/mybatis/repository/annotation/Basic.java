@@ -16,14 +16,21 @@
  *
  */
 
-package org.springframework.data.mybatis.repository.sample;
+package org.springframework.data.mybatis.repository.annotation;
 
-import org.springframework.data.mybatis.domain.sample.Role;
-import org.springframework.data.mybatis.repository.support.MybatisRepository;
+import java.lang.annotation.*;
 
 /**
+ * Annotated to named query.
+ *
  * @author Jarvis Song
  */
-public interface RoleRepository extends MybatisRepository<Role, Integer> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Documented
+public @interface Basic {
+
 
 }
+
+
