@@ -19,7 +19,7 @@
 package org.springframework.data.mybatis.repository.config;
 
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
@@ -65,12 +65,12 @@ public @interface EnableMybatisRepositories {
      * Specifies which types are eligible for component scanning. Further narrows the set of candidate components from
      * everything in {@link #basePackages()} to everything in the base packages that matches the given filter or filters.
      */
-    ComponentScan.Filter[] includeFilters() default {};
+    Filter[] includeFilters() default {};
 
     /**
      * Specifies which types are not eligible for component scanning.
      */
-    ComponentScan.Filter[] excludeFilters() default {};
+    Filter[] excludeFilters() default {};
 
     /**
      * Returns the postfix to be used when looking up custom repository implementations. Defaults to {@literal Impl}. So
@@ -115,11 +115,13 @@ public @interface EnableMybatisRepositories {
 
     /**
      * Configures the name of the {@link org.apache.ibatis.session.SqlSessionFactory} bean definition to be used to create repositories
-     * discovered through this annotation. Defaults to {@code entityManagerFactory}.
+     * discovered through this annotation. Defaults to {@code sqlSessionFactory}.
      *
      * @return sqlSessionFactoryRef
      */
     String sqlSessionFactoryRef() default "sqlSessionFactory";
+
+//    String sqlSessionTemplateRef() default "sqlSessionTemplate";
 
     /**
      * Configures the name of the {@link PlatformTransactionManager} bean definition to be used to create repositories
