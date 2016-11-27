@@ -76,9 +76,8 @@
     <!--ResultMap End-->
 
     <!--Select Pre Start-->
-    @if(!@_this.isFragmentExist('SELECT_BASIC_PRE')){
-        <sql id="SELECT_BASIC_PRE" lang="#lang#">
-            SELECT
+    @if(!@_this.isFragmentExist('SELECT_BASIC_COLUMNS')){
+        <sql id="SELECT_BASIC_COLUMNS" lang="#lang#">
             @trim(){
                 @for(entry in model.primaryKeys){
                     #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
@@ -92,17 +91,26 @@
             @}
         </sql>
     @}
+    @if(!@_this.isFragmentExist('SELECT_BASIC_PRE')){
+        <sql id="SELECT_BASIC_PRE" lang="#lang#">
+            SELECT
+            <include refid="SELECT_BASIC_COLUMNS"/>
+        </sql>
+    @}
+
     @if(!@_this.isFragmentExist('SELECT_PRE')){
         <sql id="SELECT_PRE" lang="#lang#">
             SELECT
+            <include refid="SELECT_COLUMNS"/>
+        </sql>
+    @}
+    @if(!@_this.isFragmentExist('SELECT_COLUMNS')){
+        <sql id="SELECT_COLUMNS" lang="#lang#">
             @trim(){
                 @for(entry in model.primaryKeys){
                     #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
                 @}
                 @for(entry in model.columns){
-                    #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
-                @}
-                @for(entry in model.joinColumns){
                     #QUOTA+model.name+QUOTA#.#entry.value.nameInDatabase# AS #QUOTA+entry.value.name+QUOTA#,
                 @}
                 @for(entry in model.oneToOnes){

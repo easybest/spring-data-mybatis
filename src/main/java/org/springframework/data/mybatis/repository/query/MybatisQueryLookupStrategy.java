@@ -19,6 +19,7 @@
 package org.springframework.data.mybatis.repository.query;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.data.mybatis.repository.localism.Localism;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -52,15 +53,17 @@ public final class MybatisQueryLookupStrategy {
     private static class CreateQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
         private final SqlSessionTemplate sqlSessionTemplate;
+        private final Localism           localism;
 
-        public CreateQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate) {
+        public CreateQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate, Localism localism) {
             this.sqlSessionTemplate = sqlSessionTemplate;
+            this.localism = localism;
         }
 
         @Override
         protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
             try {
-                return new PartTreeMybatisQuery(sqlSessionTemplate, method);
+                return new PartTreeMybatisQuery(sqlSessionTemplate, localism, method);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(
                         String.format("Could not create query metamodel for method %s!", method.toString()), e);
@@ -115,16 +118,16 @@ public final class MybatisQueryLookupStrategy {
         }
     }
 
-    public static QueryLookupStrategy create(SqlSessionTemplate sqlSessionTemplate, QueryLookupStrategy.Key key, EvaluationContextProvider evaluationContextProvider) {
+    public static QueryLookupStrategy create(SqlSessionTemplate sqlSessionTemplate, Localism localism, QueryLookupStrategy.Key key, EvaluationContextProvider evaluationContextProvider) {
         Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null!");
         switch (key != null ? key : QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND) {
             case CREATE:
-                return new CreateQueryLookupStrategy(sqlSessionTemplate);
+                return new CreateQueryLookupStrategy(sqlSessionTemplate, localism);
             case USE_DECLARED_QUERY:
                 return new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider);
             case CREATE_IF_NOT_FOUND:
                 return new CreateIfNotFoundQueryLookupStrategy(
-                        new CreateQueryLookupStrategy(sqlSessionTemplate),
+                        new CreateQueryLookupStrategy(sqlSessionTemplate, localism),
                         new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider));
             default:
                 throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));

@@ -15,5 +15,4 @@ Import-Template:
  org.springframework.data.*;version="${springdata.commons:[=.=.=.=,+1.0.0)}",
  org.apache.ibatis.*;version="3.4.1",
  org.mybatis.spring.*;version="1.3.0",
- org.joda.time.*;version="1.3.0",
- org.beetl.*;version="2.7.0"
+ org.joda.time.*;version="1.3.0"

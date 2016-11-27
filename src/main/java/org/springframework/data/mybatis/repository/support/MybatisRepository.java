@@ -39,6 +39,9 @@ public interface MybatisRepository<T, ID extends Serializable>
         extends PagingAndSortingRepository<T, ID>, QueryByExampleExecutor<T> {
 
     @Override
+    <S extends T> List<S> save(Iterable<S> entities);
+
+    @Override
     List<T> findAll();
 
     @Override
@@ -53,9 +56,10 @@ public interface MybatisRepository<T, ID extends Serializable>
     @Override
     <S extends T> List<S> findAll(Example<S> example, Sort sort);
 
+    T findBasicOne(ID id, String... columns);
+
 
     /***  Query with association ***/
-    T findBasicOne(ID id, String... columns);
 
     <X extends T> T findOne(X condition, String... columns);
 
@@ -79,6 +83,7 @@ public interface MybatisRepository<T, ID extends Serializable>
 
     <X extends T> Long countBasicAll(X condition);
 
+    void deleteInBatch(Iterable<T> entities);
 
     <X extends T> int deleteByCondition(X condition);
 }
