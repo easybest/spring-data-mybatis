@@ -103,7 +103,7 @@ public abstract class MybatisQueryExecution {
             }
 
             if (parameters.hasSortParameter()) {
-                parameter.put("sorts", values[parameters.getSortIndex()]);
+                parameter.put("_sorts", values[parameters.getSortIndex()]);
             }
 
             return query.getSqlSessionTemplate().selectList(query.getStatementId(), parameter);
@@ -112,8 +112,6 @@ public abstract class MybatisQueryExecution {
     }
 
     static class SlicedExecution extends MybatisQueryExecution {
-
-
         @Override
         protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
             MybatisParameters parameters = query.getQueryMethod().getParameters();
@@ -123,29 +121,21 @@ public abstract class MybatisQueryExecution {
                 parameter.put("p" + (c++), values[param.getIndex()]);
             }
 
-            if (parameters.hasSortParameter()) {
-                parameter.put("sorts", values[parameters.getSortIndex()]);
-            }
 
             Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
+            if (parameters.hasSortParameter()) {
+                parameter.put("_sorts", values[parameters.getSortIndex()]);
+            } else {
+                parameter.put("_sorts", pageable.getSort());
+            }
             parameter.put("offset", pageable.getOffset());
-            parameter.put("pageSize", pageable.getPageSize());
+            parameter.put("pageSize", pageable.getPageSize() + 1);
             parameter.put("offsetEnd", pageable.getOffset() + pageable.getPageSize());
             List<Object> resultList = query.getSqlSessionTemplate().selectList(query.getStatementId(), parameter);
 
             int pageSize = pageable.getPageSize();
             boolean hasNext = resultList.size() > pageSize;
 
-//            ParametersParameterAccessor accessor = new ParametersParameterAccessor(parameters, values);
-//            Pageable pageable = accessor.getPageable();
-//
-//            Query createQuery = query.createQuery(values);
-//            int pageSize = pageable.getPageSize();
-//            createQuery.setMaxResults(pageSize + 1);
-//
-//            List<Object> resultList = createQuery.getResultList();
-//            boolean hasNext = resultList.size() > pageSize;
-//
             return new SliceImpl<Object>(hasNext ? resultList.subList(0, pageSize) : resultList, pageable, hasNext);
         }
     }
@@ -161,16 +151,22 @@ public abstract class MybatisQueryExecution {
                 parameter.put("p" + (c++), values[param.getIndex()]);
             }
 
-            if (parameters.hasSortParameter()) {
-                parameter.put("sorts", values[parameters.getSortIndex()]);
-            }
-
             Pageable pager = (Pageable) values[parameters.getPageableIndex()];
-            parameter.put("offset", pager.getOffset());
-            parameter.put("pageSize", pager.getPageSize());
-            parameter.put("offsetEnd", pager.getOffset() + pager.getPageSize());
+
+
+            if (parameters.hasSortParameter()) {
+                parameter.put("_sorts", values[parameters.getSortIndex()]);
+            } else if (null != pager) {
+                parameter.put("_sorts", pager.getSort());
+            }
+            parameter.put("offset", null == pager ? 0 : pager.getOffset());
+            parameter.put("pageSize", null == pager ? Integer.MAX_VALUE : pager.getPageSize());
+            parameter.put("offsetEnd", null == pager ? Integer.MAX_VALUE : pager.getOffset() + pager.getPageSize());
             List<?> result = query.getSqlSessionTemplate().selectList(query.getStatementId(), parameter);
 
+            if(null ==pager){
+                return new PageImpl(result);
+            }
 
             long total = calculateTotal(pager, result);
             if (total < 0) {
@@ -205,7 +201,7 @@ public abstract class MybatisQueryExecution {
                 parameter.put("p" + (c++), values[param.getIndex()]);
             }
 
-            return query.getSqlSessionTemplate().selectList(query.getStatementId(), parameter);
+            return query.getSqlSessionTemplate().selectOne(query.getStatementId(), parameter);
         }
     }
 

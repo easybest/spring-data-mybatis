@@ -21,6 +21,8 @@ package org.springframework.data.mybatis.repository.support;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.domain.*;
 import org.springframework.data.mybatis.domains.Auditable;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
@@ -31,8 +33,8 @@ import java.util.*;
  *
  * @author Jarvis Song
  */
-//@Repository
-//@Transactional(readOnly = true)
+@Repository
+@Transactional(readOnly = true)
 public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSessionRepositorySupport
         implements MybatisRepository<T, ID> {
 
@@ -58,6 +60,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
 
     @Override
+    @Transactional
     public <S extends T> S save(S entity) {
         Assert.notNull(entity);
 
@@ -105,22 +108,25 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
     @Override
     public long count() {
-        return selectOne("_countByPager");
+        return selectOne("_count");
     }
 
     @Override
+    @Transactional
     public void delete(ID id) {
         Assert.notNull(id);
         super.delete(STATEMENT_DELETE_BY_ID, id);
     }
 
     @Override
+    @Transactional
     public void delete(T entity) {
         Assert.notNull(entity);
         delete(entityInformation.getId(entity));
     }
 
     @Override
+    @Transactional
     public void delete(Iterable<? extends T> entities) {
         if (null == entities) {
             return;
@@ -131,6 +137,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
     }
 
     @Override
+    @Transactional
     public void deleteAll() {
         super.delete("_deleteAll");
     }
@@ -144,8 +151,8 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
     @Override
     public List<T> findAll(Sort sort) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("sorts", sort);
-        return selectList("_selectByPager", params);
+        params.put("_sorts", sort);
+        return selectList("_findAll", params);
     }
 
     @Override
@@ -155,17 +162,18 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         }
 
         HashMap<String, Object> params = new HashMap<String, Object>();
-        params.put("ids", ids);
-        return selectList("_selectByIds", params);
+        params.put("_ids", ids);
+        return selectList("_findAll", params);
     }
 
     @Override
-    public <S extends T> Iterable<S> save(Iterable<S> entities) {
-        if (null == entities) return entities;
+    @Transactional
+    public <S extends T> List<S> save(Iterable<S> entities) {
+        if (null == entities) return Collections.emptyList();
         for (S entity : entities) {
             save(entity);
         }
-        return entities;
+        return (List<S>) entities;
     }
 
     @Override
@@ -200,38 +208,41 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
     @Override
     public Page<T> findAll(Pageable pageable) {
+        if(null == pageable){
+            return new PageImpl<T>(findAll());
+        }
         return findAll(pageable, null);
     }
 
     @Override
     public <X extends T> T findOne(X condition, String... columns) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("condition", condition);
+        params.put("_condition", condition);
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
-        return selectOne("_selectByPager", params);
+        return selectOne("_findAll", params);
     }
 
     @Override
     public <X extends T> List<T> findAll(X condition, String... columns) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("condition", condition);
+        params.put("_condition", condition);
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
-        return selectList("_selectByPager", params);
+        return selectList("_findAll", params);
     }
 
     @Override
     public <X extends T> List<T> findAll(Sort sort, X condition, String... columns) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("condition", condition);
-        params.put("sorts", sort);
+        params.put("_condition", condition);
+        params.put("_sorts", sort);
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
-        return selectList("_selectByPager", params);
+        return selectList("_findAll", params);
     }
 
     @Override
@@ -240,63 +251,71 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         if (null != columns) {
             otherParam.put("_specifiedFields", columns);
         }
-        return findByPager(pageable, "_selectByPager", "_countByPager", condition, otherParam);
+        return findByPager(pageable, "_findByPager", "_countByCondition", condition, otherParam);
     }
 
     @Override
     public <X extends T> Long countAll(X condition) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("condition", condition);
-        return selectOne("_countByPager", params);
+        params.put("_condition", condition);
+        return selectOne("_countByCondition", params);
     }
 
     @Override
     public <X extends T> T findBasicOne(X condition, String... columns) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("condition", condition);
+        params.put("_condition", condition);
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
-        return selectOne("_selectBasicByPager", params);
+        return selectOne("_findBasicAll", params);
     }
 
     @Override
     public <X extends T> List<T> findBasicAll(X condition, String... columns) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("condition", condition);
+        params.put("_condition", condition);
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
-        return selectList("_selectBasicByPager", params);
+        return selectList("_findBasicAll", params);
     }
 
     @Override
     public <X extends T> List<T> findBasicAll(Sort sort, X condition, String... columns) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("condition", condition);
-        params.put("sorts", sort);
+        params.put("_condition", condition);
+        params.put("_sorts", sort);
         if (null != columns) {
             params.put("_specifiedFields", columns);
         }
-        return selectList("_selectBasicByPager", params);
+        return selectList("_findBasicAll", params);
     }
 
     @Override
     public <X extends T> Page<T> findBasicAll(Pageable pageable, X condition, String... columns) {
-        return findByPager(pageable, "_selectBasicByPager", "_countBasicByPager", condition, columns);
+        return findByPager(pageable, "_findBasicByPager", "_countBasicByCondition", condition, columns);
     }
 
     @Override
     public <X extends T> Long countBasicAll(X condition) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("condition", condition);
-        return selectOne("_countBasicByPager", params);
+        params.put("_condition", condition);
+        return selectOne("_countBasicByCondition", params);
     }
 
     @Override
+    @Transactional
     public <X extends T> int deleteByCondition(X condition) {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("condition", condition);
+        params.put("_condition", condition);
         return super.delete("_deleteByCondition", params);
+    }
+
+    @Override
+    @Transactional
+    public void deleteInBatch(Iterable<T> entities) {
+        //FIXME improve delete in batch
+        delete(entities);
     }
 }
