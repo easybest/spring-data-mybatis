@@ -19,7 +19,7 @@
 package org.springframework.data.mybatis.repository.support;
 
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mybatis.repository.localism.Localism;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
@@ -35,34 +35,33 @@ import java.io.Serializable;
 public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID extends Serializable> extends
         TransactionalRepositoryFactoryBeanSupport<T, S, ID> {
 
-    private final SqlSessionTemplate sessionTemplate;
+    private SqlSessionTemplate sqlSessionTemplate;
+    private Localism           localism;
 
     @Override
     public void afterPropertiesSet() {
-        Assert.notNull(sessionTemplate, "SqlSessionTemplate must not be null.");
+        Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null.");
+        Assert.notNull(localism, "database localism must not be null.");
         super.afterPropertiesSet();
 
 
-        createMybatisMappers();
-    }
-
-    private void createMybatisMappers() {
-
-
-    }
-
-    @Autowired
-    public MybatisRepositoryFactoryBean(SqlSessionTemplate sessionTemplate) {
-        this.sessionTemplate = sessionTemplate;
     }
 
     @Override
     protected RepositoryFactorySupport doCreateRepositoryFactory() {
-        return createRepositoryFactory(sessionTemplate);
+        return createRepositoryFactory(sqlSessionTemplate, localism);
     }
 
-    private RepositoryFactorySupport createRepositoryFactory(SqlSessionTemplate sessionTemplate) {
-        return new MybatisRepositoryFactory(sessionTemplate);
+    private RepositoryFactorySupport createRepositoryFactory(SqlSessionTemplate sessionTemplate, Localism localism) {
+        return new MybatisRepositoryFactory(sessionTemplate, localism);
+    }
+
+    public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
+        this.sqlSessionTemplate = sqlSessionTemplate;
+    }
+
+    public void setLocalism(Localism localism) {
+        this.localism = localism;
     }
 
 

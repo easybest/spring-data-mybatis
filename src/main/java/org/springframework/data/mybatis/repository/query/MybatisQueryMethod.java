@@ -20,6 +20,7 @@ package org.springframework.data.mybatis.repository.query;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.data.mybatis.repository.annotation.Basic;
 import org.springframework.data.mybatis.repository.annotation.Query;
 import org.springframework.data.mybatis.repository.support.MybatisEntityInformationSupport;
 import org.springframework.data.projection.ProjectionFactory;
@@ -67,7 +68,7 @@ public class MybatisQueryMethod extends QueryMethod {
      * @param metadata must not be {@literal null}.
      * @param factory  must not be {@literal null}.
      */
-    public MybatisQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory) {
+    public MybatisQueryMethod(final Method method, RepositoryMetadata metadata, ProjectionFactory factory) {
         super(method, metadata, factory);
 
         Assert.notNull(method, "Method must not be null!");
@@ -75,6 +76,7 @@ public class MybatisQueryMethod extends QueryMethod {
 
         Assert.isTrue(!(isModifyingQuery() && getParameters().hasSpecialParameter()),
                 String.format("Modifying method must not contain %s!", Parameters.TYPES));
+
 
     }
 
@@ -96,7 +98,6 @@ public class MybatisQueryMethod extends QueryMethod {
     @Override
     public boolean isCollectionQuery() {
         return super.isCollectionQuery() && !NATIVE_ARRAY_TYPES.contains(method.getReturnType());
-
     }
 
 
@@ -106,6 +107,10 @@ public class MybatisQueryMethod extends QueryMethod {
 
     Query getQueryAnnotation() {
         return method.getAnnotation(Query.class);
+    }
+
+    Basic getBasicAnnotation() {
+        return method.getAnnotation(Basic.class);
     }
 
     String getAnnotatedQuery() {
