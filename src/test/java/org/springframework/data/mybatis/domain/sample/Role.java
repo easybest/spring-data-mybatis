@@ -18,9 +18,12 @@
 
 package org.springframework.data.mybatis.domain.sample;
 
+import org.springframework.data.annotations.ComplexSearch;
 import org.springframework.data.annotations.Searchable;
 
 import javax.persistence.*;
+
+import static org.springframework.data.annotations.Searchable.OPERATE.LIKE;
 
 /**
  * Sample domain class representing roles. Mapped with XML.
@@ -35,6 +38,10 @@ public class Role {
     @GeneratedValue
     private Integer id;
     @Searchable
+    @ComplexSearch({
+            @Searchable,
+            @Searchable(operate = LIKE, properyName = "fuzzyName")
+    })
     private String  name;
 
     @ManyToOne
@@ -102,6 +109,14 @@ public class Role {
     public String toString() {
 
         return PREFIX + name;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Group getGroup() {

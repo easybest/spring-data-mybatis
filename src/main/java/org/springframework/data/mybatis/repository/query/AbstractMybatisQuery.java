@@ -20,6 +20,7 @@ package org.springframework.data.mybatis.repository.query;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.mybatis.repository.annotation.Basic;
 import org.springframework.data.mybatis.repository.annotation.Query;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.*;
 import org.springframework.data.repository.query.ParametersParameterAccessor;
@@ -41,8 +42,6 @@ import java.util.Map;
  * @author Jarvis Song
  */
 public abstract class AbstractMybatisQuery implements RepositoryQuery {
-
-    protected static final String LANG_BEETL = "beetl";
 
     protected final SqlSessionTemplate sqlSessionTemplate;
     protected final MybatisQueryMethod method;
@@ -122,11 +121,8 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
     }
 
     protected boolean isBasicQuery() {
-        Query annotation = method.getQueryAnnotation();
-        if (null != annotation) {
-            return annotation.basic();
-        }
-        return true;
+        Basic basic = method.getBasicAnnotation();
+        return null != basic;
     }
 
     public SqlSessionTemplate getSqlSessionTemplate() {

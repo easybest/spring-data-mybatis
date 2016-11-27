@@ -104,4 +104,9 @@ public class MySQLLocalism extends Localism {
     public IdentityColumnSupport getIdentityColumnSupport() {
         return new MySQLIdentityColumnSupport();
     }
+
+    @Override
+    public boolean supportsDeleteAlias() {
+        return true;
+    }
 }

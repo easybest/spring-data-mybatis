@@ -20,12 +20,9 @@ package org.springframework.data.mybatis.config.sample;
 
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
-import org.springframework.data.mybatis.repository.sample.UserRepository;
 import org.springframework.data.mybatis.support.SqlSessionFactoryBean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
@@ -40,10 +37,7 @@ import java.sql.SQLException;
  */
 @Configuration
 @EnableMybatisRepositories(
-        value = "org.springframework.data.mybatis.repository.sample",
-        excludeFilters = {
-                @ComponentScan.Filter(value = {UserRepository.class}, type = FilterType.ASSIGNABLE_TYPE)
-        }
+        "org.springframework.data.mybatis.repository.sample"
 )
 public class TestConfig implements ResourceLoaderAware {
 
@@ -52,10 +46,6 @@ public class TestConfig implements ResourceLoaderAware {
     @Bean
     public DataSource dataSource() throws SQLException {
 
-//        DriverManagerDataSource ds = new DriverManagerDataSource("jdbc:mysql://10.10.100.199:3306/cq_test?characterEncoding=utf8", "root", "supconit");
-//        ds.setDriverClassName("com.mysql.jdbc.Driver");
-//        ScriptUtils.executeSqlScript(ds.getConnection(), resourceLoader.getResource("classpath:/test-init-mysql.sql"));
-//        return ds;
 
         return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).addScript("classpath:/test-init.sql").build();
     }

@@ -16,14 +16,22 @@
  *
  */
 
-package org.springframework.data.mybatis.repository.sample;
-
-import org.springframework.data.mybatis.domain.sample.Role;
-import org.springframework.data.mybatis.repository.support.MybatisRepository;
+package org.springframework.data.mybatis.domain.sample;
 
 /**
  * @author Jarvis Song
  */
-public interface RoleRepository extends MybatisRepository<Role, Integer> {
+public class RoleCond extends Role {
+    private String fuzzyName;
 
+    public RoleCond() {
+    }
+
+    public String getFuzzyName() {
+        return fuzzyName;
+    }
+
+    public void setFuzzyName(String fuzzyName) {
+        this.fuzzyName = fuzzyName;
+    }
 }

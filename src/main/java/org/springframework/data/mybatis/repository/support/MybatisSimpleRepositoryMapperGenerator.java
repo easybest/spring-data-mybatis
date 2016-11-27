@@ -20,19 +20,16 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.session.Configuration;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
-import org.dom4j.io.OutputFormat;
-import org.dom4j.io.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mapping.model.MappingException;
 import org.springframework.data.mybatis.repository.localism.Localism;
 import org.springframework.data.mybatis.repository.localism.identity.IdentityColumnSupport;
 
-import java.io.*;
-import java.util.HashMap;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 /**
@@ -47,23 +44,22 @@ public class MybatisSimpleRepositoryMapperGenerator {
             "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">";
     private static final String MAPPER_END   = "</mapper>";
 
-    private final Configuration      configuration; // mybatis's configuration
-    private final MybatisEntityModel model; // entity's mapper model
-    private final Localism           localism;
-    private final String             lang;  // the script language
-    private final String             namespace; // namespace
+    private final Configuration          configuration; // mybatis's configuration
+    private final MybatisEntityModel     model; // entity's mapper model
+    private final Localism               localism;
+    private final MybatisMapperGenerator generator;
 
 
-    public MybatisSimpleRepositoryMapperGenerator(Configuration configuration, MybatisEntityModel model, Localism localism, String lang) {
+    public MybatisSimpleRepositoryMapperGenerator(Configuration configuration, MybatisEntityModel model, Localism localism) {
         this.configuration = configuration;
         this.model = model;
-        this.namespace = model.getClz().getName();
         this.localism = localism;
-        this.lang = lang;
+        generator = new MybatisMapperGenerator(model, localism);
     }
 
     public void generate() {
         String xml;
+        String namespace = model.getClz().getName();
         try {
             xml = render();
         } catch (IOException e) {
@@ -95,23 +91,12 @@ public class MybatisSimpleRepositoryMapperGenerator {
     }
 
     private String render() throws IOException {
-        Map<String, Object> context = new HashMap<String, Object>();
-        context.put("_mybatis_auto_mapping", "true");
-        context.put("lang", lang);
-        context.put("namespace", namespace);
-        context.put("tableName", model.getNameInDatabase());
-        context.put("domainType", model.getClz().getName());
-        context.put("sequence", "SEQ_" + model.getNameInDatabase()); //FIXME 如果超过30个字 截取.
-        context.put("_databaseId", configuration.getDatabaseId());
-        context.put("localism", localism);
-        context.put("model", model);
-        context.put("_this", this);
 
 
         StringBuilder builder = new StringBuilder();
         builder.append(MAPPER_BEGIN);
 
-        builder.append("<mapper namespace=\"" + namespace + "\">");
+        builder.append("<mapper namespace=\"" + model.getClz().getName() + "\">");
 
         if (!isFragmentExist("TABLE_NAME")) {
             builder.append("<sql id=\"TABLE_NAME\">" + model.getNameInDatabase() + "</sql>");
@@ -127,22 +112,20 @@ public class MybatisSimpleRepositoryMapperGenerator {
         if (!isResultMapExist("ResultMap")) {
             buildResultMap(builder);
         }
-
-        if (!isFragmentExist("SELECT_BASIC_COLUMNS")) {
-            buildBasicColumns(builder);
-        }
-        if (!isFragmentExist("SELECT_COLUMNS")) {
-            buildColumns(builder, true);
-        }
-
         if (!isStatementExist("_insert")) {
             buildInsertSQL(builder);
+        }
+        if (!isStatementExist("_update")) {
+            buildUpdateSQL(builder);
         }
         if (!isStatementExist("_getById")) {
             buildGetById(builder);
         }
         if (!isStatementExist("_findAll")) {
             buildFindAll(builder);
+        }
+        if (!isStatementExist("_findBasicAll")) {
+            buildFindBasicAll(builder);
         }
         if (!isStatementExist("_count")) {
             buildCount(builder);
@@ -156,72 +139,108 @@ public class MybatisSimpleRepositoryMapperGenerator {
         if (!isStatementExist("_findByPager")) {
             buildFindByPager(builder);
         }
+        if (!isStatementExist("_findBasicByPager")) {
+            buildFindBasicByPager(builder);
+        }
         if (!isStatementExist("_countByCondition")) {
             buildCountByCondition(builder);
         }
-
-
+        if (!isStatementExist("_countBasicByCondition")) {
+            buildCountBasicByCondition(builder);
+        }
+        if (!isStatementExist("_getBasicById")) {
+            buildGetBasicById(builder);
+        }
+        if (!isStatementExist("_deleteByCondition")) {
+            buildDeleteByCondition(builder);
+        }
         builder.append(MAPPER_END);
         String result = builder.toString();
-//        result = BeetlFacade.apply(result, context);
 
-        Document doc = null;
-        try {
-            doc = DocumentHelper.parseText(result);
-        } catch (DocumentException e) {
-            e.printStackTrace();
-        }
-        OutputFormat format = OutputFormat.createPrettyPrint();
-        format.setExpandEmptyElements(true);
-        format.setSuppressDeclaration(true);
-        OutputStream outputStream = new ByteArrayOutputStream();
-        XMLWriter writer = new XMLWriter(outputStream, format);
-        writer.write(doc);
-        writer.close();
-        System.out.println(outputStream.toString());
 
         return result;
+    }
+
+    private void buildUpdateSQL(StringBuilder builder) {
+        builder.append("<update id=\"_update\" parameterType=\"" + model.getClz().getName() + "\" lang=\"XML\">");
+        builder.append("update ").append(model.getNameInDatabase());
+        builder.append("<set>");
+        for (Map.Entry<String, MybatisEntityModel> entry : model.getColumns().entrySet()) {
+            builder.append("<if test=\"" + entry.getValue().getName() + " != null\">")
+                    .append(entry.getValue().getNameInDatabase()).append("=#{").append(entry.getValue().getName()).append("}").append(",</if>");
+        }
+        for (Map.Entry<String, MybatisEntityModel> entry : model.getJoinColumns().entrySet()) {
+            builder.append("<if test=\"" + entry.getValue().getName().split("\\.")[0] + " !=null and " + entry.getValue().getName() + " != null\">")
+                    .append(entry.getValue().getNameInDatabase()).append("=#{").append(entry.getValue().getName()).append("}").append(",</if>");
+        }
+        builder.append("</set>");
+        builder.append("<trim prefix=\"where\" prefixOverrides=\"and |or \">");
+        for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
+            builder.append("and ").append(entry.getValue().getNameInDatabase()).append("=");
+            builder.append("#{").append(entry.getValue().getName()).append("}");
+        }
+        builder.append("</trim>");
+        builder.append("</update>");
+    }
+
+    private void buildDeleteByCondition(StringBuilder builder) {
+        builder.append("<delete id=\"_deleteByCondition\" lang=\"XML\">");
+        builder.append("delete");
+        if (localism.supportsDeleteAlias()) {
+            builder.append(" ").append(quota(model.getName()));
+        }
+        builder.append(" from ").append(generator.buildFrom(true));
+
+        builder.append("<if test=\"_condition != null\">");
+        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+        builder.append(buildCondition());
+        builder.append("</trim>");
+        builder.append("</if>");
+        builder.append("</delete>");
+    }
+
+
+    private void buildGetBasicById(StringBuilder builder) {
+
+        builder.append("<select id=\"_getBasicById\" parameterType=\"" + model.getPrimaryKey().getClz().getName() + "\" resultMap=\"ResultMap\" lang=\"XML\">");
+        builder.append("select ").append(generator.buildSelectColumns(true)).append(" from ").append(generator.buildFrom(true));
+        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+        for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
+            builder.append("and ").append(quota(model.getName())).append(".").append(entry.getValue().getNameInDatabase()).append("=");
+            builder.append("#{" + entry.getValue().getName() + "}");
+        }
+        builder.append("</trim>");
+        builder.append("</select>");
+    }
+
+    private void buildFindBasicByPager(StringBuilder builder) {
+
+        builder.append("<select id=\"_findBasicByPager\" resultMap=\"ResultMap\" lang=\"XML\">");
+        StringBuilder condition = new StringBuilder();
+        condition.append("<if test=\"_condition != null\">");
+        condition.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+        condition.append(buildCondition());
+        condition.append("</trim>");
+        condition.append("</if>");
+
+        builder.append(localism.getLimitHandler().processSql(true, generator.buildSelectColumns(true), " from " + generator.buildFrom(true), condition.toString(), generator.buildSorts(true, null)));
+
+        builder.append("</select>");
     }
 
 
     private void buildFindByPager(StringBuilder builder) {
         builder.append("<select id=\"_findByPager\" resultMap=\"ResultMap\" lang=\"XML\">");
-        StringBuilder columns = new StringBuilder();
         StringBuilder condition = new StringBuilder();
-        StringBuilder sorts = new StringBuilder();
-
-        buildColumns(columns, false);
-
+        condition.append("<if test=\"_condition != null\">");
         condition.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-        condition.append("<if test=\"condition != null\">");
-        condition.append("</if>");
+        condition.append(buildCondition());
         condition.append("</trim>");
+        condition.append("</if>");
 
-        sorts.append("<if test=\"_sorts != null\">");
-        sorts.append("order by ");
-        sorts.append("<foreach item=\"item\" index=\"idx\" collection=\"_sorts\" open=\"\" separator=\",\" close=\"\">");
-        sorts.append("${item.property} ${item.direction}");
-        sorts.append("</foreach>");
-        sorts.append("</if>");
-
-        builder.append(localism.getLimitHandler().processSql(true, columns.toString(), " from " + model.getNameInDatabase() + " " + quota(model.getName()) + buildLeftOuterJionSQL(), condition.toString(), sorts.toString()));
+        builder.append(localism.getLimitHandler().processSql(true, generator.buildSelectColumns(false), " from " + generator.buildFrom(false), condition.toString(), generator.buildSorts(false, null)));
 
         builder.append("</select>");
-    }
-
-    private String buildLeftOuterJionSQL() {
-        StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getOneToOnes().entrySet()) {
-            builder.append(" left outer join ").append(entry.getValue().getNameInDatabase()).append(" ").append(quota(model.getName() + "." + entry.getKey()))
-                    .append(" on ").append(quota(model.getName())).append(".").append(entry.getValue().getJoinColumnName())
-                    .append("=").append(quota(model.getName() + "." + entry.getKey())).append(".").append(entry.getValue().getJoinReferencedColumnName());
-        }
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getManyToOnes().entrySet()) {
-            builder.append(" left outer join ").append(entry.getValue().getNameInDatabase()).append(" ").append(quota(model.getName() + "." + entry.getKey()))
-                    .append(" on ").append(quota(model.getName())).append(".").append(entry.getValue().getJoinColumnName())
-                    .append("=").append(quota(model.getName() + "." + entry.getKey())).append(".").append(entry.getValue().getJoinReferencedColumnName());
-        }
-        return builder.toString();
     }
 
     private void buildDeleteAll(StringBuilder builder) {
@@ -230,7 +249,13 @@ public class MybatisSimpleRepositoryMapperGenerator {
 
     private void buildDeleteById(StringBuilder builder) {
         builder.append("<delete id=\"_deleteById\" parameterType=\"" + model.getPrimaryKey().getClz().getName() + "\" lang=\"XML\">");
-        builder.append("delete from ").append(model.getNameInDatabase());
+
+        builder.append("delete");
+        if (localism.supportsDeleteAlias()) {
+            builder.append(" ").append(quota(model.getName()));
+        }
+        builder.append(" from ").append(generator.buildFrom(true));
+
         builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
         for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
             builder.append("and ").append(entry.getValue().getNameInDatabase()).append("=#{" + entry.getValue().getName() + "}");
@@ -241,13 +266,9 @@ public class MybatisSimpleRepositoryMapperGenerator {
     }
 
     private void buildCount(StringBuilder builder) {
-
         builder.append("<select id=\"_count\" resultType=\"long\" lang=\"XML\">");
-
         builder.append("select count(*) from ");
-        builder.append(model.getNameInDatabase()).append(" ").append(quota(model.getName()));
-
-
+        builder.append(generator.buildFrom(true));
         builder.append("</select>");
 
     }
@@ -255,31 +276,62 @@ public class MybatisSimpleRepositoryMapperGenerator {
     private void buildCountByCondition(StringBuilder builder) {
         builder.append("<select id=\"_countByCondition\" resultType=\"long\" lang=\"XML\">");
 
-        builder.append("select count(*) from ");
-        builder.append(model.getNameInDatabase()).append(" ").append(quota(model.getName()));
-        builder.append(buildLeftOuterJionSQL());
+        builder.append("select count(*) from ").append(generator.buildFrom(false));
 
         builder.append("<if test=\"_condition != null\">");
+        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+        builder.append(buildCondition());
+        builder.append("</trim>");
+        builder.append("</if>");
 
+        builder.append("</select>");
+    }
+
+    private void buildCountBasicByCondition(StringBuilder builder) {
+        builder.append("<select id=\"_countBasicByCondition\" resultType=\"long\" lang=\"XML\">");
+
+        builder.append("select count(*) from ").append(generator.buildFrom(true));
+
+        builder.append("<if test=\"_condition != null\">");
+        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+        builder.append(buildCondition());
+        builder.append("</trim>");
         builder.append("</if>");
 
         builder.append("</select>");
     }
 
 
-    private void buildFindAll(StringBuilder builder) {
-        builder.append("<select id=\"_findAll\" resultMap=\"ResultMap\" lang=\"XML\">");
-        builder.append(buildSelectSQL());
+    private String buildCondition() {
+        StringBuilder builder = new StringBuilder();
+        for (MybatisEntityModel.SearchModel sm : model.getSearchModels()) {
+            builder.append("<if test=\"_condition." + sm.getPropertyName() + "\">");
+            builder.append(" and ").append(quota(null == sm.getAlias() ? model.getName() : sm.getAlias())).append(".").append(sm.getColumnName());
+            builder.append("<![CDATA[").append(sm.getOper()).append("]]>");
+            if ("IN".equalsIgnoreCase(sm.getOperate()) || "NOTIN".equalsIgnoreCase(sm.getOperate())) {
+                builder.append("<foreach item=\"item\" index=\"index\" collection=\"_condition." + sm.getPropertyName() + "\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+                builder.append("#{item}");
+                builder.append("</foreach>");
+            } else {
+                builder.append("#{_condition." + sm.getPropertyName() + "}");
+            }
+            builder.append("</if>");
+        }
+
+        return builder.toString();
+
+    }
+
+    private void buildFindBasicAll(StringBuilder builder) {
+        builder.append("<select id=\"_findBasicAll\" resultMap=\"ResultMap\" lang=\"XML\">");
+
+        builder.append("select ").append(generator.buildSelectColumns(true)).append(" from ").append(generator.buildFrom(true));
+
 
         builder.append("<if test=\"_condition != null\">");
-
-        builder.append("</if>");
-
-        builder.append("<if test=\"_sorts != null\">");
-        builder.append("order by ");
-        builder.append("<foreach item=\"item\" index=\"idx\" collection=\"_sorts\" open=\"\" separator=\",\" close=\"\">");
-        builder.append(quota("${item.property}")).append(" ${item.direction}");
-        builder.append("</foreach>");
+        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+        builder.append(buildCondition());
+        builder.append("</trim>");
         builder.append("</if>");
 
         builder.append("<if test=\"_ids != null\">");
@@ -291,34 +343,48 @@ public class MybatisSimpleRepositoryMapperGenerator {
         }
         builder.append("</if>");
 
+        builder.append(generator.buildSorts(true, null));
+
+        builder.append("</select>");
+    }
+
+    private void buildFindAll(StringBuilder builder) {
+        builder.append("<select id=\"_findAll\" resultMap=\"ResultMap\" lang=\"XML\">");
+        builder.append("select ").append(generator.buildSelectColumns(false)).append(" from ").append(generator.buildFrom(false));
+
+        builder.append("<if test=\"_condition != null\">");
+        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+        builder.append(buildCondition());
+        builder.append("</trim>");
+        builder.append("</if>");
+
+        builder.append("<if test=\"_ids != null\">");
+        if (model.isCompositeId()) {
+            //TODO
+        } else {
+            builder.append(" where ").append(quota(model.getName())).append(".").append(model.getPrimaryKey().getNameInDatabase()).append(" in ");
+            builder.append("<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+        }
+        builder.append("</if>");
+
+        builder.append(generator.buildSorts(false, null));
+
         builder.append("</select>");
     }
 
     private void buildGetById(StringBuilder builder) {
         builder.append("<select id=\"_getById\" parameterType=\"" + model.getPrimaryKey().getClz().getName() + "\" resultMap=\"ResultMap\" lang=\"XML\">");
-        builder.append(buildSelectSQL());
+        builder.append("select ").append(generator.buildSelectColumns(false)).append(" from ").append(generator.buildFrom(false));
 
         builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-
         for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
             builder.append("and ").append(quota(model.getName())).append(".").append(entry.getValue().getNameInDatabase()).append("=");
             builder.append("#{" + entry.getValue().getName() + "}");
         }
-
         builder.append("</trim>");
 
         builder.append("</select>");
     }
-
-    private String buildSelectSQL() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("select <include refid=\"SELECT_COLUMNS\"/> from ");
-        builder.append(model.getNameInDatabase()).append(" ").append(quota(model.getName()));
-
-        builder.append(buildLeftOuterJionSQL());
-        return builder.toString();
-    }
-
 
     private void buildInsertSQL(StringBuilder builder) {
         builder.append("<insert id=\"_insert\" parameterType=\"" + model.getClz().getName() + "\" lang=\"XML\"");
@@ -469,61 +535,6 @@ public class MybatisSimpleRepositoryMapperGenerator {
     }
 
 
-    private void buildBasicColumnsNormal(StringBuilder builder) {
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
-            builder.append(quota(model.getName()) + "." + entry.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getValue().getName())).append(",");
-        }
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getColumns().entrySet()) {
-            builder.append(quota(model.getName()) + "." + entry.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getValue().getName())).append(",");
-        }
-    }
-
-    private void buildBasicColumns(StringBuilder builder) {
-        builder.append("<sql id=\"SELECT_BASIC_COLUMNS\">");
-
-        buildBasicColumnsNormal(builder);
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getJoinColumns().entrySet()) {
-            builder.append(quota(model.getName()) + "." + entry.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getValue().getName())).append(",");
-        }
-
-        builder.append("</sql>");
-    }
-
-    private void buildColumnsAssociations(StringBuilder builder, Map<String, MybatisEntityModel> associations) {
-        for (Map.Entry<String, MybatisEntityModel> entry : associations.entrySet()) {
-            for (Map.Entry<String, MybatisEntityModel> ent : entry.getValue().getPrimaryKeys().entrySet()) {
-                builder.append(quota(model.getName() + "." + entry.getKey()) + "." + ent.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getKey() + "." + ent.getValue().getName())).append(",");
-            }
-            for (Map.Entry<String, MybatisEntityModel> ent : entry.getValue().getColumns().entrySet()) {
-                builder.append(quota(model.getName() + "." + entry.getKey()) + "." + ent.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getKey() + "." + ent.getValue().getName())).append(",");
-            }
-            for (Map.Entry<String, MybatisEntityModel> ent : entry.getValue().getJoinColumns().entrySet()) {
-                builder.append(quota(model.getName() + "." + entry.getKey()) + "." + ent.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getKey() + "." + ent.getValue().getName())).append(",");
-            }
-        }
-
-
-    }
-
-    private void buildColumns(StringBuilder builder, boolean containWrap) {
-        if (containWrap) {
-            builder.append("<sql id=\"SELECT_COLUMNS\">");
-        }
-        buildBasicColumnsNormal(builder);
-
-        buildColumnsAssociations(builder, model.getOneToOnes());
-        buildColumnsAssociations(builder, model.getManyToOnes());
-
-
-        if (builder.charAt(builder.length() - 1) == ',') {
-            builder.deleteCharAt(builder.length() - 1);
-        }
-        if (containWrap) {
-            builder.append("</sql>");
-        }
-    }
-
-
     private String alias(String column) {
         return column;
     }
@@ -541,7 +552,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         if (null == configuration) {
             return false;
         }
-        return configuration.hasResultMap(namespace + "." + name);
+        return configuration.hasResultMap(model.getClz().getName() + "." + name);
     }
 
     /**
@@ -551,7 +562,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         if (null == configuration) {
             return false;
         }
-        return configuration.getSqlFragments().containsKey(namespace + "." + fragment);
+        return configuration.getSqlFragments().containsKey(model.getClz().getName() + "." + fragment);
     }
 
     /**
@@ -561,6 +572,6 @@ public class MybatisSimpleRepositoryMapperGenerator {
         if (null == configuration) {
             return false;
         }
-        return configuration.hasStatement(namespace + "." + id);
+        return configuration.hasStatement(model.getClz().getName() + "." + id);
     }
 }
