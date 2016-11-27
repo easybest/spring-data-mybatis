@@ -27,6 +27,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.config.sample.TestConfig;
 import org.springframework.data.mybatis.domain.sample.Group;
 import org.springframework.data.mybatis.domain.sample.Role;
+import org.springframework.data.mybatis.domain.sample.RoleCond;
 import org.springframework.data.mybatis.repository.sample.GroupRepository;
 import org.springframework.data.mybatis.repository.sample.RoleRepository;
 import org.springframework.test.context.ContextConfiguration;
@@ -52,7 +53,7 @@ public class RoleSimpleRepositoryTests {
     RoleRepository  roleRepository;
     @Autowired
     GroupRepository groupRepository;
-    Role manager, tester, developer;
+    Role manager, tester, developer, assistant;
     Group group1, group2;
 
     @Before
@@ -66,7 +67,8 @@ public class RoleSimpleRepositoryTests {
         manager = new Role("manager", group1);
         tester = new Role("tester", group2);
         developer = new Role("developer", group2);
-        roleRepository.save(Arrays.asList(manager, tester, developer));
+        assistant = new Role("assistant", group1);
+        roleRepository.save(Arrays.asList(manager, tester, developer, assistant));
     }
 
     @Test
@@ -109,7 +111,7 @@ public class RoleSimpleRepositoryTests {
     @Test
     public void testFindAll() {
         List<Role> all = roleRepository.findAll();
-        assertEquals(3, all.size());
+        assertEquals(4, all.size());
 
         for (Role role : all) {
             assertNotNull(role.getGroup());
@@ -130,34 +132,34 @@ public class RoleSimpleRepositoryTests {
     @Test
     public void testCount() {
         long count = roleRepository.count();
-        assertEquals(3, count);
+        assertEquals(4, count);
     }
 
     @Test
     public void testDeleteById() {
         long count = roleRepository.count();
-        assertEquals(3, count);
+        assertEquals(4, count);
         roleRepository.delete(manager.getId());
         count = roleRepository.count();
-        assertEquals(2, count);
+        assertEquals(3, count);
     }
 
     @Test
     public void testDeleteByEntity() {
         long count = roleRepository.count();
-        assertEquals(3, count);
+        assertEquals(4, count);
         roleRepository.delete(manager);
         count = roleRepository.count();
-        assertEquals(2, count);
+        assertEquals(3, count);
     }
 
     @Test
     public void testDeleteMultiple() {
         long count = roleRepository.count();
-        assertEquals(3, count);
+        assertEquals(4, count);
         roleRepository.delete(Arrays.asList(manager, tester));
         count = roleRepository.count();
-        assertEquals(1, count);
+        assertEquals(2, count);
     }
 
     @Test
@@ -170,15 +172,16 @@ public class RoleSimpleRepositoryTests {
     @Test
     public void testFindBySort() {
         List<Role> roles = roleRepository.findAll(new Sort(Sort.Direction.ASC, "name"));
-        assertEquals(developer, roles.get(0));
-        assertEquals(manager, roles.get(1));
-        assertEquals(tester, roles.get(2));
+        assertEquals(assistant, roles.get(0));
+        assertEquals(developer, roles.get(1));
+        assertEquals(manager, roles.get(2));
+        assertEquals(tester, roles.get(3));
     }
 
     @Test
     public void testFindByPage() {
         Page<Role> page = roleRepository.findAll(new PageRequest(0, 2));
-        assertEquals(3, page.getTotalElements());
+        assertEquals(4, page.getTotalElements());
         assertEquals(2, page.getTotalPages());
         assertEquals(2, page.getContent().size());
 
@@ -190,6 +193,127 @@ public class RoleSimpleRepositoryTests {
 
     @Test
     public void testFindBasicOne() {
+        Role role = roleRepository.findBasicOne(this.manager.getId());
+        assertEquals(manager.getId(), role.getId());
+        assertNotNull(role.getGroup().getId());
+        assertNull(role.getGroup().getName());
+    }
+
+    @Test
+    public void testFindOneByCondition() {
+
+        RoleCond cond = new RoleCond();
+        cond.setName("manager");
+
+        Role one = roleRepository.findOne(cond);
+
+        assertNotNull(one);
+        assertEquals(manager.getId(), one.getId());
+    }
+
+    @Test
+    public void testFindAllByCondition() {
+
+        RoleCond cond = new RoleCond();
+        cond.setFuzzyName("%st%");
+        List<Role> all = roleRepository.findAll(cond);
+        assertEquals(2, all.size());
+
+    }
+
+    @Test
+    public void testFindAllSortByCondition() {
+        RoleCond cond = new RoleCond();
+        cond.setFuzzyName("%st%");
+        List<Role> roles = roleRepository.findAll(new Sort(Sort.Direction.ASC, "name"), cond);
+        assertEquals(2, roles.size());
+        assertEquals(assistant, roles.get(0));
+        assertEquals(tester, roles.get(1));
+    }
+
+    @Test
+    public void testFindPageByCondition() {
+        RoleCond cond = new RoleCond();
+        cond.setFuzzyName("%st%");
+        Page<Role> page = roleRepository.findAll(new PageRequest(0, 2), cond);
+        assertEquals(2, page.getTotalElements());
+        assertEquals(1, page.getTotalPages());
+        assertEquals(2, page.getContent().size());
+    }
+
+    @Test
+    public void testCountByCondition() {
+        RoleCond cond = new RoleCond();
+        cond.setFuzzyName("%st%");
+        Long count = roleRepository.countAll(cond);
+        assertEquals(2L, count.longValue());
+    }
+
+    @Test
+    public void testFindBasicOneByCondition() {
+        RoleCond cond = new RoleCond();
+        cond.setName("manager");
+        Role role = roleRepository.findBasicOne(cond);
+        assertNotNull(role);
+        assertNull(role.getGroup().getName());
+    }
+
+    @Test
+    public void testFindBasicAllByCondition() {
+        RoleCond cond = new RoleCond();
+        cond.setFuzzyName("%st%");
+        List<Role> roles = roleRepository.findBasicAll(cond);
+        assertEquals(2, roles.size());
+        for (Role role : roles) {
+            assertNull(role.getGroup().getName());
+        }
+    }
+
+    @Test
+    public void testFindBasicAllSortByCondition() {
+        RoleCond cond = new RoleCond();
+        cond.setFuzzyName("%st%");
+        List<Role> roles = roleRepository.findBasicAll(new Sort(Sort.Direction.ASC, "name"), cond);
+        assertEquals(2, roles.size());
+        assertEquals(assistant, roles.get(0));
+        assertEquals(tester, roles.get(1));
+        for (Role role : roles) {
+            assertNull(role.getGroup().getName());
+        }
+    }
+
+
+    @Test
+    public void testFindBasicPageByCondition() {
+        RoleCond cond = new RoleCond();
+        cond.setFuzzyName("%st%");
+        Page<Role> page = roleRepository.findBasicAll(new PageRequest(0, 2), cond);
+        assertEquals(2, page.getTotalElements());
+        assertEquals(1, page.getTotalPages());
+        assertEquals(2, page.getContent().size());
+
+        for (Role role : page) {
+            assertNull(role.getGroup().getName());
+        }
+    }
+
+    @Test
+    public void testCountBasicByCondition() {
+        RoleCond cond = new RoleCond();
+        cond.setFuzzyName("%st%");
+        Long count = roleRepository.countBasicAll(cond);
+        assertEquals(2L, count.longValue());
+    }
+
+    @Test
+    public void testDeleteByCondition() {
+        RoleCond cond = new RoleCond();
+        cond.setFuzzyName("%st%");
+        int rows = roleRepository.deleteByCondition(cond);
+        assertEquals(2, rows);
+
+        long count = roleRepository.count();
+        assertEquals(2, count);
 
     }
 }

@@ -20,29 +20,28 @@ package org.springframework.data.mybatis.repository.query;
 
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.session.Configuration;
-import org.mybatis.scripting.beetl.BeetlFacade;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mapping.model.MappingException;
 import org.springframework.data.mybatis.repository.localism.Localism;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.DeleteExecution;
 import org.springframework.data.mybatis.repository.support.MybatisEntityInformationSupport;
 import org.springframework.data.mybatis.repository.support.MybatisEntityModel;
+import org.springframework.data.mybatis.repository.support.MybatisMapperGenerator;
 import org.springframework.data.mybatis.repository.support.MybatisQueryException;
 import org.springframework.data.repository.query.parser.Part;
+import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
 import org.springframework.data.repository.query.parser.PartTree;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.UUID;
+
+import static org.springframework.data.repository.query.parser.Part.Type.*;
 
 /**
  * part tree query implementation of {@link org.springframework.data.repository.query.RepositoryQuery}.
@@ -53,8 +52,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
     private transient static final Logger logger = LoggerFactory.getLogger(PartTreeMybatisQuery.class);
 
     private static final String MAPPER_BEGIN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">\n" +
-            "<mapper namespace=\"#namespace#\">\n@var QUOTA='<include refid=\"_PUBLIC.ALIAS_QUOTA\"/>';\n";
+            "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">";
     private static final String MAPPER_END   = "</mapper>";
 
     private final Localism                        localism;
@@ -62,8 +60,10 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
     private final Class<?>                        domainClass;
     private final PartTree                        tree;
     private final MybatisParameters               parameters;
+    private final MybatisEntityModel              model;
+    private final MybatisMapperGenerator          generator;
 
-    private String statementName;
+    private final String statementName;
 
     protected PartTreeMybatisQuery(SqlSessionTemplate sqlSessionTemplate, Localism localism, MybatisQueryMethod method) {
         super(sqlSessionTemplate, method);
@@ -72,10 +72,15 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         this.domainClass = this.entityInformation.getJavaType();
         this.tree = new PartTree(method.getName(), domainClass);
         this.parameters = method.getParameters();
-
-        statementName = super.getStatementName() + UUID.randomUUID().toString();
+        this.model = this.entityInformation.getModel();
+        this.generator = new MybatisMapperGenerator(model, localism);
+        this.statementName = super.getStatementName() + UUID.randomUUID().toString().replace("-", "");
 
         doCreateQueryStatement(method); // prepare mybatis statement.
+    }
+
+    private String quota(String alias) {
+        return localism.openQuote() + alias + localism.closeQuote();
     }
 
     @Override
@@ -91,12 +96,177 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         return statementName;
     }
 
+
+    private String buildQueryCondition(boolean basic) {
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+
+        int c = 0;
+        for (Iterator<PartTree.OrPart> iterator = tree.iterator(); iterator.hasNext(); ) {
+            PartTree.OrPart orPart = iterator.next();
+            builder.append(" or (");
+            builder.append("<trim prefix=\"\" prefixOverrides=\"and |or \">");
+
+            for (Iterator<Part> it = orPart.iterator(); it.hasNext(); ) {
+                String columnName = null;
+                Part part = it.next();
+                MybatisEntityModel column = model.findColumnByPropertyName(part.getProperty().getSegment());
+                if (null != column) {
+                    columnName = quota(model.getName()) + "." + column.getNameInDatabase();
+                } else if (!basic) {
+                    MybatisEntityModel oneToOne = model.findOneToOneByPropertyName(part.getProperty().getSegment());
+                    if (null != oneToOne) {
+                        MybatisEntityModel oneTonOneColumn = oneToOne.findColumnByPropertyName(part.getProperty().getLeafProperty().getSegment());
+                        if (null != oneTonOneColumn) {
+                            columnName = quota(model.getName() + "." + part.getProperty().getSegment()) + "." + oneTonOneColumn.getNameInDatabase();
+                        }
+                    } else {
+                        MybatisEntityModel manyToOne = model.findManyToOneByPropertyName(part.getProperty().getSegment());
+                        if (null != manyToOne) {
+                            MybatisEntityModel manyTonOneColumn = manyToOne.findColumnByPropertyName(part.getProperty().getLeafProperty().getSegment());
+                            if (null != manyTonOneColumn) {
+                                columnName = quota(model.getName() + "." + part.getProperty().getSegment()) + "." + manyTonOneColumn.getNameInDatabase();
+                            }
+                        } else {
+
+                        }
+                    }
+                }
+
+                if (null == columnName) {
+                    throw new MybatisQueryException("can not find property: " + part.getProperty().getSegment() + " in " + method.getName());
+                }
+
+                builder.append(" and ");
+
+                IgnoreCaseType ignoreCaseType = part.shouldIgnoreCase();
+                if (ignoreCaseType == IgnoreCaseType.ALWAYS || ignoreCaseType == IgnoreCaseType.WHEN_POSSIBLE) {
+                    builder.append("upper(").append(columnName).append(")");
+                } else {
+                    builder.append(columnName);
+                }
+
+                switch (part.getType()) {
+                    case SIMPLE_PROPERTY:
+                        builder.append("=");
+                        break;
+                    case NEGATING_SIMPLE_PROPERTY:
+                        builder.append("<![CDATA[<>]]>");
+                        break;
+                    case LESS_THAN:
+                    case BEFORE:
+                        builder.append("<![CDATA[<]]>");
+                        break;
+                    case LESS_THAN_EQUAL:
+                        builder.append("<![CDATA[<=]]>");
+                        break;
+                    case GREATER_THAN:
+                    case AFTER:
+                        builder.append("<![CDATA[>]]>");
+                        break;
+                    case GREATER_THAN_EQUAL:
+                        builder.append("<![CDATA[>=]]>");
+                        break;
+
+                    case LIKE:
+                    case NOT_LIKE:
+                    case STARTING_WITH:
+                    case ENDING_WITH:
+                        if (part.getType() == NOT_LIKE) {
+                            builder.append(" not");
+                        }
+                        builder.append(" like ");
+                        break;
+                    case CONTAINING:
+                    case NOT_CONTAINING:
+                        if (part.getType() == NOT_CONTAINING) {
+                            builder.append(" not");
+                        }
+                        builder.append(" like ");
+                        break;
+                    case IN:
+                    case NOT_IN:
+                        if (part.getType() == NOT_IN) {
+                            builder.append(" not");
+                        }
+                        builder.append(" in ");
+                        break;
+                }
+
+                switch (part.getType()) {
+                    case CONTAINING:
+                    case NOT_CONTAINING:
+                        if (ignoreCaseType == IgnoreCaseType.ALWAYS || ignoreCaseType == IgnoreCaseType.WHEN_POSSIBLE) {
+                            builder.append("concat('%',upper(#{p" + c + "}),'%')");
+                        } else {
+                            builder.append("concat('%',#{p" + c + "},'%')");
+                        }
+                        break;
+                    case STARTING_WITH:
+                        if (ignoreCaseType == IgnoreCaseType.ALWAYS || ignoreCaseType == IgnoreCaseType.WHEN_POSSIBLE) {
+                            builder.append("concat(upper(#{p" + c + "}),'%')");
+                        } else {
+                            builder.append("concat(#{p" + c + "},'%')");
+                        }
+                        break;
+                    case ENDING_WITH:
+                        if (ignoreCaseType == IgnoreCaseType.ALWAYS || ignoreCaseType == IgnoreCaseType.WHEN_POSSIBLE) {
+                            builder.append("concat('%',upper(#{p" + c + "}))");
+                        } else {
+                            builder.append("concat('%',#{p" + c + "})");
+                        }
+                        break;
+                    case IN:
+                    case NOT_IN:
+                        builder.append("<foreach item=\"item\" index=\"index\" collection=\"p" + c + "\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+                        break;
+                    case IS_NOT_NULL:
+                        builder.append(" is not null");
+                        break;
+                    case IS_NULL:
+                        builder.append(" is null");
+                        break;
+
+                    case TRUE:
+                        builder.append("=true");
+                        break;
+                    case FALSE:
+                        builder.append("=false");
+                        break;
+
+                    default:
+                        if (ignoreCaseType == IgnoreCaseType.ALWAYS || ignoreCaseType == IgnoreCaseType.WHEN_POSSIBLE) {
+                            builder.append("upper(#{p" + c + "})");
+                        } else {
+                            builder.append("#{p" + c + "}");
+                        }
+                        break;
+                }
+
+                c += part.getType().getNumberOfArguments();
+            }
+
+            builder.append("</trim>");
+
+            builder.append(" )");
+
+        }
+        builder.append("</trim>");
+        return builder.toString();
+    }
+
+
     private String doCreateDeleteQueryStatement() {
         StringBuilder builder = new StringBuilder();
-        builder.append("<delete id=\"" + getStatementName() + "\" lang=\"#lang#\">\n");
-        builder.append("DELETE FROM #model.nameInDatabase#\n");
-        builder.append(createQueryCondition());
-        builder.append("\n</delete>\n");
+        builder.append("<delete id=\"" + getStatementName() + "\" lang=\"XML\">");
+        builder.append("delete");
+        if (localism.supportsDeleteAlias()) {
+            builder.append(" ").append(quota(model.getName()));
+        }
+        builder.append(" from ").append(generator.buildFrom(isBasicQuery())).append(" ");
+        builder.append(buildQueryCondition(isBasicQuery()));
+        builder.append("</delete>");
 
         if (method.isCollectionQuery()) {
             // query first, then delete
@@ -106,107 +276,29 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         return builder.toString();
     }
 
-    private String doCreatePageQueryStatementForSqlServer(boolean includeCount) {
-        Class<?> returnedObjectType = method.getReturnedObjectType();
-        if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
-            throw new IllegalArgumentException("return object type must be or assignable from " + domainClass);
-        }
-        StringBuilder builder = new StringBuilder();
-        builder.append("<select id=\"" + getStatementName() + "\" lang=\"#lang#\" resultMap=\"ResultMap\">");
-        builder.append("<include refid=\"_PUBLIC.PAGER_BEFORE\" />\n");
-
-        builder.append("SELECT \n");
-
-        if (tree.isDistinct()) {
-            builder.append(" \n DISTINCT \n");
-        }
-
-
-        if (isBasicQuery()) {
-            builder.append("<include refid=\"SELECT_BASIC_COLUMNS\"/>");
-        } else {
-            builder.append("<include refid=\"SELECT_SELECT_COLUMNS\"/>");
-        }
-
-        builder.append("\n<include refid=\"_PUBLIC.ROW_NUMBER_OVER\" />\n");
-        builder.append(createQuerySort(true));
-        builder.append("\n<include refid=\"_PUBLIC.AS_ROW_NUM\" />\n");
-
-        builder.append("\n FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA# \n");
-
-        if (!isBasicQuery()) {
-            builder.append("@for(entry in model.manyToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n" +
-                    "            @for(entry in model.oneToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n");
-        }
-        builder.append(createQueryCondition());
-        builder.append("<include refid=\"_PUBLIC.PAGER_AFTER\" />");
-        builder.append("</select>\n");
-        if (includeCount) {
-            builder.append(doCreateCountQueryStatement("count_" + getStatementName()));
-        }
-        return builder.toString();
-
-    }
 
     private String doCreateCountQueryStatement(String statementName) {
         StringBuilder builder = new StringBuilder();
-        builder.append("<select id=\"" + statementName + "\" lang=\"#lang#\" resultType=\"long\">");
-
-        builder.append("SELECT COUNT(*) FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA# \n");
-
-        if (!isBasicQuery()) {
-            builder.append("@for(entry in model.manyToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n" +
-                    "            @for(entry in model.oneToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n");
-        }
-        builder.append(createQueryCondition());
-
-        builder.append("</select>\n");
+        builder.append("<select id=\"" + statementName + "\" lang=\"XML\" resultType=\"long\">");
+        builder.append("select count(*) from ");
+        builder.append(generator.buildFrom(isBasicQuery()));
+        builder.append(buildQueryCondition(isBasicQuery()));
+        builder.append("</select>");
         return builder.toString();
     }
+
 
     private String doCreatePageQueryStatement(boolean includeCount) {
         Class<?> returnedObjectType = method.getReturnedObjectType();
         if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
             throw new IllegalArgumentException("return object type must be or assignable from " + domainClass);
         }
-
         StringBuilder builder = new StringBuilder();
-
-        builder.append("<select id=\"" + getStatementName() + "\" lang=\"#lang#\" resultMap=\"ResultMap\">");
-        builder.append("<include refid=\"_PUBLIC.PAGER_BEFORE\" />\n");
-        builder.append("SELECT \n");
-
-        if (tree.isDistinct()) {
-            builder.append(" \n DISTINCT \n");
-        }
-
-        if (isBasicQuery()) {
-            builder.append("<include refid=\"SELECT_BASIC_COLUMNS\"/>");
-        } else {
-            builder.append("<include refid=\"SELECT_SELECT_COLUMNS\"/>");
-        }
-        builder.append("\n FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA# \n");
-
-        if (!isBasicQuery()) {
-            builder.append("@for(entry in model.manyToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n" +
-                    "            @for(entry in model.oneToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n");
-        }
-        builder.append(createQueryCondition());
-        builder.append(createQuerySort(true));
-        builder.append("<include refid=\"_PUBLIC.PAGER_AFTER\" />");
-        builder.append("</select>\n");
+        StringBuilder condition = new StringBuilder();
+        condition.append(buildQueryCondition(isBasicQuery()));
+        builder.append("<select id=\"" + statementName + "\" lang=\"XML\" resultMap=\"ResultMap\">");
+        builder.append(localism.getLimitHandler().processSql(true, generator.buildSelectColumns(isBasicQuery()), " from " + generator.buildFrom(isBasicQuery()), condition.toString(), generator.buildSorts(isBasicQuery(), tree.getSort())));
+        builder.append("</select>");
 
         if (includeCount) {
             builder.append(doCreateCountQueryStatement("count_" + getStatementName()));
@@ -217,35 +309,22 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
     private String doCreateSelectQueryStatement(String statementName) {
         StringBuilder builder = new StringBuilder();
-
-        builder.append("\n<select id=\"" + statementName + "\" lang=\"#lang#\" resultMap=\"ResultMap\">");
-        builder.append("SELECT \n");
+        builder.append("<select id=\"" + statementName + "\" lang=\"XML\" resultMap=\"ResultMap\">");
+        builder.append("select ");
 
         if (tree.isDistinct()) {
-            builder.append(" \n DISTINCT \n");
+            builder.append(" distinct ");
         }
 
-        if (isBasicQuery()) {
-            builder.append("<include refid=\"SELECT_BASIC_COLUMNS\"/>");
-        } else {
-            builder.append("<include refid=\"SELECT_SELECT_COLUMNS\"/>");
-        }
-        builder.append("\n FROM #model.nameInDatabase# #QUOTA+model.name+QUOTA# \n");
-
-        if (!isBasicQuery()) {
-            builder.append("@for(entry in model.manyToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n" +
-                    "            @for(entry in model.oneToOnes){\n" +
-                    "                LEFT OUTER JOIN #entry.value.nameInDatabase# #QUOTA+model.name+'.'+entry.key+QUOTA# ON #QUOTA+model.name+QUOTA#.#entry.value.joinColumnName#=#QUOTA+model.name+'.'+entry.key+QUOTA#.#entry.value.joinReferencedColumnName#\n" +
-                    "            @}\n");
-        }
-
+        builder.append(generator.buildSelectColumns(isBasicQuery()));
+        builder.append(" from ");
+        builder.append(generator.buildFrom(isBasicQuery()));
         // build condition
-        builder.append(createQueryCondition());
+        builder.append(buildQueryCondition(isBasicQuery()));
 
-        builder.append(createQuerySort(false));
-        builder.append("</select>\n");
+        builder.append(generator.buildSorts(isBasicQuery(), tree.getSort()));
+
+        builder.append("</select>");
         return builder.toString();
     }
 
@@ -259,94 +338,10 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         return doCreateSelectQueryStatement(getStatementName());
     }
 
-    private String createQuerySort(boolean must) {
-        Sort sort = tree.getSort();
-        StringBuilder sortSQL = new StringBuilder();
-        if (null != sort) {
-            sortSQL.append(" ORDER BY ");
-
-            for (Iterator<Order> iterator = sort.iterator(); iterator.hasNext(); ) {
-                Order order = iterator.next();
-                sortSQL.append("<include refid=\"_PUBLIC.ALIAS_QUOTA\"/>" + order.getProperty() + "<include refid=\"_PUBLIC.ALIAS_QUOTA\"/> " + order.getDirection().name() + ",");
-            }
-            sortSQL.deleteCharAt(sortSQL.length() - 1);
-        }
-
-        if (must && sortSQL.length() == 0 && entityInformation.getModel().getPrimaryKeys().size() > 0) {
-            sortSQL.append(" ORDER BY <include refid=\"_PUBLIC.ALIAS_QUOTA\"/>"
-                    + entityInformation
-                    .getModel()
-                    .getPrimaryKeys()
-                    .values().iterator().next()
-                    .getName()
-                    + "<include refid=\"_PUBLIC.ALIAS_QUOTA\"/> DESC");
-        }
-
-        if (must || parameters.hasSortParameter()) {
-            StringBuilder builder = new StringBuilder();
-            builder.append("\n\\#orderBy(_parameter.sorts,' " + sortSQL.toString() + "')\\#\n");
-            return builder.toString();
-        }
-
-
-        return sortSQL.toString();
-
-    }
-
-    private String createQueryCondition() {
-
-        MybatisParameters bindableParameters = parameters.getBindableParameters();
-        int bindableParametersNum = bindableParameters.getNumberOfParameters();
-        if (bindableParametersNum == 0) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        builder.append("@trim({prefix:\" WHERE \",prefixOverrides:\" AND| OR\"}){\n");
-
-        int c = 0;
-        for (Iterator<PartTree.OrPart> iterator = tree.iterator(); iterator.hasNext(); ) {
-            PartTree.OrPart orPart = iterator.next();
-            builder.append(" OR (\n");
-            builder.append("@trim({prefix:\"\",prefixOverrides:\" AND| OR\"}){\n");
-            for (Iterator<Part> it = orPart.iterator(); it.hasNext(); ) {
-                Part part = it.next();
-                MybatisEntityModel column = entityInformation.getModel().findColumnByPropertyName(part.getProperty().getSegment());
-                if (null == column) {
-                    throw new MybatisQueryException("can not find property: " + part.getProperty().getSegment() + " in " + method.getName());
-                }
-                builder.append(" AND ");
-                builder.append("#QUOTA+model.name+QUOTA#." + column.getNameInDatabase());
-
-
-                switch (part.getType()) {
-                    case SIMPLE_PROPERTY:
-                        builder.append("=");
-                        break;
-                }
-
-                builder.append("\\#_parameter.p" + c + "\\#");
-
-
-                c += part.getType().getNumberOfArguments();
-            }
-
-            builder.append("@}\n");
-
-            builder.append(")\n");
-
-        }
-        builder.append("@}\n");
-        return builder.toString();
-    }
-
 
     private void doCreateQueryStatement(MybatisQueryMethod method) {
 
         Configuration configuration = sqlSessionTemplate.getConfiguration();
-
-        if (configuration.hasStatement(getStatementId())) {
-            statementName = super.getStatementName() + UUID.randomUUID().toString(); // FIXME need do it?
-        }
 
         String statementXML = "";
         if (tree.isDelete()) {
@@ -354,17 +349,9 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         } else if (tree.isCountProjection()) {
             statementXML = doCreateCountQueryStatement(getStatementName());
         } else if (method.isPageQuery()) {
-            if ("sqlserver".equals(configuration.getDatabaseId())) {
-                statementXML = doCreatePageQueryStatementForSqlServer(true);
-            } else {
-                statementXML = doCreatePageQueryStatement(true);
-            }
+            statementXML = doCreatePageQueryStatement(true);
         } else if (method.isSliceQuery()) {
-            if ("sqlserver".equals(configuration.getDatabaseId())) {
-                statementXML = doCreatePageQueryStatementForSqlServer(false);
-            } else {
-                statementXML = doCreatePageQueryStatement(false);
-            }
+            statementXML = doCreatePageQueryStatement(false);
         } else if (method.isStreamQuery()) {
         } else if (method.isCollectionQuery()) {
             statementXML = doCreateCollectionQueryStatement();
@@ -375,17 +362,12 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
         StringBuilder builder = new StringBuilder();
         builder.append(MAPPER_BEGIN);
+        builder.append("<mapper namespace=\"" + getNamespace() + "\">");
         builder.append(statementXML);
         builder.append(MAPPER_END);
 
-        Map<String, Object> context = new HashMap<String, Object>();
-        context.put("_mybatis_auto_mapping", "true");
-        context.put("lang", LANG_BEETL);
-        context.put("namespace", getNamespace());
-        context.put("tableName", entityInformation.getModel().getNameInDatabase());
-        context.put("model", entityInformation.getModel());
-        String xml = BeetlFacade.apply(builder.toString(), context);
 
+        String xml = builder.toString();
 
         if (logger.isDebugEnabled()) {
             logger.debug("\n******************* Auto Generate MyBatis Mapping XML (" + getStatementId() + ") *******************\n" + xml);
@@ -397,7 +379,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
             // ignore
         }
         String namespace = getNamespace();
-        String resource = method.getName() + "_auto_generate.xml";
+        String resource = getStatementId() + "_auto_generate.xml";
         try {
             XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments(), namespace);
             xmlMapperBuilder.parse();

@@ -51,7 +51,6 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
     private static final String ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE = "enableDefaultTransactions";
     private static final String SQL_SESSION_TEMPLATE_BEAN_NAME_SUFFIX = "_Template";
     private static final String LOCALISM_BEAN_NAME_SUFFIX             = "_Localism";
-    private static final String PAGINATION_INTERCEPTOR_SUFFIX         = "_PaginationInterceptor";
 
     @Override
     public String getModuleName() {

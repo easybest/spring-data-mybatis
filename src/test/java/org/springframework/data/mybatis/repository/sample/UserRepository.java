@@ -23,9 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.domain.sample.Role;
-import org.springframework.data.mybatis.domain.sample.SpecialUser;
 import org.springframework.data.mybatis.domain.sample.User;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.mybatis.repository.support.MybatisRepository;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
@@ -36,7 +35,7 @@ import java.util.Set;
 /**
  * @author Jarvis Song
  */
-public interface UserRepository extends PagingAndSortingRepository<User, Integer> {
+public interface UserRepository extends MybatisRepository<User, Integer> {
 
     User findByEmailAddressAndLastname(String emailAddress, String lastname);
 
@@ -44,10 +43,9 @@ public interface UserRepository extends PagingAndSortingRepository<User, Integer
 
     List<User> findByEmailAddressAndLastnameOrFirstname(String emailAddress, String lastname, String username);
 
+    List<User> findByLastname(String lastname);
+
     Page<User> findByLastname(Pageable pageable, String lastname);
-
-    Page<User> findByLastnameOrderByFirstnameDesc(Pageable pageable, String lastname);
-
 
     List<User> findByFirstname(String firstname, Pageable pageable);
 
@@ -65,7 +63,7 @@ public interface UserRepository extends PagingAndSortingRepository<User, Integer
 
     List<User> findByManagerLastname(String name);
 
-    List<User> findByColleaguesLastname(String lastname);
+//    List<User> findByColleaguesLastname(String lastname);
 
     List<User> findByLastnameNotNull();
 
@@ -73,7 +71,7 @@ public interface UserRepository extends PagingAndSortingRepository<User, Integer
 
     List<User> findByEmailAddressLike(String email, Sort sort);
 
-    List<SpecialUser> findSpecialUsersByLastname(String lastname);
+//    List<SpecialUser> findSpecialUsersByLastname(String lastname);
 
     List<User> findByLastnameIgnoringCase(String lastname);
 
@@ -115,7 +113,7 @@ public interface UserRepository extends PagingAndSortingRepository<User, Integer
 
     Slice<User> findSliceByLastname(String lastname, Pageable pageable);
 
-    List<User> findByAttributesIn(Set<String> attributes);
+//    List<User> findByAttributesIn(Set<String> attributes);
 
     Long removeByLastname(String lastname);
 
@@ -158,13 +156,13 @@ public interface UserRepository extends PagingAndSortingRepository<User, Integer
     List<User> findByLastnameNotContaining(String part);
 
 
-    List<User> findByRolesContaining(Role role);
-
-    List<User> findByRolesNotContaining(Role role);
-
-    List<User> findByRolesNameContaining(String name);
-
-    List<RolesAndFirstname> findRolesAndFirstnameBy();
+//    List<User> findByRolesContaining(Role role);
+//
+//    List<User> findByRolesNotContaining(Role role);
+//
+//    List<User> findByRolesNameContaining(String name);
+//
+//    List<RolesAndFirstname> findRolesAndFirstnameBy();
 
     interface RolesAndFirstname {
 

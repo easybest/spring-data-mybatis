@@ -16,12 +16,21 @@
  *
  */
 
-package org.mybatis.scripting.beetl;
+package org.springframework.data.mybatis.repository.localism.identity;
 
-import org.beetl.core.resource.StringTemplateResourceLoader;
+public class SqlServerIdentityColumnSupport extends IdentityColumnSupportImpl {
+    @Override
+    public boolean supportsIdentityColumns() {
+        return true;
+    }
 
-/**
- * Created by songjiawei on 2016/11/13.
- */
-public class StringSqlTemplateLoader extends StringTemplateResourceLoader {
+    @Override
+    public String getIdentitySelectString(String table, String column, int type) {
+        return "select @@identity";
+    }
+
+    @Override
+    public String getIdentityColumnString(int type) {
+        return "identity not null";
+    }
 }

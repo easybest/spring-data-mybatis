@@ -60,12 +60,20 @@ public class LocalismFactoryBean implements FactoryBean<Localism>, InitializingB
     public static Localism getLocalism(String databaseId) {
         if ("h2".equalsIgnoreCase(databaseId)) {
             return new H2Localism();
-
         }
 
         if ("MySQL".equalsIgnoreCase(databaseId)) {
             return new MySQLLocalism();
         }
+
+        if ("Oracle".equalsIgnoreCase(databaseId)) {
+            return new OracleLocalism();
+        }
+        if ("sqlserver".equalsIgnoreCase(databaseId)) {
+            return new SqlServerLocalism();
+        }
+
+
         throw new IllegalArgumentException("not support database id: " + databaseId);
     }
 
