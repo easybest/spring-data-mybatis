@@ -87,10 +87,10 @@ public final class MybatisQueryLookupStrategy {
             if (null != query) {
                 return query;
             }
-            String name = method.getNamedQueryName();
-            if (namedQueries.hasQuery(name)) {
-                return MybatisQueryFactory.INSTANCE.fromMethodWithQueryString(sqlSessionTemplate, method, namedQueries.getQuery(name), evaluationContextProvider);
-            }
+//            String name = method.getNamedQueryName();
+//            if (namedQueries.hasQuery(name)) {
+//                return MybatisQueryFactory.INSTANCE.fromMethodWithQueryString(sqlSessionTemplate, method, namedQueries.getQuery(name), evaluationContextProvider);
+//            }
             throw new IllegalStateException(
                     String.format("Did neither find a NamedQuery nor an annotated query for method %s!", method));
         }
