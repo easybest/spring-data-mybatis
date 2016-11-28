@@ -25,11 +25,9 @@ import org.springframework.data.mybatis.repository.annotation.Query;
 import org.springframework.data.mybatis.repository.support.MybatisEntityInformationSupport;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -113,11 +111,6 @@ public class MybatisQueryMethod extends QueryMethod {
         return method.getAnnotation(Basic.class);
     }
 
-    String getAnnotatedQuery() {
-
-        String query = getAnnotationValue("value", String.class);
-        return StringUtils.hasText(query) ? query : null;
-    }
 
     private <T> T getAnnotationValue(String attribute, Class<T> type) {
         return getMergedOrDefaultAnnotationValue(attribute, Query.class, type);
@@ -133,26 +126,5 @@ public class MybatisQueryMethod extends QueryMethod {
         return targetType.cast(AnnotationUtils.getValue(annotation, attribute));
     }
 
-    private void assertParameterNamesInAnnotatedQuery() {
 
-        String annotatedQuery = getAnnotatedQuery();
-
-        if (!QueryUtils.hasNamedParameter(annotatedQuery)) {
-            return;
-        }
-
-        for (Parameter parameter : getParameters()) {
-
-            if (!parameter.isNamedParameter()) {
-                continue;
-            }
-
-            if (!annotatedQuery.contains(String.format(":%s", parameter.getName()))
-                    && !annotatedQuery.contains(String.format("#%s", parameter.getName()))) {
-                throw new IllegalStateException(
-                        String.format("Using named parameters for method %s but parameter '%s' not found in annotated query '%s'!",
-                                method, parameter.getName(), annotatedQuery));
-            }
-        }
-    }
 }

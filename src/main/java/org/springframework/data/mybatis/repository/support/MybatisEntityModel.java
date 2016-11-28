@@ -32,6 +32,8 @@ import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 
 /**
@@ -60,8 +62,10 @@ public class MybatisEntityModel {
     private Map<String, MybatisEntityModel> manyToManys        = new LinkedHashMap<String, MybatisEntityModel>();
     private Map<String, MybatisEntityModel> joinColumns        = new LinkedHashMap<String, MybatisEntityModel>(); //BASIC use join columns
     private List<SearchModel>               searchModels       = new ArrayList<SearchModel>();
+    private JoinTableConfig joinTableConfig;
 
     private MybatisEntityModel primaryKey;
+    private String             fromPropertyName;
 
     /* JOIN COLUMN INFO */
     private String joinColumnName;
@@ -171,6 +175,7 @@ public class MybatisEntityModel {
                 }
             }
 
+
             // ManyToOne
             if (hasAnnotation(propertyDescriptor, ManyToOne.class)) {
                 if (null != parent && parent.getClz() == domainClass) {
@@ -218,16 +223,6 @@ public class MybatisEntityModel {
             }
             // ManyToMany
             if (hasAnnotation(propertyDescriptor, ManyToMany.class)) {
-                if (!includeRelation) {
-                    continue;
-                }
-
-                if (Collection.class.isAssignableFrom(type)) {
-                    // TODO
-                }
-
-//                MybatisEntityModel target = new MybatisEntityModel(this, type, false);
-//                manyToManys.put(propertyName, target);
                 continue;
             }
 
@@ -261,6 +256,129 @@ public class MybatisEntityModel {
                 columns.put(propertyName, column);
             }
         }
+        for (PropertyDescriptor propertyDescriptor : properties) {
+            String pName = propertyDescriptor.getName();
+            Method pMethod = propertyDescriptor.getReadMethod();
+            Field pField = ReflectionUtils.findField(domainClass, pName);
+
+
+            Class<?> type = getType(propertyDescriptor, pMethod, pField);
+            String propertyName = getPropertyName(propertyDescriptor, pMethod, pField);
+
+
+            // ManyToMany
+            if (hasAnnotation(propertyDescriptor, ManyToMany.class)) {
+                if (!includeRelation) {
+                    continue;
+                }
+
+                Class targetClass = null;
+                String joinTableName;
+                String[] joinColumnsName;
+                String[] joinColumnsReferencedColumnName;
+                String[] inverseJoinColumnsName;
+                String[] inverseJoinReferencedColumnName;
+
+                Class<?> fieldClass = pField.getType();
+                if (fieldClass.isPrimitive()) {
+                    continue;
+                }
+                if (Collection.class.isAssignableFrom(fieldClass)) {
+                    Type fc = pField.getGenericType();
+                    if (null != fc && fc instanceof ParameterizedType) {
+                        ParameterizedType pt = (ParameterizedType) fc;
+                        targetClass = (Class) pt.getActualTypeArguments()[0];
+                    }
+                }
+
+                if (null == targetClass) {
+                    continue;//FIXME or throw exception?
+                }
+
+                MybatisEntityModel target = new MybatisEntityModel(this, targetClass, false);
+
+                joinTableName = nameInDatabase + "_" + target.getNameInDatabase();
+                joinColumnsName = new String[]{nameInDatabase + "_" + getPrimaryKey().getNameInDatabase()};
+                joinColumnsReferencedColumnName = new String[]{getPrimaryKey().getNameInDatabase()};
+                inverseJoinColumnsName = new String[]{target.getNameInDatabase() + "_" + target.getPrimaryKey().getNameInDatabase()};
+                inverseJoinReferencedColumnName = new String[]{target.getPrimaryKey().getNameInDatabase()};
+
+                JoinTable joinTable = getAnnotation(pMethod, pField, JoinTable.class);
+                if (null != joinTable) {
+                    if (StringUtils.isNotEmpty(joinTable.name())) {
+                        joinTableName = joinTable.name();
+                    }
+                    if (null != joinTable.joinColumns() && joinTable.joinColumns().length > 0) {
+                        joinColumnsName = new String[joinTable.joinColumns().length];
+                        joinColumnsReferencedColumnName = new String[joinTable.joinColumns().length];
+                        for (int i = 0; i < joinTable.joinColumns().length; i++) {
+                            JoinColumn joinColumn = joinTable.joinColumns()[i];
+                            if (StringUtils.isNotEmpty(joinColumn.name())) {
+                                joinColumnsName[i] = joinColumn.name();
+                            } else {
+                                joinColumnsName[i] = nameInDatabase + "_" + getPrimaryKey().getNameInDatabase();
+                            }
+                            if (StringUtils.isNotEmpty(joinColumn.referencedColumnName())) {
+                                joinColumnsReferencedColumnName[i] = joinColumn.referencedColumnName();
+                            } else {
+                                joinColumnsReferencedColumnName[i] = getPrimaryKey().getNameInDatabase();
+                            }
+                        }
+                    }
+                    if (null != joinTable.inverseJoinColumns() && joinTable.inverseJoinColumns().length > 0) {
+                        inverseJoinColumnsName = new String[joinTable.inverseJoinColumns().length];
+                        inverseJoinReferencedColumnName = new String[joinTable.inverseJoinColumns().length];
+                        for (int i = 0; i < joinTable.inverseJoinColumns().length; i++) {
+                            JoinColumn joinColumn = joinTable.inverseJoinColumns()[i];
+                            if (StringUtils.isNotEmpty(joinColumn.name())) {
+                                inverseJoinColumnsName[i] = joinColumn.name();
+                            } else {
+                                inverseJoinColumnsName[i] = target.getNameInDatabase() + "_" + target.getPrimaryKey().getNameInDatabase();
+                            }
+                            if (StringUtils.isNotEmpty(joinColumn.referencedColumnName())) {
+                                inverseJoinReferencedColumnName[i] = joinColumn.referencedColumnName();
+                            } else {
+                                inverseJoinReferencedColumnName[i] = target.getPrimaryKey().getNameInDatabase();
+                            }
+                        }
+                    }
+                }
+
+                JoinTableConfig joinTableConfig = new JoinTableConfig(joinTableName, target.getNameInDatabase(), joinColumnsName, joinColumnsReferencedColumnName, inverseJoinColumnsName, inverseJoinReferencedColumnName);
+                target.setJoinTableConfig(joinTableConfig);
+
+                if (Collection.class.isAssignableFrom(type)) {
+                    // TODO
+                }
+                target.setFromPropertyName(propertyName);
+                manyToManys.put(propertyName, target);
+                continue;
+            }
+
+        }
+
+    }
+
+    private void resolveJoinColumn(Method method, Field field, String propertyName, MybatisEntityModel dm) {
+        String joinColumnName = StringUtils.camelToUnderline(propertyName).toUpperCase() + "_" + dm.getPrimaryKeys().values().iterator().next().getNameInDatabase();
+        String joinReferencedColumnName = dm.getPrimaryKeys().values().iterator().next().getNameInDatabase();
+        String joinReferencedName = dm.getPrimaryKeys().values().iterator().next().getName();
+        JoinColumn joinColumn = getAnnotation(method, field, JoinColumn.class);
+        if (null != joinColumn) {
+            if (StringUtils.isNotEmpty(joinColumn.name())) {
+                joinColumnName = joinColumn.name();
+            }
+            if (StringUtils.isNotEmpty(joinColumn.referencedColumnName())) {
+                joinReferencedColumnName = joinColumn.referencedColumnName();
+                MybatisEntityModel referenceModel = dm.findColumnByColumnName(joinReferencedColumnName);
+                if (null != referenceModel) {
+                    joinReferencedName = referenceModel.getName();
+                }
+            }
+        }
+        dm.setJoinColumnName(joinColumnName);
+        dm.setJoinReferencedColumnName(joinReferencedColumnName);
+        dm.setJoinReferencedName(joinReferencedName);
     }
 
     public void setTypes(int types) {
@@ -338,6 +456,11 @@ public class MybatisEntityModel {
         return column;
     }
 
+    public MybatisEntityModel findManyToManyByPropertyName(String segment) {
+        MybatisEntityModel column = manyToManys.get(segment);
+        return column;
+    }
+
 
     /**
      * process join column in not include relation.
@@ -390,28 +513,6 @@ public class MybatisEntityModel {
 
 
         joinColumns.put(column.getName(), column);
-    }
-
-    private void resolveJoinColumn(Method method, Field field, String propertyName, MybatisEntityModel dm) {
-        String joinColumnName = StringUtils.camelToUnderline(propertyName).toUpperCase() + "_" + dm.getPrimaryKeys().values().iterator().next().getNameInDatabase();
-        String joinReferencedColumnName = dm.getPrimaryKeys().values().iterator().next().getNameInDatabase();
-        String joinReferencedName = dm.getPrimaryKeys().values().iterator().next().getName();
-        JoinColumn joinColumn = getAnnotation(method, field, JoinColumn.class);
-        if (null != joinColumn) {
-            if (StringUtils.isNotEmpty(joinColumn.name())) {
-                joinColumnName = joinColumn.name();
-            }
-            if (StringUtils.isNotEmpty(joinColumn.referencedColumnName())) {
-                joinReferencedColumnName = joinColumn.referencedColumnName();
-                MybatisEntityModel referenceModel = dm.findColumnByColumnName(joinReferencedColumnName);
-                if (null != referenceModel) {
-                    joinReferencedName = referenceModel.getName();
-                }
-            }
-        }
-        dm.setJoinColumnName(joinColumnName);
-        dm.setJoinReferencedColumnName(joinReferencedColumnName);
-        dm.setJoinReferencedName(joinReferencedName);
     }
 
 
@@ -598,6 +699,21 @@ public class MybatisEntityModel {
         return compositeId;
     }
 
+    public JoinTableConfig getJoinTableConfig() {
+        return joinTableConfig;
+    }
+
+    public void setJoinTableConfig(JoinTableConfig joinTableConfig) {
+        this.joinTableConfig = joinTableConfig;
+    }
+
+    public String getFromPropertyName() {
+        return fromPropertyName;
+    }
+
+    public void setFromPropertyName(String fromPropertyName) {
+        this.fromPropertyName = fromPropertyName;
+    }
 
     /**
      * Searcher model.
@@ -647,6 +763,72 @@ public class MybatisEntityModel {
 
         public void setOperate(String operate) {
             this.operate = operate;
+        }
+    }
+
+    public static class JoinTableConfig {
+        private String   joinTableName;
+        private String   targetTableName;
+        private String[] joinColumnsName;
+        private String[] joinColumnsReferencedColumnName;
+        private String[] inverseJoinColumnsName;
+        private String[] inverseJoinReferencedColumnName;
+
+        public JoinTableConfig(String joinTableName, String targetTableName, String[] joinColumnsName, String[] joinColumnsReferencedColumnName, String[] inverseJoinColumnsName, String[] inverseJoinReferencedColumnName) {
+            this.joinTableName = joinTableName;
+            this.targetTableName = targetTableName;
+            this.joinColumnsName = joinColumnsName;
+            this.joinColumnsReferencedColumnName = joinColumnsReferencedColumnName;
+            this.inverseJoinColumnsName = inverseJoinColumnsName;
+            this.inverseJoinReferencedColumnName = inverseJoinReferencedColumnName;
+        }
+
+        public String getTargetTableName() {
+            return targetTableName;
+        }
+
+        public void setTargetTableName(String targetTableName) {
+            this.targetTableName = targetTableName;
+        }
+
+        public String getJoinTableName() {
+            return joinTableName;
+        }
+
+        public void setJoinTableName(String joinTableName) {
+            this.joinTableName = joinTableName;
+        }
+
+        public String[] getJoinColumnsName() {
+            return joinColumnsName;
+        }
+
+        public void setJoinColumnsName(String[] joinColumnsName) {
+            this.joinColumnsName = joinColumnsName;
+        }
+
+        public String[] getJoinColumnsReferencedColumnName() {
+            return joinColumnsReferencedColumnName;
+        }
+
+        public void setJoinColumnsReferencedColumnName(String[] joinColumnsReferencedColumnName) {
+            this.joinColumnsReferencedColumnName = joinColumnsReferencedColumnName;
+        }
+
+        public String[] getInverseJoinColumnsName() {
+            return inverseJoinColumnsName;
+        }
+
+        public void setInverseJoinColumnsName(String[] inverseJoinColumnsName) {
+            this.inverseJoinColumnsName = inverseJoinColumnsName;
+        }
+
+        public String[] getInverseJoinReferencedColumnName() {
+            return inverseJoinReferencedColumnName;
+        }
+
+        public void setInverseJoinReferencedColumnName(String[] inverseJoinReferencedColumnName) {
+            this.inverseJoinReferencedColumnName = inverseJoinReferencedColumnName;
         }
     }
 }

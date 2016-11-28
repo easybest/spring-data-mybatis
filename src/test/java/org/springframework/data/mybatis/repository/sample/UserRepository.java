@@ -24,6 +24,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.domain.sample.Role;
 import org.springframework.data.mybatis.domain.sample.User;
+import org.springframework.data.mybatis.repository.annotation.Query;
 import org.springframework.data.mybatis.repository.support.MybatisRepository;
 import org.springframework.data.repository.query.Param;
 
@@ -36,6 +37,12 @@ import java.util.Set;
  * @author Jarvis Song
  */
 public interface UserRepository extends MybatisRepository<User, Integer> {
+
+    @Query
+    List<User> findUseMapper(@Param("lastname") String lastname);
+
+    @Query("findUseMapper")
+    List<User> findUseMapper1(@Param("lastname") String lastname);
 
     User findByEmailAddressAndLastname(String emailAddress, String lastname);
 

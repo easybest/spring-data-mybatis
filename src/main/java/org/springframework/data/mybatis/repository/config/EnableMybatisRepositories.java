@@ -48,6 +48,8 @@ public @interface EnableMybatisRepositories {
      */
     String[] value() default {};
 
+    String mapperLocations() default "";
+
     /**
      * Base packages to scan for annotated components. {@link #value()} is an alias for (and mutually exclusive with) this
      * attribute. Use {@link #basePackageClasses()} for a type-safe alternative to String-based package names.

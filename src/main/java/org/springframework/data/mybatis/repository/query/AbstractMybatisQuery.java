@@ -114,10 +114,10 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
     protected String getStatementName() {
         Query annotation = method.getQueryAnnotation();
-        if (null == annotation || StringUtils.isEmpty(annotation.name())) {
+        if (null == annotation || StringUtils.isEmpty(annotation.value())) {
             return method.getName();
         }
-        return annotation.name();
+        return annotation.value();
     }
 
     protected boolean isBasicQuery() {
