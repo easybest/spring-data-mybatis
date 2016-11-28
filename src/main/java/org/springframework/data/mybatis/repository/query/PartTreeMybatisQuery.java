@@ -26,10 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.mapping.model.MappingException;
 import org.springframework.data.mybatis.repository.localism.Localism;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.DeleteExecution;
-import org.springframework.data.mybatis.repository.support.MybatisEntityInformationSupport;
-import org.springframework.data.mybatis.repository.support.MybatisEntityModel;
-import org.springframework.data.mybatis.repository.support.MybatisMapperGenerator;
-import org.springframework.data.mybatis.repository.support.MybatisQueryException;
+import org.springframework.data.mybatis.repository.support.*;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
 import org.springframework.data.repository.query.parser.PartTree;
@@ -129,9 +126,14 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
                                 columnName = quota(model.getName() + "." + part.getProperty().getSegment()) + "." + manyTonOneColumn.getNameInDatabase();
                             }
                         } else {
-
+                            MybatisEntityModel manyToMany = model.findManyToManyByPropertyName(part.getProperty().getSegment());
+                            if (null != manyToMany) {
+                                throw new MybatisQueryNotSupportException("now we can not support @ManyToMany query.");
+                            }
                         }
                     }
+
+
                 }
 
                 if (null == columnName) {

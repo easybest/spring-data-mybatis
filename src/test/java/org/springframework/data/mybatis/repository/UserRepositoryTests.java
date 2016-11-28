@@ -388,8 +388,8 @@ public class UserRepositoryTests {
         assertThat(result, hasItem(thirdUser));
     }
 
-//    @Test
-//    public void executesFindByColleaguesLastnameCorrectly() throws Exception {
+//    @Test(expected = MybatisQueryNotSupportException.class)
+//    public void executesFindByColleaguesLastnameCorrectly() {
 //
 //        flushTestUsers();
 //

@@ -19,10 +19,7 @@
 package org.springframework.data.mybatis.domain.sample;
 
 import javax.persistence.*;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Jarvis Song
@@ -45,6 +42,9 @@ public class User {
     private String emailAddress;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "DS_USER_DS_USER",
+            joinColumns = @JoinColumn(name = "DS_USER_ID", referencedColumnName = "ID"),
+            inverseJoinColumns = @JoinColumn(name = "COLLEAGUES_ID", referencedColumnName = "ID"))
     private Set<User> colleagues;
     @ManyToOne
     private User      manager;
@@ -89,6 +89,7 @@ public class User {
         this.attributes = new HashSet<String>();
         this.createdAt = new Date();
     }
+
 
     public User getManager() {
         return manager;
