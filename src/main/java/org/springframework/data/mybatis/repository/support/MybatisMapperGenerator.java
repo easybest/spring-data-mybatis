@@ -25,6 +25,7 @@ import org.springframework.util.StringUtils;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Jarvis Song
@@ -83,12 +84,12 @@ public class MybatisMapperGenerator {
         StringBuilder builder = new StringBuilder();
         builder.append(model.getNameInDatabase()).append(" ").append(quota(model.getName()));
         if (!basic) {
-            builder.append(buildLeftOuterJoin());
+            builder.append(buildLeftOuterJoin(null));
         }
         return builder.toString();
     }
 
-    private String buildLeftOuterJoin() {
+    private String buildLeftOuterJoin(Set<MybatisEntityModel> manyToManys) {
         StringBuilder builder = new StringBuilder();
         for (Map.Entry<String, MybatisEntityModel> entry : model.getOneToOnes().entrySet()) {
             builder.append(" left outer join ").append(entry.getValue().getNameInDatabase()).append(" ").append(quota(model.getName() + "." + entry.getKey()))
@@ -100,6 +101,23 @@ public class MybatisMapperGenerator {
                     .append(" on ").append(quota(model.getName())).append(".").append(entry.getValue().getJoinColumnName())
                     .append("=").append(quota(model.getName() + "." + entry.getKey())).append(".").append(entry.getValue().getJoinReferencedColumnName());
         }
+
+//        if (!CollectionUtils.isEmpty(manyToManys)) {
+//            for (MybatisEntityModel manyToMany : manyToManys) {
+//                MybatisEntityModel.JoinTableConfig config = manyToMany.getJoinTableConfig();
+//                builder.append(" left outer join ").append(config.getJoinTableName()).append(" ").append(quota(model.getName() + "." + manyToMany.getFromPropertyName())).append(" on ");
+//                for (int i = 0; i < config.getJoinColumnsName().length; i++) {
+//                    if (i > 0) {
+//                        builder.append(" and ");
+//                    }
+//                    builder.append(quota(model.getName() + "." + manyToMany.getFromPropertyName())).append(".").append(config.getJoinColumnsName()[i]).append("=");
+//                    builder.append(quota(model.getName())).append(".").append(config.getJoinColumnsReferencedColumnName()[i]);
+//                }
+//                builder.append(" left outer join ").append();
+//            }
+//
+//        }
+
         return builder.toString();
     }
 

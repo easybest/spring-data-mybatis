@@ -97,7 +97,14 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
         builder.addConstructorArgReference(sqlSessionFactoryRef);
         registerIfNotAlreadyRegistered(builder.getBeanDefinition(), registry, sqlSessionFactoryRef.concat(SQL_SESSION_TEMPLATE_BEAN_NAME_SUFFIX), source);
 
-
+        // create mybatis mapper register
+        String mapperLocations = config.getAttribute("mapperLocations");
+        if (StringUtils.hasText(mapperLocations)) {
+            BeanDefinitionBuilder builder1 = BeanDefinitionBuilder.rootBeanDefinition(MybatisMappersRegister.class);
+            builder1.addPropertyReference("sqlSessionFactory", sqlSessionFactoryRef);
+            builder1.addPropertyValue("locations", mapperLocations);
+            registerIfNotAlreadyRegistered(builder1.getBeanDefinition(), registry, sqlSessionFactoryRef.concat("_MapperLocations"), source);
+        }
     }
 
     @Override

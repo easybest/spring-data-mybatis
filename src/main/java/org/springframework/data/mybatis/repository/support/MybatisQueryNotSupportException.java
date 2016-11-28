@@ -16,43 +16,28 @@
  *
  */
 
-package org.springframework.data.mybatis.repository.annotation;
-
-import org.springframework.data.annotation.QueryAnnotation;
-
-import java.lang.annotation.*;
+package org.springframework.data.mybatis.repository.support;
 
 /**
- * Annotated to named query.
- *
  * @author Jarvis Song
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
-@QueryAnnotation
-@Documented
-public @interface Query {
-
-    /**
-     * statement name.
-     *
-     * @return
-     */
-    String value() default "";
-
-    String namespace() default "";
-
-    String sql() default "";
-
-    Class<?> returnType() default Unspecified.class;
-
-    Class<?> parameterType() default Unspecified.class;
-
-    boolean basic() default true;
-
-    class Unspecified {
+public class MybatisQueryNotSupportException extends RuntimeException {
+    public MybatisQueryNotSupportException() {
     }
 
+    public MybatisQueryNotSupportException(String message) {
+        super(message);
+    }
+
+    public MybatisQueryNotSupportException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public MybatisQueryNotSupportException(Throwable cause) {
+        super(cause);
+    }
+
+    public MybatisQueryNotSupportException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }
-
-
