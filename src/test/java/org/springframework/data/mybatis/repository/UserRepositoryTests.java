@@ -110,6 +110,17 @@ public class UserRepositoryTests {
     }
 
     @Test
+    public void testFindUseMapperWithStatement() throws Exception {
+
+        flushTestUsers();
+
+        List<User> byName = repository.findUseMapper1("Gierke");
+
+        assertThat(byName.size(), is(1));
+        assertThat(byName.get(0), is(firstUser));
+    }
+
+    @Test
     public void testRead() throws Exception {
 
         flushTestUsers();
