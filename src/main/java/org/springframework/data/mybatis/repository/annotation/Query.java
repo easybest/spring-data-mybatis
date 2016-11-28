@@ -33,11 +33,16 @@ import java.lang.annotation.*;
 @Documented
 public @interface Query {
 
+    /**
+     * statement name.
+     *
+     * @return
+     */
     String value() default "";
 
     String namespace() default "";
 
-    String name() default "";
+    String sql() default "";
 
     Class<?> returnType() default Unspecified.class;
 
