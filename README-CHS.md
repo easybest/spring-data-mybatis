@@ -38,7 +38,10 @@ Download the jar through Maven:
 The simple Spring Data Mybatis configuration with Java-Config looks like this: 
 ```java
 @Configuration
-@EnableMybatisRepositories("com.example.repositories")
+@EnableMybatisRepositories(
+    value = "com.example.repositories",
+    mapperLocations = "classpath*:/com/example/repositories/mappers/*Mapper.xml"
+)
 public class AppConfig {
 
     @Bean
