@@ -28,6 +28,7 @@ import org.springframework.data.mybatis.repository.query.MybatisParameters.Mybat
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.NoResultException;
 import java.util.Collection;
@@ -85,6 +86,7 @@ public abstract class MybatisQueryExecution {
                 ? CONVERSION_SERVICE.convert(result, requiredType) : result;
     }
 
+
     static class CollectionExecution extends MybatisQueryExecution {
 
         @Override
@@ -99,7 +101,12 @@ public abstract class MybatisQueryExecution {
 
             int c = 0;
             for (MybatisParameter param : parameters.getBindableParameters()) {
-                parameter.put("p" + (c++), values[param.getIndex()]);
+                String name = param.getName();
+                if (StringUtils.isEmpty(name)) {
+                    name = "p" + c;
+                }
+                parameter.put(name, values[param.getIndex()]);
+                c++;
             }
 
             if (parameters.hasSortParameter()) {
@@ -118,7 +125,12 @@ public abstract class MybatisQueryExecution {
             Map<String, Object> parameter = new HashMap<String, Object>();
             int c = 0;
             for (MybatisParameter param : parameters.getBindableParameters()) {
-                parameter.put("p" + (c++), values[param.getIndex()]);
+                String name = param.getName();
+                if (StringUtils.isEmpty(name)) {
+                    name = "p" + c;
+                }
+                parameter.put(name, values[param.getIndex()]);
+                c++;
             }
 
 
@@ -148,7 +160,12 @@ public abstract class MybatisQueryExecution {
             Map<String, Object> parameter = new HashMap<String, Object>();
             int c = 0;
             for (MybatisParameter param : parameters.getBindableParameters()) {
-                parameter.put("p" + (c++), values[param.getIndex()]);
+                String name = param.getName();
+                if (StringUtils.isEmpty(name)) {
+                    name = "p" + c;
+                }
+                parameter.put(name, values[param.getIndex()]);
+                c++;
             }
 
             Pageable pager = (Pageable) values[parameters.getPageableIndex()];
@@ -164,7 +181,7 @@ public abstract class MybatisQueryExecution {
             parameter.put("offsetEnd", null == pager ? Integer.MAX_VALUE : pager.getOffset() + pager.getPageSize());
             List<?> result = query.getSqlSessionTemplate().selectList(query.getStatementId(), parameter);
 
-            if(null ==pager){
+            if (null == pager) {
                 return new PageImpl(result);
             }
 
@@ -198,7 +215,12 @@ public abstract class MybatisQueryExecution {
 
             int c = 0;
             for (MybatisParameter param : parameters.getBindableParameters()) {
-                parameter.put("p" + (c++), values[param.getIndex()]);
+                String name = param.getName();
+                if (StringUtils.isEmpty(name)) {
+                    name = "p" + c;
+                }
+                parameter.put(name, values[param.getIndex()]);
+                c++;
             }
 
             return query.getSqlSessionTemplate().selectOne(query.getStatementId(), parameter);
@@ -226,7 +248,12 @@ public abstract class MybatisQueryExecution {
 
             int c = 0;
             for (MybatisParameter param : parameters.getBindableParameters()) {
-                parameter.put("p" + (c++), values[param.getIndex()]);
+                String name = param.getName();
+                if (StringUtils.isEmpty(name)) {
+                    name = "p" + c;
+                }
+                parameter.put(name, values[param.getIndex()]);
+                c++;
             }
 
 
