@@ -38,8 +38,11 @@ import java.util.Set;
  */
 public interface UserRepository extends MybatisRepository<User, Integer> {
 
-    @Query("findUseMapper")
+    @Query
     List<User> findUseMapper(@Param("lastname") String lastname);
+
+    @Query("findUseMapper")
+    List<User> findUseMapper1(@Param("lastname") String lastname);
 
     User findByEmailAddressAndLastname(String emailAddress, String lastname);
 
