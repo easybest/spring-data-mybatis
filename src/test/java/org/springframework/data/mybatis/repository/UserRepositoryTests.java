@@ -99,6 +99,28 @@ public class UserRepositoryTests {
     }
 
     @Test
+    public void testFindUseMapper() throws Exception {
+
+        flushTestUsers();
+
+        List<User> byName = repository.findUseMapper("Gierke");
+
+        assertThat(byName.size(), is(1));
+        assertThat(byName.get(0), is(firstUser));
+    }
+
+    @Test
+    public void testFindUseMapperWithStatement() throws Exception {
+
+        flushTestUsers();
+
+        List<User> byName = repository.findUseMapper1("Gierke");
+
+        assertThat(byName.size(), is(1));
+        assertThat(byName.get(0), is(firstUser));
+    }
+
+    @Test
     public void testRead() throws Exception {
 
         flushTestUsers();
@@ -388,8 +410,8 @@ public class UserRepositoryTests {
         assertThat(result, hasItem(thirdUser));
     }
 
-//    @Test
-//    public void executesFindByColleaguesLastnameCorrectly() throws Exception {
+//    @Test(expected = MybatisQueryNotSupportException.class)
+//    public void executesFindByColleaguesLastnameCorrectly() {
 //
 //        flushTestUsers();
 //

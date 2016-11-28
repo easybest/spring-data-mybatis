@@ -45,15 +45,12 @@ public enum MybatisQueryFactory {
         }
 
 
-        return fromMethodWithQueryString(sqlSessionTemplate, method, method.getAnnotatedQuery(), evaluationContextProvider);
+        return fromMethodWithQueryString(sqlSessionTemplate, method, method.getQueryAnnotation(), evaluationContextProvider);
     }
 
-    AbstractMybatisQuery fromMethodWithQueryString(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, String queryString,
+    AbstractMybatisQuery fromMethodWithQueryString(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, Query query,
                                                    EvaluationContextProvider evaluationContextProvider) {
-        if (null == queryString) {
-            return null;
-        }
 
-        return new SimpleMybatisQuery(sqlSessionTemplate, method, queryString, evaluationContextProvider, PARSER);
+        return new SimpleMybatisQuery(sqlSessionTemplate, method, query, evaluationContextProvider, PARSER);
     }
 }
