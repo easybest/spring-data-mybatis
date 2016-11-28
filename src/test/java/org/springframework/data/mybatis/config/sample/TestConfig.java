@@ -37,7 +37,8 @@ import java.sql.SQLException;
  */
 @Configuration
 @EnableMybatisRepositories(
-        "org.springframework.data.mybatis.repository.sample"
+        value = "org.springframework.data.mybatis.repository.sample",
+        mapperLocations = "classpath*:/org/springframework/data/mybatis/repository/sample/mappers/*Mapper.xml"
 )
 public class TestConfig implements ResourceLoaderAware {
 
@@ -45,8 +46,6 @@ public class TestConfig implements ResourceLoaderAware {
 
     @Bean
     public DataSource dataSource() throws SQLException {
-
-
         return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).addScript("classpath:/test-init.sql").build();
     }
 
@@ -65,7 +64,6 @@ public class TestConfig implements ResourceLoaderAware {
 
     @Override
     public void setResourceLoader(ResourceLoader resourceLoader) {
-
         this.resourceLoader = resourceLoader;
     }
 }
