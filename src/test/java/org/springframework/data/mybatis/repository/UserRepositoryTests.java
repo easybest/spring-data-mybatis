@@ -71,13 +71,10 @@ public class UserRepositoryTests {
         thirdUser.setAge(43);
         fourthUser = new User("kevin", "raymond", "no@gmail.com");
         fourthUser.setAge(31);
-        adminRole = new Role("admin");
 
     }
 
     protected void flushTestUsers() {
-
-        roleRepository.save(adminRole);
 
         firstUser = repository.save(firstUser);
         secondUser = repository.save(secondUser);
