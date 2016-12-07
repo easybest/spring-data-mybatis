@@ -50,9 +50,9 @@ public @interface EnableMybatisRepositories {
 
     String[] mapperLocations() default {};
 
-    String[] baseEntityPackages() default {};
-
-    Class<?>[] baseEntityPackageClasses() default {};
+//    String[] baseEntityPackages() default {};
+//
+//    Class<?>[] baseEntityPackageClasses() default {};
 
     /**
      * Base packages to scan for annotated components. {@link #value()} is an alias for (and mutually exclusive with) this
