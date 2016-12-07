@@ -19,6 +19,10 @@ CREATE TABLE DS_USER (
   MANAGER_ID    NUMBER(11)    NULL,
   BINARY_DATA   BLOB          NULL,
   DATE_OF_BIRTH DATE          NULL,
+  country       VARCHAR2(64)  NULL,
+  city          VARCHAR2(64)  NULL,
+  street_name   VARCHAR2(64)  NULL,
+  street_no     VARCHAR2(64)  NULL,
   PRIMARY KEY (ID)
 );
 CREATE SEQUENCE SEQ_DS_USER;
