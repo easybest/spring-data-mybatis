@@ -19,26 +19,28 @@
 package org.springframework.data.mybatis.repository.config;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.data.mybatis.repository.localism.LocalismFactoryBean;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.data.annotation.Persistent;
+import org.springframework.data.mybatis.annotations.Entity;
+import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.repository.dialect.DialectFactoryBean;
 import org.springframework.data.mybatis.repository.support.MybatisRepository;
 import org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.config.XmlRepositoryConfigurationSource;
+import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
 import org.springframework.data.repository.util.TxUtils;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.Entity;
-import javax.persistence.MappedSuperclass;
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * Mybatis repository configuration extension for spring data.
@@ -50,11 +52,19 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
     private static final String DEFAULT_SQL_SESSION_FACTORY_BEAN_NAME = "sqlSessionFactory";
     private static final String ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE = "enableDefaultTransactions";
     private static final String SQL_SESSION_TEMPLATE_BEAN_NAME_SUFFIX = "_Template";
-    private static final String LOCALISM_BEAN_NAME_SUFFIX             = "_Localism";
+    private static final String DIALECT_BEAN_NAME_SUFFIX              = "_Dialect";
+    public static final  String MAPPING_CONTEXT_SUFFIX                = "_MappingContext";
+
+    private final ResourceLoader resourceLoader;
+
+    public MybatisRepositoryConfigExtension(ResourceLoader resourceLoader) {
+
+        this.resourceLoader = resourceLoader;
+    }
 
     @Override
     public String getModuleName() {
-        return "mybatis";
+        return "MyBatis";
     }
 
     @Override
@@ -69,7 +79,7 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 
     @Override
     protected Collection<Class<? extends Annotation>> getIdentifyingAnnotations() {
-        return Arrays.asList(Entity.class, MappedSuperclass.class);
+        return Arrays.asList(Entity.class, Persistent.class);
 
     }
 
@@ -78,18 +88,56 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
         return Collections.<Class<?>>singleton(MybatisRepository.class);
     }
 
+
+    private Class<?> loadRepositoryInterface(String repositoryInterface, ResourceLoader loader) {
+
+        ClassLoader classLoader = loader.getClassLoader();
+
+        try {
+            return org.springframework.util.ClassUtils.forName(repositoryInterface, classLoader);
+        } catch (ClassNotFoundException e) {
+        } catch (LinkageError e) {
+        }
+
+        return null;
+    }
+
     @Override
     public void registerBeansForRoot(BeanDefinitionRegistry registry, RepositoryConfigurationSource config) {
         super.registerBeansForRoot(registry, config);
 
+
+        Set<Class<?>> initialEntitySet = new HashSet<Class<?>>();
+        Collection<BeanDefinition> candidates = config.getCandidates(resourceLoader);
+        for (BeanDefinition candidate : candidates) {
+            Class<?> repositoryInterface = loadRepositoryInterface(candidate.getBeanClassName(), resourceLoader);
+            if (null == repositoryInterface) {
+                continue;
+            }
+
+            RepositoryMetadata metadata = AbstractRepositoryMetadata.getMetadata(repositoryInterface);
+            if (null == metadata) {
+                continue;
+            }
+
+            initialEntitySet.add(metadata.getDomainType());
+        }
+
+
         Object source = config.getSource();
         String sqlSessionFactoryRef = config.getAttribute("sqlSessionFactoryRef");
-        sqlSessionFactoryRef = null == sqlSessionFactoryRef ? DEFAULT_SQL_SESSION_FACTORY_BEAN_NAME : sqlSessionFactoryRef;
+        sqlSessionFactoryRef = (null == sqlSessionFactoryRef ? DEFAULT_SQL_SESSION_FACTORY_BEAN_NAME : sqlSessionFactoryRef);
 
-        // create database localism
-        BeanDefinitionBuilder localismBuilder = BeanDefinitionBuilder.rootBeanDefinition(LocalismFactoryBean.class);
-        localismBuilder.addPropertyReference("sqlSessionFactory", sqlSessionFactoryRef);
-        registerIfNotAlreadyRegistered(localismBuilder.getBeanDefinition(), registry, sqlSessionFactoryRef.concat(LOCALISM_BEAN_NAME_SUFFIX), source);
+
+        BeanDefinitionBuilder mappingContextBuilder = BeanDefinitionBuilder.rootBeanDefinition(MybatisMappingContext.class);
+        mappingContextBuilder.addPropertyValue("initialEntitySet", initialEntitySet);
+        registerIfNotAlreadyRegistered(mappingContextBuilder.getBeanDefinition(), registry, sqlSessionFactoryRef.concat(MAPPING_CONTEXT_SUFFIX), source);
+
+
+        // create database dialect
+        BeanDefinitionBuilder dialectBuilder = BeanDefinitionBuilder.rootBeanDefinition(DialectFactoryBean.class);
+        dialectBuilder.addPropertyReference("sqlSessionFactory", sqlSessionFactoryRef);
+        registerIfNotAlreadyRegistered(dialectBuilder.getBeanDefinition(), registry, sqlSessionFactoryRef.concat(DIALECT_BEAN_NAME_SUFFIX), source);
 
 
         // create sqlSessionTemplate bean.
@@ -98,13 +146,16 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
         registerIfNotAlreadyRegistered(builder.getBeanDefinition(), registry, sqlSessionFactoryRef.concat(SQL_SESSION_TEMPLATE_BEAN_NAME_SUFFIX), source);
 
         // create mybatis mapper register
-        String mapperLocations = config.getAttribute("mapperLocations");
-        if (StringUtils.hasText(mapperLocations)) {
-            BeanDefinitionBuilder builder1 = BeanDefinitionBuilder.rootBeanDefinition(MybatisMappersRegister.class);
-            builder1.addPropertyReference("sqlSessionFactory", sqlSessionFactoryRef);
-            builder1.addPropertyValue("locations", mapperLocations);
-            registerIfNotAlreadyRegistered(builder1.getBeanDefinition(), registry, sqlSessionFactoryRef.concat("_MapperLocations"), source);
+        if (config instanceof AnnotationRepositoryConfigurationSource) {
+            String[] mapperLocations = ((AnnotationRepositoryConfigurationSource) config).getAttributes().getStringArray("mapperLocations");
+            if (null != mapperLocations && mapperLocations.length > 0) {
+                BeanDefinitionBuilder builder1 = BeanDefinitionBuilder.rootBeanDefinition(MybatisMappersRegister.class);
+                builder1.addPropertyReference("sqlSessionFactory", sqlSessionFactoryRef);
+                builder1.addPropertyValue("locations", mapperLocations);
+                registerIfNotAlreadyRegistered(builder1.getBeanDefinition(), registry, sqlSessionFactoryRef.concat("_MapperLocations"), source);
+            }
         }
+
     }
 
     @Override
@@ -113,9 +164,10 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
         builder.addPropertyValue("transactionManager", null == transactionManagerRef ? DEFAULT_TRANSACTION_MANAGER_BEAN_NAME : transactionManagerRef);
 
         String sqlSessionFactoryRef = source.getAttribute("sqlSessionFactoryRef");
-        sqlSessionFactoryRef = null == sqlSessionFactoryRef ? DEFAULT_SQL_SESSION_FACTORY_BEAN_NAME : sqlSessionFactoryRef;
+        sqlSessionFactoryRef = (null == sqlSessionFactoryRef ? DEFAULT_SQL_SESSION_FACTORY_BEAN_NAME : sqlSessionFactoryRef);
         builder.addPropertyReference("sqlSessionTemplate", sqlSessionFactoryRef.concat(SQL_SESSION_TEMPLATE_BEAN_NAME_SUFFIX));
-        builder.addPropertyReference("localism", sqlSessionFactoryRef.concat(LOCALISM_BEAN_NAME_SUFFIX));
+        builder.addPropertyReference("dialect", sqlSessionFactoryRef.concat(DIALECT_BEAN_NAME_SUFFIX));
+        builder.addPropertyReference("mappingContext", sqlSessionFactoryRef.concat(MAPPING_CONTEXT_SUFFIX));
 
     }
 

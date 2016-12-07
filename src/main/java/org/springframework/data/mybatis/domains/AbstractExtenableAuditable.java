@@ -18,8 +18,10 @@
 
 package org.springframework.data.mybatis.domains;
 
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
+
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.mybatis.annotations.MappedSuperclass;
+
 import java.io.Serializable;
 import java.util.Map;
 

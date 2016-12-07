@@ -19,10 +19,10 @@
 package org.springframework.data.mybatis.repository.query;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.data.mybatis.annotations.Entity;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.Entity;
 
 /**
  * default implementation of mybatis entity metadata.

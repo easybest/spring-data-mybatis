@@ -48,7 +48,11 @@ public @interface EnableMybatisRepositories {
      */
     String[] value() default {};
 
-    String mapperLocations() default "";
+    String[] mapperLocations() default {};
+
+//    String[] baseEntityPackages() default {};
+//
+//    Class<?>[] baseEntityPackageClasses() default {};
 
     /**
      * Base packages to scan for annotated components. {@link #value()} is an alias for (and mutually exclusive with) this
@@ -122,8 +126,6 @@ public @interface EnableMybatisRepositories {
      * @return sqlSessionFactoryRef
      */
     String sqlSessionFactoryRef() default "sqlSessionFactory";
-
-//    String sqlSessionTemplateRef() default "sqlSessionTemplate";
 
     /**
      * Configures the name of the {@link PlatformTransactionManager} bean definition to be used to create repositories
