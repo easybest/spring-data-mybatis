@@ -20,14 +20,16 @@ package org.springframework.data.mybatis.domains;
 
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.annotations.JdbcType;
+import org.springframework.data.mybatis.annotations.Column;
+import org.springframework.data.mybatis.annotations.JdbcType;
+import org.springframework.data.mybatis.annotations.MappedSuperclass;
+import org.springframework.data.mybatis.annotations.Temporal;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import java.io.Serializable;
 import java.util.Date;
+
+import static org.apache.ibatis.type.JdbcType.BIGINT;
+import static org.springframework.data.mybatis.annotations.Temporal.TemporalType.TIMESTAMP;
 
 /**
  * Auditable Basic Entity Only DateTime.
@@ -42,15 +44,14 @@ public abstract class AbstractAuditableDateTime<PK extends Serializable> extends
 
 
     @Column(name = "CREATED_DATE")
-    @JdbcType(org.apache.ibatis.type.JdbcType.BIGINT)
-    @Temporal(TemporalType.TIMESTAMP)
+    @JdbcType(BIGINT)
     @CreatedDate
     protected Date createdDate;
 
 
     @Column(name = "LAST_MODIFIED_DATE")
-    @JdbcType(org.apache.ibatis.type.JdbcType.BIGINT)
-    @Temporal(TemporalType.TIMESTAMP)
+    @JdbcType(BIGINT)
+    @Temporal(TIMESTAMP)
     @LastModifiedDate
     protected Date lastModifiedDate;
 

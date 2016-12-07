@@ -122,6 +122,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
     @Transactional
     public void delete(T entity) {
         Assert.notNull(entity);
+
         delete(entityInformation.getId(entity));
     }
 
@@ -208,7 +209,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
     @Override
     public Page<T> findAll(Pageable pageable) {
-        if(null == pageable){
+        if (null == pageable) {
             return new PageImpl<T>(findAll());
         }
         return findAll(pageable, null);

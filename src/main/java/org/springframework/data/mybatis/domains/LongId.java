@@ -18,12 +18,13 @@
 
 package org.springframework.data.mybatis.domains;
 
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
+import org.springframework.data.mybatis.annotations.Id;
+import org.springframework.data.mybatis.annotations.MappedSuperclass;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
+import static org.springframework.data.mybatis.annotations.Id.GenerationType.AUTO;
+
 
 /**
  * Long Id.
@@ -36,8 +37,7 @@ public abstract class LongId implements Persistable<Long> {
     protected Long id;
 
     @Override
-    @Id
-    @GeneratedValue
+    @Id(strategy = AUTO)
     public Long getId() {
         return id;
     }

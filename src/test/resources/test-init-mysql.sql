@@ -14,7 +14,10 @@ CREATE TABLE DS_USER (
   MANAGER_ID    INT(11)      NULL,
   BINARY_DATA   BLOB         NULL,
   DATE_OF_BIRTH DATE         NULL,
-
+  country       VARCHAR(64)  NULL,
+  city          VARCHAR(64)  NULL,
+  street_name   VARCHAR(64)  NULL,
+  street_no     VARCHAR(64)  NULL,
   PRIMARY KEY (ID)
 );
 CREATE TABLE DS_ROLE (

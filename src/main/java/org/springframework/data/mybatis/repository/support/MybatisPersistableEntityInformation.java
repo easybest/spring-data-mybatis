@@ -19,6 +19,7 @@
 package org.springframework.data.mybatis.repository.support;
 
 import org.springframework.data.domain.Persistable;
+import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
 
 import java.io.Serializable;
@@ -29,15 +30,16 @@ import java.io.Serializable;
  * @author Jarvis Song
  */
 public class MybatisPersistableEntityInformation<T extends Persistable<ID>, ID extends Serializable> extends MybatisMetamodelEntityInformation<T, ID> {
+
     /**
      * Creates a new {@link AbstractEntityInformation} from the given domain class.
      *
-     * @param domainClass must not be {@literal null}.
+     * @param persistentEntity
+     * @param domainClass      must not be {@literal null}.
      */
-    public MybatisPersistableEntityInformation(Class<T> domainClass) {
-        super(domainClass);
+    protected MybatisPersistableEntityInformation(PersistentEntity<T, ?> persistentEntity, Class<T> domainClass) {
+        super(persistentEntity, domainClass);
     }
-
 
     @Override
     public boolean isNew(T entity) {
