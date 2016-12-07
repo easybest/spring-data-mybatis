@@ -68,7 +68,8 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
     protected Object getTargetRepository(RepositoryInformation information) {
 
         // generate Mapper statements.
-        new MybatisSimpleRepositoryMapperGenerator(sessionTemplate.getConfiguration(), dialect, mappingContext, information.getDomainType()).generate();
+        new MybatisSimpleRepositoryMapperGenerator(sessionTemplate.getConfiguration(), dialect, mappingContext, information.getDomainType())
+                .generate();
 
 
         return getTargetRepositoryViaReflection(information,
@@ -88,7 +89,7 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
     @Override
     protected QueryLookupStrategy getQueryLookupStrategy(Key key, EvaluationContextProvider evaluationContextProvider) {
-        return MybatisQueryLookupStrategy.create(sessionTemplate, dialect, key, evaluationContextProvider);
+        return MybatisQueryLookupStrategy.create(mappingContext, sessionTemplate, dialect, key, evaluationContextProvider);
     }
 
 

@@ -4,11 +4,11 @@ Bundle-Name: ${project.name}
 Bundle-Vendor: Jarvis Song
 Bundle-Version: ${project.version}
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
-Export-Template:
+Export-Template: 
  org.springframework.data.mybatis.*;version="${project.version}"
-Import-Template:
+Import-Template: 
  com.querydsl.*;version="${querydsl:[=.=.=,+1.0.0)}";resolution:=optional,
- javax.persistence.*;version="+2.0.0",
+ javax.sql.*;version="+1.0.0",
  org.w3c.dom.*;version="+1.0.0",
  org.slf4j.*;version="${slf4j:[=.=.=,+1.0.0)}",
  org.springframework.*;version="${spring:[=.=.=.=,+1.0.0)}",
