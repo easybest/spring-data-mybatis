@@ -19,6 +19,7 @@
 package org.springframework.data.mybatis.repository.query;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
@@ -54,10 +55,12 @@ public final class MybatisQueryLookupStrategy {
 
     private static class CreateQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
-        private final SqlSessionTemplate sqlSessionTemplate;
-        private final Dialect            dialect;
+        private final MybatisMappingContext context;
+        private final SqlSessionTemplate    sqlSessionTemplate;
+        private final Dialect               dialect;
 
-        public CreateQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate, Dialect dialect) {
+        public CreateQueryLookupStrategy(MybatisMappingContext context, SqlSessionTemplate sqlSessionTemplate, Dialect dialect) {
+            this.context = context;
             this.sqlSessionTemplate = sqlSessionTemplate;
             this.dialect = dialect;
         }
@@ -65,7 +68,7 @@ public final class MybatisQueryLookupStrategy {
         @Override
         protected RepositoryQuery resolveQuery(MybatisQueryMethod method, NamedQueries namedQueries) {
             try {
-                return new PartTreeMybatisQuery(sqlSessionTemplate, dialect, method);
+                return new PartTreeMybatisQuery(context, sqlSessionTemplate, dialect, method);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(
                         String.format("Could not create query metamodel for method %s!", method.toString()), e);
@@ -120,19 +123,21 @@ public final class MybatisQueryLookupStrategy {
         }
     }
 
-    public static QueryLookupStrategy create(SqlSessionTemplate sqlSessionTemplate,
-                                             Dialect dialect,
-                                             Key key,
-                                             EvaluationContextProvider evaluationContextProvider) {
+    public static QueryLookupStrategy create(
+            MybatisMappingContext context,
+            SqlSessionTemplate sqlSessionTemplate,
+            Dialect dialect,
+            Key key,
+            EvaluationContextProvider evaluationContextProvider) {
         Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null!");
         switch (key != null ? key : Key.CREATE_IF_NOT_FOUND) {
             case CREATE:
-                return new CreateQueryLookupStrategy(sqlSessionTemplate, dialect);
+                return new CreateQueryLookupStrategy(context, sqlSessionTemplate, dialect);
             case USE_DECLARED_QUERY:
                 return new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider);
             case CREATE_IF_NOT_FOUND:
                 return new CreateIfNotFoundQueryLookupStrategy(
-                        new CreateQueryLookupStrategy(sqlSessionTemplate, dialect),
+                        new CreateQueryLookupStrategy(context, sqlSessionTemplate, dialect),
                         new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider));
             default:
                 throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
