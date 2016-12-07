@@ -38,7 +38,8 @@ import java.sql.SQLException;
 @Configuration
 @EnableMybatisRepositories(
         value = "org.springframework.data.mybatis.repository.sample",
-        mapperLocations = "classpath*:/org/springframework/data/mybatis/repository/sample/mappers/*Mapper.xml"
+        mapperLocations = "classpath*:/org/springframework/data/mybatis/repository/sample/mappers/*Mapper.xml",
+        baseEntityPackages = {"org.springframework.data.mybatis.domain.sample"}
 )
 public class TestConfig implements ResourceLoaderAware {
 

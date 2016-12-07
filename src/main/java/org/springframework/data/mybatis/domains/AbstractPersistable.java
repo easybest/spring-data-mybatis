@@ -18,14 +18,15 @@
 
 package org.springframework.data.mybatis.domains;
 
-import org.springframework.data.annotations.Searchable;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
+import org.springframework.data.mybatis.annotations.Condition;
+import org.springframework.data.mybatis.annotations.Id;
+import org.springframework.data.mybatis.annotations.MappedSuperclass;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
 import java.io.Serializable;
+
+import static org.springframework.data.mybatis.annotations.Id.GenerationType.AUTO;
 
 /**
  * Abstract base class for entities. Allows parameterization of id type, chooses auto-generation and implements
@@ -53,16 +54,15 @@ public abstract class AbstractPersistable<PK extends Serializable> implements Pe
     }
 
 
-    @Id
-    @GeneratedValue
-//    @JdbcType(JDBCType.NUMERIC)
+    @Id(strategy = AUTO)
+    //    @JdbcType(JDBCType.NUMERIC)
     protected PK id;
 
     /*
      * (non-Javadoc)
      * @see org.springframework.data.domain.Persistable#getId()
      */
-    @Searchable
+    @Condition
     public PK getId() {
         return id;
     }

@@ -18,7 +18,8 @@
 
 package org.springframework.data.mybatis.domain.sample;
 
-import javax.persistence.Entity;
+
+import org.springframework.data.mybatis.annotations.Entity;
 
 /**
  * @author Jarvis Song

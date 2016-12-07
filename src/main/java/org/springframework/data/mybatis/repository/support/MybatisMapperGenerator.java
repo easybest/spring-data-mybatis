@@ -19,45 +19,229 @@
 package org.springframework.data.mybatis.repository.support;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mybatis.repository.localism.Localism;
+import org.springframework.data.mapping.Association;
+import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.SimpleAssociationHandler;
+import org.springframework.data.mapping.SimplePropertyHandler;
+import org.springframework.data.mybatis.mapping.MybatisEmbeddedAssociation;
+import org.springframework.data.mybatis.mapping.MybatisManyToOneAssociation;
+import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
+import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+import org.springframework.data.mybatis.repository.dialect.Dialect;
+import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
+import org.springframework.data.repository.query.parser.Part.Type;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+
+import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.ALWAYS;
+import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.WHEN_POSSIBLE;
+import static org.springframework.data.repository.query.parser.Part.Type.*;
 
 /**
  * @author Jarvis Song
  */
 public class MybatisMapperGenerator {
 
-    private final MybatisEntityModel model; // entity's mapper model
-    private final Localism           localism;
 
-    public MybatisMapperGenerator(MybatisEntityModel model, Localism localism) {
-        this.model = model;
-        this.localism = localism;
+    private final Dialect                    dialect;
+    private final MybatisPersistentEntity<?> persistentEntity;
+
+    public MybatisMapperGenerator(Dialect dialect, MybatisPersistentEntity<?> persistentEntity) {
+
+        this.dialect = dialect;
+        this.persistentEntity = persistentEntity;
     }
 
-
-    public String buildSelectColumns(boolean basic) {
+    public String buildConditionCaluse(Type type, IgnoreCaseType ignoreCaseType, String[] properties) {
         StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
-            builder.append(quota(model.getName()) + "." + entry.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getValue().getName())).append(",");
-        }
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getColumns().entrySet()) {
-            builder.append(quota(model.getName()) + "." + entry.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getValue().getName())).append(",");
+        switch (type) {
+            case CONTAINING:
+            case NOT_CONTAINING:
+                if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
+                    builder.append("concat('%',upper(#{" + properties[0] + "}),'%')");
+                } else {
+                    builder.append("concat('%',#{" + properties[0] + "},'%')");
+                }
+                break;
+            case STARTING_WITH:
+                if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
+                    builder.append("concat(upper(#{" + properties[0] + "}),'%')");
+                } else {
+                    builder.append("concat(#{" + properties[0] + "},'%')");
+                }
+                break;
+            case ENDING_WITH:
+                if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
+                    builder.append("concat('%',upper(#{" + properties[0] + "}))");
+                } else {
+                    builder.append("concat('%',#{" + properties[0] + "})");
+                }
+                break;
+            case IN:
+            case NOT_IN:
+                builder.append("<foreach item=\"item\" index=\"index\" collection=\"" + properties[0] + "\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+                break;
+            case IS_NOT_NULL:
+                builder.append(" is not null");
+                break;
+            case IS_NULL:
+                builder.append(" is null");
+                break;
+
+            case TRUE:
+                builder.append("=true");
+                break;
+            case FALSE:
+                builder.append("=false");
+                break;
+
+            default:
+                if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
+                    builder.append("upper(#{" + properties[0] + "})");
+                } else {
+                    builder.append("#{" + properties[0] + "}");
+                }
+                break;
         }
 
-        if (basic) {
-            for (Map.Entry<String, MybatisEntityModel> entry : model.getJoinColumns().entrySet()) {
-                builder.append(quota(model.getName()) + "." + entry.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getValue().getName())).append(",");
-            }
-        } else {
-            buildColumnsAssociations(builder, model.getOneToOnes());
-            buildColumnsAssociations(builder, model.getManyToOnes());
+        return builder.toString();
+    }
+
+    public String buildConditionOperate(Type type) {
+        StringBuilder builder = new StringBuilder();
+        switch (type) {
+            case SIMPLE_PROPERTY:
+                builder.append("=");
+                break;
+            case NEGATING_SIMPLE_PROPERTY:
+                builder.append("<![CDATA[<>]]>");
+                break;
+            case LESS_THAN:
+            case BEFORE:
+                builder.append("<![CDATA[<]]>");
+                break;
+            case LESS_THAN_EQUAL:
+                builder.append("<![CDATA[<=]]>");
+                break;
+            case GREATER_THAN:
+            case AFTER:
+                builder.append("<![CDATA[>]]>");
+                break;
+            case GREATER_THAN_EQUAL:
+                builder.append("<![CDATA[>=]]>");
+                break;
+
+            case LIKE:
+            case NOT_LIKE:
+            case STARTING_WITH:
+            case ENDING_WITH:
+                if (type == NOT_LIKE) {
+                    builder.append(" not");
+                }
+                builder.append(" like ");
+                break;
+            case CONTAINING:
+            case NOT_CONTAINING:
+                if (type == NOT_CONTAINING) {
+                    builder.append(" not");
+                }
+                builder.append(" like ");
+                break;
+            case IN:
+            case NOT_IN:
+                if (type == NOT_IN) {
+                    builder.append(" not");
+                }
+                builder.append(" in ");
+                break;
         }
+        return builder.toString();
+    }
+
+    public String buildSelectColumns(final boolean basic) {
+        final StringBuilder builder = new StringBuilder();
+
+        persistentEntity.doWithProperties(new SimplePropertyHandler() {
+            @Override
+            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                builder.append(quota(persistentEntity.getEntityName()) + "." + property.getColumnName()).append(" as ").append(quota(property.getName())).append(",");
+            }
+        });
+
+        persistentEntity.doWithAssociations(new SimpleAssociationHandler() {
+            @Override
+            public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
+                if ((ass instanceof MybatisEmbeddedAssociation)) {
+                    final MybatisEmbeddedAssociation association = (MybatisEmbeddedAssociation) ass;
+                    MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+                    if (null != obversePersistentEntity) {
+                        obversePersistentEntity.doWithProperties(new SimplePropertyHandler() {
+                            @Override
+                            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                builder.append(quota(persistentEntity.getEntityName()) + "." + property.getColumnName()).append(" as ").append(quota(association.getInverse().getName() + "." + property.getName())).append(",");
+                            }
+                        });
+                    }
+                    return;
+                }
+
+                if ((ass instanceof MybatisManyToOneAssociation)) {
+                    final MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
+                    if (basic) {
+                        builder.append(quota(persistentEntity.getEntityName()) + "." + association.getJoinColumnName()).append(" as ").append(quota(association.getInverse().getName() + "." + association.getObverse().getName())).append(",");
+                        return;
+                    } else {
+                        MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+                        if (null != obversePersistentEntity) {
+                            obversePersistentEntity.doWithProperties(new SimplePropertyHandler() {
+                                @Override
+                                public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                    MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                    builder.append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()) + "." + property.getColumnName())
+                                            .append(" as ").append(quota(association.getInverse().getName() + "." + property.getName())).append(",");
+                                }
+                            });
+                            obversePersistentEntity.doWithAssociations(new SimpleAssociationHandler() {
+                                @Override
+                                public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
+                                    if ((ass instanceof MybatisEmbeddedAssociation)) {
+                                        final MybatisEmbeddedAssociation association1 = (MybatisEmbeddedAssociation) ass;
+                                        MybatisPersistentEntity<?> obversePersistentEntity1 = association1.getObversePersistentEntity();
+                                        if (null != obversePersistentEntity1) {
+                                            obversePersistentEntity1.doWithProperties(new SimplePropertyHandler() {
+                                                @Override
+                                                public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                                    MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                                    builder.append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()) + "." + property.getColumnName())
+                                                            .append(" as ").append(quota(association.getInverse().getName() + "." + association1.getInverse().getName() + "." + property.getName())).append(",");
+                                                }
+                                            });
+                                        }
+                                        return;
+                                    }
+
+                                    if ((ass instanceof MybatisManyToOneAssociation)) {
+                                        final MybatisManyToOneAssociation association1 = (MybatisManyToOneAssociation) ass;
+                                        builder.append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()) + "." + association1.getJoinColumnName())
+                                                .append(" as ").append(quota(association.getInverse().getName() + "." + association1.getInverse().getName() + "." + association1.getObverse().getName())).append(",");
+
+                                    }
+                                }
+                            });
+                        }
+
+
+                    }
+                }
+
+            }
+        });
+
 
         if (builder.length() > 0 && builder.charAt(builder.length() - 1) == ',') {
             builder.deleteCharAt(builder.length() - 1);
@@ -66,41 +250,31 @@ public class MybatisMapperGenerator {
         return builder.toString();
     }
 
-    private void buildColumnsAssociations(StringBuilder builder, Map<String, MybatisEntityModel> associations) {
-        for (Map.Entry<String, MybatisEntityModel> entry : associations.entrySet()) {
-            for (Map.Entry<String, MybatisEntityModel> ent : entry.getValue().getPrimaryKeys().entrySet()) {
-                builder.append(quota(model.getName() + "." + entry.getKey()) + "." + ent.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getKey() + "." + ent.getValue().getName())).append(",");
-            }
-            for (Map.Entry<String, MybatisEntityModel> ent : entry.getValue().getColumns().entrySet()) {
-                builder.append(quota(model.getName() + "." + entry.getKey()) + "." + ent.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getKey() + "." + ent.getValue().getName())).append(",");
-            }
-            for (Map.Entry<String, MybatisEntityModel> ent : entry.getValue().getJoinColumns().entrySet()) {
-                builder.append(quota(model.getName() + "." + entry.getKey()) + "." + ent.getValue().getNameInDatabase()).append(" as ").append(quota(entry.getKey() + "." + ent.getValue().getName())).append(",");
-            }
-        }
-    }
 
     public String buildFrom(boolean basic) {
         StringBuilder builder = new StringBuilder();
-        builder.append(model.getNameInDatabase()).append(" ").append(quota(model.getName()));
+        builder.append(persistentEntity.getTableName()).append(" ").append(quota(persistentEntity.getEntityName()));
         if (!basic) {
-            builder.append(buildLeftOuterJoin(null));
+            builder.append(buildLeftOuterJoin());
         }
         return builder.toString();
     }
 
-    private String buildLeftOuterJoin(Set<MybatisEntityModel> manyToManys) {
-        StringBuilder builder = new StringBuilder();
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getOneToOnes().entrySet()) {
-            builder.append(" left outer join ").append(entry.getValue().getNameInDatabase()).append(" ").append(quota(model.getName() + "." + entry.getKey()))
-                    .append(" on ").append(quota(model.getName())).append(".").append(entry.getValue().getJoinColumnName())
-                    .append("=").append(quota(model.getName() + "." + entry.getKey())).append(".").append(entry.getValue().getJoinReferencedColumnName());
-        }
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getManyToOnes().entrySet()) {
-            builder.append(" left outer join ").append(entry.getValue().getNameInDatabase()).append(" ").append(quota(model.getName() + "." + entry.getKey()))
-                    .append(" on ").append(quota(model.getName())).append(".").append(entry.getValue().getJoinColumnName())
-                    .append("=").append(quota(model.getName() + "." + entry.getKey())).append(".").append(entry.getValue().getJoinReferencedColumnName());
-        }
+    private String buildLeftOuterJoin() {
+        final StringBuilder builder = new StringBuilder();
+
+        persistentEntity.doWithAssociations(new SimpleAssociationHandler() {
+            @Override
+            public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
+                if ((ass instanceof MybatisManyToOneAssociation)) {
+                    final MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
+                    builder.append(" left outer join ").append(association.getObversePersistentEntity().getTableName()).append(" ").append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()))
+                            .append(" on ").append(quota(persistentEntity.getEntityName())).append(".").append(association.getJoinColumnName())
+                            .append("=").append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName())).append(".").append(association.getJoinReferencedColumnName());
+                }
+            }
+        });
+
 
 //        if (!CollectionUtils.isEmpty(manyToManys)) {
 //            for (MybatisEntityModel manyToMany : manyToManys) {
@@ -122,7 +296,7 @@ public class MybatisMapperGenerator {
     }
 
     private String quota(String alias) {
-        return localism.openQuote() + alias + localism.closeQuote();
+        return dialect.openQuote() + alias + dialect.closeQuote();
     }
 
     public String buildSorts(boolean basic, Sort sort) {
@@ -138,7 +312,7 @@ public class MybatisMapperGenerator {
                 String[] ss = s.split(" as ");
                 String key = ss[ss.length - 1];
                 String val = ss[0];
-                key = key.replace(String.valueOf(localism.openQuote()), "").replace(String.valueOf(localism.closeQuote()), "");
+                key = key.replace(String.valueOf(dialect.openQuote()), "").replace(String.valueOf(dialect.closeQuote()), "");
                 map.put(key, val);
             }
 
@@ -162,7 +336,7 @@ public class MybatisMapperGenerator {
                 String[] ss = s.split(" as ");
                 String key = ss[ss.length - 1];
                 String val = ss[0];
-                key = key.replace(String.valueOf(localism.openQuote()), "").replace(String.valueOf(localism.closeQuote()), "");
+                key = key.replace(String.valueOf(dialect.openQuote()), "").replace(String.valueOf(dialect.closeQuote()), "");
                 val = val.replace("\"", "\\\"");
                 builder.append(String.format("\"%s\":\"%s\",", key, val));
             }
