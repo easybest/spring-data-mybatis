@@ -18,6 +18,8 @@
 
 package org.springframework.data.mybatis.repository.config;
 
+import org.springframework.context.ResourceLoaderAware;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.repository.config.RepositoryBeanDefinitionRegistrarSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationExtension;
 
@@ -28,7 +30,9 @@ import java.lang.annotation.Annotation;
  *
  * @author Jarvis Song
  */
-class MybatisRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupport {
+class MybatisRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupport implements ResourceLoaderAware {
+
+    private ResourceLoader resourceLoader;
 
     @Override
     protected Class<? extends Annotation> getAnnotation() {
@@ -37,7 +41,12 @@ class MybatisRepositoriesRegistrar extends RepositoryBeanDefinitionRegistrarSupp
 
     @Override
     protected RepositoryConfigurationExtension getExtension() {
-        return new MybatisRepositoryConfigExtension();
+        return new MybatisRepositoryConfigExtension(resourceLoader);
     }
 
+    @Override
+    public void setResourceLoader(ResourceLoader resourceLoader) {
+        super.setResourceLoader(resourceLoader);
+        this.resourceLoader = resourceLoader;
+    }
 }

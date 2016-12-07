@@ -18,7 +18,8 @@
 
 package org.springframework.data.mybatis.domain.sample;
 
-import javax.persistence.Embeddable;
+
+import org.springframework.data.mybatis.annotations.Embeddable;
 
 /**
  * @author Jarvis Song

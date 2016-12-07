@@ -18,31 +18,26 @@
 
 package org.springframework.data.mybatis.domain.sample;
 
-import org.springframework.data.annotations.ComplexSearch;
-import org.springframework.data.annotations.Searchable;
+import org.springframework.data.mybatis.annotations.*;
+import org.springframework.data.repository.query.parser.Part;
 
-import javax.persistence.*;
-
-import static org.springframework.data.annotations.Searchable.OPERATE.LIKE;
 
 /**
  * Sample domain class representing roles. Mapped with XML.
  */
-@Entity
-@Table(name = "DS_ROLE")
+@Entity(table = "DS_ROLE")
 public class Role {
 
     private static final String PREFIX = "ROLE_";
 
-    @Id
-    @GeneratedValue
+    @Id(strategy = Id.GenerationType.AUTO)
     private Integer id;
-    @Searchable
-    @ComplexSearch({
-            @Searchable,
-            @Searchable(operate = LIKE, properyName = "fuzzyName")
+
+    @Conditions({
+            @Condition,
+            @Condition(type = Part.Type.LIKE, properties = "fuzzyName")
     })
-    private String  name;
+    private String name;
 
     @ManyToOne
     private Group group;

@@ -31,7 +31,7 @@ Download the jar through Maven:
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>${version}.RELEASE</version>
+  <version>1.0.2.RELEASE</version>
 </dependency>
 ```
 

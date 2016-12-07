@@ -30,12 +30,6 @@ import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.Tuple;
-import javax.persistence.TupleElement;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * abstract mybatis query.
  *
@@ -169,35 +163,8 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
         @Override
         public Object convert(Object source) {
 
-            if (!(source instanceof Tuple)) {
-                return source;
-            }
+            return source;
 
-            Tuple tuple = (Tuple) source;
-            Map<String, Object> result = new HashMap<String, Object>();
-            List<TupleElement<?>> elements = tuple.getElements();
-
-            if (elements.size() == 1) {
-
-                Object value = tuple.get(elements.get(0));
-
-                if (type.isInstance(value)) {
-                    return value;
-                }
-            }
-
-            for (TupleElement<?> element : elements) {
-
-                String alias = element.getAlias();
-
-                if (alias == null || isIndexAsString(alias)) {
-                    throw new IllegalStateException("No aliases found in result tuple! Make sure your query defines aliases!");
-                }
-
-                result.put(element.getAlias(), tuple.get(element));
-            }
-
-            return result;
         }
 
         private static boolean isIndexAsString(String source) {
