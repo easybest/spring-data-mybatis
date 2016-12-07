@@ -82,7 +82,7 @@ public class DialectFactoryBean implements FactoryBean<Dialect>, InitializingBea
         if ("H2".equals(databaseName)) {
             return new H2Dialect();
         }
-        if ("MySQL".equals(databaseName)) {
+        if ("MySQL".equals(databaseName) || "MariaDB".equalsIgnoreCase(databaseName)) {
 //            if (majorVersion >= 5 ) {
 //                return new MySQL5Dialect();
 //            }
