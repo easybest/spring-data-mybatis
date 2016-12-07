@@ -39,7 +39,5 @@ public class MybatisQueryException extends RuntimeException {
         super(cause);
     }
 
-    public MybatisQueryException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
+
 }

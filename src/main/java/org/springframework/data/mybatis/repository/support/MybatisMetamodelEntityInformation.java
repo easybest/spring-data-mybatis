@@ -18,13 +18,11 @@
 
 package org.springframework.data.mybatis.repository.support;
 
+import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.util.StringUtils;
 
-import javax.persistence.metamodel.SingularAttribute;
 import java.io.Serializable;
-import java.lang.reflect.Method;
 
 /**
  * mybatis meta.
@@ -33,56 +31,36 @@ import java.lang.reflect.Method;
  */
 public class MybatisMetamodelEntityInformation<T, ID extends Serializable> extends MybatisEntityInformationSupport<T, ID> {
 
-
     /**
      * Creates a new {@link AbstractEntityInformation} from the given domain class.
      *
-     * @param domainClass must not be {@literal null}.
+     * @param persistentEntity
+     * @param domainClass      must not be {@literal null}.
      */
-    public MybatisMetamodelEntityInformation(Class<T> domainClass) {
-        super(domainClass);
-    }
-
-    @Override
-    public SingularAttribute<? super T, ?> getIdAttribute() {
-        return null;
-    }
-
-    @Override
-    public boolean hasCompositeId() {
-        return model.getPrimaryKeys().size() > 1;
-    }
-
-    @Override
-    public Iterable<String> getIdAttributeNames() {
-        return null;
-    }
-
-    @Override
-    public Object getCompositeIdAttributeValue(Serializable id, String idAttribute) {
-        return null;
+    protected MybatisMetamodelEntityInformation(PersistentEntity<T, ?> persistentEntity, Class<T> domainClass) {
+        super(persistentEntity, domainClass);
     }
 
     @Override
     public ID getId(T entity) {
-        MybatisEntityModel primaryKey = model.getPrimaryKey();
-        if (null == primaryKey) {
+        if (null == persistentEntity) {
             return null;
         }
-        String methodName = "get" + StringUtils.capitalize(primaryKey.getName());
-        Method method = ReflectionUtils.findMethod(entity.getClass(), methodName);
-        if (null == method) {
-            throw new MybatisQueryException("can not find getter method for primary key filed: " + primaryKey.getName());
-        }
-        return (ID) ReflectionUtils.invokeMethod(method, entity);
+
+        return (ID) persistentEntity.getIdentifierAccessor(entity).getIdentifier();
+
     }
 
     @Override
     public Class<ID> getIdType() {
-        MybatisEntityModel primaryKey = model.getPrimaryKey();
-        if (null == primaryKey) {
+        if (null == persistentEntity) {
             return null;
         }
-        return (Class<ID>) primaryKey.getClz();
+
+        PersistentProperty idProperty = persistentEntity.getIdProperty();
+        if (null == idProperty) {
+            return null;
+        }
+        return (Class<ID>) idProperty.getType();
     }
 }

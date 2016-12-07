@@ -30,8 +30,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.NoResultException;
-import java.util.Collection;
+ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

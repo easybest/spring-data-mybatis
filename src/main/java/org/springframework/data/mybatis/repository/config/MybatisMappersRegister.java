@@ -39,7 +39,7 @@ import java.io.InputStream;
 public class MybatisMappersRegister implements InitializingBean, ApplicationContextAware {
 
     private SqlSessionFactory  sqlSessionFactory;
-    private String             locations;
+    private String[]           locations;
     private ApplicationContext applicationContext;
 
 
@@ -51,8 +51,7 @@ public class MybatisMappersRegister implements InitializingBean, ApplicationCont
         }
 
         Configuration configuration = sqlSessionFactory.getConfiguration();
-        String[] split = locations.split(",");
-        for (String s : split) {
+        for (String s : locations) {
             if (StringUtils.isEmpty(s)) {
                 continue;
             }
@@ -90,7 +89,7 @@ public class MybatisMappersRegister implements InitializingBean, ApplicationCont
         this.sqlSessionFactory = sqlSessionFactory;
     }
 
-    public void setLocations(String locations) {
+    public void setLocations(String[] locations) {
         this.locations = locations;
     }
 

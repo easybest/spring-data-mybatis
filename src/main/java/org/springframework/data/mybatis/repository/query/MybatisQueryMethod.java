@@ -22,7 +22,6 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mybatis.repository.annotation.Basic;
 import org.springframework.data.mybatis.repository.annotation.Query;
-import org.springframework.data.mybatis.repository.support.MybatisEntityInformationSupport;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.Parameters;
@@ -88,10 +87,6 @@ public class MybatisQueryMethod extends QueryMethod {
         return (MybatisParameters) super.getParameters();
     }
 
-    @Override
-    public MybatisEntityInformationSupport<?, ?> getEntityInformation() {
-        return MybatisEntityInformationSupport.getEntityInformation(getDomainClass());
-    }
 
     @Override
     public boolean isCollectionQuery() {
