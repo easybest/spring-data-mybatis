@@ -18,23 +18,34 @@
 
 package org.springframework.data.mybatis.domain.sample;
 
-import org.springframework.data.mybatis.domains.LongId;
+import org.springframework.data.mybatis.annotations.Entity;
+import org.springframework.data.mybatis.annotations.Id;
 
-import javax.persistence.Entity;
+import static org.springframework.data.mybatis.annotations.Id.GenerationType.AUTO;
+
 
 /**
  * @author Jarvis Song
  */
 @Entity
-public class Department extends LongId {
-
-    private String name;
+public class Department {
+    @Id(strategy = AUTO)
+    protected Long   id;
+    private   String name;
 
     public Department() {
     }
 
     public Department(String name) {
         this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {

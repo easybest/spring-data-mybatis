@@ -22,15 +22,25 @@ import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.session.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.mapping.*;
 import org.springframework.data.mapping.model.MappingException;
-import org.springframework.data.mybatis.repository.localism.Localism;
-import org.springframework.data.mybatis.repository.localism.identity.IdentityColumnSupport;
+import org.springframework.data.mybatis.annotations.*;
+import org.springframework.data.mybatis.mapping.*;
+import org.springframework.data.mybatis.repository.dialect.Dialect;
+import org.springframework.data.mybatis.repository.dialect.identity.IdentityColumnSupport;
+import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
+import org.springframework.data.repository.query.parser.Part.Type;
+import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.springframework.data.mybatis.annotations.Id.GenerationType.*;
 
 /**
  * generate basic mapper for simple repository automatic.
@@ -38,28 +48,36 @@ import java.util.Map;
  * @author Jarvis Song
  */
 public class MybatisSimpleRepositoryMapperGenerator {
-    private transient static final Logger logger = LoggerFactory.getLogger(MybatisSimpleRepositoryMapperGenerator.class);
-
-    private static final String MAPPER_BEGIN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+    private transient static final Logger logger       = LoggerFactory.getLogger(MybatisSimpleRepositoryMapperGenerator.class);
+    private static final           String MAPPER_BEGIN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">";
-    private static final String MAPPER_END   = "</mapper>";
+    private static final           String MAPPER_END   = "</mapper>";
 
-    private final Configuration          configuration; // mybatis's configuration
-    private final MybatisEntityModel     model; // entity's mapper model
-    private final Localism               localism;
-    private final MybatisMapperGenerator generator;
+    private final Configuration              configuration;
+    private final Dialect                    dialect;
+    private final MybatisMappingContext      context;
+    private final Class<?>                   domainClass;
+    private final MybatisPersistentEntity<?> persistentEntity;
+    private final MybatisMapperGenerator     generator;
 
-
-    public MybatisSimpleRepositoryMapperGenerator(Configuration configuration, MybatisEntityModel model, Localism localism) {
+    public MybatisSimpleRepositoryMapperGenerator(Configuration configuration, Dialect dialect, MybatisMappingContext context, Class<?> domainClass) {
         this.configuration = configuration;
-        this.model = model;
-        this.localism = localism;
-        generator = new MybatisMapperGenerator(model, localism);
+        this.dialect = dialect;
+        this.context = context;
+        this.domainClass = domainClass;
+        this.persistentEntity = context.getPersistentEntity(domainClass);
+
+        this.generator = new MybatisMapperGenerator(dialect, persistentEntity);
     }
 
+
     public void generate() {
+        if (null == persistentEntity) {
+            logger.warn("Could not find persistent entity for domain: " + domainClass + " from mapping context.");
+            return;
+        }
         String xml;
-        String namespace = model.getClz().getName();
+        String namespace = domainClass.getName();
         try {
             xml = render();
         } catch (IOException e) {
@@ -79,7 +97,6 @@ public class MybatisSimpleRepositoryMapperGenerator {
             XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(inputStream, configuration, resource, configuration.getSqlFragments(), namespace);
             xmlMapperBuilder.parse();
         } catch (Exception e) {
-            logger.warn(xml);
             throw new MappingException("create auto mapping error for " + namespace, e);
         } finally {
             try {
@@ -92,18 +109,17 @@ public class MybatisSimpleRepositoryMapperGenerator {
 
     private String render() throws IOException {
 
-
         StringBuilder builder = new StringBuilder();
         builder.append(MAPPER_BEGIN);
 
-        builder.append("<mapper namespace=\"" + model.getClz().getName() + "\">");
+        builder.append("<mapper namespace=\"" + domainClass.getName() + "\">");
 
         if (!isFragmentExist("TABLE_NAME")) {
-            builder.append("<sql id=\"TABLE_NAME\">" + model.getNameInDatabase() + "</sql>");
+            builder.append("<sql id=\"TABLE_NAME\">" + persistentEntity.getTableName() + "</sql>");
         }
-        if (localism.supportsSequences()) {
+        if (dialect.supportsSequences()) {
             if (!isFragmentExist("SEQUENCE")) {
-                builder.append("<sql id=\"SEQUENCE\">" + localism.getSequenceNextValString(model.getSequenceName()) + "</sql>");
+                builder.append("<sql id=\"SEQUENCE\">" + dialect.getSequenceNextValString(persistentEntity.getSequenceName()) + "</sql>");
             }
         }
         if (!isFragmentExist("SELECT_CONDITION_INNER")) {
@@ -161,33 +177,88 @@ public class MybatisSimpleRepositoryMapperGenerator {
         return result;
     }
 
-    private void buildUpdateSQL(StringBuilder builder) {
-        builder.append("<update id=\"_update\" parameterType=\"" + model.getClz().getName() + "\" lang=\"XML\">");
-        builder.append("update ").append(model.getNameInDatabase());
-        builder.append("<set>");
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getColumns().entrySet()) {
-            builder.append("<if test=\"" + entry.getValue().getName() + " != null\">")
-                    .append(entry.getValue().getNameInDatabase()).append("=#{").append(entry.getValue().getName()).append("}").append(",</if>");
+    private void buildUpdateSQL(final StringBuilder builder) {
+        if (!persistentEntity.hasIdProperty()) {
+            return;
         }
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getJoinColumns().entrySet()) {
-            builder.append("<if test=\"" + entry.getValue().getName().split("\\.")[0] + " !=null and " + entry.getValue().getName() + " != null\">")
-                    .append(entry.getValue().getNameInDatabase()).append("=#{").append(entry.getValue().getName()).append("}").append(",</if>");
+        builder.append("<update id=\"_update\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
+        builder.append("update ").append(persistentEntity.getTableName());
+        builder.append("<set>");
+
+        persistentEntity.doWithProperties(new SimplePropertyHandler() {
+            @Override
+            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                if (property.isIdProperty()) {
+                    return;
+                }
+                builder.append("<if test=\"" + property.getName() + " != null\">")
+                        .append(property.getColumnName()).append("=#{").append(property.getName()).append("}").append(",</if>");
+            }
+        });
+
+        persistentEntity.doWithAssociations(new SimpleAssociationHandler() {
+            @Override
+            public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
+                if ((ass instanceof MybatisEmbeddedAssociation)) {
+                    final MybatisEmbeddedAssociation association = (MybatisEmbeddedAssociation) ass;
+                    MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+                    if (null != obversePersistentEntity) {
+                        obversePersistentEntity.doWithProperties(new SimplePropertyHandler() {
+                            @Override
+                            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                builder.append("<if test=\"" + association.getInverse().getName() + " != null and " + association.getInverse().getName() + "." + property.getName() + " != null\">")
+                                        .append(property.getColumnName()).append("=#{").append(association.getInverse().getName()).append(".").append(property.getName()).append("}").append(",</if>");
+                            }
+                        });
+                    }
+                    return;
+                }
+
+                if ((ass instanceof MybatisManyToOneAssociation)) {
+                    MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
+                    builder.append("<if test=\"" + association.getInverse().getName() + " != null and " + association.getInverse().getName() + "." + association.getObverse().getName() + " != null\">")
+                            .append(association.getJoinColumnName()).append("=#{").append(association.getInverse().getName()).append(".").append(association.getObverse().getName()).append("}").append(",</if>");
+                    return;
+                }
+
+
+            }
+        });
+
+        if (builder.charAt(builder.length() - 1) == ',') {
+            builder.deleteCharAt(builder.length() - 1);
         }
         builder.append("</set>");
         builder.append("<trim prefix=\"where\" prefixOverrides=\"and |or \">");
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
-            builder.append("and ").append(entry.getValue().getNameInDatabase()).append("=");
-            builder.append("#{").append(entry.getValue().getName()).append("}");
+
+        final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+        if (idProperty.isCompositeId()) {
+            MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
+            if (null != idEntity) {
+                idEntity.doWithProperties(new SimplePropertyHandler() {
+                    @Override
+                    public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                        MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                        builder.append("and ").append(property.getColumnName()).append("=").append("#{").append(idProperty.getName()).append(".").append(property.getName()).append("}");
+                    }
+                });
+            }
+        } else {
+            builder.append("and ").append(idProperty.getColumnName()).append("=").append("#{").append(idProperty.getName()).append("}");
         }
+
         builder.append("</trim>");
         builder.append("</update>");
     }
 
+
     private void buildDeleteByCondition(StringBuilder builder) {
         builder.append("<delete id=\"_deleteByCondition\" lang=\"XML\">");
         builder.append("delete");
-        if (localism.supportsDeleteAlias()) {
-            builder.append(" ").append(quota(model.getName()));
+        if (dialect.supportsDeleteAlias()) {
+            builder.append(" ").append(quota(persistentEntity.getEntityName()));
         }
         builder.append(" from ").append(generator.buildFrom(true));
 
@@ -199,16 +270,43 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("</delete>");
     }
 
+    private void buildGetById(final StringBuilder builder) {
+        builder.append("<select id=\"_getById\" parameterType=\"" + domainClass.getName() + "\" resultMap=\"ResultMap\" lang=\"XML\">");
+        builder.append("select ").append(generator.buildSelectColumns(false)).append(" from ").append(generator.buildFrom(false));
 
-    private void buildGetBasicById(StringBuilder builder) {
+        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+        buildByIdCaluse(builder);
+        builder.append("</trim>");
+        builder.append("</select>");
+    }
 
-        builder.append("<select id=\"_getBasicById\" parameterType=\"" + model.getPrimaryKey().getClz().getName() + "\" resultMap=\"ResultMap\" lang=\"XML\">");
+    private void buildByIdCaluse(final StringBuilder builder) {
+        final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+        if (idProperty.isCompositeId()) {
+            MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
+            if (null != idEntity) {
+                idEntity.doWithProperties(new SimplePropertyHandler() {
+                    @Override
+                    public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                        MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                        builder.append("and ").append(quota(persistentEntity.getEntityName())).append(".").append(property.getColumnName())
+                                .append("=").append("#{" + idProperty.getName() + "." + property.getName() + "}");
+                    }
+                });
+            }
+        } else {
+            builder.append("and ").append(quota(persistentEntity.getEntityName())).append(".").append(idProperty.getColumnName())
+                    .append("=").append("#{" + idProperty.getName() + "}");
+        }
+    }
+
+    private void buildGetBasicById(final StringBuilder builder) {
+
+
+        builder.append("<select id=\"_getBasicById\" parameterType=\"" + domainClass.getName() + "\" resultMap=\"ResultMap\" lang=\"XML\">");
         builder.append("select ").append(generator.buildSelectColumns(true)).append(" from ").append(generator.buildFrom(true));
         builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
-            builder.append("and ").append(quota(model.getName())).append(".").append(entry.getValue().getNameInDatabase()).append("=");
-            builder.append("#{" + entry.getValue().getName() + "}");
-        }
+        buildByIdCaluse(builder);
         builder.append("</trim>");
         builder.append("</select>");
     }
@@ -223,7 +321,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         condition.append("</trim>");
         condition.append("</if>");
 
-        builder.append(localism.getLimitHandler().processSql(true, generator.buildSelectColumns(true), " from " + generator.buildFrom(true), condition.toString(), generator.buildSorts(true, null)));
+        builder.append(dialect.getLimitHandler().processSql(true, generator.buildSelectColumns(true), " from " + generator.buildFrom(true), condition.toString(), generator.buildSorts(true, null)));
 
         builder.append("</select>");
     }
@@ -238,27 +336,44 @@ public class MybatisSimpleRepositoryMapperGenerator {
         condition.append("</trim>");
         condition.append("</if>");
 
-        builder.append(localism.getLimitHandler().processSql(true, generator.buildSelectColumns(false), " from " + generator.buildFrom(false), condition.toString(), generator.buildSorts(false, null)));
+        builder.append(dialect.getLimitHandler().processSql(true, generator.buildSelectColumns(false), " from " + generator.buildFrom(false), condition.toString(), generator.buildSorts(false, null)));
 
         builder.append("</select>");
     }
 
     private void buildDeleteAll(StringBuilder builder) {
-        builder.append("<delete id=\"_deleteAll\">truncate table " + model.getNameInDatabase() + " </delete>");
+        builder.append("<delete id=\"_deleteAll\">truncate table " + persistentEntity.getTableName() + " </delete>");
     }
 
-    private void buildDeleteById(StringBuilder builder) {
-        builder.append("<delete id=\"_deleteById\" parameterType=\"" + model.getPrimaryKey().getClz().getName() + "\" lang=\"XML\">");
+    private void buildDeleteById(final StringBuilder builder) {
+        if (!persistentEntity.hasIdProperty()) {
+            return;
+        }
+        builder.append("<delete id=\"_deleteById\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
 
         builder.append("delete");
-        if (localism.supportsDeleteAlias()) {
-            builder.append(" ").append(quota(model.getName()));
+        if (dialect.supportsDeleteAlias()) {
+            builder.append(" ").append(quota(persistentEntity.getEntityName()));
         }
         builder.append(" from ").append(generator.buildFrom(true));
 
         builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
-            builder.append("and ").append(entry.getValue().getNameInDatabase()).append("=#{" + entry.getValue().getName() + "}");
+
+
+        final MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+        if (idProperty.isCompositeId()) {
+            MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
+            if (null != idEntity) {
+                idEntity.doWithProperties(new PropertyHandler<MybatisPersistentProperty>() {
+                    @Override
+                    public void doWithPersistentProperty(MybatisPersistentProperty property) {
+                        builder.append("and ").append(property.getColumnName()).append("=#{" + idProperty.getName() + "." + property.getName() + "}");
+
+                    }
+                });
+            }
+        } else {
+            builder.append("and ").append(idProperty.getColumnName()).append("=#{" + idProperty.getName() + "}");
         }
 
         builder.append("</trim>");
@@ -272,6 +387,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("</select>");
 
     }
+
 
     private void buildCountByCondition(StringBuilder builder) {
         builder.append("<select id=\"_countByCondition\" resultType=\"long\" lang=\"XML\">");
@@ -303,24 +419,63 @@ public class MybatisSimpleRepositoryMapperGenerator {
 
 
     private String buildCondition() {
-        StringBuilder builder = new StringBuilder();
-        for (MybatisEntityModel.SearchModel sm : model.getSearchModels()) {
-            builder.append("<if test=\"_condition." + sm.getPropertyName() + "\">");
-            builder.append(" and ").append(quota(null == sm.getAlias() ? model.getName() : sm.getAlias())).append(".").append(sm.getColumnName());
-            builder.append("<![CDATA[").append(sm.getOper()).append("]]>");
-            if ("IN".equalsIgnoreCase(sm.getOperate()) || "NOTIN".equalsIgnoreCase(sm.getOperate())) {
-                builder.append("<foreach item=\"item\" index=\"index\" collection=\"_condition." + sm.getPropertyName() + "\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
-                builder.append("#{item}");
-                builder.append("</foreach>");
-            } else {
-                builder.append("#{_condition." + sm.getPropertyName() + "}");
+        final StringBuilder builder = new StringBuilder();
+        persistentEntity.doWithProperties(new PropertyHandler<MybatisPersistentProperty>() {
+            @Override
+            public void doWithPersistentProperty(MybatisPersistentProperty property) {
+                Set<Condition> conditions = new HashSet<Condition>();
+                Condition cond = property.findAnnotation(Condition.class);
+                if (null != cond) {
+                    conditions.add(cond);
+                }
+                Conditions conds = property.findAnnotation(Conditions.class);
+                if (null != conds && null != conds.value() && conds.value().length > 0) {
+                    conditions.addAll(Arrays.asList(conds.value()));
+                }
+                if (conditions.isEmpty()) {
+                    return;
+                }
+                for (Condition condition : conditions) {
+                    String[] condProperties = condition.properties();
+                    String condColumn = condition.column();
+                    String condAlias = condition.alias();
+                    Type condType = condition.type();
+                    IgnoreCaseType ignoreCaseType = condition.ignoreCaseType();
+                    if (null == condProperties || condProperties.length == 0) {
+                        condProperties = new String[]{property.getName()};
+                    }
+                    if (StringUtils.isEmpty(condColumn)) {
+                        condColumn = property.getColumnName();
+                    }
+                    if (StringUtils.isEmpty(condAlias)) {
+                        condAlias = persistentEntity.getEntityName();
+                    }
+                    builder.append("<if test=\"");
+
+                    for (int i = 0; i < condProperties.length; i++) {
+                        if (i > 0) {
+                            builder.append(" and ");
+                        }
+                        builder.append("_condition." + condProperties[i] + " != null");
+                    }
+                    builder.append("\">");
+
+                    builder.append(" and ").append(quota(condAlias)).append(".").append(condColumn);
+                    builder.append(generator.buildConditionOperate(condType));
+                    for (int i = 0; i < condProperties.length; i++) {
+                        condProperties[i] = "_condition." + condProperties[i];
+                    }
+                    builder.append(generator.buildConditionCaluse(condType, ignoreCaseType, condProperties));
+                    builder.append("</if>");
+                }
+
             }
-            builder.append("</if>");
-        }
+        });
 
         return builder.toString();
 
     }
+
 
     private void buildFindBasicAll(StringBuilder builder) {
         builder.append("<select id=\"_findBasicAll\" resultMap=\"ResultMap\" lang=\"XML\">");
@@ -334,15 +489,17 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("</trim>");
         builder.append("</if>");
 
-        builder.append("<if test=\"_ids != null\">");
-        if (model.isCompositeId()) {
-            //TODO
-        } else {
-            builder.append(" where ").append(quota(model.getName())).append(".").append(model.getPrimaryKey().getNameInDatabase()).append(" in ");
-            builder.append("<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
-        }
-        builder.append("</if>");
+        if (persistentEntity.hasIdProperty()) {
+            MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+            if (!idProperty.isCompositeId()) {
+                builder.append("<if test=\"_ids != null\">");
 
+                builder.append(" where ").append(quota(persistentEntity.getEntityName())).append(".").append(idProperty.getColumnName()).append(" in ");
+                builder.append("<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+
+                builder.append("</if>");
+            }
+        }
         builder.append(generator.buildSorts(true, null));
 
         builder.append("</select>");
@@ -358,180 +515,322 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("</trim>");
         builder.append("</if>");
 
-        builder.append("<if test=\"_ids != null\">");
-        if (model.isCompositeId()) {
-            //TODO
-        } else {
-            builder.append(" where ").append(quota(model.getName())).append(".").append(model.getPrimaryKey().getNameInDatabase()).append(" in ");
-            builder.append("<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
-        }
-        builder.append("</if>");
+        if (persistentEntity.hasIdProperty()) {
+            builder.append("<if test=\"_ids != null\">");
 
+            MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+            if (!idProperty.isCompositeId()) {
+                builder.append(" where ").append(quota(persistentEntity.getEntityName())).append(".").append(idProperty.getColumnName()).append(" in ");
+                builder.append("<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+            }
+            builder.append("</if>");
+        }
         builder.append(generator.buildSorts(false, null));
 
         builder.append("</select>");
     }
 
-    private void buildGetById(StringBuilder builder) {
-        builder.append("<select id=\"_getById\" parameterType=\"" + model.getPrimaryKey().getClz().getName() + "\" resultMap=\"ResultMap\" lang=\"XML\">");
-        builder.append("select ").append(generator.buildSelectColumns(false)).append(" from ").append(generator.buildFrom(false));
 
-        builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
-            builder.append("and ").append(quota(model.getName())).append(".").append(entry.getValue().getNameInDatabase()).append("=");
-            builder.append("#{" + entry.getValue().getName() + "}");
+    private void buildInsertSQL(final StringBuilder builder) {
+        builder.append("<insert id=\"_insert\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\"");
+
+        MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
+        if (persistentEntity.hasIdProperty() && !idProperty.isCompositeId()) {
+            builder.append(" keyProperty=\"" + idProperty.getName() + "\" keyColumn=\"" + idProperty.getColumnName() + "\"");
         }
-        builder.append("</trim>");
 
-        builder.append("</select>");
-    }
-
-    private void buildInsertSQL(StringBuilder builder) {
-        builder.append("<insert id=\"_insert\" parameterType=\"" + model.getClz().getName() + "\" lang=\"XML\"");
-
-        if (!model.isCompositeId() && null != model.getPrimaryKey() && model.getPrimaryKey().isGeneratedValue()) {
-            builder.append(" keyProperty=\"" + model.getPrimaryKey().getName() + "\" keyColumn=\"" + model.getPrimaryKey().getNameInDatabase() + "\"");
-        }
         builder.append(">");
-        IdentityColumnSupport identityColumnSupport = localism.getIdentityColumnSupport();
-
-        if (!model.isCompositeId() && null != model.getPrimaryKey() && model.getPrimaryKey().isGeneratedValue()) {
-            if (identityColumnSupport.supportsIdentityColumns()) {
-                builder.append("<selectKey keyProperty=\"" + model.getPrimaryKey().getName() + "\" resultType=\"" + model.getPrimaryKey().getClz().getName() + "\" order=\"AFTER\">");
-                builder.append(identityColumnSupport.getIdentitySelectString(model.getNameInDatabase(), model.getPrimaryKey().getNameInDatabase(), model.getPrimaryKey().getTypes()));
+        if (persistentEntity.hasIdProperty() && !idProperty.isCompositeId()) {
+            IdentityColumnSupport identityColumnSupport = dialect.getIdentityColumnSupport();
+            if (idProperty.getIdGenerationType() == IDENTITY || (idProperty.getIdGenerationType() == AUTO && identityColumnSupport.supportsIdentityColumns())) {
+                builder.append("<selectKey keyProperty=\"" + idProperty.getName() + "\" resultType=\"" + idProperty.getActualType().getName() + "\" order=\"AFTER\">");
+                builder.append(dialect.getIdentityColumnSupport().getIdentitySelectString(persistentEntity.getTableName(), idProperty.getColumnName(), idProperty.getJdbcType().TYPE_CODE));
                 builder.append("</selectKey>");
-            } else if (localism.supportsSequences()) {
-                builder.append("<selectKey keyProperty=\"" + model.getPrimaryKey().getName() + "\" resultType=\"" + model.getPrimaryKey().getClz().getName() + "\" order=\"BEFORE\">");
+            } else if (idProperty.getIdGenerationType() == SEQUENCE || (idProperty.getIdGenerationType() == AUTO && dialect.supportsSequences())) {
+                builder.append("<selectKey keyProperty=\"" + idProperty.getName() + "\" resultType=\"" + idProperty.getActualType().getName() + "\" order=\"BEFORE\">");
                 builder.append("<include refid=\"SEQUENCE\" />");
                 builder.append("</selectKey>");
             }
         }
-
         builder.append("<![CDATA[");
 
-        builder.append("insert into ").append(model.getNameInDatabase()).append("(");
+        builder.append("insert into ").append(persistentEntity.getTableName()).append("(");
 
-        // first, process primary key
 
-        if (!model.isCompositeId() && null != model.getPrimaryKey() && model.getPrimaryKey().isGeneratedValue()) {
-
-            if (!identityColumnSupport.supportsIdentityColumns()) {
-                builder.append(model.getPrimaryKey().getNameInDatabase()).append(",");
+        persistentEntity.doWithProperties(new SimplePropertyHandler() {
+            @Override
+            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                if (property.isIdProperty()) {
+                    if (property.isCompositeId()) {
+                        MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(property.getActualType());
+                        if (null != idEntity) {
+                            idEntity.doWithProperties(new SimplePropertyHandler() {
+                                @Override
+                                public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                    MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                    builder.append(property.getColumnName()).append(",");
+                                }
+                            });
+                        }
+                        return;
+                    }
+                    IdentityColumnSupport identityColumnSupport = dialect.getIdentityColumnSupport();
+                    if (property.getIdGenerationType() == IDENTITY || (property.getIdGenerationType() == AUTO && identityColumnSupport.supportsIdentityColumns())) {
+                        return;
+                    }
+                }
+                builder.append(property.getColumnName()).append(",");
             }
+        });
 
-        } else {
-            for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
-                builder.append(entry.getValue().getNameInDatabase()).append(",");
+        persistentEntity.doWithAssociations(new SimpleAssociationHandler() {
+            @Override
+            public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
+
+                if ((ass instanceof MybatisEmbeddedAssociation)) {
+                    MybatisEmbeddedAssociation association = (MybatisEmbeddedAssociation) ass;
+                    MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+                    if (null != obversePersistentEntity) {
+                        obversePersistentEntity.doWithProperties(new SimplePropertyHandler() {
+                            @Override
+                            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                builder.append(property.getColumnName()).append(",");
+                            }
+                        });
+                    }
+                    return;
+                }
+
+                if ((ass instanceof MybatisManyToOneAssociation)) {
+                    MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
+                    builder.append(association.getJoinColumnName()).append(",");
+                    return;
+                }
+
+
             }
+        });
+
+        if (builder.charAt(builder.length() - 1) == ',') {
+            builder.deleteCharAt(builder.length() - 1);
         }
-        // normal columns
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getColumns().entrySet()) {
-            builder.append(entry.getValue().getNameInDatabase()).append(",");
-        }
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getJoinColumns().entrySet()) {
-            builder.append(entry.getValue().getNameInDatabase()).append(",");
-        }
+        builder.append(") values(");
+
+        persistentEntity.doWithProperties(new SimplePropertyHandler() {
+            @Override
+            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                if (property.isIdProperty()) {
+                    if (property.isCompositeId()) {
+                        MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(property.getActualType());
+                        if (null != idEntity) {
+                            idEntity.doWithProperties(new SimplePropertyHandler() {
+                                @Override
+                                public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                    MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                    builder.append("#{").append(property.getName()).append(",jdbcType=").append(property.getJdbcType()).append("},");
+                                }
+                            });
+                        }
+                        return;
+                    }
+                    IdentityColumnSupport identityColumnSupport = dialect.getIdentityColumnSupport();
+                    if (property.getIdGenerationType() == IDENTITY || (property.getIdGenerationType() == AUTO && identityColumnSupport.supportsIdentityColumns())) {
+                        return;
+                    }
+                }
+                builder.append("#{").append(property.getName()).append(",jdbcType=").append(property.getJdbcType()).append("},");
+            }
+        });
+
+        persistentEntity.doWithAssociations(new SimpleAssociationHandler() {
+            @Override
+            public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
+                if ((ass instanceof MybatisEmbeddedAssociation)) {
+                    final MybatisEmbeddedAssociation association = (MybatisEmbeddedAssociation) ass;
+                    MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+                    if (null != obversePersistentEntity) {
+                        obversePersistentEntity.doWithProperties(new SimplePropertyHandler() {
+                            @Override
+                            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                builder.append("#{").append(association.getInverse().getName()).append(".").append(property.getName()).append(",jdbcType=").append(property.getJdbcType()).append("},");
+                            }
+                        });
+                    }
+                    return;
+                }
+                if ((ass instanceof MybatisManyToOneAssociation)) {
+                    MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
+                    builder.append("#{").append(association.getInverse().getName()).append(".").append(association.getObverse().getName()).append(",jdbcType=").append(association.getObverse().getJdbcType()).append("},");
+                    return;
+                }
+            }
+        });
 
         if (builder.charAt(builder.length() - 1) == ',') {
             builder.deleteCharAt(builder.length() - 1);
         }
 
-        builder.append(") values (");
-
-        if (!model.isCompositeId() && null != model.getPrimaryKey() && model.getPrimaryKey().isGeneratedValue()) {
-            if (!identityColumnSupport.supportsIdentityColumns()) {
-                builder.append("#{" + model.getPrimaryKey().getName() + ",jdbcType=" + model.getPrimaryKey().getJdbcType() + "},");
-            }
-        } else {
-            for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
-                builder.append("#{" + entry.getValue().getName() + ",jdbcType=" + entry.getValue().getJdbcType() + "},");
-            }
-        }
-
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getColumns().entrySet()) {
-            builder.append("#{" + entry.getValue().getName() + ",jdbcType=" + entry.getValue().getJdbcType() + "},");
-        }
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getJoinColumns().entrySet()) {
-            builder.append("#{" + entry.getValue().getName() + ",jdbcType=" + entry.getValue().getJdbcType() + "},");
-        }
-        if (builder.charAt(builder.length() - 1) == ',') {
-            builder.deleteCharAt(builder.length() - 1);
-        }
         builder.append(")]]>");
-
 
         builder.append("</insert>");
     }
 
-    private void buildResultMap(StringBuilder builder) {
-        builder.append("<resultMap id=\"ResultMap\" type=\"" + model.getClz().getName() + "\">");
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getPrimaryKeys().entrySet()) {
-            builder.append(String.format("<id property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                    entry.getValue().getName(),
-                    alias(entry.getValue().getName()),
-                    entry.getValue().getClz().getName(),
-                    entry.getValue().getJdbcType()
-            ));
-        }
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getColumns().entrySet()) {
-            builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                    entry.getValue().getName(),
-                    alias(entry.getValue().getName()),
-                    entry.getValue().getClz().getName(),
-                    entry.getValue().getJdbcType()
-            ));
-        }
-        buildAssociationResultMap(builder, model.getOneToOnes());
-        buildAssociationResultMap(builder, model.getManyToOnes());
 
-        for (Map.Entry<String, MybatisEntityModel> entry : model.getOneToManys().entrySet()) {
-            builder.append(String.format("<collection property=\"%s\" ofType=\"%s\">",
-                    entry.getKey(),
-                    entry.getValue().getClz().getName()
-            ));
-            builder.append("</collection>");
+    private void buildInnerResultMapId(final StringBuilder builder, final MybatisPersistentProperty idProperty, final String prefix) {
+
+        if (null != idProperty) {
+            if (idProperty.isCompositeId()) {
+
+                MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(idProperty.getActualType());
+                if (null != idEntity) {
+                    idEntity.doWithProperties(new SimplePropertyHandler() {
+                        @Override
+                        public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                            MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                            builder.append(String.format("<id property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                                    idProperty.getName() + "." + property.getName(),
+                                    alias(prefix + property.getName()),
+                                    property.getActualType().getName(),
+                                    property.getJdbcType()
+                            ));
+                        }
+                    });
+                }
+
+            } else {
+                builder.append(String.format("<id property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                        idProperty.getName(),
+                        alias(prefix + idProperty.getName()),
+                        idProperty.getActualType().getName(),
+                        idProperty.getJdbcType()
+                ));
+            }
         }
-        builder.append("</resultMap>");
     }
 
-    private void buildAssociationResultMap(StringBuilder builder, Map<String, MybatisEntityModel> associations) {
-        for (Map.Entry<String, MybatisEntityModel> entry : associations.entrySet()) {
-            builder.append(String.format("<association property=\"%s\" javaType=\"%s\">",
-                    entry.getKey(),
-                    entry.getValue().getClz().getName()
-            ));
-            for (Map.Entry<String, MybatisEntityModel> subEntry : entry.getValue().getPrimaryKeys().entrySet()) {
-                builder.append(String.format("<id property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                        subEntry.getValue().getName(),
-                        alias(entry.getKey() + "." + subEntry.getValue().getName()),
-                        subEntry.getValue().getClz().getName(),
-                        subEntry.getValue().getJdbcType()
-                ));
-            }
-            for (Map.Entry<String, MybatisEntityModel> subEntry : entry.getValue().getColumns().entrySet()) {
-                builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                        subEntry.getValue().getName(),
-                        alias(entry.getKey() + "." + subEntry.getValue().getName()),
-                        subEntry.getValue().getClz().getName(),
-                        subEntry.getValue().getJdbcType()
-                ));
-            }
-            for (Map.Entry<String, MybatisEntityModel> subEntry : entry.getValue().getJoinColumns().entrySet()) {
-                builder.append(String.format("<association property=\"%s\" javaType=\"%s\">",
-                        subEntry.getValue().getParent().getName(),
-                        subEntry.getValue().getParent().getClz().getName()
-                ));
-                builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                        subEntry.getValue().getName().replace(subEntry.getValue().getParent().getName() + ".", ""),
-                        alias(entry.getValue().getName() + "." + subEntry.getValue().getName()),
-                        subEntry.getValue().getClz().getName(),
-                        subEntry.getValue().getJdbcType()
-                ));
-                builder.append("</association>");
-            }
+    private void buildInnerResultMap(final StringBuilder builder, final MybatisPersistentEntity<?> persistentEntity, final String prefix) {
 
-            builder.append("</association>");
+        persistentEntity.doWithProperties(new SimplePropertyHandler() {
+            @Override
+            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                if (property.isIdProperty()) {
+                    buildInnerResultMapId(builder, property, prefix);
+                    return;
+                }
+                builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                        property.getName(),
+                        alias(prefix + property.getName()),
+                        property.getActualType().getName(),
+                        property.getJdbcType()
+                ));
+            }
+        });
+    }
+
+    private void buildInnerToOneAssociationResultMap(final StringBuilder builder, final PersistentProperty<? extends PersistentProperty<?>> inverse) {
+        Class<?> actualType = inverse.getActualType();
+        builder.append(String.format("<association property=\"%s\" javaType=\"%s\">",
+                inverse.getName(),
+                actualType.getName()
+        ));
+        MybatisPersistentEntityImpl<?> inversePersistentEntity = context.getPersistentEntity(actualType);
+        if (null != inversePersistentEntity) {
+            buildInnerResultMap(builder, inversePersistentEntity, inverse.getName() + ".");
+
+            inversePersistentEntity.doWithAssociations(new AssociationHandler<MybatisPersistentProperty>() {
+                @Override
+                public void doWithAssociation(final Association<MybatisPersistentProperty> ass) {
+                    if (ass instanceof MybatisEmbeddedAssociation) {
+                        MybatisPersistentEntityImpl<?> inversePersistentEntity1 = context.getPersistentEntity(ass.getInverse().getActualType());
+
+                        builder.append(String.format("<association property=\"%s\" javaType=\"%s\">",
+                                ass.getInverse().getName(),
+                                ass.getInverse().getActualType().getName()
+                        ));
+
+                        inversePersistentEntity1.doWithProperties(new PropertyHandler<MybatisPersistentProperty>() {
+                            @Override
+                            public void doWithPersistentProperty(MybatisPersistentProperty p1) {
+                                builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                                        p1.getName(),
+                                        alias(inverse.getName() + "." + ass.getInverse().getName() + "." + p1.getName()),
+                                        p1.getActualType().getName(),
+                                        p1.getJdbcType()
+                                ));
+                            }
+                        });
+
+
+                        builder.append("</association>");
+                        return;
+                    }
+                    if (ass instanceof MybatisManyToOneAssociation) {
+                        MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
+                        builder.append(String.format("<association property=\"%s\" javaType=\"%s\">",
+                                ass.getInverse().getName(),
+                                ass.getInverse().getActualType().getName()
+                        ));
+
+                        builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                                association.getObverse().getName(),
+                                alias(inverse.getName() + "." + ass.getInverse().getName() + "." + association.getObverse().getName()),
+                                association.getObverse().getActualType().getName(),
+                                association.getObverse().getJdbcType()
+                        ));
+                        builder.append("</association>");
+                        return;
+                    }
+                }
+            });
+
         }
+        builder.append("</association>");
+    }
+
+    private void buildInnerToManyAssociationResultMap(final StringBuilder builder, PersistentProperty<? extends PersistentProperty<?>> inverse) {
+        Class<?> actualType = inverse.getActualType();
+        builder.append(String.format("<collection property=\"%s\" ofType=\"%s\">",
+                inverse.getName(),
+                actualType.getName()
+        ));
+        MybatisPersistentEntityImpl<?> inversePersistentEntity = context.getPersistentEntity(actualType);
+        if (null != inversePersistentEntity) {
+            buildInnerResultMap(builder, inversePersistentEntity, inverse.getName() + ".");
+        }
+        builder.append("</collection>");
+    }
+
+    private void buildResultMap(final StringBuilder builder) {
+        builder.append("<resultMap id=\"ResultMap\" type=\"" + domainClass.getName() + "\">");
+
+        buildInnerResultMap(builder, persistentEntity, "");
+
+        persistentEntity.doWithAssociations(new AssociationHandler<MybatisPersistentProperty>() {
+            @Override
+            public void doWithAssociation(Association<MybatisPersistentProperty> ass) {
+                MybatisPersistentProperty inverse = ass.getInverse();
+
+                if (ass instanceof MybatisEmbeddedAssociation) {
+                    buildInnerToOneAssociationResultMap(builder, inverse);
+                    return;
+                }
+                if (ass instanceof MybatisManyToOneAssociation) {
+                    buildInnerToOneAssociationResultMap(builder, inverse);
+                    return;
+                }
+                if (null != inverse.findAnnotation(OneToMany.class) || null != inverse.findAnnotation(ManyToMany.class)) {
+                    buildInnerToManyAssociationResultMap(builder, inverse);
+                }
+
+            }
+        });
+
+        builder.append("</resultMap>");
     }
 
 
@@ -540,7 +839,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
     }
 
     private String quota(String alias) {
-        return localism.openQuote() + alias + localism.closeQuote();
+        return dialect.openQuote() + alias + dialect.closeQuote();
     }
 
     /**
@@ -552,7 +851,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         if (null == configuration) {
             return false;
         }
-        return configuration.hasResultMap(model.getClz().getName() + "." + name);
+        return configuration.hasResultMap(domainClass.getName() + "." + name);
     }
 
     /**
@@ -562,7 +861,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         if (null == configuration) {
             return false;
         }
-        return configuration.getSqlFragments().containsKey(model.getClz().getName() + "." + fragment);
+        return configuration.getSqlFragments().containsKey(domainClass.getName() + "." + fragment);
     }
 
     /**
@@ -572,6 +871,6 @@ public class MybatisSimpleRepositoryMapperGenerator {
         if (null == configuration) {
             return false;
         }
-        return configuration.hasStatement(model.getClz().getName() + "." + id);
+        return configuration.hasStatement(domainClass.getName() + "." + id);
     }
 }

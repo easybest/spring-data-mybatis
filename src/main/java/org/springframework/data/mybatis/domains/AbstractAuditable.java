@@ -18,8 +18,9 @@
 
 package org.springframework.data.mybatis.domains;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
+import org.springframework.data.mybatis.annotations.Column;
+import org.springframework.data.mybatis.annotations.MappedSuperclass;
+
 import java.io.Serializable;
 
 /**

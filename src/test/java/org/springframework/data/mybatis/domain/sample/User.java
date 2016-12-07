@@ -18,33 +18,39 @@
 
 package org.springframework.data.mybatis.domain.sample;
 
-import javax.persistence.*;
-import java.util.*;
+import org.springframework.data.mybatis.annotations.*;
+import org.springframework.data.repository.query.parser.Part;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.springframework.data.repository.query.parser.Part.Type.LIKE;
 
 /**
  * @author Jarvis Song
  */
-@Entity
-@Table(name = "DS_USER")
+@Entity(table = "DS_USER")
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id(strategy = Id.GenerationType.AUTO)
     private Integer id;
+    @Condition
     private String  firstname;
+    @Condition(type = LIKE)
     private String  lastname;
     private int     age;
     private boolean active;
-    @Temporal(TemporalType.TIMESTAMP)
     private Date    createdAt;
 
-    @Column(nullable = false, unique = true)
+    @Column
     private String emailAddress;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "DS_USER_DS_USER",
-            joinColumns = @JoinColumn(name = "DS_USER_ID", referencedColumnName = "ID"),
-            inverseJoinColumns = @JoinColumn(name = "COLLEAGUES_ID", referencedColumnName = "ID"))
+    @ManyToMany
+//    @JoinTable(name = "DS_USER_DS_USER",
+//            joinColumns = @JoinColumn(name = "DS_USER_ID", referencedColumnName = "ID"),
+//            inverseJoinColumns = @JoinColumn(name = "COLLEAGUES_ID", referencedColumnName = "ID"))
     private Set<User> colleagues;
     @ManyToOne
     private User      manager;
@@ -60,7 +66,6 @@ public class User {
     @ElementCollection
     private Set<String> attributes;
 
-    @Temporal(TemporalType.DATE)
     private Date dateOfBirth;
 
     /**

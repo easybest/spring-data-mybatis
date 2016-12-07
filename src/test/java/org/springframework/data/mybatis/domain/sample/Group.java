@@ -18,21 +18,20 @@
 
 package org.springframework.data.mybatis.domain.sample;
 
-import org.springframework.data.annotations.Searchable;
+import org.springframework.data.mybatis.annotations.Condition;
+import org.springframework.data.mybatis.annotations.Entity;
 import org.springframework.data.mybatis.domains.LongId;
+import org.springframework.data.repository.query.parser.Part;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
 
 /**
  * @author Jarvis Song
  */
-@Entity
-@Table(name = "DS_GROUP")
+@Entity(table = "DS_GROUP")
 public class Group extends LongId {
-    @Searchable
+    @Condition
     private String code;
-    @Searchable(operate = Searchable.OPERATE.LIKE)
+    @Condition(type = Part.Type.SIMPLE_PROPERTY)
     private String name;
 
     public Group() {
