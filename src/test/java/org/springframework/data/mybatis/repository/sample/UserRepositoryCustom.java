@@ -15,28 +15,27 @@
  *   limitations under the License.
  *
  */
+package org.springframework.data.mybatis.repository.sample;
 
-package org.springframework.data.mybatis.mapping;
 
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
-import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mybatis.annotations.Id.GenerationType;
+import org.springframework.data.mybatis.domain.sample.User;
 
 /**
- * @author Jarvis Song
+ * Simple interface for custom methods on the repository for {@code User}s.
+ *
+ * @author Oliver Gierke
  */
-public interface MybatisPersistentProperty extends PersistentProperty<MybatisPersistentProperty> {
+public interface UserRepositoryCustom {
 
-    JdbcType getJdbcType();
+    /**
+     * Method actually triggering a finder but being overridden.
+     */
+    void findByOverrridingMethod();
 
-    String getColumnName();
-
-    boolean isToOneAssociation();
-
-    boolean isCompositeId();
-
-    GenerationType getIdGenerationType();
-
-    Class<? extends TypeHandler> getSpecifiedTypeHandler();
+    /**
+     * Some custom method to implement.
+     *
+     * @param user
+     */
+    void someCustomMethod(User user);
 }

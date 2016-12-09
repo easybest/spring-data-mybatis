@@ -31,7 +31,7 @@ Download the jar through Maven:
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>1.0.3.RELEASE</version>
+  <version>1.0.4.RELEASE</version>
 </dependency>
 ```
 
@@ -39,10 +39,10 @@ The simple Spring Data Mybatis configuration with Java-Config looks like this:
 ```java
 @Configuration
 @EnableMybatisRepositories(
-    value = "com.example.repositories",
-    mapperLocations = "classpath*:/com/example/repositories/mappers/*Mapper.xml"
+        value = "org.springframework.data.mybatis.repository.sample",
+        mapperLocations = "classpath*:/org/springframework/data/mybatis/repository/sample/mappers/*Mapper.xml"
 )
-public class AppConfig {
+public class TestConfig {
 
     @Bean
     public DataSource dataSource() throws SQLException {
@@ -115,6 +115,78 @@ public class UserRepositoryIntegrationTest {
 }
 
 ```
+
+
+## Use Spring Boot
+
+add the jar through Maven:
+   
+   ```xml
+   <dependency>
+       <groupId>com.ifrabbit</groupId>
+       <artifactId>spring-boot-starter-data-mybatis</artifactId>
+       <version>1.0.4.RELEASE</version>
+   </dependency>
+   ```
+
+If you need custom Mapper, you should add property in your application.properties like this:
+```
+spring.data.mybatis.mapper-Locations=classpath*:/org/springframework/data/mybatis/samples/mappers/*Mapper.xml
+```
+
+And you need not to define SqlSessionFactory manually.
+
+The full test code like this:
+
+```java
+@SpringBootApplication
+public class SpringDataMybatisSamplesApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(SpringDataMybatisSamplesApplication.class, args);
+    }
+
+    @Bean
+    public CommandLineRunner dummyCLR(ReservationRepository reservationRepository) {
+        return args -> {
+            Stream.of("Tom", "Jack", "Apple")
+                    .forEach(name -> reservationRepository.save(new Reservation(name)));
+        };
+    }
+
+}
+
+@RepositoryRestResource // here we use RepositoryRestResource
+interface ReservationRepository extends MybatisRepository<Reservation, Long> {
+}
+
+@Entity
+class Reservation extends LongId {
+
+    private String reservationName;
+
+    public Reservation() {
+    }
+
+    public Reservation(String reservationName) {
+        this.reservationName = reservationName;
+    }
+
+    public String getReservationName() {
+        return reservationName;
+    }
+
+    @Override
+    public String toString() {
+        return "Reservation{" +
+                "reservationName='" + reservationName + '\'' +
+                '}';
+    }
+}
+```
+
+The full example you can find in [https://github.com/hatunet/spring-data-mybatis-samples](https://github.com/hatunet/spring-data-mybatis-samples)
+
 
 ## Contributing to Spring Data MyBatis ##
 

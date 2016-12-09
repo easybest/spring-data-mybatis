@@ -18,10 +18,8 @@
 
 package org.springframework.data.mybatis.config.sample;
 
-import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
 import org.springframework.data.mybatis.support.SqlSessionFactoryBean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -40,9 +38,7 @@ import java.sql.SQLException;
         value = "org.springframework.data.mybatis.repository.sample",
         mapperLocations = "classpath*:/org/springframework/data/mybatis/repository/sample/mappers/*Mapper.xml"
 )
-public class TestConfig implements ResourceLoaderAware {
-
-    private ResourceLoader resourceLoader;
+public class TestConfig {
 
     @Bean
     public DataSource dataSource() throws SQLException {
@@ -61,9 +57,4 @@ public class TestConfig implements ResourceLoaderAware {
         return new DataSourceTransactionManager(dataSource);
     }
 
-
-    @Override
-    public void setResourceLoader(ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
-    }
 }
