@@ -16,27 +16,21 @@
  *
  */
 
-package org.springframework.data.mybatis.mapping;
+package org.springframework.data.mybatis.annotations;
 
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
-import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mybatis.annotations.Id.GenerationType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.*;
 
 /**
  * @author Jarvis Song
  */
-public interface MybatisPersistentProperty extends PersistentProperty<MybatisPersistentProperty> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(value = {FIELD, METHOD, ANNOTATION_TYPE})
+public @interface TypeHandler {
 
-    JdbcType getJdbcType();
+    Class<? extends org.apache.ibatis.type.TypeHandler> value();
 
-    String getColumnName();
-
-    boolean isToOneAssociation();
-
-    boolean isCompositeId();
-
-    GenerationType getIdGenerationType();
-
-    Class<? extends TypeHandler> getSpecifiedTypeHandler();
 }
