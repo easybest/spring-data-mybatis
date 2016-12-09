@@ -6,13 +6,12 @@
     <parent>
         <groupId>org.springframework.data.build</groupId>
         <artifactId>spring-data-parent</artifactId>
-        <!--<version>1.9.0.BUILD-SNAPSHOT</version>-->
         <version>1.8.5.RELEASE</version>
     </parent>
 
     <groupId>com.ifrabbit</groupId>
     <artifactId>spring-data-mybatis</artifactId>
-    <version>1.0.4.BUILD-SNAPSHOT</version>
+    <version>1.0.4.RELEASE</version>
 
     <name>Spring Data MyBatis</name>
     <description>The primary goal of the Spring Data project is to make it easier to build Spring-powered applications
@@ -41,7 +40,6 @@
     </scm>
 
     <properties>
-        <!--<springdata.commons>1.13.0.BUILD-SNAPSHOT</springdata.commons>-->
         <springdata.commons>1.12.5.RELEASE</springdata.commons>
     </properties>
 
