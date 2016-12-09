@@ -193,7 +193,10 @@ public class MybatisSimpleRepositoryMapperGenerator {
                     return;
                 }
                 builder.append("<if test=\"" + property.getName() + " != null\">")
-                        .append(property.getColumnName()).append("=#{").append(property.getName()).append("}").append(",</if>");
+                        .append(property.getColumnName()).append("=#{").append(property.getName())
+                        .append(",jdbcType=").append(property.getJdbcType())
+                        .append(null != property.getSpecifiedTypeHandler() ? ("typeHandler=" + property.getSpecifiedTypeHandler().getName()) : "")
+                        .append("}").append(",</if>");
             }
         });
 
@@ -641,7 +644,11 @@ public class MybatisSimpleRepositoryMapperGenerator {
                         return;
                     }
                 }
-                builder.append("#{").append(property.getName()).append(",jdbcType=").append(property.getJdbcType()).append("},");
+                builder.append("#{").append(property.getName()).append(",jdbcType=").append(property.getJdbcType());
+                if (null != property.getSpecifiedTypeHandler()) {
+                    builder.append(",typeHandler=").append(property.getSpecifiedTypeHandler().getName());
+                }
+                builder.append("},");
             }
         });
 
@@ -722,7 +729,9 @@ public class MybatisSimpleRepositoryMapperGenerator {
                     buildInnerResultMapId(builder, property, prefix);
                     return;
                 }
-                builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"" + (
+                                null != property.getSpecifiedTypeHandler() ? (" typeHandler=\"" + property.getSpecifiedTypeHandler().getName() + "\"") : ""
+                        ) + " />",
                         property.getName(),
                         alias(prefix + property.getName()),
                         property.getActualType().getName(),
@@ -756,7 +765,9 @@ public class MybatisSimpleRepositoryMapperGenerator {
                         inversePersistentEntity1.doWithProperties(new PropertyHandler<MybatisPersistentProperty>() {
                             @Override
                             public void doWithPersistentProperty(MybatisPersistentProperty p1) {
-                                builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                                builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"" + (
+                                                null != p1.getSpecifiedTypeHandler() ? (" typeHandler=\"" + p1.getSpecifiedTypeHandler().getName() + "\"") : ""
+                                        ) + "/>",
                                         p1.getName(),
                                         alias(inverse.getName() + "." + ass.getInverse().getName() + "." + p1.getName()),
                                         p1.getActualType().getName(),
@@ -776,7 +787,9 @@ public class MybatisSimpleRepositoryMapperGenerator {
                                 ass.getInverse().getActualType().getName()
                         ));
 
-                        builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                        builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"" + (
+                                        null != association.getObverse().getSpecifiedTypeHandler() ? (" typeHandler=\"" + association.getObverse().getSpecifiedTypeHandler().getName() + "\"") : ""
+                                ) + "/>",
                                 association.getObverse().getName(),
                                 alias(inverse.getName() + "." + ass.getInverse().getName() + "." + association.getObverse().getName()),
                                 association.getObverse().getActualType().getName(),
