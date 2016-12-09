@@ -18,7 +18,7 @@
 
 package org.springframework.data.mybatis.mapping;
 
-import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.TypeHandler;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
@@ -27,11 +27,14 @@ import org.springframework.data.mybatis.annotations.*;
 import org.springframework.data.mybatis.annotations.Id.GenerationType;
 import org.springframework.data.util.ParsingUtils;
 import org.springframework.util.StringUtils;
+import org.apache.ibatis.type.JdbcType;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.apache.ibatis.type.JdbcType.*;
 
 /**
  * @author Jarvis Song
@@ -42,26 +45,26 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
     private static Map<Class<?>, JdbcType> javaTypesMappedToJdbcTypes = new HashMap<Class<?>, JdbcType>();
 
     static {
-        javaTypesMappedToJdbcTypes.put(String.class, JdbcType.VARCHAR);
-        javaTypesMappedToJdbcTypes.put(java.math.BigDecimal.class, JdbcType.NUMERIC);
-        javaTypesMappedToJdbcTypes.put(boolean.class, JdbcType.BIT);
-        javaTypesMappedToJdbcTypes.put(byte.class, JdbcType.TINYINT);
-        javaTypesMappedToJdbcTypes.put(short.class, JdbcType.SMALLINT);
-        javaTypesMappedToJdbcTypes.put(int.class, JdbcType.INTEGER);
-        javaTypesMappedToJdbcTypes.put(long.class, JdbcType.BIGINT);
-        javaTypesMappedToJdbcTypes.put(float.class, JdbcType.REAL);
-        javaTypesMappedToJdbcTypes.put(double.class, JdbcType.DOUBLE);
-        javaTypesMappedToJdbcTypes.put(byte[].class, JdbcType.VARBINARY);
-        javaTypesMappedToJdbcTypes.put(java.util.Date.class, JdbcType.TIMESTAMP);
-        javaTypesMappedToJdbcTypes.put(java.sql.Date.class, JdbcType.DATE);
-        javaTypesMappedToJdbcTypes.put(java.sql.Time.class, JdbcType.TIME);
-        javaTypesMappedToJdbcTypes.put(java.sql.Timestamp.class, JdbcType.TIMESTAMP);
+        javaTypesMappedToJdbcTypes.put(String.class, VARCHAR);
+        javaTypesMappedToJdbcTypes.put(java.math.BigDecimal.class, NUMERIC);
+        javaTypesMappedToJdbcTypes.put(boolean.class, BIT);
+        javaTypesMappedToJdbcTypes.put(byte.class, TINYINT);
+        javaTypesMappedToJdbcTypes.put(short.class, SMALLINT);
+        javaTypesMappedToJdbcTypes.put(int.class, INTEGER);
+        javaTypesMappedToJdbcTypes.put(long.class, BIGINT);
+        javaTypesMappedToJdbcTypes.put(float.class, REAL);
+        javaTypesMappedToJdbcTypes.put(double.class, DOUBLE);
+        javaTypesMappedToJdbcTypes.put(byte[].class, VARBINARY);
+        javaTypesMappedToJdbcTypes.put(java.util.Date.class, TIMESTAMP);
+        javaTypesMappedToJdbcTypes.put(java.sql.Date.class, DATE);
+        javaTypesMappedToJdbcTypes.put(java.sql.Time.class, TIME);
+        javaTypesMappedToJdbcTypes.put(java.sql.Timestamp.class, TIMESTAMP);
 
-        javaTypesMappedToJdbcTypes.put(Boolean.class, JdbcType.BIT);
-        javaTypesMappedToJdbcTypes.put(Integer.class, JdbcType.INTEGER);
-        javaTypesMappedToJdbcTypes.put(Long.class, JdbcType.BIGINT);
-        javaTypesMappedToJdbcTypes.put(Float.class, JdbcType.REAL);
-        javaTypesMappedToJdbcTypes.put(Double.class, JdbcType.DOUBLE);
+        javaTypesMappedToJdbcTypes.put(Boolean.class, BIT);
+        javaTypesMappedToJdbcTypes.put(Integer.class, INTEGER);
+        javaTypesMappedToJdbcTypes.put(Long.class, BIGINT);
+        javaTypesMappedToJdbcTypes.put(Float.class, REAL);
+        javaTypesMappedToJdbcTypes.put(Double.class, DOUBLE);
 
 
     }
@@ -146,7 +149,7 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
             return t;
         }
 
-        return JdbcType.UNDEFINED;
+        return UNDEFINED;
     }
 
     @Override
@@ -183,5 +186,14 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
             return null;
         }
         return id.strategy();
+    }
+
+    @Override
+    public Class<? extends TypeHandler> getSpecifiedTypeHandler() {
+        org.springframework.data.mybatis.annotations.TypeHandler typeHandler = findAnnotation(org.springframework.data.mybatis.annotations.TypeHandler.class);
+        if (null != typeHandler) {
+            return typeHandler.value();
+        }
+        return null;
     }
 }
