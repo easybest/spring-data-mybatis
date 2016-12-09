@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * @author Jarvis Song
  */
-public interface UserRepository extends MybatisRepository<User, Integer> {
+public interface UserRepository extends MybatisRepository<User, Integer>, UserRepositoryCustom {
 
     @Query
     List<User> findUseMapper(@Param("lastname") String lastname);
