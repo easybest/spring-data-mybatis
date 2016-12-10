@@ -195,7 +195,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
                 builder.append("<if test=\"" + property.getName() + " != null\">")
                         .append(property.getColumnName()).append("=#{").append(property.getName())
                         .append(",jdbcType=").append(property.getJdbcType())
-                        .append(null != property.getSpecifiedTypeHandler() ? ("typeHandler=" + property.getSpecifiedTypeHandler().getName()) : "")
+                        .append(null != property.getSpecifiedTypeHandler() ? (",typeHandler=" + property.getSpecifiedTypeHandler().getName()) : "")
                         .append("}").append(",</if>");
             }
         });
