@@ -135,6 +135,26 @@ public class DialectFactoryBean implements FactoryBean<Dialect>, InitializingBea
 //            }
 //            return new Oracle8iDialect();
         }
+
+        if ("PostgreSQL".equals(databaseName)) {
+//            if ( majorVersion == 9 ) {
+//                if ( minorVersion >= 4 ) {
+//                    return new PostgreSQL94Dialect();
+//                }
+//                else if ( minorVersion >= 2 ) {
+//                    return new PostgreSQL92Dialect();
+//                }
+//                return new PostgreSQL9Dialect();
+//            }
+//
+//            if ( majorVersion == 8 && minorVersion >= 2 ) {
+//                return new PostgreSQL82Dialect();
+//            }
+
+            return new PostgreSQLDialect();
+        }
+
+
         return null;
     }
 
