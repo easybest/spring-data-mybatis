@@ -131,7 +131,7 @@ add the jar through Maven:
 
 If you need custom Mapper, you should add property in your application.properties like this:
 ```
-spring.data.mybatis.mapper-Locations=classpath*:/org/springframework/data/mybatis/samples/mappers/*Mapper.xml
+spring.data.mybatis.mapper-locations=classpath*:/org/springframework/data/mybatis/samples/mappers/*Mapper.xml
 ```
 
 And you need not to define SqlSessionFactory manually.
