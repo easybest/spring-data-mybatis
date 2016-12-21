@@ -40,7 +40,8 @@
     </scm>
 
     <properties>
-        <springdata.commons>1.12.5.RELEASE</springdata.commons>
+        <springdata.commons.version>1.12.5.RELEASE</springdata.commons.version>
+        <mybatis.version>3.4.1</mybatis.version>
     </properties>
 
     <profiles>
@@ -103,7 +104,7 @@
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-commons</artifactId>
-            <version>${springdata.commons}</version>
+            <version>${springdata.commons.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -116,7 +117,7 @@
         <dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis</artifactId>
-            <version>3.4.1</version>
+            <version>${mybatis.version}</version>
         </dependency>
         <dependency>
             <groupId>org.mybatis</groupId>
