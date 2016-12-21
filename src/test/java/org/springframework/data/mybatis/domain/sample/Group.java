@@ -21,7 +21,8 @@ package org.springframework.data.mybatis.domain.sample;
 import org.springframework.data.mybatis.annotations.Condition;
 import org.springframework.data.mybatis.annotations.Entity;
 import org.springframework.data.mybatis.domains.LongId;
-import org.springframework.data.repository.query.parser.Part;
+
+import static org.springframework.data.repository.query.parser.Part.Type.SIMPLE_PROPERTY;
 
 
 /**
@@ -31,7 +32,7 @@ import org.springframework.data.repository.query.parser.Part;
 public class Group extends LongId {
     @Condition
     private String code;
-    @Condition(type = Part.Type.SIMPLE_PROPERTY)
+    @Condition(type = SIMPLE_PROPERTY)
     private String name;
 
     public Group() {

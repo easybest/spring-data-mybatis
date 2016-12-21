@@ -19,7 +19,6 @@
 package org.springframework.data.mybatis.domain.sample;
 
 import org.springframework.data.mybatis.annotations.*;
-import org.springframework.data.repository.query.parser.Part;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -48,9 +47,9 @@ public class User {
     private String emailAddress;
 
     @ManyToMany
-//    @JoinTable(name = "DS_USER_DS_USER",
-//            joinColumns = @JoinColumn(name = "DS_USER_ID", referencedColumnName = "ID"),
-//            inverseJoinColumns = @JoinColumn(name = "COLLEAGUES_ID", referencedColumnName = "ID"))
+    @JoinTable(name = "DS_USER_DS_USER",
+            joinColumns = @JoinColumn(name = "DS_USER_ID", referencedColumnName = "ID"),
+            inverseJoinColumns = @JoinColumn(name = "COLLEAGUES_ID", referencedColumnName = "ID"))
     private Set<User> colleagues;
     @ManyToOne
     private User      manager;
