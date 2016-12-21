@@ -134,7 +134,7 @@ public class UserRepositoryIntegrationTest {
 
 如果你需要使用自己编写的Mybatis Mapper，需要在application.properties中配置：
 ```
-spring.data.mybatis.mapper-Locations=classpath*:/org/springframework/data/mybatis/samples/mappers/*Mapper.xml
+spring.data.mybatis.mapper-locations=classpath*:/org/springframework/data/mybatis/samples/mappers/*Mapper.xml
 ```
 
 在Spring Boot中你不需要自己去定义SqlSessionFactory.
