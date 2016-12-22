@@ -29,6 +29,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 /**
  * @author Jarvis Song
  */
@@ -53,11 +56,18 @@ public class AuditableDepartmentRepositoryTests {
 
     @Test
     public void testCreateDate() {
-//        Department develop = new Department("develop");
-//        assertNull(develop.getCreatedDate());
-//        develop = departmentRepository.save(develop);
-//        assertNotNull(develop.getCreatedDate());
+        Department develop = new Department("develop");
+        assertNull(develop.getCreatedDate());
+        develop = departmentRepository.save(develop);
+        assertNotNull(develop.getCreatedDate());
+    }
 
+    @Test
+    public void testLastModifiedDate() {
+        assertNull(research.getLastModifiedDate());
+        research.setName("research1");
+        departmentRepository.save(research);
+        assertNotNull(research.getLastModifiedDate());
     }
 
 

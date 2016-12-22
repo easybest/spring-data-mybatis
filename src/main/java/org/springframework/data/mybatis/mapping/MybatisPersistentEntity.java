@@ -34,4 +34,6 @@ public interface MybatisPersistentEntity<T> extends PersistentEntity<T, MybatisP
     String getEntityName();
 
     MybatisPersistentProperty findByColumnName(String columnName);
+
+
 }
