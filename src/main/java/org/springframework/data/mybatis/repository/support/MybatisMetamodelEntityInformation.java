@@ -18,12 +18,17 @@
 
 package org.springframework.data.mybatis.repository.support;
 
+import org.joda.time.DateTime;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.util.Date;
 
 /**
  * mybatis meta.
@@ -31,6 +36,9 @@ import java.io.Serializable;
  * @author Jarvis Song
  */
 public class MybatisMetamodelEntityInformation<T, ID extends Serializable> extends MybatisEntityInformationSupport<T, ID> {
+
+    private PersistentProperty<?> createdDateProperty;
+    private PersistentProperty<?> lastModifiedDateProperty;
 
     /**
      * Creates a new {@link AbstractEntityInformation} from the given domain class.
@@ -40,6 +48,9 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
      */
     protected MybatisMetamodelEntityInformation(PersistentEntity<T, ?> persistentEntity, Class<T> domainClass) {
         super(persistentEntity, domainClass);
+
+        createdDateProperty = persistentEntity.getPersistentProperty(CreatedDate.class);
+        lastModifiedDateProperty = persistentEntity.getPersistentProperty(LastModifiedDate.class);
     }
 
     @Override
@@ -67,7 +78,40 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
 
     @Override
     public boolean hasVersion() {
-        return null != persistentEntity.getVersionProperty();
+        return persistentEntity.hasVersionProperty();
+    }
+
+
+    private void setAuditDate(PersistentProperty<?> property, T entity, Class<? extends Annotation> annotationType) {
+
+
+        Class<?> type = property.getRawType();
+        if (Date.class.isAssignableFrom(type)) {
+            persistentEntity.getPropertyAccessor(entity).setProperty(property, new Date());
+        } else if (DateTime.class == type) {
+            persistentEntity.getPropertyAccessor(entity).setProperty(property, DateTime.now());
+        } else if (Long.class == type || long.class == type) {
+            persistentEntity.getPropertyAccessor(entity).setProperty(property, System.currentTimeMillis());
+        } else {
+            throw new IllegalArgumentException("now we can not support " + type.getName() + " for " + annotationType.getName());
+        }
+    }
+
+    @Override
+    public void setCreatedDate(T entity) {
+        if (null == createdDateProperty) {
+            return;
+        }
+        setAuditDate(createdDateProperty, entity, CreatedDate.class);
+    }
+
+    @Override
+    public void setLastModifiedDate(T entity) {
+        if (null == lastModifiedDateProperty) {
+            return;
+        }
+        setAuditDate(lastModifiedDateProperty, entity, LastModifiedDate.class);
+
     }
 
     @Override
