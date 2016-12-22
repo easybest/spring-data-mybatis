@@ -20,6 +20,7 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
+import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
 
 import java.io.Serializable;
@@ -62,5 +63,34 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
             return null;
         }
         return (Class<ID>) idProperty.getType();
+    }
+
+    @Override
+    public boolean hasVersion() {
+        return null != persistentEntity.getVersionProperty();
+    }
+
+    @Override
+    public int increaseVersion(T entity) {
+        PersistentProperty<?> versionProperty = persistentEntity.getVersionProperty();
+        if (null == versionProperty) {
+            return 0;
+        }
+
+        PersistentPropertyAccessor accessor = persistentEntity.getPropertyAccessor(entity);
+        int newVer = (Integer) accessor.getProperty(versionProperty) + 1;
+        accessor.setProperty(versionProperty, newVer);
+
+        return newVer;
+    }
+
+    @Override
+    public void setVersion(T entity, int version) {
+        PersistentProperty<?> versionProperty = persistentEntity.getVersionProperty();
+        if (null == versionProperty) {
+            return;
+        }
+        persistentEntity.getPropertyAccessor(entity).setProperty(versionProperty, version);
+
     }
 }
