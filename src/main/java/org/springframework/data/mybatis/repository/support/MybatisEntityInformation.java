@@ -39,4 +39,8 @@ public interface MybatisEntityInformation<T, ID extends Serializable>
     boolean hasVersion();
 
 
+    void setCreatedDate(T entity);
+
+    void setLastModifiedDate(T entity);
+
 }
