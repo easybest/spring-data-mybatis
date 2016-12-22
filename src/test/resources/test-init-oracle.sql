@@ -43,8 +43,13 @@ CREATE TABLE DS_GROUP (
 CREATE SEQUENCE SEQ_DS_GROUP;
 
 CREATE TABLE DEPARTMENT (
-  ID   NUMBER(11)   NOT NULL,
-  NAME VARCHAR2(32) NULL,
+  ID                 NUMBER(11)   NOT NULL,
+  NAME               VARCHAR2(32) NULL,
+  version            NUMBER(11)   NULL,
+  created_date       TIMESTAMP    NULL,
+  last_modified_date TIMESTAMP    NULL,
+  creator            NUMBER(11)   NULL,
+  modifier           NUMBER(11)   NULL,
   PRIMARY KEY (ID)
 );
 CREATE SEQUENCE SEQ_DEPARTMENT;
