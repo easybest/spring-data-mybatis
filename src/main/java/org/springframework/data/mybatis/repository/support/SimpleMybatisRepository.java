@@ -66,6 +66,11 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
         if (entityInformation.isNew(entity)) {
             // insert
+
+            if (entityInformation.hasVersion()) {
+                entityInformation.setVersion(entity, 0);
+            }
+
             if (entity instanceof Auditable) {
                 ((Auditable) entity).setCreatedDate(new Date());
                 if (null != auditorAware) {
@@ -76,6 +81,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
             insert(STATEMENT_INSERT, entity);
         } else {
             // update
+
             if (entity instanceof Auditable) {
                 ((Auditable) entity).setLastModifiedDate(new Date());
                 if (null != auditorAware) {
@@ -83,7 +89,13 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
                 }
             }
 
-            update(STATEMENT_UPDATE, entity);
+            int row = update(STATEMENT_UPDATE, entity);
+            if (row == 0) {
+                throw new MybatisNoHintException("update effect 0 row, maybe version control lock occurred.");
+            }
+            if (entityInformation.hasVersion()) {
+                entityInformation.increaseVersion(entity);
+            }
         }
 
         return entity;
