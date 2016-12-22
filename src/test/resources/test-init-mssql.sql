@@ -33,7 +33,12 @@ CREATE TABLE DS_GROUP (
   PRIMARY KEY (ID)
 );
 CREATE TABLE DEPARTMENT (
-  ID   INT IDENTITY,
-  NAME VARCHAR(32) NULL,
+  ID                 INT IDENTITY,
+  NAME               VARCHAR(32) NULL,
+  version            INT         NULL,
+  created_date       TIMESTAMP   NULL,
+  last_modified_date TIMESTAMP   NULL,
+  creator            INT         NULL,
+  modifier           INT         NULL,
   PRIMARY KEY (ID)
 );
