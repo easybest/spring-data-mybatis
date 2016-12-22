@@ -20,13 +20,15 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.domain.*;
-import org.springframework.data.mybatis.domains.Auditable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Default implementation of the {@link org.springframework.data.repository.CrudRepository} interface.
@@ -67,27 +69,18 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         if (entityInformation.isNew(entity)) {
             // insert
 
+            entityInformation.setCreatedDate(entity);
+
             if (entityInformation.hasVersion()) {
                 entityInformation.setVersion(entity, 0);
             }
 
-            if (entity instanceof Auditable) {
-                ((Auditable) entity).setCreatedDate(new Date());
-                if (null != auditorAware) {
-                    ((Auditable) entity).setCreatedBy(auditorAware.getCurrentAuditor());
-                }
-            }
 
             insert(STATEMENT_INSERT, entity);
         } else {
             // update
 
-            if (entity instanceof Auditable) {
-                ((Auditable) entity).setLastModifiedDate(new Date());
-                if (null != auditorAware) {
-                    ((Auditable) entity).setLastModifiedBy(auditorAware.getCurrentAuditor());
-                }
-            }
+            entityInformation.setLastModifiedDate(entity);
 
             int row = update(STATEMENT_UPDATE, entity);
             if (row == 0) {
