@@ -18,25 +18,22 @@
 
 package org.springframework.data.mybatis.repository.support;
 
-import org.springframework.data.mybatis.repository.query.MybatisEntityMetadata;
-import org.springframework.data.repository.core.EntityInformation;
-
-import java.io.Serializable;
-
 /**
- * mybatis entity information.
- *
  * @author Jarvis Song
  */
-public interface MybatisEntityInformation<T, ID extends Serializable>
-        extends EntityInformation<T, ID>, MybatisEntityMetadata<T> {
+public class MybatisNoHintException extends MybatisQueryException {
+    public MybatisNoHintException() {
+    }
 
+    public MybatisNoHintException(String message) {
+        super(message);
+    }
 
-    int increaseVersion(T entity);
+    public MybatisNoHintException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    void setVersion(T entity, int version);
-
-    boolean hasVersion();
-
-
+    public MybatisNoHintException(Throwable cause) {
+        super(cause);
+    }
 }

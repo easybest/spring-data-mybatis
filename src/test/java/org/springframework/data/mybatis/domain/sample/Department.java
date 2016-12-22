@@ -21,13 +21,13 @@ package org.springframework.data.mybatis.domain.sample;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
-import org.springframework.data.mybatis.annotations.*;
+import org.springframework.data.mybatis.annotations.Column;
+import org.springframework.data.mybatis.annotations.Entity;
+import org.springframework.data.mybatis.annotations.Id;
 
 import java.util.Date;
 
-import static org.apache.ibatis.type.JdbcType.BIGINT;
 import static org.springframework.data.mybatis.annotations.Id.GenerationType.AUTO;
-import static org.springframework.data.mybatis.annotations.Temporal.TemporalType.TIMESTAMP;
 
 
 /**
@@ -36,25 +36,20 @@ import static org.springframework.data.mybatis.annotations.Temporal.TemporalType
 @Entity
 public class Department {
     @Id(strategy = AUTO)
-    protected Long   id;
-    private   String name;
+    protected Long    id;
+    private   String  name;
     @Version
-    private   Long   version;
+    private   Integer version;
 
 
-    @Column(name = "CREATED_DATE")
-    @JdbcType(BIGINT)
     @CreatedDate
     protected Date createdDate;
 
 
-    @Column(name = "LAST_MODIFIED_DATE")
-    @JdbcType(BIGINT)
-    @Temporal(TIMESTAMP)
     @LastModifiedDate
     protected Date lastModifiedDate;
 
-    @Column(name = "CREATOR")
+    @Column(name = "creator")
     protected Long createdBy;
 
     @Column(name = "MODIFIER")
@@ -79,11 +74,11 @@ public class Department {
         return name;
     }
 
-    public Long getVersion() {
+    public Integer getVersion() {
         return version;
     }
 
-    public void setVersion(Long version) {
+    public void setVersion(Integer version) {
         this.version = version;
     }
 
