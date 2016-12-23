@@ -112,6 +112,10 @@ public class Dialect {
         return tableName;
     }
 
+    public String wrapColumnName(String columnName) {
+        return columnName;
+    }
+
     public boolean supportsSequences() {
         return false;
     }

@@ -31,7 +31,7 @@ import static org.springframework.data.mybatis.annotations.Id.GenerationType.AUT
 /**
  * @author Jarvis Song
  */
-@Entity
+@Entity(table = "DEPARTMENT")
 public class Department {
     @Id(strategy = AUTO)
     protected Long    id;
