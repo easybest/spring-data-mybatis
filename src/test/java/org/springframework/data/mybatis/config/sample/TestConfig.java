@@ -18,8 +18,10 @@
 
 package org.springframework.data.mybatis.config.sample;
 
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
 import org.springframework.data.mybatis.support.SqlSessionFactoryBean;
@@ -39,11 +41,14 @@ import java.sql.SQLException;
         value = "org.springframework.data.mybatis.repository.sample",
         mapperLocations = "classpath*:/org/springframework/data/mybatis/repository/sample/mappers/*Mapper.xml"
 )
-public class TestConfig {
+public class TestConfig implements ResourceLoaderAware {
+
+    private ResourceLoader resourceLoader;
 
     @Bean
     public DataSource dataSource() throws SQLException {
         return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.H2).addScript("classpath:/test-init.sql").build();
+
     }
 
     @Bean
@@ -68,4 +73,9 @@ public class TestConfig {
         };
     }
 
+    @Override
+    public void setResourceLoader(ResourceLoader resourceLoader) {
+
+        this.resourceLoader = resourceLoader;
+    }
 }

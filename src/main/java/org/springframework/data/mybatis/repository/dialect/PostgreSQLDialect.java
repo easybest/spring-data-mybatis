@@ -58,6 +58,11 @@ public class PostgreSQLDialect extends Dialect {
     }
 
     @Override
+    public String wrapColumnName(String columnName) {
+        return "\"" + columnName + "\"";
+    }
+
+    @Override
     public String getDatabaseId() {
         return "postgresql";
     }
@@ -75,6 +80,6 @@ public class PostgreSQLDialect extends Dialect {
 
     @Override
     public boolean supportsDeleteAlias() {
-        return true;
+        return false;
     }
 }

@@ -36,14 +36,16 @@ public class User {
     @Id(strategy = Id.GenerationType.AUTO)
     private Integer id;
     @Condition
+    @Column(name = "FIRSTNAME")
     private String  firstname;
     @Condition(type = LIKE)
+    @Column(name = "LASTNAME")
     private String  lastname;
     private int     age;
     private boolean active;
     private Date    createdAt;
 
-    @Column
+    @Column(name = "EMAIL_ADDRESS")
     private String emailAddress;
 
     @ManyToMany
