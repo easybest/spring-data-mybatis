@@ -70,6 +70,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
             // insert
 
             entityInformation.setCreatedDate(entity);
+            entityInformation.setCreatedBy(entity);
 
             if (entityInformation.hasVersion()) {
                 entityInformation.setVersion(entity, 0);
@@ -81,6 +82,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
             // update
 
             entityInformation.setLastModifiedDate(entity);
+            entityInformation.setLastModifiedBy(entity);
 
             int row = update(STATEMENT_UPDATE, entity);
             if (row == 0) {
