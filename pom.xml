@@ -11,7 +11,7 @@
 
     <groupId>com.ifrabbit</groupId>
     <artifactId>spring-data-mybatis</artifactId>
-    <version>1.0.6.RELEASE</version>
+    <version>1.0.7.RELEASE</version>
 
     <name>Spring Data MyBatis</name>
     <description>The primary goal of the Spring Data project is to make it easier to build Spring-powered applications
@@ -150,15 +150,21 @@
             <scope>test</scope>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>com.oracle</groupId>-->
-            <!--<artifactId>ojdbc14</artifactId>-->
-            <!--<version>10.2.0.4.0</version>-->
-            <!--<scope>test</scope>-->
+        <!--<groupId>com.oracle</groupId>-->
+        <!--<artifactId>ojdbc14</artifactId>-->
+        <!--<version>10.2.0.4.0</version>-->
+        <!--<scope>test</scope>-->
         <!--</dependency>-->
         <dependency>
             <groupId>net.sourceforge.jtds</groupId>
             <artifactId>jtds</artifactId>
             <version>1.3.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.4.1212</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
