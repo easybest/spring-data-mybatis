@@ -55,7 +55,7 @@ public class AuditableDepartmentRepositoryTests {
     }
 
     @Test
-    public void testCreateDate() {
+    public void testCreatedDate() {
         Department develop = new Department("develop");
         assertNull(develop.getCreatedDate());
         develop = departmentRepository.save(develop);
@@ -68,6 +68,22 @@ public class AuditableDepartmentRepositoryTests {
         research.setName("research1");
         departmentRepository.save(research);
         assertNotNull(research.getLastModifiedDate());
+    }
+
+    @Test
+    public void testCreatedBy() {
+        Department develop = new Department("develop");
+        assertNull(develop.getCreatedBy());
+        develop = departmentRepository.save(develop);
+        assertNotNull(develop.getCreatedBy());
+    }
+
+    @Test
+    public void testLastModifiedBy() {
+        assertNull(research.getLastModifiedBy());
+        research.setName("research1");
+        departmentRepository.save(research);
+        assertNotNull(research.getLastModifiedBy());
     }
 
 

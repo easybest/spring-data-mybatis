@@ -43,4 +43,8 @@ public interface MybatisEntityInformation<T, ID extends Serializable>
 
     void setLastModifiedDate(T entity);
 
+    void setCreatedBy(T entity);
+
+    void setLastModifiedBy(T entity);
+
 }

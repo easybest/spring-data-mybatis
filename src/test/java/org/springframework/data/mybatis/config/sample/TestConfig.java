@@ -20,6 +20,7 @@ package org.springframework.data.mybatis.config.sample;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
 import org.springframework.data.mybatis.support.SqlSessionFactoryBean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -55,6 +56,16 @@ public class TestConfig {
     @Bean
     public PlatformTransactionManager transactionManager(DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
+    }
+
+    @Bean
+    public AuditorAware<Long> auditorAware() {
+        return new AuditorAware<Long>() {
+            @Override
+            public Long getCurrentAuditor() {
+                return 1001L;
+            }
+        };
     }
 
 }
