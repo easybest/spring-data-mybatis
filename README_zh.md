@@ -33,7 +33,7 @@ Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>1.0.5.RELEASE</version>
+  <version>1.0.6.RELEASE</version>
 </dependency>
 ```
 最简单的通过Java注解配置的Spring Data Mybatis 配置如下所示：
@@ -128,7 +128,7 @@ public class UserRepositoryIntegrationTest {
    <dependency>
        <groupId>com.ifrabbit</groupId>
        <artifactId>spring-boot-starter-data-mybatis</artifactId>
-       <version>1.0.5.RELEASE</version>
+       <version>1.0.6.RELEASE</version>
    </dependency>
    ```
 
