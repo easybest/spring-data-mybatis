@@ -253,7 +253,7 @@ public class MybatisMapperGenerator {
 
     public String buildFrom(boolean basic) {
         StringBuilder builder = new StringBuilder();
-        builder.append(persistentEntity.getTableName()).append(" ").append(quota(persistentEntity.getEntityName()));
+        builder.append(dialect.wrapTableName(persistentEntity.getTableName())).append(" ").append(quota(persistentEntity.getEntityName()));
         if (!basic) {
             builder.append(buildLeftOuterJoin());
         }
@@ -268,7 +268,7 @@ public class MybatisMapperGenerator {
             public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
                 if ((ass instanceof MybatisManyToOneAssociation)) {
                     final MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
-                    builder.append(" left outer join ").append(association.getObversePersistentEntity().getTableName()).append(" ").append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()))
+                    builder.append(" left outer join ").append(dialect.wrapTableName(association.getObversePersistentEntity().getTableName())).append(" ").append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()))
                             .append(" on ").append(quota(persistentEntity.getEntityName())).append(".").append(association.getJoinColumnName())
                             .append("=").append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName())).append(".").append(association.getJoinReferencedColumnName());
                 }
