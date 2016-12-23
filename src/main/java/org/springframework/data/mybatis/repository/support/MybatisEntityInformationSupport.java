@@ -18,6 +18,7 @@
 
 package org.springframework.data.mybatis.repository.support;
 
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mybatis.annotations.Entity;
@@ -38,6 +39,7 @@ public abstract class MybatisEntityInformationSupport<T, ID extends Serializable
 
 
     protected final PersistentEntity<T, ?> persistentEntity;
+    protected final AuditorAware<?>        auditorAware;
 
     /**
      * Creates a new {@link AbstractEntityInformation} from the given domain class.
@@ -46,9 +48,11 @@ public abstract class MybatisEntityInformationSupport<T, ID extends Serializable
      */
     protected MybatisEntityInformationSupport(
             PersistentEntity<T, ?> persistentEntity,
+            AuditorAware<?> auditorAware,
             Class<T> domainClass) {
         super(domainClass);
         this.persistentEntity = persistentEntity;
+        this.auditorAware = auditorAware;
     }
 
     @Override
@@ -63,14 +67,16 @@ public abstract class MybatisEntityInformationSupport<T, ID extends Serializable
     }
 
 
-    public static <T, ID extends Serializable> MybatisEntityInformation<T, ID> getEntityInformation(MybatisMappingContext mappingContext, Class<T> domainClass) {
+    public static <T, ID extends Serializable> MybatisEntityInformation<T, ID> getEntityInformation(MybatisMappingContext mappingContext,
+                                                                                                    AuditorAware<?> auditorAware,
+                                                                                                    Class<T> domainClass) {
         Assert.notNull(domainClass);
         PersistentEntity<T, ?> persistentEntity = (PersistentEntity<T, ?>) mappingContext.getPersistentEntity(domainClass);
         if (Persistable.class.isAssignableFrom(domainClass)) {
-            return new MybatisPersistableEntityInformation(persistentEntity, domainClass);
+            return new MybatisPersistableEntityInformation(persistentEntity, auditorAware, domainClass);
         }
 
-        return new MybatisMetamodelEntityInformation<T, ID>(persistentEntity, domainClass);
+        return new MybatisMetamodelEntityInformation<T, ID>(persistentEntity, auditorAware, domainClass);
     }
 
 }

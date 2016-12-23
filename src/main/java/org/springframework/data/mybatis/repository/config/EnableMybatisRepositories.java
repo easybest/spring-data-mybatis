@@ -135,6 +135,8 @@ public @interface EnableMybatisRepositories {
      */
     String transactionManagerRef() default "transactionManager";
 
+    String auditorAwareRef() default "auditorAware";
+
     /**
      * Configures whether nested repository-interfaces (e.g. defined as inner classes) should be discovered by the
      * repositories infrastructure.
