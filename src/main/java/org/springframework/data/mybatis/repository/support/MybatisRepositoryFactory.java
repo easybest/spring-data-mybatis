@@ -19,6 +19,7 @@
 package org.springframework.data.mybatis.repository.support;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.mybatis.repository.query.MybatisQueryLookupStrategy;
@@ -45,23 +46,25 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
     private final SqlSessionTemplate    sessionTemplate;
     private final Dialect               dialect;
     private final MybatisMappingContext mappingContext;
+    private final AuditorAware<?>       auditorAware;
 
     public MybatisRepositoryFactory(final MybatisMappingContext mappingContext,
                                     final SqlSessionTemplate sessionTemplate,
-                                    final Dialect dialect) {
+                                    final Dialect dialect,
+                                    AuditorAware<?> auditorAware) {
         Assert.notNull(sessionTemplate);
         Assert.notNull(dialect);
         this.mappingContext = mappingContext;
         this.sessionTemplate = sessionTemplate;
         this.dialect = dialect;
-
+        this.auditorAware = auditorAware;
     }
 
     @Override
     public <T, ID extends Serializable> MybatisEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
 
         return (MybatisEntityInformation<T, ID>)
-                MybatisEntityInformationSupport.getEntityInformation(mappingContext, domainClass);
+                MybatisEntityInformationSupport.getEntityInformation(mappingContext, auditorAware, domainClass);
     }
 
     @Override
