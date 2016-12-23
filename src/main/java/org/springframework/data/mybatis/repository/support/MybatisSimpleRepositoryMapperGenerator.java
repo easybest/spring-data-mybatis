@@ -115,7 +115,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("<mapper namespace=\"" + domainClass.getName() + "\">");
 
         if (!isFragmentExist("TABLE_NAME")) {
-            builder.append("<sql id=\"TABLE_NAME\">" + persistentEntity.getTableName() + "</sql>");
+            builder.append("<sql id=\"TABLE_NAME\">" + dialect.wrapTableName(persistentEntity.getTableName()) + "</sql>");
         }
         if (dialect.supportsSequences()) {
             if (!isFragmentExist("SEQUENCE")) {
@@ -182,7 +182,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
             return;
         }
         builder.append("<update id=\"_update\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
-        builder.append("update ").append(persistentEntity.getTableName());
+        builder.append("update ").append(dialect.wrapTableName(persistentEntity.getTableName()));
         builder.append("<set>");
 
         persistentEntity.doWithProperties(new SimplePropertyHandler() {
@@ -356,7 +356,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
     }
 
     private void buildDeleteAll(StringBuilder builder) {
-        builder.append("<delete id=\"_deleteAll\">truncate table " + persistentEntity.getTableName() + " </delete>");
+        builder.append("<delete id=\"_deleteAll\">truncate table " +dialect.wrapTableName( persistentEntity.getTableName() )+ " </delete>");
     }
 
     private void buildDeleteById(final StringBuilder builder) {
@@ -558,7 +558,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
             IdentityColumnSupport identityColumnSupport = dialect.getIdentityColumnSupport();
             if (idProperty.getIdGenerationType() == IDENTITY || (idProperty.getIdGenerationType() == AUTO && identityColumnSupport.supportsIdentityColumns())) {
                 builder.append("<selectKey keyProperty=\"" + idProperty.getName() + "\" resultType=\"" + idProperty.getActualType().getName() + "\" order=\"AFTER\">");
-                builder.append(dialect.getIdentityColumnSupport().getIdentitySelectString(persistentEntity.getTableName(), idProperty.getColumnName(), idProperty.getJdbcType().TYPE_CODE));
+                builder.append(dialect.getIdentityColumnSupport().getIdentitySelectString(dialect.wrapTableName(persistentEntity.getTableName()), idProperty.getColumnName(), idProperty.getJdbcType().TYPE_CODE));
                 builder.append("</selectKey>");
             } else if (idProperty.getIdGenerationType() == SEQUENCE || (idProperty.getIdGenerationType() == AUTO && dialect.supportsSequences())) {
                 builder.append("<selectKey keyProperty=\"" + idProperty.getName() + "\" resultType=\"" + idProperty.getActualType().getName() + "\" order=\"BEFORE\">");
@@ -568,7 +568,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         }
         builder.append("<![CDATA[");
 
-        builder.append("insert into ").append(persistentEntity.getTableName()).append("(");
+        builder.append("insert into ").append(dialect.wrapTableName(persistentEntity.getTableName())).append("(");
 
 
         persistentEntity.doWithProperties(new SimplePropertyHandler() {
