@@ -53,6 +53,11 @@ public class PostgreSQLDialect extends Dialect {
     }
 
     @Override
+    public String wrapTableName(String tableName) {
+        return "\"" + tableName + "\"";
+    }
+
+    @Override
     public String getDatabaseId() {
         return "postgresql";
     }
