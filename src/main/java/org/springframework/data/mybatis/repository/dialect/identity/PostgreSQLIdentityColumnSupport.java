@@ -28,7 +28,7 @@ public class PostgreSQLIdentityColumnSupport extends IdentityColumnSupportImpl {
 
     @Override
     public String getIdentitySelectString(String table, String column, int type) {
-        return "select currval('" + table + '_' + column + "_seq')";
+        return "select currval('\"" + table + '_' + column + "_seq\"')";
     }
 
     @Override
