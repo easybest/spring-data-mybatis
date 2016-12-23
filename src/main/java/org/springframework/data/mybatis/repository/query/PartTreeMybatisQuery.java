@@ -120,7 +120,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
                     throw new MybatisQueryException("can not find property: " + part.getProperty().getSegment() + " from entity: " + persistentEntity.getName());
                 }
                 if (!property.isEntity()) {
-                    columnName = quota(persistentEntity.getEntityName()) + "." + property.getColumnName();
+                    columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(property.getColumnName());
                 } else if (!basic) {
                     if (property.isAssociation()) {
                         Association<MybatisPersistentProperty> ass = property.getAssociation();
@@ -130,9 +130,9 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
                             if (null == leafProperty) {
                                 throw new MybatisQueryException("can not find property: " + part.getProperty().getLeafProperty().getSegment() + " from entity: " + association.getObversePersistentEntity().getName());
                             }
-                            columnName = quota(persistentEntity.getEntityName() + "." + part.getProperty().getSegment()) + "." + leafProperty.getColumnName();
+                            columnName = quota(persistentEntity.getEntityName() + "." + part.getProperty().getSegment()) + "." + dialect.wrapColumnName(leafProperty.getColumnName());
                         } else if (ass instanceof MybatisEmbeddedAssociation) {
-                            columnName = quota(persistentEntity.getEntityName()) + "." + ass.getObverse().getColumnName();
+                            columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(ass.getObverse().getColumnName());
                         }
                     }
                 }

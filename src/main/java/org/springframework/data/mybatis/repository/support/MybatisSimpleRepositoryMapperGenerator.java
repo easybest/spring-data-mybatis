@@ -194,12 +194,12 @@ public class MybatisSimpleRepositoryMapperGenerator {
                 }
 
                 if (property.isVersionProperty()) {
-                    builder.append(property.getColumnName()).append("=").append(property.getColumnName()).append("+1,");
+                    builder.append(dialect.wrapColumnName(property.getColumnName())).append("=").append(dialect.wrapColumnName(property.getColumnName())).append("+1,");
                     return;
                 }
 
                 builder.append("<if test=\"" + property.getName() + " != null\">")
-                        .append(property.getColumnName()).append("=#{").append(property.getName())
+                        .append(dialect.wrapColumnName(property.getColumnName())).append("=#{").append(property.getName())
                         .append(",jdbcType=").append(property.getJdbcType())
                         .append(null != property.getSpecifiedTypeHandler() ? (",typeHandler=" + property.getSpecifiedTypeHandler().getName()) : "")
                         .append("}").append(",</if>");
@@ -218,7 +218,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
                             public void doWithPersistentProperty(PersistentProperty<?> pp) {
                                 MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
                                 builder.append("<if test=\"" + association.getInverse().getName() + " != null and " + association.getInverse().getName() + "." + property.getName() + " != null\">")
-                                        .append(property.getColumnName()).append("=#{").append(association.getInverse().getName()).append(".").append(property.getName()).append("}").append(",</if>");
+                                        .append(dialect.wrapColumnName(property.getColumnName())).append("=#{").append(association.getInverse().getName()).append(".").append(property.getName()).append("}").append(",</if>");
                             }
                         });
                     }
@@ -250,17 +250,17 @@ public class MybatisSimpleRepositoryMapperGenerator {
                     @Override
                     public void doWithPersistentProperty(PersistentProperty<?> pp) {
                         MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                        builder.append(" and ").append(property.getColumnName()).append("=").append("#{").append(idProperty.getName()).append(".").append(property.getName()).append("}");
+                        builder.append(" and ").append(dialect.wrapColumnName(property.getColumnName())).append("=").append("#{").append(idProperty.getName()).append(".").append(property.getName()).append("}");
                     }
                 });
             }
         } else {
-            builder.append(" and ").append(idProperty.getColumnName()).append("=").append("#{").append(idProperty.getName()).append("}");
+            builder.append(" and ").append(dialect.wrapColumnName(idProperty.getColumnName())).append("=").append("#{").append(idProperty.getName()).append("}");
         }
 
         MybatisPersistentProperty versionProperty = persistentEntity.getVersionProperty();
         if (null != versionProperty) {
-            builder.append("and ").append(versionProperty.getColumnName()).append("=").append("#{").append(versionProperty.getName()).append("}");
+            builder.append("and ").append(dialect.wrapColumnName(versionProperty.getColumnName())).append("=").append("#{").append(versionProperty.getName()).append("}");
         }
 
         builder.append("</trim>");
@@ -303,13 +303,13 @@ public class MybatisSimpleRepositoryMapperGenerator {
                     @Override
                     public void doWithPersistentProperty(PersistentProperty<?> pp) {
                         MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                        builder.append(" and ").append(quota(persistentEntity.getEntityName())).append(".").append(property.getColumnName())
+                        builder.append(" and ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(property.getColumnName()))
                                 .append("=").append("#{" + idProperty.getName() + "." + property.getName() + "}");
                     }
                 });
             }
         } else {
-            builder.append(" and ").append(quota(persistentEntity.getEntityName())).append(".").append(idProperty.getColumnName())
+            builder.append(" and ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(idProperty.getColumnName()))
                     .append("=").append("#{" + idProperty.getName() + "}");
         }
     }
@@ -356,7 +356,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
     }
 
     private void buildDeleteAll(StringBuilder builder) {
-        builder.append("<delete id=\"_deleteAll\">truncate table " +dialect.wrapTableName( persistentEntity.getTableName() )+ " </delete>");
+        builder.append("<delete id=\"_deleteAll\">truncate table " + dialect.wrapTableName(persistentEntity.getTableName()) + " </delete>");
     }
 
     private void buildDeleteById(final StringBuilder builder) {
@@ -381,13 +381,13 @@ public class MybatisSimpleRepositoryMapperGenerator {
                 idEntity.doWithProperties(new PropertyHandler<MybatisPersistentProperty>() {
                     @Override
                     public void doWithPersistentProperty(MybatisPersistentProperty property) {
-                        builder.append("and ").append(property.getColumnName()).append("=#{" + idProperty.getName() + "." + property.getName() + "}");
+                        builder.append("and ").append(dialect.wrapColumnName(property.getColumnName())).append("=#{" + idProperty.getName() + "." + property.getName() + "}");
 
                     }
                 });
             }
         } else {
-            builder.append(" and ").append(idProperty.getColumnName()).append("=#{" + idProperty.getName() + "}");
+            builder.append(" and ").append(dialect.wrapColumnName(idProperty.getColumnName())).append("=#{" + idProperty.getName() + "}");
         }
 
         builder.append("</trim>");
@@ -459,7 +459,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
                         condProperties = new String[]{property.getName()};
                     }
                     if (StringUtils.isEmpty(condColumn)) {
-                        condColumn = property.getColumnName();
+                        condColumn = dialect.wrapColumnName(property.getColumnName());
                     }
                     if (StringUtils.isEmpty(condAlias)) {
                         condAlias = persistentEntity.getEntityName();
@@ -508,7 +508,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
             if (!idProperty.isCompositeId()) {
                 builder.append("<if test=\"_ids != null\">");
 
-                builder.append(" where ").append(quota(persistentEntity.getEntityName())).append(".").append(idProperty.getColumnName()).append(" in ");
+                builder.append(" where ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(idProperty.getColumnName())).append(" in ");
                 builder.append("<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
 
                 builder.append("</if>");
@@ -534,7 +534,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
 
             MybatisPersistentProperty idProperty = persistentEntity.getIdProperty();
             if (!idProperty.isCompositeId()) {
-                builder.append(" where ").append(quota(persistentEntity.getEntityName())).append(".").append(idProperty.getColumnName()).append(" in ");
+                builder.append(" where ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(idProperty.getColumnName())).append(" in ");
                 builder.append("<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
             }
             builder.append("</if>");
@@ -558,7 +558,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
             IdentityColumnSupport identityColumnSupport = dialect.getIdentityColumnSupport();
             if (idProperty.getIdGenerationType() == IDENTITY || (idProperty.getIdGenerationType() == AUTO && identityColumnSupport.supportsIdentityColumns())) {
                 builder.append("<selectKey keyProperty=\"" + idProperty.getName() + "\" resultType=\"" + idProperty.getActualType().getName() + "\" order=\"AFTER\">");
-                builder.append(dialect.getIdentityColumnSupport().getIdentitySelectString(dialect.wrapTableName(persistentEntity.getTableName()), idProperty.getColumnName(), idProperty.getJdbcType().TYPE_CODE));
+                builder.append(dialect.getIdentityColumnSupport().getIdentitySelectString(persistentEntity.getTableName(), idProperty.getColumnName(), idProperty.getJdbcType().TYPE_CODE));
                 builder.append("</selectKey>");
             } else if (idProperty.getIdGenerationType() == SEQUENCE || (idProperty.getIdGenerationType() == AUTO && dialect.supportsSequences())) {
                 builder.append("<selectKey keyProperty=\"" + idProperty.getName() + "\" resultType=\"" + idProperty.getActualType().getName() + "\" order=\"BEFORE\">");
@@ -583,7 +583,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
                                 @Override
                                 public void doWithPersistentProperty(PersistentProperty<?> pp) {
                                     MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                                    builder.append(property.getColumnName()).append(",");
+                                    builder.append(dialect.wrapColumnName(property.getColumnName())).append(",");
                                 }
                             });
                         }
@@ -594,7 +594,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
                         return;
                     }
                 }
-                builder.append(property.getColumnName()).append(",");
+                builder.append(dialect.wrapColumnName(property.getColumnName())).append(",");
             }
         });
 
@@ -610,7 +610,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
                             @Override
                             public void doWithPersistentProperty(PersistentProperty<?> pp) {
                                 MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                                builder.append(property.getColumnName()).append(",");
+                                builder.append(dialect.wrapColumnName(property.getColumnName())).append(",");
                             }
                         });
                     }
