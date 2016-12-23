@@ -50,6 +50,7 @@ import java.util.*;
 public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExtensionSupport {
     private static final String DEFAULT_TRANSACTION_MANAGER_BEAN_NAME = TxUtils.DEFAULT_TRANSACTION_MANAGER;
     private static final String DEFAULT_SQL_SESSION_FACTORY_BEAN_NAME = "sqlSessionFactory";
+    private static final String DEFAULT_AUDITOR_AWARE_BEAN_NAME       = "auditorAware";
     private static final String ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE = "enableDefaultTransactions";
     private static final String SQL_SESSION_TEMPLATE_BEAN_NAME_SUFFIX = "_Template";
     private static final String DIALECT_BEAN_NAME_SUFFIX              = "_Dialect";

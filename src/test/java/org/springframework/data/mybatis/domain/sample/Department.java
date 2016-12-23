@@ -18,9 +18,7 @@
 
 package org.springframework.data.mybatis.domain.sample;
 
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.annotation.Version;
+import org.springframework.data.annotation.*;
 import org.springframework.data.mybatis.annotations.Column;
 import org.springframework.data.mybatis.annotations.Entity;
 import org.springframework.data.mybatis.annotations.Id;
@@ -50,9 +48,11 @@ public class Department {
     protected Date lastModifiedDate;
 
     @Column(name = "creator")
+    @CreatedBy
     protected Long createdBy;
 
     @Column(name = "MODIFIER")
+    @LastModifiedBy
     protected Long lastModifiedBy;
 
     public Department() {

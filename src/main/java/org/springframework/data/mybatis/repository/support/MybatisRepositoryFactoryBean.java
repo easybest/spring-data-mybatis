@@ -19,6 +19,8 @@
 package org.springframework.data.mybatis.repository.support;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.repository.Repository;
@@ -40,6 +42,9 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID ext
     private Dialect               dialect;
     private MybatisMappingContext mappingContext;
 
+    @Autowired(required = false)
+    private AuditorAware<?> auditorAware;
+
     @Override
     public void afterPropertiesSet() {
         Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null.");
@@ -54,7 +59,7 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID ext
 
     @Override
     protected RepositoryFactorySupport doCreateRepositoryFactory() {
-        return new MybatisRepositoryFactory(mappingContext, sqlSessionTemplate, dialect);
+        return new MybatisRepositoryFactory(mappingContext, sqlSessionTemplate, dialect, auditorAware);
     }
 
     public void setSqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
@@ -65,4 +70,7 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID ext
         this.dialect = dialect;
     }
 
+    public void setAuditorAware(AuditorAware<?> auditorAware) {
+        this.auditorAware = auditorAware;
+    }
 }
