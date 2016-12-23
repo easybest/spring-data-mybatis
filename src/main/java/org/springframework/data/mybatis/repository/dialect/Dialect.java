@@ -108,6 +108,9 @@ public class Dialect {
         }
     }
 
+    public String wrapTableName(String tableName) {
+        return tableName;
+    }
 
     public boolean supportsSequences() {
         return false;
