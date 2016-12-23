@@ -19,8 +19,11 @@
 package org.springframework.data.mybatis.repository.support;
 
 import org.joda.time.DateTime;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -39,6 +42,9 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
 
     private PersistentProperty<?> createdDateProperty;
     private PersistentProperty<?> lastModifiedDateProperty;
+    private PersistentProperty<?> createdByProperty;
+    private PersistentProperty<?> lastModifiedByProperty;
+
 
     /**
      * Creates a new {@link AbstractEntityInformation} from the given domain class.
@@ -46,11 +52,13 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
      * @param persistentEntity
      * @param domainClass      must not be {@literal null}.
      */
-    protected MybatisMetamodelEntityInformation(PersistentEntity<T, ?> persistentEntity, Class<T> domainClass) {
-        super(persistentEntity, domainClass);
+    protected MybatisMetamodelEntityInformation(PersistentEntity<T, ?> persistentEntity, AuditorAware<?> auditorAware, Class<T> domainClass) {
+        super(persistentEntity, auditorAware, domainClass);
 
         createdDateProperty = persistentEntity.getPersistentProperty(CreatedDate.class);
         lastModifiedDateProperty = persistentEntity.getPersistentProperty(LastModifiedDate.class);
+        createdByProperty = persistentEntity.getPersistentProperty(CreatedBy.class);
+        lastModifiedByProperty = persistentEntity.getPersistentProperty(LastModifiedBy.class);
     }
 
     @Override
@@ -112,6 +120,26 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
         }
         setAuditDate(lastModifiedDateProperty, entity, LastModifiedDate.class);
 
+    }
+
+    private void setCurrentAuditor(PersistentProperty<?> property, T entity) {
+        persistentEntity.getPropertyAccessor(entity).setProperty(property, auditorAware.getCurrentAuditor());
+    }
+
+    @Override
+    public void setCreatedBy(T entity) {
+        if (null == createdByProperty || null == auditorAware) {
+            return;
+        }
+        setCurrentAuditor(createdByProperty, entity);
+    }
+
+    @Override
+    public void setLastModifiedBy(T entity) {
+        if (null == lastModifiedByProperty || null == auditorAware) {
+            return;
+        }
+        setCurrentAuditor(lastModifiedByProperty, entity);
     }
 
     @Override
