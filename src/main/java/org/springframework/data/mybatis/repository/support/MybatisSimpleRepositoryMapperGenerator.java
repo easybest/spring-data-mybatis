@@ -228,7 +228,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
                 if ((ass instanceof MybatisManyToOneAssociation)) {
                     MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
                     builder.append("<if test=\"" + association.getInverse().getName() + " != null and " + association.getInverse().getName() + "." + association.getObverse().getName() + " != null\">")
-                            .append(association.getJoinColumnName()).append("=#{").append(association.getInverse().getName()).append(".").append(association.getObverse().getName()).append("}").append(",</if>");
+                            .append(dialect.wrapColumnName(association.getJoinColumnName())).append("=#{").append(association.getInverse().getName()).append(".").append(association.getObverse().getName()).append("}").append(",</if>");
                     return;
                 }
 
