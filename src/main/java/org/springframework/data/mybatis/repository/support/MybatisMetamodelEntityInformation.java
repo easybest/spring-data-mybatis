@@ -18,7 +18,6 @@
 
 package org.springframework.data.mybatis.repository.support;
 
-import org.joda.time.DateTime;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -27,6 +26,7 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
+import org.springframework.data.mybatis.domains.AuditDateAware;
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
 
 import java.io.Serializable;
@@ -52,8 +52,8 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
      * @param persistentEntity
      * @param domainClass      must not be {@literal null}.
      */
-    protected MybatisMetamodelEntityInformation(PersistentEntity<T, ?> persistentEntity, AuditorAware<?> auditorAware, Class<T> domainClass) {
-        super(persistentEntity, auditorAware, domainClass);
+    protected MybatisMetamodelEntityInformation(PersistentEntity<T, ?> persistentEntity, AuditorAware<?> auditorAware, AuditDateAware<?> auditDateAware, Class<T> domainClass) {
+        super(persistentEntity, auditorAware, auditDateAware, domainClass);
 
         createdDateProperty = persistentEntity.getPersistentProperty(CreatedDate.class);
         lastModifiedDateProperty = persistentEntity.getPersistentProperty(LastModifiedDate.class);
@@ -92,16 +92,19 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
 
     private void setAuditDate(PersistentProperty<?> property, T entity, Class<? extends Annotation> annotationType) {
 
+        if (null != auditDateAware) {
+            persistentEntity.getPropertyAccessor(entity).setProperty(property, auditDateAware.getCurrentDate());
+            return;
+        }
 
         Class<?> type = property.getRawType();
         if (Date.class.isAssignableFrom(type)) {
             persistentEntity.getPropertyAccessor(entity).setProperty(property, new Date());
-        } else if (DateTime.class == type) {
-            persistentEntity.getPropertyAccessor(entity).setProperty(property, DateTime.now());
         } else if (Long.class == type || long.class == type) {
             persistentEntity.getPropertyAccessor(entity).setProperty(property, System.currentTimeMillis());
         } else {
-            throw new IllegalArgumentException("now we can not support " + type.getName() + " for " + annotationType.getName());
+            throw new IllegalArgumentException("now we can not support " + type.getName() + " for " + annotationType.getName()
+                    + ", you can implement org.springframework.data.mybatis.domains.AuditDateAware interface as a spring bean.");
         }
     }
 
