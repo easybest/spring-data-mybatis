@@ -132,6 +132,26 @@ public class UserRepositoryIntegrationTest {
    </dependency>
    ```
 
+如果你想使用快照版本:
+```xml
+<dependency>
+  <groupId>com.ifrabbit</groupId>
+  <artifactId>spring-data-mybatis</artifactId>
+  <version>1.0.8.BUILD-SNAPSHOT</version>
+</dependency>
+```
+使用快照版本前，需要在pom.xml中配置:
+
+```xml
+<repository>
+ <id>oss-snapshots-repo</id>
+ <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+ <releases><enabled>false</enabled></releases>
+ <snapshots><enabled>true</enabled></snapshots>
+</repository>
+```
+
+
 如果你需要使用自己编写的Mybatis Mapper，需要在application.properties中配置：
 ```
 spring.data.mybatis.mapper-locations=classpath*:/org/springframework/data/mybatis/samples/mappers/*Mapper.xml
