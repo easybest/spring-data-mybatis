@@ -35,6 +35,27 @@ Download the jar through Maven:
 </dependency>
 ```
 
+If you want use snapshot version , you can download the jar through maven:
+```xml
+<dependency>
+  <groupId>com.ifrabbit</groupId>
+  <artifactId>spring-data-mybatis</artifactId>
+  <version>1.0.8.BUILD-SNAPSHOT</version>
+</dependency>
+```
+
+but you should add repository configuration to your pom.xml like this:
+
+```xml
+<repository>
+ <id>oss-snapshots-repo</id>
+ <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+ <releases><enabled>false</enabled></releases>
+ <snapshots><enabled>true</enabled></snapshots>
+</repository>
+```
+
+
 The simple Spring Data Mybatis configuration with Java-Config looks like this: 
 ```java
 @Configuration
