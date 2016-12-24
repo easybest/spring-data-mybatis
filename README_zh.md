@@ -36,6 +36,27 @@ Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 
   <version>1.0.7.RELEASE</version>
 </dependency>
 ```
+
+如果你想使用快照版本:
+```xml
+<dependency>
+  <groupId>com.ifrabbit</groupId>
+  <artifactId>spring-data-mybatis</artifactId>
+  <version>1.0.8.BUILD-SNAPSHOT</version>
+</dependency>
+```
+使用快照版本前，需要在pom.xml中配置:
+
+```xml
+<repository>
+ <id>oss-snapshots-repo</id>
+ <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+ <releases><enabled>false</enabled></releases>
+ <snapshots><enabled>true</enabled></snapshots>
+</repository>
+```
+
+
 最简单的通过Java注解配置的Spring Data Mybatis 配置如下所示：
 ```java
 @Configuration
@@ -131,25 +152,6 @@ public class UserRepositoryIntegrationTest {
        <version>1.0.7.RELEASE</version>
    </dependency>
    ```
-
-如果你想使用快照版本:
-```xml
-<dependency>
-  <groupId>com.ifrabbit</groupId>
-  <artifactId>spring-data-mybatis</artifactId>
-  <version>1.0.8.BUILD-SNAPSHOT</version>
-</dependency>
-```
-使用快照版本前，需要在pom.xml中配置:
-
-```xml
-<repository>
- <id>oss-snapshots-repo</id>
- <url>https://oss.sonatype.org/content/repositories/snapshots</url>
- <releases><enabled>false</enabled></releases>
- <snapshots><enabled>true</enabled></snapshots>
-</repository>
-```
 
 
 如果你需要使用自己编写的Mybatis Mapper，需要在application.properties中配置：
