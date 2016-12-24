@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.mybatis.domains.AuditDateAware;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
 import org.springframework.data.mybatis.support.SqlSessionFactoryBean;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -32,6 +33,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.Date;
 
 /**
  * Created by songjiawei on 2016/11/9.
@@ -69,6 +71,16 @@ public class TestConfig implements ResourceLoaderAware {
             @Override
             public Long getCurrentAuditor() {
                 return 1001L;
+            }
+        };
+    }
+
+    @Bean
+    public AuditDateAware<Date> auditDateAware() {
+        return new AuditDateAware<Date>() {
+            @Override
+            public Date getCurrentDate() {
+                return new Date();
             }
         };
     }
