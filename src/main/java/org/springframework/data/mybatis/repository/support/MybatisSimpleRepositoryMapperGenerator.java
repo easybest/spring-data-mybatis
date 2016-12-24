@@ -619,7 +619,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
 
                 if ((ass instanceof MybatisManyToOneAssociation)) {
                     MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
-                    builder.append(association.getJoinColumnName()).append(",");
+                    builder.append(dialect.wrapColumnName(association.getJoinColumnName())).append(",");
                     return;
                 }
 
