@@ -21,6 +21,7 @@ package org.springframework.data.mybatis.repository.support;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mybatis.domains.AuditDateAware;
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
 
 import java.io.Serializable;
@@ -38,8 +39,8 @@ public class MybatisPersistableEntityInformation<T extends Persistable<ID>, ID e
      * @param persistentEntity
      * @param domainClass      must not be {@literal null}.
      */
-    protected MybatisPersistableEntityInformation(PersistentEntity<T, ?> persistentEntity, AuditorAware<?> auditorAware, Class<T> domainClass) {
-        super(persistentEntity, auditorAware, domainClass);
+    protected MybatisPersistableEntityInformation(PersistentEntity<T, ?> persistentEntity, AuditorAware<?> auditorAware, AuditDateAware<?> auditDateAware, Class<T> domainClass) {
+        super(persistentEntity, auditorAware, auditDateAware, domainClass);
     }
 
     @Override
