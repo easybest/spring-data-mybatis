@@ -20,6 +20,7 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.mybatis.domains.AuditDateAware;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.mybatis.repository.query.MybatisQueryLookupStrategy;
@@ -47,24 +48,27 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
     private final Dialect               dialect;
     private final MybatisMappingContext mappingContext;
     private final AuditorAware<?>       auditorAware;
+    private final AuditDateAware<?>     auditDateAware;
 
     public MybatisRepositoryFactory(final MybatisMappingContext mappingContext,
                                     final SqlSessionTemplate sessionTemplate,
                                     final Dialect dialect,
-                                    AuditorAware<?> auditorAware) {
+                                    AuditorAware<?> auditorAware,
+                                    AuditDateAware<?> auditDateAware) {
         Assert.notNull(sessionTemplate);
         Assert.notNull(dialect);
         this.mappingContext = mappingContext;
         this.sessionTemplate = sessionTemplate;
         this.dialect = dialect;
         this.auditorAware = auditorAware;
+        this.auditDateAware = auditDateAware;
     }
 
     @Override
     public <T, ID extends Serializable> MybatisEntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
 
         return (MybatisEntityInformation<T, ID>)
-                MybatisEntityInformationSupport.getEntityInformation(mappingContext, auditorAware, domainClass);
+                MybatisEntityInformationSupport.getEntityInformation(mappingContext, auditorAware, auditDateAware, domainClass);
     }
 
     @Override
