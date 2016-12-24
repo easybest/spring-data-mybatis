@@ -37,7 +37,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Reference
 public @interface ManyToOne {
 
-    String name() default "";
 
-    String referencedColumnName() default "";
 }

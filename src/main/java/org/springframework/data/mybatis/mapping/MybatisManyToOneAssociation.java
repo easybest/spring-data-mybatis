@@ -65,11 +65,11 @@ public class MybatisManyToOneAssociation extends MybatisAssociation {
         if (null == entity) {
             return null;
         }
-        if (null == joinColumn || StringUtils.isEmpty(joinColumn.name())) {
+        if (null == joinColumn || StringUtils.isEmpty(joinColumn.referencedColumnName())) {
             return entity.getIdProperty();
         }
 
-        return entity.findByColumnName(joinColumn.name());
+        return entity.findByColumnName(joinColumn.referencedColumnName());
 
     }
 
