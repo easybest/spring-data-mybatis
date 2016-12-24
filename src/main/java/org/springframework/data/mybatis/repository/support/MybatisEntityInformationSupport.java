@@ -22,6 +22,7 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mybatis.annotations.Entity;
+import org.springframework.data.mybatis.domains.AuditDateAware;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
 import org.springframework.util.Assert;
@@ -40,19 +41,22 @@ public abstract class MybatisEntityInformationSupport<T, ID extends Serializable
 
     protected final PersistentEntity<T, ?> persistentEntity;
     protected final AuditorAware<?>        auditorAware;
+    protected final AuditDateAware<?>      auditDateAware;
 
     /**
      * Creates a new {@link AbstractEntityInformation} from the given domain class.
      *
-     * @param domainClass must not be {@literal null}.
+     * @param auditDateAware
+     * @param domainClass    must not be {@literal null}.
      */
     protected MybatisEntityInformationSupport(
             PersistentEntity<T, ?> persistentEntity,
             AuditorAware<?> auditorAware,
-            Class<T> domainClass) {
+            AuditDateAware<?> auditDateAware, Class<T> domainClass) {
         super(domainClass);
         this.persistentEntity = persistentEntity;
         this.auditorAware = auditorAware;
+        this.auditDateAware = auditDateAware;
     }
 
     @Override
@@ -69,14 +73,15 @@ public abstract class MybatisEntityInformationSupport<T, ID extends Serializable
 
     public static <T, ID extends Serializable> MybatisEntityInformation<T, ID> getEntityInformation(MybatisMappingContext mappingContext,
                                                                                                     AuditorAware<?> auditorAware,
+                                                                                                    AuditDateAware<?> auditDateAware,
                                                                                                     Class<T> domainClass) {
         Assert.notNull(domainClass);
         PersistentEntity<T, ?> persistentEntity = (PersistentEntity<T, ?>) mappingContext.getPersistentEntity(domainClass);
         if (Persistable.class.isAssignableFrom(domainClass)) {
-            return new MybatisPersistableEntityInformation(persistentEntity, auditorAware, domainClass);
+            return new MybatisPersistableEntityInformation(persistentEntity, auditorAware, auditDateAware, domainClass);
         }
 
-        return new MybatisMetamodelEntityInformation<T, ID>(persistentEntity, auditorAware, domainClass);
+        return new MybatisMetamodelEntityInformation<T, ID>(persistentEntity, auditorAware, auditDateAware, domainClass);
     }
 
 }
