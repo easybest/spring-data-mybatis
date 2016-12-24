@@ -54,6 +54,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "COLLEAGUES_ID", referencedColumnName = "ID"))
     private Set<User> colleagues;
     @ManyToOne
+    @JoinColumn(name = "MANAGER_ID")
     private User      manager;
     @ManyToMany
     private Set<Role> roles;
