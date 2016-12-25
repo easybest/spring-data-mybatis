@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.data.build</groupId>
         <artifactId>spring-data-parent</artifactId>
-        <version>1.8.5.RELEASE</version>
+        <version>1.8.6.RELEASE</version>
     </parent>
 
     <groupId>com.ifrabbit</groupId>
@@ -40,7 +40,7 @@
     </scm>
 
     <properties>
-        <springdata.commons.version>1.12.5.RELEASE</springdata.commons.version>
+        <springdata.commons.version>1.12.6.RELEASE</springdata.commons.version>
         <mybatis.version>3.4.1</mybatis.version>
     </properties>
 
