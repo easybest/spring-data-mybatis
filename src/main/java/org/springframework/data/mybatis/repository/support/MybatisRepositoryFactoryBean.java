@@ -48,6 +48,15 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID ext
     @Autowired(required = false)
     private AuditDateAware<?> auditDateAware;
 
+    /**
+     * Creates a new {@link TransactionalRepositoryFactoryBeanSupport} for the given repository interface.
+     *
+     * @param repositoryInterface must not be {@literal null}.
+     */
+    public MybatisRepositoryFactoryBean(Class<? extends T> repositoryInterface) {
+        super(repositoryInterface);
+    }
+
     @Override
     public void afterPropertiesSet() {
         Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null.");
