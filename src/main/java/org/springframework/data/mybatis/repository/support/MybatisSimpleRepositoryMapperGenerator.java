@@ -463,13 +463,15 @@ public class MybatisSimpleRepositoryMapperGenerator {
                     if (StringUtils.isEmpty(condAlias)) {
                         condAlias = persistentEntity.getEntityName();
                     }
-                    builder.append("<if test=\"");
+                    builder.append("<if test=\"_condition != null");
 
                     for (int i = 0; i < condProperties.length; i++) {
-                        if (i > 0) {
-                            builder.append(" and ");
+                        String condProperty = condProperties[i];
+                        String[] split = condProperty.split("\\.");
+                        if (split.length > 1) {
+                            builder.append(" and _condition." + split[0] + " != null");
                         }
-                        builder.append("_condition." + condProperties[i] + " != null");
+                        builder.append(" and _condition." + condProperty + " != null");
                     }
                     builder.append("\">");
 
@@ -515,13 +517,15 @@ public class MybatisSimpleRepositoryMapperGenerator {
                     if (StringUtils.isEmpty(condAlias)) {
                         condAlias = persistentEntity.getEntityName();
                     }
-                    builder.append("<if test=\"");
+                    builder.append("<if test=\"_condition != null");
 
                     for (int i = 0; i < condProperties.length; i++) {
-                        if (i > 0) {
-                            builder.append(" and ");
+                        String condProperty = condProperties[i];
+                        String[] split = condProperty.split("\\.");
+                        if (split.length > 1) {
+                            builder.append(" and _condition." + split[0] + " != null");
                         }
-                        builder.append("_condition." + condProperties[i] + " != null");
+                        builder.append(" and _condition." + condProperty + " != null");
                     }
                     builder.append("\">");
 
