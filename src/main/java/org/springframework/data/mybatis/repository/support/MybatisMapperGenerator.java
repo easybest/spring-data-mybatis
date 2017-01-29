@@ -157,6 +157,7 @@ public class MybatisMapperGenerator {
                 }
                 builder.append(" in ");
                 break;
+
         }
         return builder.toString();
     }
