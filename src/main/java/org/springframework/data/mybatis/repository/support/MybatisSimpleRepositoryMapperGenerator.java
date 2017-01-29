@@ -431,7 +431,6 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("</select>");
     }
 
-
     private String buildCondition() {
         final StringBuilder builder = new StringBuilder();
         persistentEntity.doWithProperties(new PropertyHandler<MybatisPersistentProperty>() {
@@ -464,13 +463,69 @@ public class MybatisSimpleRepositoryMapperGenerator {
                     if (StringUtils.isEmpty(condAlias)) {
                         condAlias = persistentEntity.getEntityName();
                     }
-                    builder.append("<if test=\"");
+                    builder.append("<if test=\"_condition != null");
 
                     for (int i = 0; i < condProperties.length; i++) {
-                        if (i > 0) {
-                            builder.append(" and ");
+                        String condProperty = condProperties[i];
+                        String[] split = condProperty.split("\\.");
+                        if (split.length > 1) {
+                            builder.append(" and _condition." + split[0] + " != null");
                         }
-                        builder.append("_condition." + condProperties[i] + " != null");
+                        builder.append(" and _condition." + condProperty + " != null");
+                    }
+                    builder.append("\">");
+
+                    builder.append(" and ").append(quota(condAlias)).append(".").append(condColumn);
+                    builder.append(generator.buildConditionOperate(condType));
+                    for (int i = 0; i < condProperties.length; i++) {
+                        condProperties[i] = "_condition." + condProperties[i];
+                    }
+                    builder.append(generator.buildConditionCaluse(condType, ignoreCaseType, condProperties));
+                    builder.append("</if>");
+                }
+
+            }
+        });
+        persistentEntity.doWithAssociations(new AssociationHandler<MybatisPersistentProperty>() {
+            @Override
+            public void doWithAssociation(Association<MybatisPersistentProperty> association) {
+                MybatisPersistentProperty property = association.getInverse();
+                Set<Condition> conditions = new HashSet<Condition>();
+                Condition cond = property.findAnnotation(Condition.class);
+                if (null != cond) {
+                    conditions.add(cond);
+                }
+                Conditions conds = property.findAnnotation(Conditions.class);
+                if (null != conds && null != conds.value() && conds.value().length > 0) {
+                    conditions.addAll(Arrays.asList(conds.value()));
+                }
+                if (conditions.isEmpty()) {
+                    return;
+                }
+                for (Condition condition : conditions) {
+                    String[] condProperties = condition.properties();
+                    String condColumn = condition.column();
+                    String condAlias = condition.alias();
+                    Type condType = condition.type();
+                    IgnoreCaseType ignoreCaseType = condition.ignoreCaseType();
+                    if (null == condProperties || condProperties.length == 0) {
+                        condProperties = new String[]{property.getName()};
+                    }
+                    if (StringUtils.isEmpty(condColumn)) {
+                        condColumn = dialect.wrapColumnName(property.getColumnName());
+                    }
+                    if (StringUtils.isEmpty(condAlias)) {
+                        condAlias = persistentEntity.getEntityName();
+                    }
+                    builder.append("<if test=\"_condition != null");
+
+                    for (int i = 0; i < condProperties.length; i++) {
+                        String condProperty = condProperties[i];
+                        String[] split = condProperty.split("\\.");
+                        if (split.length > 1) {
+                            builder.append(" and _condition." + split[0] + " != null");
+                        }
+                        builder.append(" and _condition." + condProperty + " != null");
                     }
                     builder.append("\">");
 
