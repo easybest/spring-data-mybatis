@@ -92,6 +92,12 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
 
     private void setAuditDate(PersistentProperty<?> property, T entity, Class<? extends Annotation> annotationType) {
 
+        Object val = persistentEntity.getPropertyAccessor(entity).getProperty(property);
+        if (null != val) {
+            return;
+        }
+
+
         if (null != auditDateAware) {
             persistentEntity.getPropertyAccessor(entity).setProperty(property, auditDateAware.getCurrentDate());
             return;
@@ -126,6 +132,10 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
     }
 
     private void setCurrentAuditor(PersistentProperty<?> property, T entity) {
+        Object val = persistentEntity.getPropertyAccessor(entity).getProperty(property);
+        if (null != val) {
+            return;
+        }
         persistentEntity.getPropertyAccessor(entity).setProperty(property, auditorAware.getCurrentAuditor());
     }
 
