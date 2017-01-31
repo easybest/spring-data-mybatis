@@ -38,6 +38,10 @@ import java.util.List;
 public interface MybatisRepository<T, ID extends Serializable>
         extends PagingAndSortingRepository<T, ID>, QueryByExampleExecutor<T> {
 
+    <S extends T> S insert(S entity);
+
+    <S extends T> S update(S entity);
+
     @Override
     <S extends T> List<S> save(Iterable<S> entities);
 
