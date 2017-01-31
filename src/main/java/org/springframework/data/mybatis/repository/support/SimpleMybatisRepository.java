@@ -60,6 +60,34 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         return entityInformation.getJavaType().getName();
     }
 
+    @Override
+    public <S extends T> S insert(S entity) {
+        entityInformation.setCreatedDate(entity);
+        entityInformation.setCreatedBy(entity);
+
+        if (entityInformation.hasVersion()) {
+            entityInformation.setVersion(entity, 0);
+        }
+
+
+        insert(STATEMENT_INSERT, entity);
+        return entity;
+    }
+
+    @Override
+    public <S extends T> S update(S entity) {
+        entityInformation.setLastModifiedDate(entity);
+        entityInformation.setLastModifiedBy(entity);
+
+        int row = update(STATEMENT_UPDATE, entity);
+        if (row == 0) {
+            throw new MybatisNoHintException("update effect 0 row, maybe version control lock occurred.");
+        }
+        if (entityInformation.hasVersion()) {
+            entityInformation.increaseVersion(entity);
+        }
+        return entity;
+    }
 
     @Override
     @Transactional
@@ -69,28 +97,11 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
         if (entityInformation.isNew(entity)) {
             // insert
 
-            entityInformation.setCreatedDate(entity);
-            entityInformation.setCreatedBy(entity);
-
-            if (entityInformation.hasVersion()) {
-                entityInformation.setVersion(entity, 0);
-            }
-
-
-            insert(STATEMENT_INSERT, entity);
+            insert(entity);
         } else {
             // update
 
-            entityInformation.setLastModifiedDate(entity);
-            entityInformation.setLastModifiedBy(entity);
-
-            int row = update(STATEMENT_UPDATE, entity);
-            if (row == 0) {
-                throw new MybatisNoHintException("update effect 0 row, maybe version control lock occurred.");
-            }
-            if (entityInformation.hasVersion()) {
-                entityInformation.increaseVersion(entity);
-            }
+            update(entity);
         }
 
         return entity;
