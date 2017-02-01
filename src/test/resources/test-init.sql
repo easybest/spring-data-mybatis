@@ -50,3 +50,11 @@ CREATE TABLE DS_USER_DS_ROLE (
   DS_ROLE_ID INT(11) NOT NULL,
   PRIMARY KEY (DS_USER_ID, DS_ROLE_ID)
 );
+
+CREATE TABLE ds_booking (
+  ID            INT(11)     NOT NULL AUTO_INCREMENT,
+  serial_number VARCHAR(32) NULL,
+  amount        INT(11)     NULL,
+  user_id       INT(11)     NULL,
+  PRIMARY KEY (ID)
+);
