@@ -98,6 +98,14 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
             return new MybatisOneToOneAssociation(this, null);
         }
 
+        if (null != findAnnotation(OneToMany.class)) {
+            return new MybatisOneToManyAssociation(this, null);
+        }
+
+        if (null != findAnnotation(ManyToMany.class)) {
+            return new MybatisManyToManyAssociation(this, null);
+        }
+
         return new MybatisAssociation(this, null);
 
     }
