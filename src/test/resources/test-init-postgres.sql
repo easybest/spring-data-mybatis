@@ -42,3 +42,12 @@ CREATE TABLE "DEPARTMENT" (
   "MODIFIER"         INT         NULL,
   PRIMARY KEY (ID)
 );
+
+CREATE TABLE "ds_booking" (
+  ID            BIGSERIAL   NOT NULL,
+  serial_number VARCHAR(32) NULL,
+  amount        INT     NULL,
+  user_id       INT     NULL,
+  PRIMARY KEY (ID)
+);
+

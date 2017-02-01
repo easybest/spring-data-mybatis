@@ -55,4 +55,16 @@ public class MybatisAssociation extends Association<MybatisPersistentProperty> {
         return null;
     }
 
+    public MybatisPersistentEntity<?> getInversePersistentEntity() {
+
+        if (null != getInverse()) {
+            MybatisPersistentEntity owner = (MybatisPersistentEntity) getInverse().getOwner();
+
+            return owner;
+
+        }
+        return null;
+    }
+
+
 }
