@@ -42,3 +42,11 @@ CREATE TABLE DEPARTMENT (
   modifier           INT         NULL,
   PRIMARY KEY (ID)
 );
+
+CREATE TABLE ds_booking (
+  ID            INT IDENTITY,
+  serial_number VARCHAR(32) NULL,
+  amount        INT(11)     NULL,
+  user_id       INT(11)     NULL,
+  PRIMARY KEY (ID)
+);
