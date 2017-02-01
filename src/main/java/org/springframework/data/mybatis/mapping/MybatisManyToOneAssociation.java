@@ -52,7 +52,7 @@ public class MybatisManyToOneAssociation extends MybatisAssociation {
         } else {
             MybatisPersistentEntity<?> entity = getObversePersistentEntity();
             if (null != entity && entity.hasIdProperty()) {
-                name = ParsingUtils.reconcatenateCamelCase(getInverse().getName(), "_") + "_" + entity.getIdProperty().getColumnName();
+                name = entity.getTableName() + "_" + entity.getIdProperty().getColumnName();
             }
         }
         return name;

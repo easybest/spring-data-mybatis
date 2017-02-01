@@ -20,11 +20,9 @@ package org.springframework.data.mybatis.domain.sample;
 
 import org.springframework.data.mybatis.annotations.*;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
+import static org.springframework.data.mybatis.annotations.Id.GenerationType.AUTO;
 import static org.springframework.data.repository.query.parser.Part.Type.LIKE;
 
 /**
@@ -33,7 +31,7 @@ import static org.springframework.data.repository.query.parser.Part.Type.LIKE;
 @Entity(table = "DS_USER")
 public class User {
 
-    @Id(strategy = Id.GenerationType.AUTO)
+    @Id(strategy = AUTO)
     private Integer id;
     @Condition
     @Column(name = "FIRSTNAME")
@@ -70,6 +68,10 @@ public class User {
 
     private Date dateOfBirth;
 
+    @OneToMany
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private List<Booking> bookings;
+
     /**
      * Creates a new empty instance of {@code User}.
      */
@@ -77,14 +79,15 @@ public class User {
         this(null, null, null);
     }
 
-    /**
-     * Creates a new instance of {@code User} with preinitialized values for firstname, lastname, email address and roles.
-     *
-     * @param firstname
-     * @param lastname
-     * @param emailAddress
-     * @param roles
-     */
+
+    //    @PersistenceConstructor
+    public User(String firstname, String lastname) {
+
+        this.firstname = firstname;
+        this.lastname = lastname;
+
+    }
+
     public User(String firstname, String lastname, String emailAddress, Role... roles) {
 
         this.firstname = firstname;
@@ -97,6 +100,21 @@ public class User {
         this.createdAt = new Date();
     }
 
+    public void setColleagues(Set<User> colleagues) {
+        this.colleagues = colleagues;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
+    public List<Booking> getBookings() {
+        return bookings;
+    }
+
+    public void setBookings(List<Booking> bookings) {
+        this.bookings = bookings;
+    }
 
     public User getManager() {
         return manager;

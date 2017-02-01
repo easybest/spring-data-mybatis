@@ -22,7 +22,7 @@
             <pattern>▶ %-5level %d{HH:mm:ss.SSS} [%thread] %logger{36}[%method:%line] - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="org.springframework.data.mybatis.replication" level="DEBUG" additivity="false">
+    <logger name="org.springframework.data.mybatis" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
     <root level="INFO">
