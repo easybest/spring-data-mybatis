@@ -23,10 +23,7 @@ import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.SimpleAssociationHandler;
 import org.springframework.data.mapping.SimplePropertyHandler;
-import org.springframework.data.mybatis.mapping.MybatisEmbeddedAssociation;
-import org.springframework.data.mybatis.mapping.MybatisManyToOneAssociation;
-import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
-import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+import org.springframework.data.mybatis.mapping.*;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
 import org.springframework.data.repository.query.parser.Part.Type;
@@ -240,6 +237,52 @@ public class MybatisMapperGenerator {
                     }
                 }
 
+                if ((ass instanceof MybatisOneToManyAssociation)) {
+                    if (basic) {
+                        return;
+                    }
+
+                    final MybatisOneToManyAssociation association = (MybatisOneToManyAssociation) ass;
+                    MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+                    if (null != obversePersistentEntity) {
+                        obversePersistentEntity.doWithProperties(new SimplePropertyHandler() {
+                            @Override
+                            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                builder.append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()) + "." + dialect.wrapColumnName(property.getColumnName()))
+                                        .append(" as ").append(quota(association.getInverse().getName() + "." + property.getName())).append(",");
+                            }
+                        });
+                        obversePersistentEntity.doWithAssociations(new SimpleAssociationHandler() {
+                            @Override
+                            public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
+                                if ((ass instanceof MybatisEmbeddedAssociation)) {
+                                    final MybatisEmbeddedAssociation association1 = (MybatisEmbeddedAssociation) ass;
+                                    MybatisPersistentEntity<?> obversePersistentEntity1 = association1.getObversePersistentEntity();
+                                    if (null != obversePersistentEntity1) {
+                                        obversePersistentEntity1.doWithProperties(new SimplePropertyHandler() {
+                                            @Override
+                                            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                                builder.append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()) + "." + dialect.wrapColumnName(property.getColumnName()))
+                                                        .append(" as ").append(quota(association.getInverse().getName() + "." + association1.getInverse().getName() + "." + property.getName())).append(",");
+                                            }
+                                        });
+                                    }
+                                    return;
+                                }
+
+                                if ((ass instanceof MybatisManyToOneAssociation)) {
+                                    final MybatisManyToOneAssociation association1 = (MybatisManyToOneAssociation) ass;
+                                    builder.append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()) + "." + dialect.wrapColumnName(association1.getJoinColumnName()))
+                                            .append(" as ").append(quota(association.getInverse().getName() + "." + association1.getInverse().getName() + "." + association1.getObverse().getName())).append(",");
+
+                                }
+                            }
+                        });
+                    }
+
+                }
             }
         });
 
@@ -269,10 +312,50 @@ public class MybatisMapperGenerator {
             public void doWithAssociation(Association<? extends PersistentProperty<?>> ass) {
                 if ((ass instanceof MybatisManyToOneAssociation)) {
                     final MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
-                    builder.append(" left outer join ").append(dialect.wrapTableName(association.getObversePersistentEntity().getTableName())).append(" ").append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()))
+                    builder.append(" left outer join ").append(dialect.wrapTableName(association.getObversePersistentEntity().getTableName())).append(" ")
+                            .append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()))
                             .append(" on ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(association.getJoinColumnName()))
                             .append("=").append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName())).append(".").append(dialect.wrapColumnName(association.getJoinReferencedColumnName()));
+                    return;
                 }
+
+                if ((ass instanceof MybatisOneToManyAssociation)) {
+                    final MybatisOneToManyAssociation association = (MybatisOneToManyAssociation) ass;
+
+                    if (association.preferJoinTable()) {
+                        // join table
+                        builder.append(" left outer join ").append(dialect.wrapTableName(association.getJoinTableName())).append(" ")
+                                .append(" on ");
+                        String[] joinTableJoinColumnNames = association.getJoinTableJoinColumnNames();
+                        String[] joinTableJoinReferencedColumnNames = association.getJoinTableJoinReferencedColumnNames();
+                        for (int i = 0; i < joinTableJoinColumnNames.length; i++) {
+                            if (i > 0) {
+                                builder.append(" and ");
+                            }
+                            builder.append(dialect.wrapTableName(association.getJoinTableName())).append(".").append(joinTableJoinColumnNames[i]).append("=")
+                                    .append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(joinTableJoinReferencedColumnNames[i]));
+                        }
+                        builder.append(" left outer join ").append(dialect.wrapTableName(association.getObversePersistentEntity().getTableName())).append(" ")
+                                .append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()))
+                                .append(" on ");
+                        String[] joinTableInverseJoinColumnNames = association.getJoinTableInverseJoinColumnNames();
+                        String[] joinTableInverseJoinReferencedColumnNames = association.getJoinTableInverseJoinReferencedColumnNames();
+                        for (int i = 0; i < joinTableInverseJoinColumnNames.length; i++) {
+                            if (i > 0) {
+                                builder.append(" and ");
+                            }
+                            builder.append(dialect.wrapTableName(association.getJoinTableName())).append(".").append(joinTableInverseJoinColumnNames[i]).append("=")
+                                    .append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName())).append(".").append(dialect.wrapColumnName(joinTableInverseJoinReferencedColumnNames[i]));
+                        }
+                    } else {
+                        // join column
+                        builder.append(" left outer join ").append(dialect.wrapTableName(association.getObversePersistentEntity().getTableName())).append(" ")
+                                .append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName()))
+                                .append(" on ").append(quota(persistentEntity.getEntityName())).append(".").append(dialect.wrapColumnName(association.getJoinReferencedColumnName()))
+                                .append("=").append(quota(persistentEntity.getEntityName() + "." + association.getInverse().getName())).append(".").append(dialect.wrapColumnName(association.getJoinColumnName()));
+                    }
+                }
+
             }
         });
 

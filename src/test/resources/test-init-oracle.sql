@@ -53,3 +53,13 @@ CREATE TABLE DEPARTMENT (
   PRIMARY KEY (ID)
 );
 CREATE SEQUENCE SEQ_DEPARTMENT;
+
+CREATE TABLE ds_booking (
+  ID            NUMBER(11)   NOT NULL,
+  serial_number VARCHAR(32) NULL,
+  amount        NUMBER(11)     NULL,
+  user_id       NUMBER(11)     NULL,
+  PRIMARY KEY (ID)
+);
+
+CREATE SEQUENCE SEQ_ds_booking;
