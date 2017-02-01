@@ -793,27 +793,19 @@ public class MybatisSimpleRepositoryMapperGenerator {
         PreferredConstructor<?, MybatisPersistentProperty> persistenceConstructor = persistentEntity.getPersistenceConstructor();
         if (null != persistenceConstructor && persistenceConstructor.hasParameters()) {
             constructorBuilder.append("<constructor>");
-        }
 
-
-        persistentEntity.doWithProperties(new SimplePropertyHandler() {
-            @Override
-            public void doWithPersistentProperty(PersistentProperty<?> pp) {
-                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-
-                if (persistentEntity.isConstructorArgument(property)) {
+            for (PreferredConstructor.Parameter<Object, MybatisPersistentProperty> parameter : persistenceConstructor.getParameters()) {
+                MybatisPersistentProperty property = persistentEntity.getPersistentProperty(parameter.getName());
+                if (null != property) {
                     if (property.isIdProperty()) {
-
                         if (property.isCompositeId()) {
-
                             MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(property.getActualType());
                             if (null != idEntity) {
                                 idEntity.doWithProperties(new SimplePropertyHandler() {
                                     @Override
                                     public void doWithPersistentProperty(PersistentProperty<?> pp) {
                                         MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                                        builder.append(String.format("<idArg property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                                                property.getName() + "." + property.getName(),
+                                        constructorBuilder.append(String.format("<idArg column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
                                                 alias(prefix + property.getName()),
                                                 property.getActualType().getName(),
                                                 property.getJdbcType()
@@ -821,27 +813,36 @@ public class MybatisSimpleRepositoryMapperGenerator {
                                     }
                                 });
                             }
-
                         } else {
-                            builder.append(String.format("<idArg property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
-                                    property.getName(),
+                            constructorBuilder.append(String.format("<idArg column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
                                     alias(prefix + property.getName()),
                                     property.getActualType().getName(),
                                     property.getJdbcType()
                             ));
                         }
-
-
                     } else {
-                        constructorBuilder.append(String.format("<arg property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\""
-                                        + (null != property.getSpecifiedTypeHandler() ? (" typeHandler=\"" + property.getSpecifiedTypeHandler().getName() + "\"") : "")
-                                        + " />",
-                                property.getName(),
+                        constructorBuilder.append(String.format("<arg column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
                                 alias(prefix + property.getName()),
                                 property.getActualType().getName(),
                                 property.getJdbcType()
                         ));
                     }
+                }else{
+
+
+                }
+            }
+
+
+            constructorBuilder.append("</constructor>");
+        }
+
+
+        persistentEntity.doWithProperties(new SimplePropertyHandler() {
+            @Override
+            public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                if (persistentEntity.isConstructorArgument(property)) {
                     return;
                 }
 
@@ -862,9 +863,6 @@ public class MybatisSimpleRepositoryMapperGenerator {
         });
 
 
-        if (null != persistenceConstructor && persistenceConstructor.hasParameters()) {
-            constructorBuilder.append("</constructor>");
-        }
         builder.append(constructorBuilder).append(resultBuilder);
     }
 
