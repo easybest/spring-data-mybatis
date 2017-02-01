@@ -787,17 +787,72 @@ public class MybatisSimpleRepositoryMapperGenerator {
 
     private void buildInnerResultMap(final StringBuilder builder, final MybatisPersistentEntity<?> persistentEntity, final String prefix) {
 
+        final StringBuilder constructorBuilder = new StringBuilder();
+        final StringBuilder resultBuilder = new StringBuilder();
+
+        PreferredConstructor<?, MybatisPersistentProperty> persistenceConstructor = persistentEntity.getPersistenceConstructor();
+        if (null != persistenceConstructor && persistenceConstructor.hasParameters()) {
+            constructorBuilder.append("<constructor>");
+        }
+
+
         persistentEntity.doWithProperties(new SimplePropertyHandler() {
             @Override
             public void doWithPersistentProperty(PersistentProperty<?> pp) {
                 MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                if (property.isIdProperty()) {
-                    buildInnerResultMapId(builder, property, prefix);
+
+                if (persistentEntity.isConstructorArgument(property)) {
+                    if (property.isIdProperty()) {
+
+                        if (property.isCompositeId()) {
+
+                            MybatisPersistentEntityImpl<?> idEntity = context.getPersistentEntity(property.getActualType());
+                            if (null != idEntity) {
+                                idEntity.doWithProperties(new SimplePropertyHandler() {
+                                    @Override
+                                    public void doWithPersistentProperty(PersistentProperty<?> pp) {
+                                        MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
+                                        builder.append(String.format("<idArg property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                                                property.getName() + "." + property.getName(),
+                                                alias(prefix + property.getName()),
+                                                property.getActualType().getName(),
+                                                property.getJdbcType()
+                                        ));
+                                    }
+                                });
+                            }
+
+                        } else {
+                            builder.append(String.format("<idArg property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"/>",
+                                    property.getName(),
+                                    alias(prefix + property.getName()),
+                                    property.getActualType().getName(),
+                                    property.getJdbcType()
+                            ));
+                        }
+
+
+                    } else {
+                        constructorBuilder.append(String.format("<arg property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\""
+                                        + (null != property.getSpecifiedTypeHandler() ? (" typeHandler=\"" + property.getSpecifiedTypeHandler().getName() + "\"") : "")
+                                        + " />",
+                                property.getName(),
+                                alias(prefix + property.getName()),
+                                property.getActualType().getName(),
+                                property.getJdbcType()
+                        ));
+                    }
                     return;
                 }
-                builder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\"" + (
-                                null != property.getSpecifiedTypeHandler() ? (" typeHandler=\"" + property.getSpecifiedTypeHandler().getName() + "\"") : ""
-                        ) + " />",
+
+
+                if (property.isIdProperty()) {
+                    buildInnerResultMapId(resultBuilder, property, prefix);
+                    return;
+                }
+                resultBuilder.append(String.format("<result property=\"%s\" column=\"%s\" javaType=\"%s\" jdbcType=\"%s\""
+                                + (null != property.getSpecifiedTypeHandler() ? (" typeHandler=\"" + property.getSpecifiedTypeHandler().getName() + "\"") : "")
+                                + " />",
                         property.getName(),
                         alias(prefix + property.getName()),
                         property.getActualType().getName(),
@@ -805,6 +860,12 @@ public class MybatisSimpleRepositoryMapperGenerator {
                 ));
             }
         });
+
+
+        if (null != persistenceConstructor && persistenceConstructor.hasParameters()) {
+            constructorBuilder.append("</constructor>");
+        }
+        builder.append(constructorBuilder).append(resultBuilder);
     }
 
     private void buildInnerToOneAssociationResultMap(final StringBuilder builder, final PersistentProperty<? extends PersistentProperty<?>> inverse) {
@@ -880,12 +941,15 @@ public class MybatisSimpleRepositoryMapperGenerator {
         MybatisPersistentEntityImpl<?> inversePersistentEntity = context.getPersistentEntity(actualType);
         if (null != inversePersistentEntity) {
             buildInnerResultMap(builder, inversePersistentEntity, inverse.getName() + ".");
+
+
         }
         builder.append("</collection>");
     }
 
     private void buildResultMap(final StringBuilder builder) {
         builder.append("<resultMap id=\"ResultMap\" type=\"" + domainClass.getName() + "\">");
+
 
         buildInnerResultMap(builder, persistentEntity, "");
 
@@ -902,8 +966,10 @@ public class MybatisSimpleRepositoryMapperGenerator {
                     buildInnerToOneAssociationResultMap(builder, inverse);
                     return;
                 }
-                if (null != inverse.findAnnotation(OneToMany.class) || null != inverse.findAnnotation(ManyToMany.class)) {
+
+                if (ass instanceof MybatisOneToManyAssociation) {
                     buildInnerToManyAssociationResultMap(builder, inverse);
+                    return;
                 }
 
             }
