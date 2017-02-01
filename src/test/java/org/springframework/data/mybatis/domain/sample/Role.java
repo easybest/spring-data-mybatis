@@ -40,6 +40,7 @@ public class Role {
     private String name;
 
     @ManyToOne
+    @JoinColumn(name = "group_id")
     private Group group;
 
     /**
