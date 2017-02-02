@@ -11,7 +11,7 @@
 
     <groupId>com.ifrabbit</groupId>
     <artifactId>spring-data-mybatis</artifactId>
-    <version>1.0.8.RELEASE</version>
+    <version>1.0.9.BUILD-SNAPSHOT</version>
 
     <name>Spring Data MyBatis</name>
     <description>The primary goal of the Spring Data project is to make it easier to build Spring-powered applications
