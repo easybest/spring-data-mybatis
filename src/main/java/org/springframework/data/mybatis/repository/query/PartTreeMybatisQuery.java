@@ -24,6 +24,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mapping.Association;
+import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.model.MappingException;
 import org.springframework.data.mybatis.mapping.*;
 import org.springframework.data.mybatis.repository.dialect.Dialect;
@@ -126,11 +127,26 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
                         Association<MybatisPersistentProperty> ass = property.getAssociation();
                         if (ass instanceof MybatisManyToOneAssociation) {
                             MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
-                            MybatisPersistentProperty leafProperty = association.getObversePersistentEntity().getPersistentProperty(part.getProperty().getLeafProperty().getSegment());
-                            if (null == leafProperty) {
-                                throw new MybatisQueryException("can not find property: " + part.getProperty().getLeafProperty().getSegment() + " from entity: " + association.getObversePersistentEntity().getName());
+
+                            MybatisPersistentEntity<?> obversePersistentEntity = association.getObversePersistentEntity();
+                            if (null == obversePersistentEntity) {
+                                throw new MybatisQueryException("can not find obverse persistent entity.");
                             }
-                            columnName = quota(persistentEntity.getEntityName() + "." + part.getProperty().getSegment()) + "." + dialect.wrapColumnName(leafProperty.getColumnName());
+
+                            PropertyPath leaf = part.getProperty().getLeafProperty();
+
+                            if (obversePersistentEntity.getType() == leaf.getType()) {
+
+                                //columnName = quota(persistentEntity.getEntityName() + "." + part.getProperty().getSegment()) + "." + dialect.wrapColumnName(obversePersistentEntity.getIdProperty().getColumnName());
+                                throw new UnsupportedOperationException("findBy{Association Model} Style is not support now.");
+
+                            } else {
+                                MybatisPersistentProperty leafProperty = obversePersistentEntity.getPersistentProperty(leaf.getSegment());
+                                if (null == leafProperty) {
+                                    throw new MybatisQueryException("can not find property: " + leaf.getSegment() + " from entity: " + obversePersistentEntity.getName());
+                                }
+                                columnName = quota(persistentEntity.getEntityName() + "." + part.getProperty().getSegment()) + "." + dialect.wrapColumnName(leafProperty.getColumnName());
+                            }
                         } else if (ass instanceof MybatisEmbeddedAssociation) {
                             columnName = quota(persistentEntity.getEntityName()) + "." + dialect.wrapColumnName(ass.getObverse().getColumnName());
                         }
