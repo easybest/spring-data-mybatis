@@ -35,7 +35,7 @@ Download the jar through Maven:
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>1.0.7.RELEASE</version>
+  <version>1.0.8.RELEASE</version>
 </dependency>
 ```
 
@@ -44,7 +44,7 @@ If you want use snapshot version , you can download the jar through maven:
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>1.0.8.BUILD-SNAPSHOT</version>
+  <version>1.0.9.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -150,7 +150,7 @@ add the jar through Maven:
    <dependency>
        <groupId>com.ifrabbit</groupId>
        <artifactId>spring-boot-starter-data-mybatis</artifactId>
-       <version>1.0.7.RELEASE</version>
+       <version>1.0.8.RELEASE</version>
    </dependency>
    ```
 
