@@ -251,7 +251,7 @@ public abstract class MybatisQueryExecution {
         @Override
         protected Object doExecute(final AbstractMybatisQuery query, final Object[] values) {
             if (null == values || values.length == 0) {
-                return query.getSqlSessionTemplate().selectList(query.getStatementId());
+                return query.getSqlSessionTemplate().selectOne(query.getStatementId());
             }
             MybatisParameters parameters = query.getQueryMethod().getParameters();
             Map<String, Object> parameter = new HashMap<String, Object>();
