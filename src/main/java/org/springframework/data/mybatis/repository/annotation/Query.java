@@ -22,6 +22,8 @@ import org.springframework.data.annotation.QueryAnnotation;
 
 import java.lang.annotation.*;
 
+import static org.springframework.data.mybatis.repository.annotation.Query.Operation.unknown;
+
 /**
  * Annotated to named query.
  *
@@ -50,7 +52,17 @@ public @interface Query {
 
     boolean basic() default true;
 
+    Operation operation() default unknown;
+
     class Unspecified {
+    }
+
+    enum Operation {
+        insert,
+        update,
+        select,
+        delete,
+        unknown
     }
 
 }

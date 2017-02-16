@@ -30,7 +30,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
- import java.util.Collection;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -199,6 +199,50 @@ public abstract class MybatisQueryExecution {
             }
             if (result.size() < pager.getPageSize()) return result.size();
             return -1;
+        }
+    }
+    static class InsertExecution extends MybatisQueryExecution {
+        @Override
+        protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
+            if (null == values || values.length == 0) {
+                return query.getSqlSessionTemplate().insert(query.getStatementId());
+            }
+            MybatisParameters parameters = query.getQueryMethod().getParameters();
+            Map<String, Object> parameter = new HashMap<String, Object>();
+
+            int c = 0;
+            for (MybatisParameter param : parameters.getBindableParameters()) {
+                String name = param.getName();
+                if (StringUtils.isEmpty(name)) {
+                    name = "p" + c;
+                }
+                parameter.put(name, values[param.getIndex()]);
+                c++;
+            }
+
+            return query.getSqlSessionTemplate().insert(query.getStatementId(), parameter);
+        }
+    }
+    static class UpdateExecution extends MybatisQueryExecution {
+        @Override
+        protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
+            if (null == values || values.length == 0) {
+                return query.getSqlSessionTemplate().update(query.getStatementId());
+            }
+            MybatisParameters parameters = query.getQueryMethod().getParameters();
+            Map<String, Object> parameter = new HashMap<String, Object>();
+
+            int c = 0;
+            for (MybatisParameter param : parameters.getBindableParameters()) {
+                String name = param.getName();
+                if (StringUtils.isEmpty(name)) {
+                    name = "p" + c;
+                }
+                parameter.put(name, values[param.getIndex()]);
+                c++;
+            }
+
+            return query.getSqlSessionTemplate().update(query.getStatementId(), parameter);
         }
     }
 
