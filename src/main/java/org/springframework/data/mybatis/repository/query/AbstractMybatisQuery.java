@@ -22,6 +22,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.mybatis.repository.annotation.Basic;
 import org.springframework.data.mybatis.repository.annotation.Query;
+import org.springframework.data.mybatis.repository.annotation.Query.Operation;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.*;
 import org.springframework.data.repository.query.ParametersParameterAccessor;
 import org.springframework.data.repository.query.RepositoryQuery;
@@ -29,6 +30,8 @@ import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import static org.springframework.data.mybatis.repository.annotation.Query.Operation.unknown;
 
 /**
  * abstract mybatis query.
@@ -81,6 +84,14 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
         return annotation.returnType();
     }
 
+    protected Operation getOperation() {
+        Query annotation = method.getQueryAnnotation();
+        if (null == annotation) {
+            return null;
+        }
+        return annotation.operation();
+    }
+
     protected String getStatementId() {
         return getNamespace() + "." + getStatementName();
     }
@@ -125,6 +136,22 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 
     protected MybatisQueryExecution getExecution() {
+        Operation operation = getOperation();
+        if (null != operation && operation != unknown) {
+            switch (operation) {
+                case insert:
+                    return new InsertExecution();
+                case update:
+                    return new UpdateExecution();
+                case select:
+                    break;
+                case delete:
+                    return new DeleteExecution();
+                case unknown:
+                    break;
+            }
+        }
+
 
         if (method.isStreamQuery()) {
             return new StreamExecution();

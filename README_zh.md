@@ -34,7 +34,7 @@ Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>1.0.8.RELEASE</version>
+  <version>1.0.9.RELEASE</version>
 </dependency>
 ```
 
@@ -43,7 +43,7 @@ Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>1.0.9.BUILD-SNAPSHOT</version>
+  <version>1.0.10.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 使用快照版本前，需要在pom.xml中配置:
@@ -150,7 +150,7 @@ public class UserRepositoryIntegrationTest {
    <dependency>
        <groupId>com.ifrabbit</groupId>
        <artifactId>spring-boot-starter-data-mybatis</artifactId>
-       <version>1.0.8.RELEASE</version>
+       <version>1.0.9.RELEASE</version>
    </dependency>
    ```
 
