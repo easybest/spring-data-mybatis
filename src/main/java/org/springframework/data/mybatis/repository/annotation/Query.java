@@ -60,8 +60,12 @@ public @interface Query {
     enum Operation {
         insert,
         update,
-        select,
+        select_one,
+        select_list,
         delete,
+        page,
+        slice,
+        stream,
         unknown
     }
 

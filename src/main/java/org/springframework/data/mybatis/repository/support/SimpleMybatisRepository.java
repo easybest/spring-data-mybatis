@@ -61,6 +61,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
     }
 
     @Override
+    @Transactional
     public <S extends T> S insert(S entity) {
         entityInformation.setCreatedDate(entity);
         entityInformation.setCreatedBy(entity);
@@ -75,6 +76,7 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
     }
 
     @Override
+    @Transactional
     public <S extends T> S update(S entity) {
         entityInformation.setLastModifiedDate(entity);
         entityInformation.setLastModifiedBy(entity);
