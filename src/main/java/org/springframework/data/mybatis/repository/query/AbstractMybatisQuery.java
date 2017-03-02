@@ -143,10 +143,18 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
                     return new InsertExecution();
                 case update:
                     return new UpdateExecution();
-                case select:
-                    break;
+                case select_one:
+                    return new SingleEntityExecution();
+                case select_list:
+                    return new CollectionExecution();
                 case delete:
                     return new DeleteExecution();
+                case page:
+                    return new PagedExecution();
+                case slice:
+                    return new SlicedExecution();
+                case stream:
+                    return new StreamExecution();
                 case unknown:
                     break;
             }
