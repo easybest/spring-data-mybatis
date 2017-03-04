@@ -6,12 +6,12 @@
     <parent>
         <groupId>org.springframework.data.build</groupId>
         <artifactId>spring-data-parent</artifactId>
-        <version>1.9.0.RELEASE</version>
+        <version>1.9.1.RELEASE</version>
     </parent>
 
     <groupId>com.ifrabbit</groupId>
     <artifactId>spring-data-mybatis</artifactId>
-    <version>1.0.11.RELEASE</version>
+    <version>1.0.12.RELEASE</version>
 
     <name>Spring Data MyBatis</name>
     <description>The primary goal of the Spring Data project is to make it easier to build Spring-powered applications
@@ -40,7 +40,7 @@
     </scm>
 
     <properties>
-        <springdata.commons.version>1.13.0.RELEASE</springdata.commons.version>
+        <springdata.commons.version>1.13.1.RELEASE</springdata.commons.version>
         <mybatis.version>3.4.2</mybatis.version>
     </properties>
 
@@ -134,13 +134,13 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>1.4.192</version>
+            <version>1.4.193</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.39</version>
+            <version>5.1.40</version>
             <scope>test</scope>
         </dependency>
         <!--<dependency>-->
