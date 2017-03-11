@@ -279,6 +279,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("<if test=\"_condition != null\">");
         builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
         builder.append(buildCondition());
+        builder.append("<include refid=\"SELECT_CONDITION_INNER\" />");
         builder.append("</trim>");
         builder.append("</if>");
         builder.append("</delete>");
@@ -332,6 +333,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         condition.append("<if test=\"_condition != null\">");
         condition.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
         condition.append(buildCondition());
+        condition.append("<include refid=\"SELECT_CONDITION_INNER\" />");
         condition.append("</trim>");
         condition.append("</if>");
 
@@ -347,6 +349,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         condition.append("<if test=\"_condition != null\">");
         condition.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
         condition.append(buildCondition());
+        condition.append("<include refid=\"SELECT_CONDITION_INNER\" />");
         condition.append("</trim>");
         condition.append("</if>");
 
@@ -411,6 +414,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("<if test=\"_condition != null\">");
         builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
         builder.append(buildCondition());
+        builder.append("<include refid=\"SELECT_CONDITION_INNER\" />");
         builder.append("</trim>");
         builder.append("</if>");
 
@@ -425,6 +429,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("<if test=\"_condition != null\">");
         builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
         builder.append(buildCondition());
+        builder.append("<include refid=\"SELECT_CONDITION_INNER\" />");
         builder.append("</trim>");
         builder.append("</if>");
 
@@ -555,6 +560,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("<if test=\"_condition != null\">");
         builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
         builder.append(buildCondition());
+        builder.append("<include refid=\"SELECT_CONDITION_INNER\" />");
         builder.append("</trim>");
         builder.append("</if>");
 
@@ -581,6 +587,8 @@ public class MybatisSimpleRepositoryMapperGenerator {
         builder.append("<if test=\"_condition != null\">");
         builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
         builder.append(buildCondition());
+        builder.append("<include refid=\"SELECT_CONDITION_INNER\" />");
+
         builder.append("</trim>");
         builder.append("</if>");
 
