@@ -20,10 +20,6 @@ package org.springframework.data.mybatis.support;
 
 import org.apache.ibatis.mapping.DatabaseIdProvider;
 import org.apache.ibatis.mapping.VendorDatabaseIdProvider;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.io.Resource;
 
 import java.util.Properties;
 
@@ -38,10 +34,7 @@ import java.util.Properties;
  *
  * @author Jarvis Song
  */
-public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryBean implements ApplicationContextAware {
-    private Class<?>[]         typeAliases;
-    private Resource[]         mapperLocations;
-    private ApplicationContext applicationContext;
+public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryBean {
 
 
     @Override
@@ -62,18 +55,5 @@ public class SqlSessionFactoryBean extends org.mybatis.spring.SqlSessionFactoryB
         super.afterPropertiesSet();
     }
 
-    @Override
-    public void setMapperLocations(Resource[] mapperLocations) {
-        this.mapperLocations = mapperLocations;
-    }
 
-    @Override
-    public void setTypeAliases(Class<?>[] typeAliases) {
-        this.typeAliases = typeAliases;
-    }
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-    }
 }
