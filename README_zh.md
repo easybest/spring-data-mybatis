@@ -150,7 +150,7 @@ public class UserRepositoryIntegrationTest {
    <dependency>
        <groupId>com.ifrabbit</groupId>
        <artifactId>spring-boot-starter-data-mybatis</artifactId>
-       <version>1.0.12.RELEASE</version>
+       <version>1.0.13.RELEASE</version>
    </dependency>
    ```
 
