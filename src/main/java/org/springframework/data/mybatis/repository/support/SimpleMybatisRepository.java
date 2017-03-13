@@ -40,13 +40,14 @@ import java.util.Map;
 public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSessionRepositorySupport
         implements MybatisRepository<T, ID> {
 
-    private static final String STATEMENT_INSERT       = "_insert";
-    private static final String STATEMENT_UPDATE       = "_update";
-    private static final String STATEMENT_GET_BY_ID    = "_getById";
+    private static final String STATEMENT_INSERT = "_insert";
+    private static final String STATEMENT_UPDATE = "_update";
+    private static final String STATEMENT_UPDATE_IGNORE_NULL = "_updateIgnoreNull";
+    private static final String STATEMENT_GET_BY_ID = "_getById";
     private static final String STATEMENT_DELETE_BY_ID = "_deleteById";
 
     private final MybatisEntityInformation<T, ID> entityInformation;
-    private       AuditorAware<Long>              auditorAware;
+    private AuditorAware<Long> auditorAware;
 
     public SimpleMybatisRepository(
             MybatisEntityInformation<T, ID> entityInformation,
@@ -93,25 +94,53 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
     @Override
     @Transactional
+    public <S extends T> S updateIgnoreNull(S entity) {
+        entityInformation.setLastModifiedDate(entity);
+        entityInformation.setLastModifiedBy(entity);
+
+        int row = update(STATEMENT_UPDATE_IGNORE_NULL, entity);
+        if (row == 0) {
+            throw new MybatisNoHintException("update effect 0 row, maybe version control lock occurred.");
+        }
+        if (entityInformation.hasVersion()) {
+            entityInformation.increaseVersion(entity);
+        }
+        return entity;
+    }
+
+    @Override
+    @Transactional
     public <S extends T> S save(S entity) {
-        Assert.notNull(entity);
+        Assert.notNull(entity, "entity can not be null");
 
         if (entityInformation.isNew(entity)) {
             // insert
-
             insert(entity);
         } else {
             // update
-
             update(entity);
         }
+        return entity;
+    }
 
+    @Override
+    @Transactional
+    public <S extends T> S saveIgnoreNull(S entity) {
+        Assert.notNull(entity, "entity can not be null");
+
+        if (entityInformation.isNew(entity)) {
+            // insert
+            insert(entity);
+        } else {
+            // update
+            updateIgnoreNull(entity);
+        }
         return entity;
     }
 
     @Override
     public T findOne(ID id) {
-        Assert.notNull(id);
+        Assert.notNull(id, "id can not be null");
         return selectOne(STATEMENT_GET_BY_ID, id);
     }
 

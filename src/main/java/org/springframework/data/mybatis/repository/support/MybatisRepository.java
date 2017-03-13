@@ -42,6 +42,10 @@ public interface MybatisRepository<T, ID extends Serializable>
 
     <S extends T> S update(S entity);
 
+    <S extends T> S updateIgnoreNull(S entity);
+
+    <S extends T> S saveIgnoreNull(S entity);
+
     @Override
     <S extends T> List<S> save(Iterable<S> entities);
 
