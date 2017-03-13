@@ -10,9 +10,9 @@ import java.util.List;
 /**
  * CRUD SERVICE BASE INTERFACE.
  *
- * @param <T>  实体类型
- * @param <ID> 主键类型
- * @author songjiawei@supcon.com
+ * @param <T>  entity type
+ * @param <ID> primary key type
+ * @author Jarvis Song
  * @since 15/9/30
  */
 public interface CrudService<T, ID extends Serializable> {
@@ -21,7 +21,7 @@ public interface CrudService<T, ID extends Serializable> {
     /**
      * Get a entity or a domain by primary key. Usually it's called id.
      *
-     * @param id 主键值
+     * @param id primary key's value
      * @return 带关联的实体
      */
     T get(ID id);
@@ -38,6 +38,14 @@ public interface CrudService<T, ID extends Serializable> {
      * Save a entity or a domain. It can be judged to update or insert by checking the id is or not null.
      */
     void save(T entity);
+
+    void saveIgnoreNull(T entity);
+
+    void insert(T entity);
+
+    void update(T entity);
+
+    void updateIgnore(T entity);
 
     /**
      * Delete a entity or a domain with its primary key.
