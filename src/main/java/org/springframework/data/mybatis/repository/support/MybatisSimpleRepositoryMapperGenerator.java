@@ -48,17 +48,17 @@ import static org.springframework.data.mybatis.annotations.Id.GenerationType.*;
  * @author Jarvis Song
  */
 public class MybatisSimpleRepositoryMapperGenerator {
-    private transient static final Logger logger       = LoggerFactory.getLogger(MybatisSimpleRepositoryMapperGenerator.class);
-    private static final           String MAPPER_BEGIN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+    private transient static final Logger logger = LoggerFactory.getLogger(MybatisSimpleRepositoryMapperGenerator.class);
+    private static final String MAPPER_BEGIN = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">";
-    private static final           String MAPPER_END   = "</mapper>";
+    private static final String MAPPER_END = "</mapper>";
 
-    private final Configuration              configuration;
-    private final Dialect                    dialect;
-    private final MybatisMappingContext      context;
-    private final Class<?>                   domainClass;
+    private final Configuration configuration;
+    private final Dialect dialect;
+    private final MybatisMappingContext context;
+    private final Class<?> domainClass;
     private final MybatisPersistentEntity<?> persistentEntity;
-    private final MybatisMapperGenerator     generator;
+    private final MybatisMapperGenerator generator;
 
     public MybatisSimpleRepositoryMapperGenerator(Configuration configuration, Dialect dialect, MybatisMappingContext context, Class<?> domainClass) {
         this.configuration = configuration;
@@ -132,7 +132,10 @@ public class MybatisSimpleRepositoryMapperGenerator {
             buildInsertSQL(builder);
         }
         if (!isStatementExist("_update")) {
-            buildUpdateSQL(builder);
+            buildUpdateSQL(builder, "_update", false);
+        }
+        if (!isStatementExist("_updateIgnoreNull")) {
+            buildUpdateSQL(builder, "_updateIgnoreNull", true);
         }
         if (!isStatementExist("_getById")) {
             buildGetById(builder);
@@ -177,11 +180,12 @@ public class MybatisSimpleRepositoryMapperGenerator {
         return result;
     }
 
-    private void buildUpdateSQL(final StringBuilder builder) {
+
+    private void buildUpdateSQL(final StringBuilder builder, String statementName, final boolean ignoreNull) {
         if (!persistentEntity.hasIdProperty()) {
             return;
         }
-        builder.append("<update id=\"_update\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
+        builder.append("<update id=\"" + statementName + "\" parameterType=\"" + domainClass.getName() + "\" lang=\"XML\">");
         builder.append("update ").append(dialect.wrapTableName(persistentEntity.getTableName()));
         builder.append("<set>");
 
@@ -197,12 +201,16 @@ public class MybatisSimpleRepositoryMapperGenerator {
                     builder.append(dialect.wrapColumnName(property.getColumnName())).append("=").append(dialect.wrapColumnName(property.getColumnName())).append("+1,");
                     return;
                 }
-
-                builder.append("<if test=\"" + property.getName() + " != null\">")
-                        .append(dialect.wrapColumnName(property.getColumnName())).append("=#{").append(property.getName())
+                if (ignoreNull) {
+                    builder.append("<if test=\"" + property.getName() + " != null\">");
+                }
+                builder.append(dialect.wrapColumnName(property.getColumnName())).append("=#{").append(property.getName())
                         .append(",jdbcType=").append(property.getJdbcType())
                         .append(null != property.getSpecifiedTypeHandler() ? (",typeHandler=" + property.getSpecifiedTypeHandler().getName()) : "")
-                        .append("}").append(",</if>");
+                        .append("},");
+                if (ignoreNull) {
+                    builder.append("</if>");
+                }
             }
         });
 
@@ -217,8 +225,13 @@ public class MybatisSimpleRepositoryMapperGenerator {
                             @Override
                             public void doWithPersistentProperty(PersistentProperty<?> pp) {
                                 MybatisPersistentProperty property = (MybatisPersistentProperty) pp;
-                                builder.append("<if test=\"" + association.getInverse().getName() + " != null and " + association.getInverse().getName() + "." + property.getName() + " != null\">")
-                                        .append(dialect.wrapColumnName(property.getColumnName())).append("=#{").append(association.getInverse().getName()).append(".").append(property.getName()).append("}").append(",</if>");
+                                if (ignoreNull) {
+                                    builder.append("<if test=\"" + association.getInverse().getName() + " != null and " + association.getInverse().getName() + "." + property.getName() + " != null\">");
+                                }
+                                builder.append(dialect.wrapColumnName(property.getColumnName())).append("=#{").append(association.getInverse().getName()).append(".").append(property.getName()).append("},");
+                                if (ignoreNull) {
+                                    builder.append("</if>");
+                                }
                             }
                         });
                     }
@@ -227,8 +240,13 @@ public class MybatisSimpleRepositoryMapperGenerator {
 
                 if ((ass instanceof MybatisManyToOneAssociation)) {
                     MybatisManyToOneAssociation association = (MybatisManyToOneAssociation) ass;
-                    builder.append("<if test=\"" + association.getInverse().getName() + " != null and " + association.getInverse().getName() + "." + association.getObverse().getName() + " != null\">")
-                            .append(dialect.wrapColumnName(association.getJoinColumnName())).append("=#{").append(association.getInverse().getName()).append(".").append(association.getObverse().getName()).append("}").append(",</if>");
+                    if (ignoreNull) {
+                        builder.append("<if test=\"" + association.getInverse().getName() + " != null and " + association.getInverse().getName() + "." + association.getObverse().getName() + " != null\">");
+                    }
+                    builder.append(dialect.wrapColumnName(association.getJoinColumnName())).append("=#{").append(association.getInverse().getName()).append(".").append(association.getObverse().getName()).append("},");
+                    if (ignoreNull) {
+                        builder.append("</if>");
+                    }
                     return;
                 }
 
@@ -835,7 +853,7 @@ public class MybatisSimpleRepositoryMapperGenerator {
                                 property.getJdbcType()
                         ));
                     }
-                }else{
+                } else {
 
 
                 }
