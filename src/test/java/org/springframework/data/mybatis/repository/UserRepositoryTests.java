@@ -622,4 +622,13 @@ public class UserRepositoryTests {
         }
     }
 
+    @Test
+    public void testFindByFirstnameOrLastname() throws Exception {
+        flushTestUsers();
+        List<User> byFirstnameOrLastname = repository.findByFirstnameOrLastname(firstUser.getFirstname(),fourthUser.getLastname());
+        assertThat(byFirstnameOrLastname.size(),is(2));
+        assertThat(byFirstnameOrLastname.get(0), is(firstUser));
+        assertThat(byFirstnameOrLastname.get(1), is(fourthUser));
+    }
+
 }
