@@ -104,6 +104,79 @@ public abstract class AbstractCrudService<R extends MybatisRepository<T, ID>, T,
         }
     }
 
+
+    @Override
+    @Transactional
+    public void saveIgnoreNull(T entity) {
+        Assert.notNull(entity, "Entity can not be null. [" + entity.getClass() + "]");
+        if (useCache()) {
+            if (entity instanceof Persistable && (null != ((Persistable) entity).getId())) {
+                evictCache(getBasic((ID) ((Persistable) entity).getId()));
+            } else {
+                evictCache(entity);
+            }
+        }
+        repository.saveIgnoreNull(entity);
+
+        if (useCache()) {
+            evictCache(entity);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void insert(T entity) {
+        Assert.notNull(entity, "Entity can not be null. [" + entity.getClass() + "]");
+        if (useCache()) {
+            if (entity instanceof Persistable && (null != ((Persistable) entity).getId())) {
+                evictCache(getBasic((ID) ((Persistable) entity).getId()));
+            } else {
+                evictCache(entity);
+            }
+        }
+        repository.insert(entity);
+
+        if (useCache()) {
+            evictCache(entity);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void update(T entity) {
+        Assert.notNull(entity, "Entity can not be null. [" + entity.getClass() + "]");
+        if (useCache()) {
+            if (entity instanceof Persistable && (null != ((Persistable) entity).getId())) {
+                evictCache(getBasic((ID) ((Persistable) entity).getId()));
+            } else {
+                evictCache(entity);
+            }
+        }
+        repository.update(entity);
+
+        if (useCache()) {
+            evictCache(entity);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateIgnore(T entity) {
+        Assert.notNull(entity, "Entity can not be null. [" + entity.getClass() + "]");
+        if (useCache()) {
+            if (entity instanceof Persistable && (null != ((Persistable) entity).getId())) {
+                evictCache(getBasic((ID) ((Persistable) entity).getId()));
+            } else {
+                evictCache(entity);
+            }
+        }
+        repository.updateIgnoreNull(entity);
+
+        if (useCache()) {
+            evictCache(entity);
+        }
+    }
+
     @Override
     @Transactional
     public void delete(ID id) {
