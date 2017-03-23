@@ -59,8 +59,8 @@ public abstract class MybatisQueryExecution {
 
     public Object execute(AbstractMybatisQuery query, Object[] values) {
 
-        Assert.notNull(query);
-        Assert.notNull(values);
+        Assert.notNull(query, "query can not be null");
+        Assert.notNull(values, "values can not be null");
 
         Object result;
 
@@ -201,6 +201,7 @@ public abstract class MybatisQueryExecution {
             return -1;
         }
     }
+
     static class InsertExecution extends MybatisQueryExecution {
         @Override
         protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
@@ -223,6 +224,7 @@ public abstract class MybatisQueryExecution {
             return query.getSqlSessionTemplate().insert(query.getStatementId(), parameter);
         }
     }
+
     static class UpdateExecution extends MybatisQueryExecution {
         @Override
         protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
