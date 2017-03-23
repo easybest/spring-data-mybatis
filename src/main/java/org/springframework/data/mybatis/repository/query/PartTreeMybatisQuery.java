@@ -31,6 +31,7 @@ import org.springframework.data.mybatis.repository.dialect.Dialect;
 import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.DeleteExecution;
 import org.springframework.data.mybatis.repository.support.MybatisMapperGenerator;
 import org.springframework.data.mybatis.repository.support.MybatisQueryException;
+import org.springframework.data.mybatis.repository.util.StringUtils;
 import org.springframework.data.repository.core.EntityMetadata;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
@@ -169,7 +170,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
                 builder.append(generator.buildConditionOperate(part.getType()));
                 String[] properties = new String[part.getType().getNumberOfArguments()];
                 for (int i = 0; i < properties.length; i++) {
-                    properties[i] = "p" + (i + (c++));
+                    properties[i] = resolveParameterName(c++);
                 }
                 builder.append(generator.buildConditionCaluse(part.getType(), ignoreCaseType, properties));
             }
@@ -183,6 +184,13 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
         return builder.toString();
     }
 
+    private String resolveParameterName(int position) {
+        String paramName = null;
+        if (parameters.hasParameterAt(position)) {
+            paramName = parameters.getParameter(position).getName();
+        }
+        return StringUtils.isNotEmpty(paramName) ? paramName : "p" + position;
+    }
 
     private String doCreateDeleteQueryStatement() {
         StringBuilder builder = new StringBuilder();
