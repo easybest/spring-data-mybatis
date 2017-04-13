@@ -41,7 +41,7 @@
 
     <properties>
         <springdata.commons.version>1.13.1.RELEASE</springdata.commons.version>
-        <mybatis.version>3.4.2</mybatis.version>
+        <mybatis.version>3.4.4</mybatis.version>
     </properties>
 
     <profiles>
