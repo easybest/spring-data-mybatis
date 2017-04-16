@@ -44,11 +44,13 @@
             </association>
         </association>
         <collection property="bookings" ofType="org.springframework.data.mybatis.domain.sample.Booking">
+            <constructor>
+                <arg column="bookings.userId" javaType="java.lang.Long" jdbcType="BIGINT"/>
+            </constructor>
             <id property="id" column="bookings.id" javaType="java.lang.Long" jdbcType="BIGINT"/>
             <result property="amount" column="bookings.amount" javaType="java.lang.Integer" jdbcType="INTEGER"/>
             <result property="serialNumber" column="bookings.serialNumber" javaType="java.lang.String"
                     jdbcType="VARCHAR"/>
-            <result property="userId" column="bookings.userId" javaType="java.lang.Long" jdbcType="BIGINT"/>
         </collection>
         <collection property="colleagues" ofType="org.springframework.data.mybatis.domain.sample.User">
             <id property="id" column="colleagues.id" javaType="java.lang.Integer" jdbcType="INTEGER"/>
@@ -74,6 +76,13 @@
         <![CDATA[insert into DS_USER(age,active,binary_data,created_at,date_of_birth,EMAIL_ADDRESS,FIRSTNAME,LASTNAME,country,city,street_name,street_no,MANAGER_ID) values(#{age,jdbcType=INTEGER},#{active,jdbcType=BIT},#{binaryData,jdbcType=TINYINT},#{createdAt,jdbcType=TIMESTAMP},#{dateOfBirth,jdbcType=TIMESTAMP},#{emailAddress,jdbcType=VARCHAR},#{firstname,jdbcType=VARCHAR},#{lastname,jdbcType=VARCHAR},#{address.country,jdbcType=VARCHAR},#{address.city,jdbcType=VARCHAR},#{address.streetName,jdbcType=VARCHAR},#{address.streetNo,jdbcType=VARCHAR},#{manager.id,jdbcType=INTEGER})]]>
     </insert>
     <update id="_update" parameterType="org.springframework.data.mybatis.domain.sample.User" lang="XML">update DS_USER
+        <set>
+            age=#{age,jdbcType=INTEGER},active=#{active,jdbcType=BIT},binary_data=#{binaryData,jdbcType=TINYINT},created_at=#{createdAt,jdbcType=TIMESTAMP},date_of_birth=#{dateOfBirth,jdbcType=TIMESTAMP},EMAIL_ADDRESS=#{emailAddress,jdbcType=VARCHAR},FIRSTNAME=#{firstname,jdbcType=VARCHAR},LASTNAME=#{lastname,jdbcType=VARCHAR},country=#{address.country},city=#{address.city},street_name=#{address.streetName},street_no=#{address.streetNo},MANAGER_ID=#{manager.id}
+        </set>
+        <trim prefix="where" prefixOverrides="and |or ">and id=#{id}</trim>
+    </update>
+    <update id="_updateIgnoreNull" parameterType="org.springframework.data.mybatis.domain.sample.User" lang="XML">update
+        DS_USER
         <set>
             <if test="age != null">age=#{age,jdbcType=INTEGER},</if>
             <if test="active != null">active=#{active,jdbcType=BIT},</if>
@@ -160,6 +169,7 @@
                 <if test="_condition != null and _condition.lastname != null">and "user".LASTNAME like
                     #{_condition.lastname}
                 </if>
+                <include refid="SELECT_CONDITION_INNER"/>
             </trim>
         </if>
         <if test="_ids != null">where "user".id in
@@ -188,6 +198,7 @@
                 <if test="_condition != null and _condition.lastname != null">and "user".LASTNAME like
                     #{_condition.lastname}
                 </if>
+                <include refid="SELECT_CONDITION_INNER"/>
             </trim>
         </if>
         <if test="_ids != null">where "user".id in
@@ -246,6 +257,7 @@
                 <if test="_condition != null and _condition.lastname != null">and "user".LASTNAME like
                     #{_condition.lastname}
                 </if>
+                <include refid="SELECT_CONDITION_INNER"/>
             </trim>
         </if>
         <if test="_sorts != null">
@@ -272,6 +284,7 @@
                 <if test="_condition != null and _condition.lastname != null">and "user".LASTNAME like
                     #{_condition.lastname}
                 </if>
+                <include refid="SELECT_CONDITION_INNER"/>
             </trim>
         </if>
         <if test="_sorts != null">
@@ -298,6 +311,7 @@
                 <if test="_condition != null and _condition.lastname != null">and "user".LASTNAME like
                     #{_condition.lastname}
                 </if>
+                <include refid="SELECT_CONDITION_INNER"/>
             </trim>
         </if>
     </select>
@@ -310,6 +324,7 @@
                 <if test="_condition != null and _condition.lastname != null">and "user".LASTNAME like
                     #{_condition.lastname}
                 </if>
+                <include refid="SELECT_CONDITION_INNER"/>
             </trim>
         </if>
     </select>
@@ -330,6 +345,7 @@
                 <if test="_condition != null and _condition.lastname != null">and "user".LASTNAME like
                     #{_condition.lastname}
                 </if>
+                <include refid="SELECT_CONDITION_INNER"/>
             </trim>
         </if>
     </delete>
