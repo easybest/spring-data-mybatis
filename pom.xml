@@ -40,7 +40,7 @@
     </scm>
 
     <properties>
-        <springdata.commons.version>1.13.1.RELEASE</springdata.commons.version>
+        <springdata.commons.version>1.13.3.RELEASE</springdata.commons.version>
         <mybatis.version>3.4.4</mybatis.version>
     </properties>
 
