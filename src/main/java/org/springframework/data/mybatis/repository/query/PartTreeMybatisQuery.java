@@ -35,6 +35,7 @@ import org.springframework.data.mybatis.repository.util.StringUtils;
 import org.springframework.data.repository.core.EntityMetadata;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
+import org.springframework.data.repository.query.parser.Part.Type;
 import org.springframework.data.repository.query.parser.PartTree;
 
 import java.io.ByteArrayInputStream;
@@ -157,7 +158,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
                 if (null == columnName) {
                     throw new MybatisQueryException("can not find property: " + part.getProperty().getSegment() + " in " + method.getName());
                 }
-
+                if(part.getType()!=Type.IS_NULL&&part.getType()!=Type.IS_NOT_NULL)
+                	builder.append("<if test="+property.getName()+" != null >");
                 builder.append(" and ");
 
                 IgnoreCaseType ignoreCaseType = part.shouldIgnoreCase();
@@ -173,6 +175,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
                     properties[i] = resolveParameterName(c++);
                 }
                 builder.append(generator.buildConditionCaluse(part.getType(), ignoreCaseType, properties));
+                if(part.getType()!=Type.IS_NULL&&part.getType()!=Type.IS_NOT_NULL)
+                	builder.append("</if>");
             }
 
             builder.append("</trim>");
