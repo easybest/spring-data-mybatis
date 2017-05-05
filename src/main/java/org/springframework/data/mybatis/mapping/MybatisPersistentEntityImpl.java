@@ -65,7 +65,17 @@ public class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, Myb
 
     @Override
     public String getSequenceName() {
-        return "seq_" + getTableName();
+        String tableName;
+        Entity entity = getType().getAnnotation(Entity.class);
+        if (null != entity && StringUtils.hasText(entity.table())) {
+            tableName = entity.table();
+        } else {
+            tableName = ParsingUtils.reconcatenateCamelCase(getType().getSimpleName(), "_");
+        }
+        if (null != entity && StringUtils.hasText(entity.schema())) {
+            return entity.schema() + ".seq_" + tableName;
+        }
+        return "seq_" + tableName;
     }
 
     @Override
@@ -87,11 +97,16 @@ public class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, Myb
 
     @Override
     public String getTableName() {
+        String tableName;
         Entity entity = getType().getAnnotation(Entity.class);
         if (null != entity && StringUtils.hasText(entity.table())) {
-            return entity.table();
+            tableName = entity.table();
+        } else {
+            tableName = ParsingUtils.reconcatenateCamelCase(getType().getSimpleName(), "_");
         }
-
-        return ParsingUtils.reconcatenateCamelCase(getType().getSimpleName(), "_");
+        if (null != entity && StringUtils.hasText(entity.schema())) {
+            tableName = entity.schema() + "." + tableName;
+        }
+        return tableName;
     }
 }
