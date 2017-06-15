@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.data.build</groupId>
         <artifactId>spring-data-parent</artifactId>
-        <version>1.9.3.RELEASE</version>
+        <version>1.9.4.RELEASE</version>
     </parent>
 
     <groupId>com.ifrabbit</groupId>
@@ -40,7 +40,7 @@
     </scm>
 
     <properties>
-        <springdata.commons.version>1.13.3.RELEASE</springdata.commons.version>
+        <springdata.commons.version>1.13.4.RELEASE</springdata.commons.version>
         <mybatis.version>3.4.4</mybatis.version>
     </properties>
 
@@ -134,13 +134,13 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>1.4.193</version>
+            <version>1.4.194</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.40</version>
+            <version>5.1.41</version>
             <scope>test</scope>
         </dependency>
         <!--<dependency>-->
