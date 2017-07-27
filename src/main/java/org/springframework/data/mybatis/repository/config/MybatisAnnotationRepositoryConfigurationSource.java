@@ -18,34 +18,40 @@
 
 package org.springframework.data.mybatis.repository.config;
 
+import java.lang.annotation.Annotation;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 
-import java.lang.annotation.Annotation;
-
 /**
  * @author Jarvis Song
  */
-public class MybatisAnnotationRepositoryConfigurationSource extends AnnotationRepositoryConfigurationSource {
-    /**
-     * Creates a new {@link AnnotationRepositoryConfigurationSource} from the given {@link AnnotationMetadata} and
-     * annotation.
-     *
-     * @param metadata
-     * @param annotation     must not be {@literal null}.
-     * @param resourceLoader must not be {@literal null}.
-     * @param environment
-     */
-    public MybatisAnnotationRepositoryConfigurationSource(AnnotationMetadata metadata, Class<? extends Annotation> annotation, ResourceLoader resourceLoader, Environment environment) {
-        super(metadata, annotation, resourceLoader, environment);
-    }
+public class MybatisAnnotationRepositoryConfigurationSource extends
+    AnnotationRepositoryConfigurationSource {
 
-    public String[] getMapperLocations() {
-        AnnotationAttributes attributes = getAttributes();
-        return attributes.getStringArray("mapperLocations");
-    }
+
+  /**
+   * Creates a new {@link AnnotationRepositoryConfigurationSource} from the given {@link
+   * AnnotationMetadata} and annotation.
+   *
+   * @param metadata must not be {@literal null}.
+   * @param annotation must not be {@literal null}.
+   * @param resourceLoader must not be {@literal null}.
+   */
+  public MybatisAnnotationRepositoryConfigurationSource(
+      AnnotationMetadata metadata,
+      Class<? extends Annotation> annotation,
+      ResourceLoader resourceLoader, Environment environment,
+      BeanDefinitionRegistry registry) {
+    super(metadata, annotation, resourceLoader, environment, registry);
+  }
+
+  public String[] getMapperLocations() {
+    AnnotationAttributes attributes = getAttributes();
+    return attributes.getStringArray("mapperLocations");
+  }
 
 }
