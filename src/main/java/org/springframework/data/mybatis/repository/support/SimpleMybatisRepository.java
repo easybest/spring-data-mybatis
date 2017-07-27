@@ -18,9 +18,6 @@
 
 package org.springframework.data.mybatis.repository.support;
 
-import static org.springframework.data.mybatis.annotations.Id.GenerationType.DISTRIBUTED;
-import static org.springframework.data.mybatis.annotations.Id.GenerationType.UUID;
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,7 +30,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mybatis.annotations.Id.GenerationType;
 import org.springframework.data.mybatis.repository.util.IdWorker;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,16 +77,6 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
     if (entityInformation.hasVersion()) {
       entityInformation.setVersion(entity, 0);
-    }
-    GenerationType idGenerationType = entityInformation.getIdGenerationType();
-    if (idGenerationType == UUID) {
-      entityInformation.setIdValue(entity, (ID) java.util.UUID.randomUUID().toString());
-    } else if (idGenerationType == DISTRIBUTED) {
-      if (entityInformation.getIdType() == Long.class) {
-        entityInformation.setIdValue(entity, (ID) Long.valueOf(idWorker.getId()));
-      } else if (entityInformation.getIdType() == String.class) {
-        entityInformation.setIdValue(entity, (ID) idWorker.getIdAsString());
-      }
     }
 
     insert(STATEMENT_INSERT, entity);
