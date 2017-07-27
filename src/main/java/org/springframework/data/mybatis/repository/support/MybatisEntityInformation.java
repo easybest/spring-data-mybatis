@@ -19,7 +19,6 @@
 package org.springframework.data.mybatis.repository.support;
 
 import java.io.Serializable;
-import org.springframework.data.mybatis.annotations.Id.GenerationType;
 import org.springframework.data.mybatis.repository.query.MybatisEntityMetadata;
 import org.springframework.data.repository.core.EntityInformation;
 
@@ -37,9 +36,7 @@ public interface MybatisEntityInformation<T, ID extends Serializable>
   void setVersion(T entity, int version);
 
   boolean hasVersion();
-
-  GenerationType getIdGenerationType();
-
+  
   void setIdValue(T entity, ID id);
 
   void setCreatedDate(T entity);

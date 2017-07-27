@@ -30,8 +30,6 @@ import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
-import org.springframework.data.mybatis.annotations.Id;
-import org.springframework.data.mybatis.annotations.Id.GenerationType;
 import org.springframework.data.mybatis.domains.AuditDateAware;
 import org.springframework.data.repository.core.support.AbstractEntityInformation;
 
@@ -90,21 +88,6 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
   @Override
   public boolean hasVersion() {
     return persistentEntity.hasVersionProperty();
-  }
-
-  @Override
-  public GenerationType getIdGenerationType() {
-    PersistentProperty<?> idProperty = persistentEntity.getIdProperty();
-    if (null == idProperty) {
-      return null;
-    }
-    Id id = idProperty.findAnnotation(Id.class);
-    if (null == id) {
-      return null;
-    }
-
-    return id.strategy();
-
   }
 
   @Override
