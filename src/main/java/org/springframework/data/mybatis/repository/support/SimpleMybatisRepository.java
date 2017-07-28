@@ -30,7 +30,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mybatis.repository.util.IdWorker;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -54,7 +53,6 @@ public class SimpleMybatisRepository<T, ID extends Serializable> extends SqlSess
 
   private final MybatisEntityInformation<T, ID> entityInformation;
   private AuditorAware<Long> auditorAware;
-  private IdWorker idWorker;
 
   public SimpleMybatisRepository(
       MybatisEntityInformation<T, ID> entityInformation,
