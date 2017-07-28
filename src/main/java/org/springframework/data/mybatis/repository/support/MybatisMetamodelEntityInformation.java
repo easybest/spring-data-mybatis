@@ -26,7 +26,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.mapping.IdentifierAccessor;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyAccessor;
@@ -90,22 +89,6 @@ public class MybatisMetamodelEntityInformation<T, ID extends Serializable> exten
     return persistentEntity.hasVersionProperty();
   }
 
-  @Override
-  public void setIdValue(T entity, ID id) {
-    IdentifierAccessor identifierAccessor = persistentEntity.getIdentifierAccessor(entity);
-    if (null == identifierAccessor) {
-      return;
-    }
-    Object identifier = identifierAccessor.getIdentifier();
-    if (null != identifier) {
-      return;
-    }
-    PersistentProperty<?> idProperty = persistentEntity.getIdProperty();
-    if (null == idProperty) {
-      return;
-    }
-    persistentEntity.getPropertyAccessor(entity).setProperty(idProperty, id);
-  }
 
   private void setAuditDate(PersistentProperty<?> property, T entity,
       Class<? extends Annotation> annotationType) {
