@@ -1,0 +1,4 @@
+# Tooling related information for the MyBatis namespace
+http\://www.springframework.org/schema/data/mybatis@name=MyBatis Namespace
+http\://www.springframework.org/schema/data/mybatis@prefix=mybatis
+http\://www.springframework.org/schema/data/mybatis@icon=org/springframework/jdbc/config/spring-jdbc.gif
