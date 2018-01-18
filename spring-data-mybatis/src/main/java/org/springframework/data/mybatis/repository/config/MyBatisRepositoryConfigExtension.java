@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Persistent;
 import org.springframework.data.mybatis.annotation.Entity;
 import org.springframework.data.mybatis.annotation.MappedSuperclass;
 import org.springframework.data.mybatis.repository.MyBatisRepository;
+import org.springframework.data.mybatis.repository.dialect.DialectFactoryBean;
 import org.springframework.data.mybatis.repository.support.MyBatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
@@ -66,6 +67,10 @@ public class MyBatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		Optional<String> sqlSessionTemplateRef = source.getAttribute("sqlSessionTemplateRef");
 		builder.addPropertyReference("sqlSessionTemplate",
 				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME));
+		builder.addPropertyReference("mappingContext",
+				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME).concat("_mappingContext"));
+		builder.addPropertyReference("dialect",
+				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME).concat("_dialect"));
 	}
 
 	@Override
@@ -87,6 +92,24 @@ public class MyBatisRepositoryConfigExtension extends RepositoryConfigurationExt
 
 	@Override
 	public void registerBeansForRoot(BeanDefinitionRegistry registry, RepositoryConfigurationSource config) {
+
 		super.registerBeansForRoot(registry, config);
+
+		Object source = config.getSource();
+		String sqlSessionTemplateRef = config.getAttribute("sqlSessionTemplateRef")
+				.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME);
+
+		BeanDefinitionBuilder mappingContextBeanDefinitionBuilder = BeanDefinitionBuilder
+				.rootBeanDefinition(MyBatisMappingContextFactoryBean.class);
+		mappingContextBeanDefinitionBuilder.addPropertyValue("repositoryConfigurationSource", config);
+		registerIfNotAlreadyRegistered(mappingContextBeanDefinitionBuilder.getBeanDefinition(), registry,
+				sqlSessionTemplateRef.concat("_mappingContext"), source);
+
+		BeanDefinitionBuilder dialectBeanDefinitionBuilder = BeanDefinitionBuilder
+				.rootBeanDefinition(DialectFactoryBean.class);
+		dialectBeanDefinitionBuilder.addConstructorArgReference(sqlSessionTemplateRef);
+		registerIfNotAlreadyRegistered(dialectBeanDefinitionBuilder.getBeanDefinition(), registry,
+				sqlSessionTemplateRef.concat("_dialect"), source);
+
 	}
 }

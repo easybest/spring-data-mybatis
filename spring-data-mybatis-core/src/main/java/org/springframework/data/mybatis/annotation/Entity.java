@@ -24,4 +24,6 @@ public @interface Entity {
 	 */
 	String table() default "";
 
+	String schema() default "";
+
 }
