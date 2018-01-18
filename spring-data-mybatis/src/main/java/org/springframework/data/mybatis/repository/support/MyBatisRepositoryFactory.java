@@ -1,11 +1,18 @@
 package org.springframework.data.mybatis.repository.support;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.data.mybatis.mapping.MyBatisMappingContext;
+import org.springframework.data.mybatis.repository.dialect.Dialect;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryLookupStrategy;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.data.repository.query.EvaluationContextProvider;
+import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.util.Assert;
+
+import java.util.Optional;
 
 import static org.springframework.data.querydsl.QuerydslUtils.*;
 
@@ -14,12 +21,20 @@ import static org.springframework.data.querydsl.QuerydslUtils.*;
  */
 public class MyBatisRepositoryFactory extends RepositoryFactorySupport {
 
-	private SqlSessionTemplate sqlSessionTemplate;
+	private final SqlSessionTemplate sqlSessionTemplate;
+	private final MyBatisMappingContext mappingContext;
+	private final Dialect dialect;
 
-	public MyBatisRepositoryFactory(SqlSessionTemplate sqlSessionTemplate) {
+	public MyBatisRepositoryFactory(SqlSessionTemplate sqlSessionTemplate, MyBatisMappingContext mappingContext,
+			Dialect dialect) {
+
 		Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null!");
-		this.sqlSessionTemplate = sqlSessionTemplate;
+		Assert.notNull(mappingContext, "MyBatisMappingContext must not be null!");
+		Assert.notNull(dialect, "Dialect must not be null!");
 
+		this.sqlSessionTemplate = sqlSessionTemplate;
+		this.mappingContext = mappingContext;
+		this.dialect = dialect;
 	}
 
 	@Override
@@ -32,7 +47,6 @@ public class MyBatisRepositoryFactory extends RepositoryFactorySupport {
 	protected Object getTargetRepository(RepositoryInformation information) {
 
 		SimpleMyBatisRepository<?, ?> repository = getTargetRepository(information, sqlSessionTemplate);
-
 		return repository;
 	}
 
@@ -40,6 +54,11 @@ public class MyBatisRepositoryFactory extends RepositoryFactorySupport {
 			SqlSessionTemplate sqlSessionTemplate) {
 
 		MyBatisEntityInformation<?, Object> entityInformation = getEntityInformation(information.getDomainType());
+
+		// create mapper for this repository
+		new MyBatisEntityMapperSupport(sqlSessionTemplate.getConfiguration(), mappingContext, dialect,
+				information.getDomainType()).done();
+
 		return getTargetRepositoryViaReflection(information, entityInformation, sqlSessionTemplate);
 	}
 
@@ -50,6 +69,13 @@ public class MyBatisRepositoryFactory extends RepositoryFactorySupport {
 		} else {
 			return SimpleMyBatisRepository.class;
 		}
+	}
+
+	@Override
+	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.Key key,
+			EvaluationContextProvider evaluationContextProvider) {
+
+		return Optional.of(MyBatisQueryLookupStrategy.create(sqlSessionTemplate, key, evaluationContextProvider));
 	}
 
 	/**

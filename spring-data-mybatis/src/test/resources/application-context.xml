@@ -7,11 +7,21 @@
 
     <!-- Database setup -->
     <import resource="infrastructure.xml"/>
-
+    <bean id="mappingContext"
+          class="org.springframework.data.mybatis.repository.config.MyBatisMappingContextFactoryBean">
+        <property name="initialEntitySet">
+            <util:set>
+                <value>org.springframework.data.mybatis.domain.sample.User</value>
+            </util:set>
+        </property>
+    </bean>
+    <bean id="dialect" class="org.springframework.data.mybatis.repository.dialect.H2Dialect"/>
     <!-- Configure a DAO for User class -->
     <bean id="userDao" class="org.springframework.data.mybatis.repository.support.MyBatisRepositoryFactoryBean">
         <constructor-arg value="org.springframework.data.mybatis.repository.sample.UserRepository"/>
         <property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+        <property name="mappingContext" ref="mappingContext"/>
+        <property name="dialect" ref="dialect"/>
     </bean>
 
 </beans>
