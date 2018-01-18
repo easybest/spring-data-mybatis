@@ -17,8 +17,6 @@ import org.springframework.data.mybatis.repository.support.MyBatisRepositoryFact
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
-import java.util.Arrays;
-
 @ContextConfiguration(inheritLocations = false, loader = AnnotationConfigContextLoader.class)
 public class JavaConfigUserRepositoryTests extends UserRepositoryTests {
 
@@ -44,7 +42,6 @@ public class JavaConfigUserRepositoryTests extends UserRepositoryTests {
 	public void doesNotPickUpJpaRepository() {
 
 		ConfigurableApplicationContext context = new AnnotationConfigApplicationContext(MyBatisRepositoryConfig.class);
-		System.out.println(Arrays.toString(context.getBeanDefinitionNames()));
 		context.getBean("mybatisRepository");
 		context.close();
 	}
