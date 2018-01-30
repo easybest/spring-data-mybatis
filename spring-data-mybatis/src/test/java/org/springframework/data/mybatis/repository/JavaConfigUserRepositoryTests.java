@@ -29,7 +29,7 @@ public class JavaConfigUserRepositoryTests extends UserRepositoryTests {
 
 		@Bean
 		public UserRepository userRepository() {
-			MyBatisRepositoryFactoryBean<UserRepository, User, Long> factory = new MyBatisRepositoryFactoryBean<>(
+			MyBatisRepositoryFactoryBean<UserRepository, User, Integer> factory = new MyBatisRepositoryFactoryBean<>(
 					UserRepository.class);
 			factory.setSqlSessionTemplate(sqlSessionTemplate);
 			factory.setBeanFactory(applicationContext);

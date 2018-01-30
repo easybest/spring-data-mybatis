@@ -169,9 +169,9 @@ public abstract class SqlSessionRepositorySupport {
 			params.put("_sorts", pager.getSort());
 		}
 		params.put("_condition", condition);
-		if (null != columns) {
-			params.put("_specifiedFields", columns);
-		}
+//		if (null != columns) {
+//			params.put("_specifiedFields", columns);
+//		}
 		if (!CollectionUtils.isEmpty(otherParams)) {
 			params.putAll(otherParams);
 		}
