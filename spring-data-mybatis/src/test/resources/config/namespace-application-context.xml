@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mybatis="http://www.springframework.org/schema/data/mybatis"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		  http://www.springframework.org/schema/data/mybatis http://www.springframework.org/schema/data/mybatis/spring-mybatis.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <import resource="../infrastructure.xml"/>
+
+    <mybatis:repositories base-package="org.springframework.data.mybatis.repository.sample"/>
+    <bean id="mappingContext"
+          class="org.springframework.data.mybatis.repository.config.MyBatisMappingContextFactoryBean">
+        <property name="initialEntitySet">
+            <util:set>
+                <value>org.springframework.data.mybatis.domain.sample.User</value>
+            </util:set>
+        </property>
+    </bean>
+    <bean id="dialect" class="org.springframework.data.mybatis.dialect.MySQLDialect"/>
+
+    <!-- Register custom DAO implementation explicitly -->
+    <bean id="userRepositoryImpl" class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl"/>
+
+</beans>

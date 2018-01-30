@@ -3,11 +3,8 @@ package org.springframework.data.mybatis.repository.config;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.data.annotation.Persistent;
-import org.springframework.data.mybatis.annotation.Entity;
-import org.springframework.data.mybatis.annotation.MappedSuperclass;
 import org.springframework.data.mybatis.repository.MyBatisRepository;
-import org.springframework.data.mybatis.repository.dialect.DialectFactoryBean;
+import org.springframework.data.mybatis.dialect.DialectFactoryBean;
 import org.springframework.data.mybatis.repository.support.MyBatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
@@ -15,10 +12,13 @@ import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.config.XmlRepositoryConfigurationSource;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.Entity;
+import javax.persistence.MappedSuperclass;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -50,7 +50,9 @@ public class MyBatisRepositoryConfigExtension extends RepositoryConfigurationExt
 
 	@Override
 	protected Collection<Class<? extends Annotation>> getIdentifyingAnnotations() {
-		return Arrays.asList(Entity.class, Persistent.class, MappedSuperclass.class);
+
+		List<Class<? extends Annotation>> annotations = Arrays.asList(Entity.class, MappedSuperclass.class);
+		return annotations;
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.querydsl.EntityPathResolver;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.querydsl.SimpleEntityPathResolver;
+import org.springframework.data.repository.core.RepositoryInformation;
 
 import java.io.Serializable;
 import java.util.Optional;
@@ -26,16 +27,17 @@ public class QuerydslMyBatisRepository<T, ID extends Serializable> extends Simpl
 	private final EntityPath<T> path;
 	private final PathBuilder<T> builder;
 
-	public QuerydslMyBatisRepository(MyBatisEntityInformation<T, ?> entityInformation,
-			SqlSessionTemplate sqlSessionTemplate) {
+	public QuerydslMyBatisRepository(RepositoryInformation repositoryInformation,
+			MyBatisEntityInformation<T, ID> entityInformation, SqlSessionTemplate sqlSessionTemplate) {
 
-		this(entityInformation, sqlSessionTemplate, DEFAULT_ENTITY_PATH_RESOLVER);
+		this(repositoryInformation, entityInformation, sqlSessionTemplate, DEFAULT_ENTITY_PATH_RESOLVER);
 	}
 
-	public QuerydslMyBatisRepository(MyBatisEntityInformation<T, ?> entityInformation,
-			SqlSessionTemplate sqlSessionTemplate, EntityPathResolver resolver) {
+	public QuerydslMyBatisRepository(RepositoryInformation repositoryInformation,
+			MyBatisEntityInformation<T, ID> entityInformation, SqlSessionTemplate sqlSessionTemplate,
+			EntityPathResolver resolver) {
 
-		super(entityInformation, sqlSessionTemplate);
+		super(repositoryInformation, entityInformation, sqlSessionTemplate);
 
 		this.path = resolver.createPath(entityInformation.getJavaType());
 		this.builder = new PathBuilder<T>(path.getType(), path.getMetadata());

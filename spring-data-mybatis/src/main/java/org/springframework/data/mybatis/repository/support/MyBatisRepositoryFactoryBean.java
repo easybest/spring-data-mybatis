@@ -2,7 +2,7 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.mybatis.mapping.MyBatisMappingContext;
-import org.springframework.data.mybatis.repository.dialect.Dialect;
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
