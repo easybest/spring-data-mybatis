@@ -13,5 +13,7 @@
     <artifactId>spring-data-mybatis-core</artifactId>
     <name>Spring Data MyBatis Core</name>
     <description>Spring Data module for MyBatis repositories.</description>
-
+    <dependencies>
+        
+    </dependencies>
 </project>

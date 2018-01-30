@@ -1,17 +1,20 @@
 package org.springframework.data.mybatis.mapping;
 
 import org.apache.ibatis.type.JdbcType;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.data.annotation.AccessType;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.mybatis.annotation.Column;
-import org.springframework.data.mybatis.annotation.Id;
-import org.springframework.data.util.Lazy;
+import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.ParsingUtils;
+import org.springframework.data.util.TypeInformation;
+import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.*;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,21 +61,32 @@ class MyBatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	static {
 
 		Set<Class<? extends Annotation>> annotations = new HashSet<Class<? extends Annotation>>();
+		annotations.add(OneToMany.class);
+		annotations.add(OneToOne.class);
+		annotations.add(ManyToMany.class);
+		annotations.add(ManyToOne.class);
+		annotations.add(Embedded.class);
+		// annotations.add(Embeddable.class);
+		annotations.add(ElementCollection.class);
 
 		ASSOCIATION_ANNOTATIONS = Collections.unmodifiableSet(annotations);
 
-		annotations = new HashSet<Class<? extends Annotation>>();
+		annotations = new HashSet<>();
 		annotations.add(Id.class);
+		annotations.add(EmbeddedId.class);
 
 		ID_ANNOTATIONS = Collections.unmodifiableSet(annotations);
 
-		annotations = new HashSet<Class<? extends Annotation>>();
+		annotations = new HashSet<>();
 		annotations.add(Column.class);
+		annotations.add(OrderColumn.class);
 
 		UPDATEABLE_ANNOTATIONS = Collections.unmodifiableSet(annotations);
 	}
 
-	private final Lazy<Boolean> isId = Lazy.of(() -> isAnnotationPresent(Id.class));
+	private final @Nullable Boolean usePropertyAccess;
+	private final @Nullable TypeInformation<?> associationTargetType;
+	private final boolean updateable;
 
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
@@ -84,11 +98,21 @@ class MyBatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	public MyBatisPersistentPropertyImpl(Property property, PersistentEntity<?, MyBatisPersistentProperty> owner,
 			SimpleTypeHolder simpleTypeHolder) {
 		super(property, owner, simpleTypeHolder);
+
+		this.usePropertyAccess = detectPropertyAccess();
+		this.associationTargetType = detectAssociationTargetType();
+		this.updateable = detectUpdatability();
 	}
 
 	@Override
-	protected Association<MyBatisPersistentProperty> createAssociation() {
-		return null;
+	public Class<?> getActualType() {
+		return null != associationTargetType ? associationTargetType.getType() : super.getActualType();
+	}
+
+	@Override
+	public Iterable<? extends TypeInformation<?>> getPersistentEntityType() {
+		return null != associationTargetType ? Collections.singleton(associationTargetType)
+				: super.getPersistentEntityType();
 	}
 
 	@Override
@@ -97,19 +121,128 @@ class MyBatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	}
 
 	@Override
-	public String getColumnName() {
-		Column column = findAnnotation(Column.class);
-		if (null != column && StringUtils.hasText(column.name())) {
-			return column.name();
-		}
-		return ParsingUtils.reconcatenateCamelCase(getName(), "_");
+	public boolean isEntity() {
+		return super.isEntity();
 	}
 
 	@Override
-	public boolean isCompositeId() {
-		return isIdProperty() && isEntity();
+	public boolean isAssociation() {
+		for (Class<? extends Annotation> annotationType : ASSOCIATION_ANNOTATIONS) {
+			if (findAnnotation(annotationType) != null) {
+				return true;
+			}
+		}
+
+		return getType().isAnnotationPresent(Embeddable.class);
 	}
 
+	@Override
+	public boolean isTransient() {
+		return isAnnotationPresent(Transient.class) || super.isTransient();
+	}
+
+	@Override
+	protected Association<MyBatisPersistentProperty> createAssociation() {
+
+		MyBatisPersistentProperty obverse = null;
+
+		// if (isAssociation()) {
+		// Class<?> targetType = getActualType();
+		// MyBatisPersistentEntity owner = (MyBatisPersistentEntity) getOwner();
+		// MyBatisPersistentEntityImpl<?> targetEntity = owner.getMappingContext().getPersistentEntity(targetType);
+		//
+		//
+		//
+		// }
+
+		return new Association<>(this, obverse);
+	}
+
+	@Override
+	public boolean usePropertyAccess() {
+		return null != usePropertyAccess ? usePropertyAccess : super.usePropertyAccess();
+	}
+
+	@Override
+	public boolean isVersionProperty() {
+		return isAnnotationPresent(Version.class);
+	}
+
+	@Override
+	public boolean isWritable() {
+		return updateable && super.isWritable();
+	}
+
+	@Override
+	public String getColumnName() {
+
+		for (Class<? extends Annotation> annotationType : UPDATEABLE_ANNOTATIONS) {
+
+			Annotation annotation = findAnnotation(annotationType);
+
+			if (null == annotation) {
+				continue;
+			}
+
+			String name = (String) AnnotationUtils.getValue(annotation, "name");
+			if (StringUtils.hasText(name)) {
+				return name;
+			}
+		}
+
+		return ParsingUtils.reconcatenateCamelCase(getName(), "_");
+	}
+
+	/**
+	 * 1 将组件类注解为@Embeddable,并将组件的属性注解为@Id <br/>
+	 * 2 将组件的属性注解为@EmbeddedId (方便) <br/>
+	 * 3 将类注解为@IdClass,并将该实体中所有属于主键的属性都注解为@Id<br/>
+	 * 第三种情况在此返回false.
+	 * 
+	 * @return
+	 */
+	@Override
+	public boolean isCompositeId() {
+
+		// 2.
+		if (isAnnotationPresent(EmbeddedId.class)) {
+			return true;
+		}
+
+		// 1.
+		if (isAnnotationPresent(Id.class) && isAssociation()) {
+
+			if (this.getAssociation().getInverse().getOwner().isAnnotationPresent(Embeddable.class)) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		return isIdProperty() && getOwner().isAnnotationPresent(IdClass.class);
+	}
+
+	@Override
+	public boolean isClearlyId() {
+
+		return (isAnnotationPresent(Id.class) && !isCompositeId())
+				|| (isAnnotationPresent(Id.class) && getOwner().isAnnotationPresent(IdClass.class));
+	}
+
+	@Override
+	public boolean isSingleId() {
+		return isIdProperty() && !isCompositeId();
+	}
+
+	/**
+	 * Java Type JDBC type String VARCHAR or LONGVARCHAR java.math.BigDecimal NUMERIC boolean BIT byte TINYINT short
+	 * SMALLINT int INTEGER long BIGINT float REAL double DOUBLE byte[] VARBINARY or LONGVARBINARY java.sql.Date DATE
+	 * java.sql.Time TIME java.sql.Timestamp TIMESTAMP ---------------------------------------- Java Object Type JDBC Type
+	 * String VARCHAR or LONGVARCHAR java.math.BigDecimal NUMERIC Boolean BIT Integer INTEGER Long BIGINT Float REAL
+	 * Double DOUBLE byte[] VARBINARY or LONGVARBINARY java.sql.Date DATE java.sql.Time TIME java.sql.Timestamp TIMESTAMP
+	 *
+	 * @return
+	 */
 	@Override
 	public JdbcType getJdbcType() {
 
@@ -126,5 +259,105 @@ class MyBatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 		}
 
 		return UNDEFINED;
+	}
+
+	@Override
+	public MyBatisPersistentEntity<?> getOwnerEntity() {
+		return (MyBatisPersistentEntity<?>) getOwner();
+	}
+
+
+
+	/**
+	 * Looks up both Spring Data's and JPA's access type definition annotations on the property or type level to determine
+	 * the access type to be used. Will consider property-level annotations over type-level ones, favoring the Spring Data
+	 * ones over the JPA ones if found on the same level. Returns {@literal null} if no explicit annotation can be found
+	 * falling back to the defaults implemented in the super class.
+	 *
+	 * @return
+	 */
+	@Nullable
+	private Boolean detectPropertyAccess() {
+
+		org.springframework.data.annotation.AccessType accessType = findAnnotation(
+				org.springframework.data.annotation.AccessType.class);
+
+		if (accessType != null) {
+			return AccessType.Type.PROPERTY.equals(accessType.value());
+		}
+
+		Access access = findAnnotation(Access.class);
+
+		if (access != null) {
+			return javax.persistence.AccessType.PROPERTY.equals(access.value());
+		}
+
+		accessType = findPropertyOrOwnerAnnotation(org.springframework.data.annotation.AccessType.class);
+
+		if (accessType != null) {
+			return AccessType.Type.PROPERTY.equals(accessType.value());
+		}
+
+		access = findPropertyOrOwnerAnnotation(Access.class);
+
+		if (access != null) {
+			return javax.persistence.AccessType.PROPERTY.equals(access.value());
+		}
+
+		return null;
+	}
+
+	/**
+	 * Inspects the association annotations on the property and returns the target entity type if specified.
+	 *
+	 * @return
+	 */
+	@Nullable
+	private TypeInformation<?> detectAssociationTargetType() {
+
+		if (!isAssociation()) {
+			return null;
+		}
+
+		for (Class<? extends Annotation> annotationType : ASSOCIATION_ANNOTATIONS) {
+
+			Annotation annotation = findAnnotation(annotationType);
+
+			if (annotation == null) {
+				continue;
+			}
+
+			Object entityValue = AnnotationUtils.getValue(annotation, "targetEntity");
+
+			if (entityValue == null || entityValue.equals(void.class)) {
+				continue;
+			}
+
+			return ClassTypeInformation.from((Class<?>) entityValue);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Checks whether {@code updatable} attribute of any of the {@link #UPDATEABLE_ANNOTATIONS} is configured to
+	 * {@literal true}.
+	 *
+	 * @return
+	 */
+	private boolean detectUpdatability() {
+
+		for (Class<? extends Annotation> annotationType : UPDATEABLE_ANNOTATIONS) {
+
+			Annotation annotation = findAnnotation(annotationType);
+
+			if (annotation == null) {
+				continue;
+			}
+
+			return (boolean) AnnotationUtils.getValue(annotation, "updatable");
+		}
+
+		return true;
 	}
 }

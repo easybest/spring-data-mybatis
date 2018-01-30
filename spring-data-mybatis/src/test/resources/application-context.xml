@@ -15,10 +15,15 @@
             </util:set>
         </property>
     </bean>
-    <bean id="dialect" class="org.springframework.data.mybatis.repository.dialect.H2Dialect"/>
+    <bean id="dialect" class="org.springframework.data.mybatis.dialect.MySQLDialect"/>
     <!-- Configure a DAO for User class -->
     <bean id="userDao" class="org.springframework.data.mybatis.repository.support.MyBatisRepositoryFactoryBean">
         <constructor-arg value="org.springframework.data.mybatis.repository.sample.UserRepository"/>
+        <property name="customImplementation">
+            <bean class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl">
+                <constructor-arg ref="sqlSessionTemplate"/>
+            </bean>
+        </property>
         <property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
         <property name="mappingContext" ref="mappingContext"/>
         <property name="dialect" ref="dialect"/>

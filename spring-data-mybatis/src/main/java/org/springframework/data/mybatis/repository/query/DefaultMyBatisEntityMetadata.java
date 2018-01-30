@@ -1,9 +1,10 @@
 package org.springframework.data.mybatis.repository.query;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.data.mybatis.annotation.Entity;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import javax.persistence.Entity;
 
 /**
  * Default implementation for {@link MyBatisEntityMetadata}.

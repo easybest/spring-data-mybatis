@@ -16,7 +16,7 @@ public class MyBatisMappingContext
 
 	@Override
 	protected <T> MyBatisPersistentEntityImpl<?> createPersistentEntity(TypeInformation<T> typeInformation) {
-		return new MyBatisPersistentEntityImpl<T>(typeInformation, new ResultMapComparator());
+		return new MyBatisPersistentEntityImpl<T>(this, typeInformation, new ResultMapComparator());
 	}
 
 	@Override
