@@ -14,7 +14,7 @@
     <name>Spring Data MyBatis Boot Starter</name>
     <description>Spring Data module for MyBatis repositories.</description>
     <properties>
-        <spring.boot>2.0.0.BUILD-SNAPSHOT</spring.boot>
+        <spring.boot>2.0.0.RC1</spring.boot>
     </properties>
     <dependencies>
         <dependency>

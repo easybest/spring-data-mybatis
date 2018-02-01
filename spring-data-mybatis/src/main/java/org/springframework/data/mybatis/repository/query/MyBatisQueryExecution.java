@@ -82,6 +82,7 @@ public abstract class MyBatisQueryExecution {
 			MyBatisParameters parameters = query.getQueryMethod().getParameters();
 
 			Map<String, Object> params = parameters.getBindableParameters().stream()
+					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(param -> param.getName().orElse("p" + c[0]++), param -> values[param.getIndex()]));
 
 			if (parameters.hasSortParameter()) {
@@ -101,6 +102,7 @@ public abstract class MyBatisQueryExecution {
 
 			MyBatisParameters parameters = query.getQueryMethod().getParameters();
 			Map<String, Object> params = parameters.getBindableParameters().stream()
+					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(param -> param.getName().orElse("p" + c[0]++), param -> values[param.getIndex()]));
 
 			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
@@ -130,6 +132,7 @@ public abstract class MyBatisQueryExecution {
 
 			MyBatisParameters parameters = query.getQueryMethod().getParameters();
 			Map<String, Object> params = parameters.getBindableParameters().stream()
+					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(param -> param.getName().orElse("p" + c[0]++), param -> values[param.getIndex()]));
 
 			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
@@ -139,6 +142,13 @@ public abstract class MyBatisQueryExecution {
 			} else {
 				params.put("_sorts", null != pageable.getSort() && pageable.getSort().isSorted() ? pageable.getSort() : null);
 			}
+
+			if (pageable == Pageable.unpaged()) {
+				List<Object> result = query.getTemplate().selectList(
+						query.getQueryMethod().getNamespace() + ".unpaged_" + query.getQueryMethod().getStatementName(), params);
+				return new PageImpl(result, pageable, null == result ? 0 : result.size());
+			}
+
 			params.put("offset", null == pageable ? 0 : pageable.getOffset());
 			params.put("pageSize", null == pageable ? Integer.MAX_VALUE : pageable.getPageSize());
 			params.put("offsetEnd", null == pageable ? Integer.MAX_VALUE : pageable.getOffset() + pageable.getPageSize());
@@ -193,6 +203,7 @@ public abstract class MyBatisQueryExecution {
 			MyBatisParameters parameters = query.getQueryMethod().getParameters();
 
 			Map<String, Object> params = parameters.getBindableParameters().stream()
+					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(param -> param.getName().orElse("p" + c[0]++), param -> values[param.getIndex()]));
 
 			if (parameters.hasSortParameter()) {
@@ -216,14 +227,46 @@ public abstract class MyBatisQueryExecution {
 	static class DeleteExecution extends MyBatisQueryExecution {
 		@Override
 		protected Object doExecute(AbstractMyBatisQuery query, Object[] values) {
-			return null;
+			final int[] c = { 0 };
+			MyBatisParameters parameters = query.getQueryMethod().getParameters();
+			Map<String, Object> params = parameters.getBindableParameters().stream()
+					.filter(param -> null != values[param.getIndex()])
+					.collect(Collectors.toMap(param -> param.getName().orElse("p" + c[0]++), param -> values[param.getIndex()]));
+
+			boolean collectionQuery = query.getQueryMethod().isCollectionQuery();
+
+			Object result = null;
+			if (collectionQuery) {
+				result = query.getTemplate().selectList(
+						query.getQueryMethod().getNamespace() + ".query_" + query.getQueryMethod().getStatementName(), params);
+			}
+
+			int rows = query.getTemplate().delete(query.getQueryMethod().getStatementId(), params);
+			if (!collectionQuery) {
+				return rows;
+			}
+			return result;
 		}
 	}
 
 	static class ExistsExecution extends MyBatisQueryExecution {
 		@Override
 		protected Object doExecute(AbstractMyBatisQuery query, Object[] values) {
-			return null;
+
+			if (null == values || values.length == 0) {
+				return ((long) query.getTemplate().selectOne(query.getQueryMethod().getStatementId())) > 0;
+			}
+
+			final int[] c = { 0 };
+
+			MyBatisParameters parameters = query.getQueryMethod().getParameters();
+
+			Map<String, Object> params = parameters.getBindableParameters().stream()
+					.filter(param -> null != values[param.getIndex()])
+					.collect(Collectors.toMap(param -> param.getName().orElse("p" + c[0]++), param -> values[param.getIndex()]));
+
+			return ((long) query.getTemplate().selectOne(query.getQueryMethod().getStatementId(), params)) > 0;
+
 		}
 	}
 

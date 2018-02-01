@@ -82,6 +82,7 @@ public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 		if (method.isModifyingQuery()) {
 			return new ModifyingExecution(method);
 		}
+
 		return new SingleEntityExecution();
 	}
 
