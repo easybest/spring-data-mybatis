@@ -9,17 +9,20 @@ import org.springframework.data.mybatis.mapping.MyBatisMappingContext;
 import org.springframework.data.mybatis.mapping.MyBatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MyBatisPersistentProperty;
 import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.DeleteExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.ExistsExecution;
 import org.springframework.data.mybatis.repository.support.MyBatisMapperBuilderAssistant;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
 import org.springframework.data.repository.query.parser.Part.Type;
 import org.springframework.data.repository.query.parser.PartTree;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import static org.apache.ibatis.mapping.SqlCommandType.*;
 import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.*;
+import static org.springframework.data.repository.query.parser.Part.Type.*;
 
 /**
  * @author Jarvis Song
@@ -62,7 +65,12 @@ public class PartTreeMyBatisQuery extends AbstractMyBatisQuery {
 
 		if (tree.isDelete()) {
 
+			doPrepareDeleteStatement();
 		} else if (tree.isCountProjection()) {
+
+			doPrepareCountQueryStatement(getStatementName());
+
+		} else if (tree.isExistsProjection()) {
 
 			doPrepareCountQueryStatement(getStatementName());
 
@@ -81,6 +89,7 @@ public class PartTreeMyBatisQuery extends AbstractMyBatisQuery {
 		} else if (method.isStreamQuery()) {
 
 		} else if (method.isQueryForEntity()) {
+
 			doPrepareSelectQueryStatement(getStatementName(), false);
 		}
 
@@ -104,6 +113,7 @@ public class PartTreeMyBatisQuery extends AbstractMyBatisQuery {
 			throw new IllegalArgumentException("return object type must be or assignable from " + domainClass);
 		}
 		doPrepareSelectQueryStatement(getStatementName(), true);
+		doPrepareSelectQueryStatement("unpaged_" + getStatementName(), false);
 		if (includeCount) {
 			doPrepareCountQueryStatement("count_" + getStatementName());
 		}
@@ -150,15 +160,33 @@ public class PartTreeMyBatisQuery extends AbstractMyBatisQuery {
 		if (pageable) {
 			sql = dialect.getLimitHandler().processSql(sql, null);
 		}
+		sql += assistant.SORT_SQL(method.isComplexQuery());
+		String[] sqls = new String[] { "<script>", sql, "</script>" };
+		assistant.addStatement(statementName, sqls, SELECT, Map.class, null, domainClass, NoKeyGenerator.INSTANCE, null,
+				null);
+	}
 
+	private void doPrepareDeleteStatement() {
+		String sql = new SQL(persistentEntity, dialect, context) {
+			{
+				DELETE_FROM(persistentEntity.getTableName() + " " + dialect.quote(persistentEntity.getEntityName()));
+				QUERY_CONDITION();
+
+			}
+		}.toString();
 		String[] sqls;
 		if (XML_PATTERN.matcher(sql).find()) {
 			sqls = new String[] { "<script>", sql, "</script>" };
 		} else {
 			sqls = new String[] { sql.replace("<![CDATA[", "").replace("]]>", "") };
 		}
-		assistant.addStatement(statementName, sqls, SELECT, Map.class, null, domainClass, NoKeyGenerator.INSTANCE, null,
-				null);
+		assistant.addStatement(method.getStatementName(), sqls, DELETE, Map.class, null, long.class,
+				NoKeyGenerator.INSTANCE, null, null);
+
+		if (method.isCollectionQuery()) {
+			doPrepareSelectQueryStatement("query_" + method.getStatementName(), false);
+		}
+
 	}
 
 	class SQL extends MyBatisMapperBuilderAssistant.SQL {
@@ -210,7 +238,32 @@ public class PartTreeMyBatisQuery extends AbstractMyBatisQuery {
 						properties[i] = resolveParameterName(c++);
 					}
 
-					WHERE(columnName + operate + queryConditionRight(part, properties));
+					if (part.getType() == IN || part.getType() == NOT_IN) {
+						StringBuilder builder = new StringBuilder();
+						Class<?> typeClass = parameters.getParameter(c - properties.length).getType();
+						String judgeEmpty = null;
+						if (typeClass.isArray()) {
+							judgeEmpty = "length==0";
+						} else if (typeClass.isAssignableFrom(Collection.class)) {
+							judgeEmpty = "isEmpty()";
+						}
+						builder.append("<choose>").append("<when test=\"" + properties[0] + "==null ");
+						if (null != judgeEmpty) {
+							builder.append("|| " + properties[0] + ".").append(judgeEmpty);
+						}
+						builder.append("\">");
+						if (part.getType() == IN) {
+							builder.append("1=0");
+						} else {
+							builder.append("1=1");
+						}
+						builder.append("</when><otherwise>");
+						builder.append(columnName + operate + queryConditionRight(part, properties));
+						builder.append("</otherwise></choose>");
+						WHERE(builder.toString());
+					} else {
+						WHERE(columnName + operate + queryConditionRight(part, properties));
+					}
 				}
 			}
 
@@ -570,7 +623,7 @@ public class PartTreeMyBatisQuery extends AbstractMyBatisQuery {
 		 * </tr>
 		 * </tbody>
 		 * </table>
-		 * 
+		 *
 		 * @param type
 		 * @return
 		 */
@@ -665,6 +718,10 @@ public class PartTreeMyBatisQuery extends AbstractMyBatisQuery {
 		if (tree.isDelete()) {
 			return new DeleteExecution();
 		}
+		if (tree.isExistsProjection()) {
+			return new ExistsExecution();
+		}
+
 		return super.getExecution();
 	}
 

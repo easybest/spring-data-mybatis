@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -64,7 +65,9 @@ public class SimpleMyBatisRepository<T, ID> extends SqlSessionRepositorySupport 
 	public List<T> findAll(Sort sort) {
 		return selectList("_findAll", new HashMap<String, Object>(1) {
 			{
-				put("_sorts", sort);
+				if (null != sort && sort.isSorted()) {
+					put("_sorts", sort);
+				}
 			}
 		});
 	}
@@ -77,7 +80,9 @@ public class SimpleMyBatisRepository<T, ID> extends SqlSessionRepositorySupport 
 	@Override
 	public List<T> findAllById(Iterable<ID> ids) {
 		Assert.notNull(ids, "The given Iterable of Id's must not be null!");
-
+		if (!ids.iterator().hasNext()) {
+			return Collections.emptyList();
+		}
 		return selectList("_findAll", new HashMap<String, Object>(1) {
 			{
 				put("_ids", ids);
