@@ -15,7 +15,6 @@ import org.springframework.data.mapping.SimpleAssociationHandler;
 import org.springframework.data.mapping.SimplePropertyHandler;
 import org.springframework.data.mybatis.annotation.GenericGenerator;
 import org.springframework.data.mybatis.annotation.GenericGenerators;
-import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MyBatisMappingContext;
 import org.springframework.data.mybatis.mapping.MyBatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MyBatisPersistentProperty;
@@ -26,7 +25,6 @@ import org.springframework.util.StringUtils;
 import javax.persistence.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,6 +73,8 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 
 		// generic
 		addInsertStatement();// _insert
+		addUpdateStatement(true);// _updateIgnoreNull
+		addUpdateStatement(false);// _update
 		addGetByIdStatement(false);// _getBasicById
 		addGetByIdStatement(true);// _getById
 		addCountStatement();// _count
@@ -114,7 +114,7 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 		if (persistentEntity.hasIdProperty() && !persistentEntity.hasCompositeIdProperty()) {
 			MyBatisPersistentProperty idProperty = persistentEntity.getIdProperty();
 			keyProperty = idProperty.getName();
-			keyColumn = column(idProperty);
+			keyColumn = new SQL().COLUMN(idProperty);
 			GeneratedValue generatedValue = idProperty.findAnnotation(GeneratedValue.class);
 			if (null != generatedValue) {
 				// using @GeneratedValue
@@ -167,13 +167,12 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 			}
 		}
 
-		SQL sql = new SQL(persistentEntity, dialect, mappingContext) {
-
+		SQL sql = new SQL() {
 			{
-				INSERT_INTO(tableName());
+				INSERT_INTO(TABLE_NAME());
 				persistentEntity.doWithProperties((SimplePropertyHandler) pp -> {
 					MyBatisPersistentProperty property = (MyBatisPersistentProperty) pp;
-					VALUES(column(property), "#{" + property.getName() + ",jdbcType=" + property.getJdbcType() + "}");
+					VALUES(COLUMN(property), VAR(property.getName(), property.getJdbcType()));
 				});
 				persistentEntity.doWithAssociations((SimpleAssociationHandler) ass -> {
 
@@ -186,8 +185,8 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 							|| inverseProperty.isAnnotationPresent(EmbeddedId.class)) {
 						targetEntity.doWithProperties((SimplePropertyHandler) idp1 -> {
 							MyBatisPersistentProperty idp = (MyBatisPersistentProperty) idp1;
-							VALUES(column(idp),
-									"#{" + targetEntity.getName() + "." + idp.getName() + ",jdbcType=" + idp.getJdbcType() + "}");
+
+							VALUES(COLUMN(idp), VAR(targetEntity.getName() + "." + idp.getName(), idp.getJdbcType()));
 						});
 					}
 
@@ -196,18 +195,74 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 							|| inverseProperty.isAnnotationPresent(OneToOne.class))) {
 						// TODO
 					}
-
 				});
 			}
 		};
 
-		addMappedStatement("_insert", new String[] { sql.toString() }, INSERT, domainClass, null, null, keyGenerator,
-				keyProperty, keyColumn);
+		addMappedStatement("_insert", sql.toStrings(), INSERT, domainClass, null, null, keyGenerator, keyProperty,
+				keyColumn);
+	}
+
+	private void addUpdateStatement(boolean ignoreNull) {
+
+		SQL ql = new SQL() {
+			{
+				UPDATE(TABLE_NAME());
+			}
+		};
+
+		StringBuilder builder = new StringBuilder();
+		builder.append(ql.toString());
+
+		if (ignoreNull) {
+			builder.append("<set>");
+		} else {
+			builder.append(" set ");
+		}
+		persistentEntity.doWithProperties((SimplePropertyHandler) pp -> {
+			MyBatisPersistentProperty property = (MyBatisPersistentProperty) pp;
+			if (property.isIdProperty()) {
+				return;
+			}
+			if (property.isVersionProperty()) {
+				builder.append(ql.COLUMN(property) + "=" + ql.COLUMN(property) + "+1,");
+				return;
+			}
+			if (!ignoreNull) {
+				builder.append(ql.COLUMN(property) + "=" + ql.VAR(property) + ",");
+			} else {
+				builder.append("<if test=\"" + property.getName() + " != null\">" + ql.COLUMN(property) + "=" + ql.VAR(property)
+						+ "," + "</if>");
+			}
+		});
+
+		if (builder.charAt(builder.length() - 1) == ',') {
+			builder.deleteCharAt(builder.length() - 1);
+		}
+
+		if (ignoreNull) {
+			builder.append("</set>");
+		}
+		SQL where = new SQL() {
+			{
+				UPDATE(TABLE_NAME());
+				ID_CALUSE(false);
+			}
+		};
+		builder.append(where.toString().replace(ql.toString(), ""));
+
+		String[] sqls;
+		if (ignoreNull) {
+			sqls = new String[] { "<script>", builder.toString(), "</script>" };
+		} else {
+			sqls = new String[] { builder.toString() };
+		}
+		addMappedStatement(ignoreNull ? "_updateIgnoreNull" : "_update", sqls, UPDATE, domainClass);
 	}
 
 	private void addGetByIdStatement(boolean complex) {
 
-		SQL sql = new SQL(persistentEntity, dialect, mappingContext) {
+		SQL sql = new SQL() {
 			{
 				SELECT_WITH_COLUMNS(complex);
 				FROM_WITH_LEFT_OUTER_JOIN(complex);
@@ -217,12 +272,12 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 				ID_CALUSE();// process id cause
 			}
 		};
-		addMappedStatement(complex ? "_getById" : "_getBasicById", new String[] { sql.toString() }, SELECT,
-				persistentEntity.getIdClass(), domainClass);
+		addMappedStatement(complex ? "_getById" : "_getBasicById", sql.toStrings(), SELECT, persistentEntity.getIdClass(),
+				domainClass);
 	}
 
 	private void addCountStatement() {
-		SQL sql = new SQL(persistentEntity, dialect, mappingContext) {
+		SQL sql = new SQL() {
 			{
 				SELECT("count(*)");
 				FROM_WITH_LEFT_OUTER_JOIN(false);
@@ -232,24 +287,23 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 	}
 
 	private void addDeleteAllStatement() {
-		addMappedStatement("_deleteAll",
-				new String[] { "truncate table " + dialect.quote(persistentEntity.getTableName()) }, DELETE);
+		addMappedStatement("_deleteAll", new String[] { "truncate table " + new SQL().TABLE_NAME() }, DELETE);
 	}
 
 	private void addDeleteByIdStatement() {
 
-		SQL sql = new SQL(persistentEntity, dialect, mappingContext) {
+		SQL sql = new SQL() {
 			{
-				DELETE_FROM(persistentEntity.getTableName() + " " + dialect.quote(persistentEntity.getEntityName()));
+				DELETE_FROM(TABLE_NAME() + " " + ALIAS());
 				ID_CALUSE();// process id cause
 			}
 		};
-		addMappedStatement("_deleteById", new String[] { sql.toString() }, DELETE, persistentEntity.getIdClass());
+		addMappedStatement("_deleteById", sql.toStrings(), DELETE, persistentEntity.getIdClass());
 	}
 
 	private void addFindAllStatement() {
 
-		SQL sql = new SQL(persistentEntity, dialect, mappingContext) {
+		SQL sql = new SQL() {
 			{
 				SELECT_WITH_COLUMNS(true);
 				FROM_WITH_LEFT_OUTER_JOIN(true);
@@ -257,134 +311,44 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 			}
 		};
 		addMappedStatement("_findAll",
-				new String[] { "<script>", sql.toString(), FIND_CONDITION_SQL(true), SORT_SQL(true), "</script>" }, DELETE,
-				Map.class, domainClass);
+				new String[] { "<script>", sql.toString(), sql.FIND_CONDITION_SQL(true), sql.SORT_SQL(true), "</script>" },
+				DELETE, Map.class, domainClass);
 
 	}
 
 	private void addFindByPagerStatement(boolean complex) {
-		String sql = new SQL(persistentEntity, dialect, mappingContext) {
+		SQL sql = new SQL() {
 			{
 				SELECT_WITH_COLUMNS(complex);
 				FROM_WITH_LEFT_OUTER_JOIN(complex);
 			}
-		}.toString();
-		sql += FIND_CONDITION_SQL(complex);
+		};
 
-		sql = dialect.getLimitHandler().processSql(sql, null);
-
-		addMappedStatement(complex ? "_findByPager" : "_findBasicByPager", new String[] { "<script>", sql, "</script>" },
+		addMappedStatement(complex ? "_findByPager" : "_findBasicByPager",
+				new String[] { "<script>",
+						dialect.getLimitHandler().processSql(sql.toString() + sql.FIND_CONDITION_SQL(complex), null), "</script>" },
 				SELECT, Map.class, domainClass);
 	}
 
 	private void addCountByConditionStatement(boolean complex) {
-		String sql = new SQL(persistentEntity, dialect, mappingContext) {
+		SQL sql = new SQL() {
 			{
 				SELECT("count(*)");
 				FROM_WITH_LEFT_OUTER_JOIN(complex);
 			}
-		}.toString();
-		sql += FIND_CONDITION_SQL(complex);
+		};
 		addMappedStatement(complex ? "_countByCondition" : "_countBasicByCondition",
-				new String[] { "<script>", sql, "</script>" }, SELECT, Map.class, long.class);
-	}
-
-	private String buildCondition() {
-		final StringBuilder builder = new StringBuilder();
-
-		return builder.toString();
-	}
-
-	private String FIND_CONDITION_SQL(boolean complex) {
-		final StringBuilder builder = new StringBuilder();
-		builder.append("<if test=\"_condition != null\">");
-		builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-		builder.append(buildCondition());
-		builder.append("</trim>");
-		builder.append("</if>");
-		// process findByIds
-		if (persistentEntity.hasIdProperty()) {
-			builder.append("<if test=\"_ids != null\">");
-			builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-
-			if (persistentEntity.hasCompositeIdProperty()) {
-				// TODO () OR () MODE
-				MyBatisPersistentEntity<?> compositeIdPersistentEntity = persistentEntity.getCompositeIdPersistentEntity();
-				builder.append(
-						"<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\"or\" close=\")\">");
-				builder.append("<trim prefixOverrides=\"and \">");
-				if (null != compositeIdPersistentEntity) {
-
-					if (persistentEntity.isAnnotationPresent(IdClass.class)) {
-						persistentEntity.doWithIdProperties(pp -> {
-							MyBatisPersistentProperty idProperty = persistentEntity.getIdProperty();
-							builder.append(" and ").append(dialect.quote(persistentEntity.getEntityName())).append('.')
-									.append(column(idProperty)).append("=").append("#{item." + idProperty.getName() + "}");
-						});
-					} else {
-						compositeIdPersistentEntity.doWithProperties((SimplePropertyHandler) pp -> {
-							MyBatisPersistentProperty idProperty = persistentEntity.getIdProperty();
-							builder.append(" and ").append(dialect.quote(persistentEntity.getEntityName())).append('.')
-									.append(column(idProperty)).append("=").append("#{item." + idProperty.getName() + "}");
-
-						});
-					}
-
-				}
-				builder.append("</trim>");
-				builder.append("</foreach>");
-			} else {
-
-				MyBatisPersistentProperty idProperty = persistentEntity.getIdProperty();
-				builder.append(dialect.quote(persistentEntity.getEntityName())).append('.').append(column(idProperty))
-						.append(" in ");
-				builder.append(
-						"<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
-
-			}
-			builder.append("</trim>");
-			builder.append("</if>");
-		}
-		return builder.toString();
-	}
-
-	public String SORT_SQL(boolean complex) {
-		final StringBuilder builder = new StringBuilder();
-
-		builder.append("<if test=\"_sorts != null\">");
-		builder.append("<bind name=\"_columnsMap\" value='#{");
-		String[] arr = new SQL(persistentEntity, dialect, mappingContext).COLUMNS(complex);
-		Arrays.stream(arr).filter(c -> StringUtils.hasText(c)).forEach(s -> {
-			String[] ss = s.split(" as ");
-			String key = ss[ss.length - 1];
-			String val = ss[0];
-			key = key.replace(String.valueOf(dialect.openQuote()), "").replace(String.valueOf(dialect.closeQuote()), "");
-			val = val.replace("\"", "\\\"");
-			builder.append(String.format("\"%s\":\"%s\",", key, val));
-		});
-
-		if (builder.length() > 0 && builder.charAt(builder.length() - 1) == ',') {
-			builder.deleteCharAt(builder.length() - 1);
-		}
-		builder.append("}' />");
-		builder.append(" order by ");
-		builder.append("<foreach item=\"item\" index=\"idx\" collection=\"_sorts\" open=\"\" separator=\",\" close=\"\">");
-		builder.append("<if test=\"item.ignoreCase\">" + dialect.getLowercaseFunction() + "(</if>")
-				.append("${_columnsMap[item.property]}").append("<if test=\"item.ignoreCase\">)</if>")
-				.append(" ${item.direction}");
-		builder.append("</foreach>");
-		builder.append("</if>");
-
-		return builder.toString();
+				new String[] { "<script>", sql.toString(), sql.FIND_CONDITION_SQL(complex), "</script>" }, SELECT, Map.class,
+				long.class);
 	}
 
 	private KeyGenerator handleSelectKeyFromIdProperty(MyBatisPersistentProperty idProperty, String baseStatementId,
 			Class<?> parameterTypeClass, boolean executeBefore, String generator) {
-
+		SQL sql = new SQL();
 		String id = baseStatementId + SelectKeyGenerator.SELECT_KEY_SUFFIX;
 		Class<?> resultTypeClass = idProperty.getActualType();
 		String keyProperty = idProperty.getName();
-		String keyColumn = column(idProperty);
+		String keyColumn = sql.COLUMN(idProperty);
 
 		String[] sqls;
 		if (executeBefore) {
@@ -397,7 +361,7 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 			}
 			sqls = new String[] { dialect.getSequenceNextValString(sequenceName) };
 		} else {
-			sqls = new String[] { dialect.getIdentityColumnSupport().getIdentitySelectString(persistentEntity.getTableName(),
+			sqls = new String[] { dialect.getIdentityColumnSupport().getIdentitySelectString(sql.TABLE_NAME(),
 					idProperty.getColumnName(), idProperty.getJdbcType().TYPE_CODE) };
 		}
 
@@ -471,25 +435,64 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 		}
 	}
 
-	public String tableName() {
-		return dialect.quote(persistentEntity.getTableName());
-	}
+	/**
+	 * SQL Build.
+	 */
+	class SQL extends AbstractMyBatisMapperBuilderAssistant.SQL {
 
-	public String column(MyBatisPersistentProperty property) {
-		return dialect.quote(property.getColumnName());
-	}
+		public String DYNAMIC_CONDITION(boolean complex) {
+			final StringBuilder builder = new StringBuilder();
 
-	private static class SQL extends AbstractMyBatisMapperBuilderAssistant.SQL {
-
-		public SQL(MyBatisPersistentEntity<?> persistentEntity, Dialect dialect, MyBatisMappingContext mappingContext) {
-			super(persistentEntity, dialect, mappingContext);
+			return builder.toString();
 		}
 
-		public SQL() {}
+		public String FIND_CONDITION_SQL(boolean complex) {
+			final StringBuilder builder = new StringBuilder();
+			builder.append("<if test=\"_condition != null\">");
+			builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+			builder.append(DYNAMIC_CONDITION(complex));
+			builder.append("</trim>");
+			builder.append("</if>");
+			// process findByIds
+			if (entity.hasIdProperty()) {
+				builder.append("<if test=\"_ids != null\">");
+				builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
 
-		@Override
-		public SQL getSelf() {
-			return this;
+				if (entity.hasCompositeIdProperty()) {
+					// TODO () OR () MODE
+					MyBatisPersistentEntity<?> compositeIdPersistentEntity = entity.getCompositeIdPersistentEntity();
+					builder.append(
+							"<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\"or\" close=\")\">");
+					builder.append("<trim prefixOverrides=\"and \">");
+					if (null != compositeIdPersistentEntity) {
+
+						if (entity.isAnnotationPresent(IdClass.class)) {
+							entity.doWithIdProperties(pp -> {
+								MyBatisPersistentProperty idProperty = entity.getIdProperty();
+								builder.append(" and ").append(dialect.quote(entity.getEntityName())).append('.')
+										.append(COLUMN(idProperty)).append("=").append(VAR(idProperty.getName()));
+							});
+						} else {
+							compositeIdPersistentEntity.doWithProperties((SimplePropertyHandler) pp -> {
+								MyBatisPersistentProperty idProperty = entity.getIdProperty();
+								builder.append(" and ").append(ALIAS()).append('.').append(COLUMN(idProperty)).append("=")
+										.append(VAR("item." + idProperty.getName()));
+							});
+						}
+					}
+					builder.append("</trim>");
+					builder.append("</foreach>");
+				} else {
+
+					MyBatisPersistentProperty idProperty = entity.getIdProperty();
+					builder.append(ALIAS()).append('.').append(COLUMN(idProperty)).append(" in ");
+					builder.append(
+							"<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+				}
+				builder.append("</trim>");
+				builder.append("</if>");
+			}
+			return builder.toString();
 		}
 	}
 

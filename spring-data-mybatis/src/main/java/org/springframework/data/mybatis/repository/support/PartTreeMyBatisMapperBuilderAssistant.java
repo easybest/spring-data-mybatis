@@ -2,9 +2,7 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.apache.ibatis.session.Configuration;
 import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MyBatisMappingContext;
-import org.springframework.data.mybatis.mapping.MyBatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MyBatisPersistentProperty;
 import org.springframework.data.mybatis.repository.query.MyBatisParameters;
 import org.springframework.data.mybatis.repository.query.MyBatisQueryMethod;
@@ -13,9 +11,7 @@ import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
 import org.springframework.data.repository.query.parser.Part.Type;
 import org.springframework.data.repository.query.parser.PartTree;
-import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -33,7 +29,9 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 
 	private static final Pattern XML_PATTERN = Pattern.compile("<[^>]+>");
 
-	private PartTreeMyBatisQuery query;
+	private PartTree tree;
+	private MyBatisQueryMethod method;
+	private boolean complex;
 
 	public PartTreeMyBatisMapperBuilderAssistant(Configuration configuration, MyBatisMappingContext mappingContext,
 			PartTreeMyBatisQuery repositoryQuery) {
@@ -41,14 +39,13 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 		super(configuration, mappingContext, repositoryQuery.getQueryMethod().getNamespace(),
 				repositoryQuery.getQueryMethod().getEntityInformation().getJavaType());
 
-		this.query = repositoryQuery;
+		this.tree = repositoryQuery.getTree();
+		this.method = repositoryQuery.getQueryMethod();
+		this.complex = this.method.isComplexQuery();
 	}
 
 	@Override
 	protected void doPrepare() {
-
-		PartTree tree = query.getTree();
-		MyBatisQueryMethod method = query.getQueryMethod();
 
 		if (tree.isDelete()) {
 
@@ -81,12 +78,12 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 		}
 
 		// last clear
-		query = null;
+		tree = null;
+		method = null;
 	}
 
 	private void doPrepareCollectionQueryStatement() {
 
-		MyBatisQueryMethod method = query.getQueryMethod();
 		Class<?> returnedObjectType = method.getReturnedObjectType();
 
 		if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
@@ -98,7 +95,6 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 
 	private void doPreparePageQueryStatement(boolean includeCount) {
 
-		MyBatisQueryMethod method = query.getQueryMethod();
 		Class<?> returnedObjectType = method.getReturnedObjectType();
 
 		if (returnedObjectType != domainClass && !returnedObjectType.isAssignableFrom(domainClass)) {
@@ -114,11 +110,10 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 
 	private void doPrepareCountQueryStatement(String statementName) {
 
-		MyBatisQueryMethod method = query.getQueryMethod();
-		String sql = new SQL(persistentEntity, dialect, mappingContext) {
+		String sql = new SQL() {
 			{
 				SELECT("count(*)");
-				FROM_WITH_LEFT_OUTER_JOIN(method.isComplexQuery());
+				FROM_WITH_LEFT_OUTER_JOIN(complex);
 				QUERY_CONDITION();
 			}
 		}.toString();
@@ -133,38 +128,32 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 	}
 
 	private void doPrepareSelectQueryStatement(String statementName, boolean pageable) {
-
-		PartTree tree = query.getTree();
-		MyBatisQueryMethod method = query.getQueryMethod();
-
-		String sql = new SQL(persistentEntity, dialect, mappingContext) {
+		SQL ql = new SQL() {
 			{
 				if (tree.isDistinct()) {
-					SELECT_DISTINCT(COLUMNS(method.isComplexQuery()));
+					SELECT_DISTINCT(COLUMNS(complex));
 				} else {
-					SELECT_WITH_COLUMNS(method.isComplexQuery());
+					SELECT_WITH_COLUMNS(complex);
 				}
-				FROM_WITH_LEFT_OUTER_JOIN(method.isComplexQuery());
+				FROM_WITH_LEFT_OUTER_JOIN(complex);
 				QUERY_CONDITION();
-				ORDER_BY(method.isComplexQuery(), tree.getSort());
+				ORDER_BY(complex, tree.getSort());
 
 			}
-		}.toString();
-		if (pageable) {
-			sql += SORT_SQL(method.isComplexQuery());
-		}
+		};
+		String sql = ql.toString();
+
+		sql += ql.SORT_SQL(this.complex);
 		if (pageable) {
 			sql = dialect.getLimitHandler().processSql(sql, null);
 		}
-		sql += SORT_SQL(method.isComplexQuery());
 		String[] sqls = new String[] { "<script>", sql, "</script>" };
 		addMappedStatement(statementName, sqls, SELECT, Map.class, domainClass);
 	}
 
 	private void doPrepareDeleteStatement() {
-		MyBatisQueryMethod method = query.getQueryMethod();
 
-		String sql = new SQL(persistentEntity, dialect, mappingContext) {
+		String sql = new SQL() {
 			{
 				DELETE_FROM(persistentEntity.getTableName() + " " + dialect.quote(persistentEntity.getEntityName()));
 				QUERY_CONDITION();
@@ -186,46 +175,10 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 	}
 
 	private String getStatementName() {
-		return query.getQueryMethod().getStatementName();
-	}
-
-	public String SORT_SQL(boolean complex) {
-		final StringBuilder builder = new StringBuilder();
-
-		builder.append("<if test=\"_sorts != null\">");
-		builder.append("<bind name=\"_columnsMap\" value='#{");
-		String[] arr = new SQL(persistentEntity, dialect, mappingContext).COLUMNS(complex);
-		Arrays.stream(arr).filter(c -> StringUtils.hasText(c)).forEach(s -> {
-			String[] ss = s.split(" as ");
-			String key = ss[ss.length - 1];
-			String val = ss[0];
-			key = key.replace(String.valueOf(dialect.openQuote()), "").replace(String.valueOf(dialect.closeQuote()), "");
-			val = val.replace("\"", "\\\"");
-			builder.append(String.format("\"%s\":\"%s\",", key, val));
-		});
-
-		if (builder.length() > 0 && builder.charAt(builder.length() - 1) == ',') {
-			builder.deleteCharAt(builder.length() - 1);
-		}
-		builder.append("}' />");
-		builder.append(" order by ");
-		builder.append("<foreach item=\"item\" index=\"idx\" collection=\"_sorts\" open=\"\" separator=\",\" close=\"\">");
-		builder.append("<if test=\"item.ignoreCase\">" + dialect.getLowercaseFunction() + "(</if>")
-				.append("${_columnsMap[item.property]}").append("<if test=\"item.ignoreCase\">)</if>")
-				.append(" ${item.direction}");
-		builder.append("</foreach>");
-		builder.append("</if>");
-
-		return builder.toString();
+		return method.getStatementName();
 	}
 
 	class SQL extends AbstractMyBatisMapperBuilderAssistant.SQL {
-
-		public SQL(MyBatisPersistentEntity<?> persistentEntity, Dialect dialect, MyBatisMappingContext mappingContext) {
-			super(persistentEntity, dialect, mappingContext);
-		}
-
-		public SQL() {}
 
 		@Override
 		public SQL getSelf() {
@@ -235,9 +188,8 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 		SQL QUERY_CONDITION() {
 			int c = 0;
 			int count = 0;
-			MyBatisParameters parameters = query.getQueryMethod().getParameters();
-			MyBatisQueryMethod method = query.getQueryMethod();
-			for (PartTree.OrPart orPart : query.getTree()) {
+			MyBatisParameters parameters = method.getParameters();
+			for (PartTree.OrPart orPart : tree) {
 				if (count++ > 0) {
 					OR();
 				}
@@ -253,7 +205,7 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 						columnName = "";
 					} else {
 						// just a simple property direct mapping a column
-						columnName = dialect.quote(persistentEntity.getEntityName()) + "." + column(property);
+						columnName = dialect.quote(persistentEntity.getEntityName()) + "." + COLUMN(property);
 					}
 
 					if (null == columnName) {
@@ -304,7 +256,7 @@ class PartTreeMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilder
 		}
 
 		private String resolveParameterName(int position) {
-			MyBatisParameters parameters = query.getQueryMethod().getParameters();
+			MyBatisParameters parameters = method.getParameters();
 			if (parameters.hasParameterAt(position)) {
 				return parameters.getParameter(position).getName().orElse("p" + position);
 			}
