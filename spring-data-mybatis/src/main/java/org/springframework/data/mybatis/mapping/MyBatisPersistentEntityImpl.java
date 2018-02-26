@@ -14,6 +14,9 @@ import javax.persistence.IdClass;
 import javax.persistence.Table;
 import java.util.Comparator;
 
+/**
+ * @author Jarvis Song
+ */
 public class MyBatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MyBatisPersistentProperty>
 		implements MyBatisPersistentEntity<T> {
 

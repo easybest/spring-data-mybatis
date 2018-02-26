@@ -33,8 +33,8 @@ public class SimpleMyBatisRepository<T, ID> extends SqlSessionRepositorySupport 
 	private final MyBatisEntityInformation<T, ID> entityInformation;
 	private final String namespace;
 
-	public SimpleMyBatisRepository(RepositoryInformation repositoryInformation,
-			MyBatisEntityInformation<T, ID> entityInformation, SqlSessionTemplate sqlSessionTemplate) {
+	public SimpleMyBatisRepository(SqlSessionTemplate sqlSessionTemplate, RepositoryInformation repositoryInformation,
+			MyBatisEntityInformation<T, ID> entityInformation) {
 
 		super(sqlSessionTemplate);
 

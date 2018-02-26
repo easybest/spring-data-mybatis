@@ -39,7 +39,7 @@ public class JavaConfigUserRepositoryTests extends UserRepositoryTests {
 	}
 
 	@Test(expected = NoSuchBeanDefinitionException.class)
-	public void doesNotPickUpJpaRepository() {
+	public void doesNotPickUpMyBatisRepository() {
 
 		ConfigurableApplicationContext context = new AnnotationConfigApplicationContext(MyBatisRepositoryConfig.class);
 		context.getBean("mybatisRepository");

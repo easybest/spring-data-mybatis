@@ -26,7 +26,7 @@ public class MyBatisPersistableEntityInformation<T extends Persistable<ID>, ID>
 
 		Class<?> idClass = ResolvableType.forClass(Persistable.class, domainClass).resolveGeneric(0);
 
-		if (idClass == null) {
+		if (null == idClass) {
 			throw new IllegalArgumentException(String.format("Could not resolve identifier type for %s!", domainClass));
 		}
 
