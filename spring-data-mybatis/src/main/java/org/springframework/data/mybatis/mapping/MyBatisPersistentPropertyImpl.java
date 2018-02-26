@@ -1,9 +1,11 @@
 package org.springframework.data.mybatis.mapping;
 
 import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.TypeHandler;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.annotation.AccessType;
 import org.springframework.data.mapping.Association;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
@@ -12,6 +14,7 @@ import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.ParsingUtils;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
@@ -262,11 +265,25 @@ class MyBatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	}
 
 	@Override
+	public Class<? extends TypeHandler> getSpecifiedTypeHandler() {
+		org.springframework.data.mybatis.annotation.TypeHandler typeHandler = findAnnotation(
+				org.springframework.data.mybatis.annotation.TypeHandler.class);
+		if (null != typeHandler && StringUtils.hasText(typeHandler.value())) {
+			try {
+				return (Class<? extends TypeHandler>) ClassUtils.forName(typeHandler.value(), null);
+			} catch (ClassNotFoundException e) {
+				throw new MappingException("@TypeHandler with class " + typeHandler.value() + " not found.", e);
+			}
+
+		}
+
+		return null;
+	}
+
+	@Override
 	public MyBatisPersistentEntity<?> getOwnerEntity() {
 		return (MyBatisPersistentEntity<?>) getOwner();
 	}
-
-
 
 	/**
 	 * Looks up both Spring Data's and JPA's access type definition annotations on the property or type level to determine
