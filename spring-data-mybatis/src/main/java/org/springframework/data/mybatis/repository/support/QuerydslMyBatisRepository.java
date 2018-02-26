@@ -37,7 +37,7 @@ public class QuerydslMyBatisRepository<T, ID extends Serializable> extends Simpl
 			MyBatisEntityInformation<T, ID> entityInformation, SqlSessionTemplate sqlSessionTemplate,
 			EntityPathResolver resolver) {
 
-		super(repositoryInformation, entityInformation, sqlSessionTemplate);
+		super(sqlSessionTemplate, repositoryInformation, entityInformation);
 
 		this.path = resolver.createPath(entityInformation.getJavaType());
 		this.builder = new PathBuilder<T>(path.getType(), path.getMetadata());

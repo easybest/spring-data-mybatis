@@ -4,7 +4,6 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.data.mybatis.repository.MyBatisRepository;
-import org.springframework.data.mybatis.dialect.DialectFactoryBean;
 import org.springframework.data.mybatis.repository.support.MyBatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
@@ -71,8 +70,6 @@ public class MyBatisRepositoryConfigExtension extends RepositoryConfigurationExt
 				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME));
 		builder.addPropertyReference("mappingContext",
 				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME).concat("_mappingContext"));
-		builder.addPropertyReference("dialect",
-				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME).concat("_dialect"));
 	}
 
 	@Override
@@ -106,12 +103,6 @@ public class MyBatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		mappingContextBeanDefinitionBuilder.addPropertyValue("repositoryConfigurationSource", config);
 		registerIfNotAlreadyRegistered(mappingContextBeanDefinitionBuilder.getBeanDefinition(), registry,
 				sqlSessionTemplateRef.concat("_mappingContext"), source);
-
-		BeanDefinitionBuilder dialectBeanDefinitionBuilder = BeanDefinitionBuilder
-				.rootBeanDefinition(DialectFactoryBean.class);
-		dialectBeanDefinitionBuilder.addConstructorArgReference(sqlSessionTemplateRef);
-		registerIfNotAlreadyRegistered(dialectBeanDefinitionBuilder.getBeanDefinition(), registry,
-				sqlSessionTemplateRef.concat("_dialect"), source);
 
 	}
 }

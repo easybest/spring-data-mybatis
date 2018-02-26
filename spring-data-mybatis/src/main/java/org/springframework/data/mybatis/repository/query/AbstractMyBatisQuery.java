@@ -1,13 +1,14 @@
 package org.springframework.data.mybatis.repository.query;
 
-import lombok.Getter;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.mybatis.dialect.Dialect;
-import org.springframework.data.mybatis.mapping.MyBatisMappingContext;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.*;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.CollectionExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.ModifyingExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.PagedExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.ProcedureExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.SingleEntityExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.SlicedExecution;
 import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.StreamExecution;
-import org.springframework.data.mybatis.repository.support.MyBatisMapperBuilderAssistant;
 import org.springframework.data.repository.query.ParametersParameterAccessor;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
@@ -25,24 +26,18 @@ import java.util.Map;
  */
 public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 
+	protected final SqlSessionTemplate template;
 	protected final MyBatisQueryMethod method;
-	protected final MyBatisMapperBuilderAssistant assistant;
-	protected final MyBatisMappingContext context;
-	@Getter protected final SqlSessionTemplate template;
-	protected final Dialect dialect;
 
-	protected final String namespace;
+	public AbstractMyBatisQuery(SqlSessionTemplate template, MyBatisQueryMethod method) {
 
-	public AbstractMyBatisQuery(MyBatisQueryMethod method, MyBatisMapperBuilderAssistant assistant,
-			MyBatisMappingContext context, SqlSessionTemplate template, Dialect dialect) {
-		this.method = method;
-		this.assistant = assistant;
-		this.context = context;
 		this.template = template;
-		this.dialect = dialect;
+		this.method = method;
 
-		this.namespace = method.getNamespace();
+	}
 
+	public SqlSessionTemplate getTemplate() {
+		return template;
 	}
 
 	@Override
@@ -55,6 +50,13 @@ public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 		return doExecute(getExecution(), parameters);
 	}
 
+	/**
+	 * Get Execution.
+	 * 
+	 * @return
+	 */
+	protected abstract MyBatisQueryExecution getExecution();
+
 	private Object doExecute(MyBatisQueryExecution execution, Object[] values) {
 		Object result = execution.execute(this, values);
 		ParametersParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);
@@ -63,7 +65,7 @@ public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 		return withDynamicProjection.processResult(result, new TupleConverter(withDynamicProjection.getReturnedType()));
 	}
 
-	protected MyBatisQueryExecution getExecution() {
+	protected MyBatisQueryExecution createExecution() {
 		if (method.isStreamQuery()) {
 			return new StreamExecution();
 		}
@@ -80,7 +82,7 @@ public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 			return new PagedExecution();
 		}
 		if (method.isModifyingQuery()) {
-			return new ModifyingExecution(method);
+			return new ModifyingExecution();
 		}
 
 		return new SingleEntityExecution();
