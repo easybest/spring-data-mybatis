@@ -1,6 +1,7 @@
 package org.springframework.data.mybatis.mapping;
 
 import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.TypeHandler;
 import org.springframework.data.mapping.PersistentProperty;
 
 /**
@@ -37,6 +38,8 @@ public interface MyBatisPersistentProperty extends PersistentProperty<MyBatisPer
 	 * @return
 	 */
 	JdbcType getJdbcType();
+
+	Class<? extends TypeHandler> getSpecifiedTypeHandler();
 
 	MyBatisPersistentEntity<?> getOwnerEntity();
 
