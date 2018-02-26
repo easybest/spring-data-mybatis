@@ -216,8 +216,6 @@ public abstract class MyBatisQueryExecution {
 
 	static class ModifyingExecution extends MyBatisQueryExecution {
 
-		public ModifyingExecution(MyBatisQueryMethod method) {}
-
 		@Override
 		protected Object doExecute(AbstractMyBatisQuery query, Object[] values) {
 			return null;

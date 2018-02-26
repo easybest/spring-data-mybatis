@@ -92,12 +92,12 @@ public class MyBatisQueryMethod extends QueryMethod {
 	}
 
 	@Nullable
-	String getNamespace() {
+	public String getNamespace() {
 		return this.namespace;
 	}
 
 	@Nullable
-	String getStatementName() {
+	public String getStatementName() {
 		return this.statementName;
 	}
 
@@ -117,7 +117,7 @@ public class MyBatisQueryMethod extends QueryMethod {
 		return getNamespace() + "." + getCountStatementName();
 	}
 
-	boolean isComplexQuery() {
+	public boolean isComplexQuery() {
 		return getAnnotationValue("withAssociations", Boolean.class).booleanValue();
 	}
 

@@ -1,9 +1,7 @@
 package org.springframework.data.mybatis.repository.query;
 
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MyBatisMappingContext;
-import org.springframework.data.mybatis.repository.support.MyBatisMapperBuilderAssistant;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -26,68 +24,56 @@ public final class MyBatisQueryLookupStrategy {
 	private MyBatisQueryLookupStrategy() {}
 
 	private abstract static class AbstractQueryLookupStrategy implements QueryLookupStrategy {
-		private final MyBatisMapperBuilderAssistant mapperBuilderAssistant;
-		private final MyBatisMappingContext context;
-		private final SqlSessionTemplate template;
-		private final Dialect dialect;
-
-		public AbstractQueryLookupStrategy(MyBatisMapperBuilderAssistant mapperBuilderAssistant,
-				MyBatisMappingContext context, SqlSessionTemplate template, Dialect dialect) {
-			this.mapperBuilderAssistant = mapperBuilderAssistant;
-			this.context = context;
-			this.template = template;
-			this.dialect = dialect;
-		}
 
 		@Override
-		public final RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
+		public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
 				NamedQueries namedQueries) {
-
-			return resolveQuery(new MyBatisQueryMethod(method, metadata, factory), mapperBuilderAssistant, context, template,
-					dialect, namedQueries);
+			return resolveQuery(new MyBatisQueryMethod(method, metadata, factory), namedQueries);
 		}
 
-		protected abstract RepositoryQuery resolveQuery(MyBatisQueryMethod method,
-				MyBatisMapperBuilderAssistant mapperBuilderAssistant, MyBatisMappingContext context,
-				SqlSessionTemplate template, Dialect dialect, NamedQueries namedQueries);
+		/**
+		 * * Resolves a {@link RepositoryQuery} from the given {@link MyBatisQueryMethod} that can be executed afterwards.
+		 * 
+		 * @param method
+		 * @param namedQueries
+		 * @return
+		 */
+		protected abstract RepositoryQuery resolveQuery(MyBatisQueryMethod method, NamedQueries namedQueries);
+
 	}
 
 	private static class CreateQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
-		public CreateQueryLookupStrategy(MyBatisMapperBuilderAssistant mapperBuilderAssistant,
-				MyBatisMappingContext context, SqlSessionTemplate template, Dialect dialect) {
-			super(mapperBuilderAssistant, context, template, dialect);
+		private final SqlSessionTemplate template;
+
+		private CreateQueryLookupStrategy(SqlSessionTemplate template) {
+			this.template = template;
 		}
 
 		@Override
-		protected RepositoryQuery resolveQuery(MyBatisQueryMethod method,
-				MyBatisMapperBuilderAssistant mapperBuilderAssistant, MyBatisMappingContext context,
-				SqlSessionTemplate template, Dialect dialect, NamedQueries namedQueries) {
-			return new PartTreeMyBatisQuery(method, mapperBuilderAssistant, context, template, dialect);
+		protected RepositoryQuery resolveQuery(MyBatisQueryMethod method, NamedQueries namedQueries) {
+			return new PartTreeMyBatisQuery(template, method);
 		}
 	}
 
 	private static class DeclaredQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
+		private final SqlSessionTemplate template;
 		private final EvaluationContextProvider evaluationContextProvider;
 
-		public DeclaredQueryLookupStrategy(MyBatisMapperBuilderAssistant mapperBuilderAssistant,
-				MyBatisMappingContext context, SqlSessionTemplate template, Dialect dialect,
+		private DeclaredQueryLookupStrategy(SqlSessionTemplate template,
 				EvaluationContextProvider evaluationContextProvider) {
-			super(mapperBuilderAssistant, context, template, dialect);
+			this.template = template;
 			this.evaluationContextProvider = evaluationContextProvider;
 		}
 
 		@Override
-		protected RepositoryQuery resolveQuery(MyBatisQueryMethod method,
-				MyBatisMapperBuilderAssistant mapperBuilderAssistant, MyBatisMappingContext context,
-				SqlSessionTemplate template, Dialect dialect, NamedQueries namedQueries) {
+		protected RepositoryQuery resolveQuery(MyBatisQueryMethod method, NamedQueries namedQueries) {
+
 			// TODO
-			// return new SimpleMyBatisQuery(method, context, template, dialect);
 
 			throw new IllegalStateException(
 					String.format("Did neither find a NamedQuery nor an annotated query for method %s!", method));
-
 		}
 	}
 
@@ -96,28 +82,25 @@ public final class MyBatisQueryLookupStrategy {
 		private final DeclaredQueryLookupStrategy lookupStrategy;
 		private final CreateQueryLookupStrategy createStrategy;
 
-		public CreateIfNotFoundQueryLookupStrategy(MyBatisMapperBuilderAssistant mapperBuilderAssistant,
-				MyBatisMappingContext context, SqlSessionTemplate template, Dialect dialect,
-				CreateQueryLookupStrategy createStrategy, DeclaredQueryLookupStrategy lookupStrategy) {
-			super(mapperBuilderAssistant, context, template, dialect);
+		private CreateIfNotFoundQueryLookupStrategy(DeclaredQueryLookupStrategy lookupStrategy,
+				CreateQueryLookupStrategy createStrategy) {
+
 			this.lookupStrategy = lookupStrategy;
 			this.createStrategy = createStrategy;
 		}
 
 		@Override
-		protected RepositoryQuery resolveQuery(MyBatisQueryMethod method,
-				MyBatisMapperBuilderAssistant mapperBuilderAssistant, MyBatisMappingContext context,
-				SqlSessionTemplate template, Dialect dialect, NamedQueries namedQueries) {
+		protected RepositoryQuery resolveQuery(MyBatisQueryMethod method, NamedQueries namedQueries) {
 			try {
-				return lookupStrategy.resolveQuery(method, mapperBuilderAssistant, context, template, dialect, namedQueries);
+				return lookupStrategy.resolveQuery(method, namedQueries);
 			} catch (IllegalStateException e) {
-				return createStrategy.resolveQuery(method, mapperBuilderAssistant, context, template, dialect, namedQueries);
+				return createStrategy.resolveQuery(method, namedQueries);
 			}
 		}
+
 	}
 
-	public static QueryLookupStrategy create(MyBatisMapperBuilderAssistant mapperBuilderAssistant,
-			MyBatisMappingContext context, SqlSessionTemplate sqlSessionTemplate, Dialect dialect,
+	public static QueryLookupStrategy create(SqlSessionTemplate sqlSessionTemplate, MyBatisMappingContext context,
 			@Nullable QueryLookupStrategy.Key key, EvaluationContextProvider evaluationContextProvider) {
 
 		Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null!");
@@ -125,15 +108,13 @@ public final class MyBatisQueryLookupStrategy {
 
 		switch (key != null ? key : QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND) {
 			case CREATE:
-				return new CreateQueryLookupStrategy(mapperBuilderAssistant, context, sqlSessionTemplate, dialect);
+				return new CreateQueryLookupStrategy(sqlSessionTemplate);
 			case USE_DECLARED_QUERY:
-				return new DeclaredQueryLookupStrategy(mapperBuilderAssistant, context, sqlSessionTemplate, dialect,
-						evaluationContextProvider);
+				return new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider);
 			case CREATE_IF_NOT_FOUND:
-				return new CreateIfNotFoundQueryLookupStrategy(mapperBuilderAssistant, context, sqlSessionTemplate, dialect,
-						new CreateQueryLookupStrategy(mapperBuilderAssistant, context, sqlSessionTemplate, dialect),
-						new DeclaredQueryLookupStrategy(mapperBuilderAssistant, context, sqlSessionTemplate, dialect,
-								evaluationContextProvider));
+				return new CreateIfNotFoundQueryLookupStrategy(
+						new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider),
+						new CreateQueryLookupStrategy(sqlSessionTemplate));
 			default:
 				throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}

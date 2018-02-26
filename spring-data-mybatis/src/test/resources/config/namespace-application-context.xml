@@ -17,8 +17,6 @@
             </util:set>
         </property>
     </bean>
-    <bean id="dialect" class="org.springframework.data.mybatis.dialect.MySQLDialect"/>
-
     <!-- Register custom DAO implementation explicitly -->
     <bean id="userRepositoryImpl" class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl"/>
 
