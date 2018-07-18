@@ -4,11 +4,8 @@ import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.identity.impl.MySQLIdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.pagination.AbstractLimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
-import org.springframework.data.mybatis.util.StringUtil;
+import org.springframework.data.mybatis.dialect.pagination.LimitHelper;
 
-import java.sql.CallableStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Types;
 
 /**
@@ -21,7 +18,11 @@ public class MySQLDialect extends Dialect {
 	private static final LimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 		@Override
 		public String processSql(String sql, RowSelection selection) {
-			// final boolean hasOffset = LimitHelper.hasFirstRow(selection);
+			if (LimitHelper.hasMaxRows(selection)) {
+				return sql + " limit " + (LimitHelper.hasFirstRow(selection) ? (LimitHelper.getFirstRow(selection) + ",") : "")
+						+ selection.getMaxRows();
+			}
+
 			// return sql + (hasOffset ? " limit #{pageSize}, #{offset}" : " limit #{pageSize}");
 			return sql + " limit #{offset}, #{pageSize}";
 		}
@@ -37,30 +38,43 @@ public class MySQLDialect extends Dialect {
 		// FIXME judge mysql storage engine.
 		this.storageEngine = getDefaultMySQLStorageEngine();
 
+		registerColumnType(Types.BIT, "bit");
+		registerColumnType(Types.BIGINT, "bigint");
+		registerColumnType(Types.SMALLINT, "smallint");
+		registerColumnType(Types.TINYINT, "tinyint");
+		registerColumnType(Types.INTEGER, "integer");
+		registerColumnType(Types.CHAR, "char(1)");
+		registerColumnType(Types.FLOAT, "float");
+		registerColumnType(Types.DOUBLE, "double precision");
+		registerColumnType(Types.BOOLEAN, "bit"); // HHH-6935
+		registerColumnType(Types.DATE, "date");
+		registerColumnType(Types.TIME, "time");
+		registerColumnType(Types.TIMESTAMP, "datetime");
+		registerColumnType(Types.VARBINARY, "longblob");
+		registerColumnType(Types.VARBINARY, 16777215, "mediumblob");
+		registerColumnType(Types.VARBINARY, 65535, "blob");
+		registerColumnType(Types.VARBINARY, 255, "tinyblob");
+		registerColumnType(Types.BINARY, "binary($l)");
+		registerColumnType(Types.LONGVARBINARY, "longblob");
+		registerColumnType(Types.LONGVARBINARY, 16777215, "mediumblob");
+		registerColumnType(Types.NUMERIC, "decimal($p,$s)");
+		registerColumnType(Types.BLOB, "longblob");
+		// registerColumnType( Types.BLOB, 16777215, "mediumblob" );
+		// registerColumnType( Types.BLOB, 65535, "blob" );
+		registerColumnType(Types.CLOB, "longtext");
+		registerColumnType(Types.NCLOB, "longtext");
+		// registerColumnType( Types.CLOB, 16777215, "mediumtext" );
+		// registerColumnType( Types.CLOB, 65535, "text" );
+		registerVarcharTypes();
+
 	}
 
-	@Override
-	public String getAddColumnString() {
-		return "add column";
-	}
-
-	@Override
-	public boolean qualifyIndexName() {
-		return false;
-	}
-
-	@Override
-	public String getAddForeignKeyConstraintString(String constraintName, String[] foreignKey, String referencedTable,
-			String[] primaryKey, boolean referencesPrimaryKey) {
-		final String cols = StringUtil.join(", ", foreignKey);
-		final String referencedCols = StringUtil.join(", ", primaryKey);
-		return String.format(" add constraint %s foreign key (%s) references %s (%s)", constraintName, cols,
-				referencedTable, referencedCols);
-	}
-
-	@Override
-	public String getDropForeignKeyString() {
-		return " drop foreign key ";
+	protected void registerVarcharTypes() {
+		registerColumnType(Types.VARCHAR, "longtext");
+		// registerColumnType( Types.VARCHAR, 16777215, "mediumtext" );
+		// registerColumnType( Types.VARCHAR, 65535, "text" );
+		registerColumnType(Types.VARCHAR, 255, "varchar($l)");
+		registerColumnType(Types.LONGVARCHAR, "longtext");
 	}
 
 	@Override
@@ -76,58 +90,6 @@ public class MySQLDialect extends Dialect {
 	@Override
 	public char openQuote() {
 		return '`';
-	}
-
-	@Override
-	public boolean canCreateCatalog() {
-		return true;
-	}
-
-	@Override
-	public String[] getCreateCatalogCommand(String catalogName) {
-		return new String[] { "create database " + catalogName };
-	}
-
-	@Override
-	public String[] getDropCatalogCommand(String catalogName) {
-		return new String[] { "drop database " + catalogName };
-	}
-
-	@Override
-	public boolean canCreateSchema() {
-		return false;
-	}
-
-	@Override
-	public String[] getCreateSchemaCommand(String schemaName) {
-		throw new UnsupportedOperationException(
-				"MySQL does not support dropping creating/dropping schemas in the JDBC sense");
-	}
-
-	@Override
-	public String[] getDropSchemaCommand(String schemaName) {
-		throw new UnsupportedOperationException(
-				"MySQL does not support dropping creating/dropping schemas in the JDBC sense");
-	}
-
-	@Override
-	public boolean supportsIfExistsBeforeTableName() {
-		return true;
-	}
-
-	@Override
-	public String getSelectGUIDString() {
-		return "select uuid()";
-	}
-
-	@Override
-	public String getTableComment(String comment) {
-		return " comment='" + comment + "'";
-	}
-
-	@Override
-	public String getColumnComment(String comment) {
-		return " comment '" + comment + "'";
 	}
 
 	@Override
@@ -200,25 +162,6 @@ public class MySQLDialect extends Dialect {
 		return "select now()";
 	}
 
-	@Override
-	public int registerResultSetOutParameter(CallableStatement statement, int col) throws SQLException {
-		return col;
-	}
-
-	@Override
-	public ResultSet getResultSet(CallableStatement ps) throws SQLException {
-		boolean isResultSet = ps.execute();
-		while (!isResultSet && ps.getUpdateCount() != -1) {
-			isResultSet = ps.getMoreResults();
-		}
-		return ps.getResultSet();
-	}
-
-	@Override
-	public boolean supportsRowValueConstructorSyntax() {
-		return true;
-	}
-
 	// locking support
 
 	@Override
@@ -236,29 +179,6 @@ public class MySQLDialect extends Dialect {
 		return " lock in share mode";
 	}
 
-	// Overridden informational metadata ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	@Override
-	public boolean supportsEmptyInList() {
-		return false;
-	}
-
-	@Override
-	public boolean areStringComparisonsCaseInsensitive() {
-		return true;
-	}
-
-	@Override
-	public boolean supportsLobValueChangePropogation() {
-		// note: at least my local MySQL 5.1 install shows this not working...
-		return false;
-	}
-
-	@Override
-	public boolean supportsSubqueryOnMutatingTable() {
-		return false;
-	}
-
 	@Override
 	public boolean supportsLockTimeouts() {
 		// yes, we do handle "lock timeout" conditions in the exception conversion delegate,
@@ -269,51 +189,16 @@ public class MySQLDialect extends Dialect {
 	}
 
 	@Override
-	public String getNotExpression(String expression) {
-		return "not (" + expression + ")";
-	}
-
-	@Override
 	public IdentityColumnSupport getIdentityColumnSupport() {
 		return new MySQLIdentityColumnSupport();
-	}
-
-	@Override
-	public boolean isJdbcLogWarningsEnabledByDefault() {
-		return false;
-	}
-
-	@Override
-	public boolean supportsCascadeDelete() {
-		return storageEngine.supportsCascadeDelete();
-	}
-
-	@Override
-	public String getTableTypeString() {
-		return storageEngine.getTableTypeString(getEngineKeyword());
 	}
 
 	protected String getEngineKeyword() {
 		return "type";
 	}
 
-	@Override
-	public boolean hasSelfReferentialForeignKeyBug() {
-		return storageEngine.hasSelfReferentialForeignKeyBug();
-	}
-
-	@Override
-	public boolean dropConstraints() {
-		return storageEngine.dropConstraints();
-	}
-
 	protected MySQLStorageEngine getDefaultMySQLStorageEngine() {
-		return MyISAMStorageEngine.INSTANCE;
-	}
-
-	@Override
-	protected String escapeLiteral(String literal) {
-		return super.escapeLiteral(literal).replace("\\", "\\\\");
+		return InnoDBStorageEngine.INSTANCE;
 	}
 
 }

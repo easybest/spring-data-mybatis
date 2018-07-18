@@ -10,3 +10,4 @@ buildNumber.properties
 .idea
 *.iml
 .DS_Store
+.flattened-pom.xml

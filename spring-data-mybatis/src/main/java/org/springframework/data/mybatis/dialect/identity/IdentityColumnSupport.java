@@ -2,11 +2,6 @@ package org.springframework.data.mybatis.dialect.identity;
 
 import org.springframework.data.mapping.MappingException;
 
-/**
- * Represents a support for the Dialect identity key generation.
- * 
- * @author Jarvis Song
- */
 public interface IdentityColumnSupport {
 
 	/**

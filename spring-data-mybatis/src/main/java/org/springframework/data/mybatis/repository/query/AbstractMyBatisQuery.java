@@ -2,13 +2,6 @@ package org.springframework.data.mybatis.repository.query;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.CollectionExecution;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.ModifyingExecution;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.PagedExecution;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.ProcedureExecution;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.SingleEntityExecution;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.SlicedExecution;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.StreamExecution;
 import org.springframework.data.repository.query.ParametersParameterAccessor;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
@@ -67,25 +60,25 @@ public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 
 	protected MyBatisQueryExecution createExecution() {
 		if (method.isStreamQuery()) {
-			return new StreamExecution();
+			return new MyBatisQueryExecution.StreamExecution();
 		}
 		if (method.isProcedureQuery()) {
-			return new ProcedureExecution();
+			return new MyBatisQueryExecution.ProcedureExecution();
 		}
 		if (method.isCollectionQuery()) {
-			return new CollectionExecution();
+			return new MyBatisQueryExecution.CollectionExecution();
 		}
 		if (method.isSliceQuery()) {
-			return new SlicedExecution();
+			return new MyBatisQueryExecution.SlicedExecution();
 		}
 		if (method.isPageQuery()) {
-			return new PagedExecution();
+			return new MyBatisQueryExecution.PagedExecution();
 		}
 		if (method.isModifyingQuery()) {
-			return new ModifyingExecution();
+			return new MyBatisQueryExecution.ModifyingExecution();
 		}
 
-		return new SingleEntityExecution();
+		return new MyBatisQueryExecution.SingleEntityExecution();
 	}
 
 	static class TupleConverter implements Converter<Object, Object> {

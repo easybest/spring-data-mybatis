@@ -8,28 +8,36 @@ import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.keygen.NoKeyGenerator;
 import org.apache.ibatis.executor.keygen.SelectKeyGenerator;
 import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.type.TypeHandler;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.mapping.SimpleAssociationHandler;
-import org.springframework.data.mapping.SimplePropertyHandler;
 import org.springframework.data.mybatis.annotation.GenericGenerator;
 import org.springframework.data.mybatis.annotation.GenericGenerators;
+import org.springframework.data.mybatis.dialect.Dialect;
+import org.springframework.data.mybatis.mapping.CompositeIdColumn;
+import org.springframework.data.mybatis.mapping.GeneratedValueIdColumn;
+import org.springframework.data.mybatis.mapping.IdColumn;
 import org.springframework.data.mybatis.mapping.MyBatisMappingContext;
-import org.springframework.data.mybatis.mapping.MyBatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MyBatisPersistentProperty;
+import org.springframework.data.mybatis.mapping.Table;
+import org.springframework.data.mybatis.mapping.ToOneJoinColumnAssociation;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.*;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.SequenceGenerators;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static javax.persistence.GenerationType.*;
 import static org.apache.ibatis.mapping.SqlCommandType.*;
 
 /**
@@ -46,10 +54,10 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 	private Map<String, SequenceGenerator> sequenceGeneratorCache = new HashMap<>();
 	private Map<String, GenericGenerator> genericGeneratorCache = new HashMap<>();
 
-	public SimpleMyBatisMapperBuilderAssistant(Configuration configuration, MyBatisMappingContext mappingContext,
-			RepositoryInformation repositoryInformation) {
+	public SimpleMyBatisMapperBuilderAssistant(SqlSessionTemplate sqlSessionTemplate,
+			MyBatisMappingContext mappingContext, Dialect dialect, RepositoryInformation repositoryInformation) {
 
-		super(configuration, mappingContext, repositoryInformation.getRepositoryInterface().getName(),
+		super(sqlSessionTemplate, mappingContext, dialect, repositoryInformation.getRepositoryInterface().getName(),
 				repositoryInformation.getDomainType());
 		this.repositoryInformation = repositoryInformation;
 
@@ -111,268 +119,335 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 		KeyGenerator keyGenerator = NoKeyGenerator.INSTANCE;
 		String keyProperty = null, keyColumn = null;
 
-		if (persistentEntity.hasIdProperty() && !persistentEntity.hasCompositeIdProperty()) {
-			MyBatisPersistentProperty idProperty = persistentEntity.getIdProperty();
-			keyProperty = idProperty.getName();
-			keyColumn = new SQL().COLUMN(idProperty);
-			GeneratedValue generatedValue = idProperty.findAnnotation(GeneratedValue.class);
-			if (null != generatedValue) {
-				// using @GeneratedValue
-				if (generatedValue.strategy() == GenerationType.AUTO) {
-					if (StringUtils.hasText(generatedValue.generator())) {
-						GenericGenerator genericGenerator = genericGeneratorCache.get(generatedValue.generator());
-						if (null == genericGenerator) {
-							throw new MappingException("Id @GeneratedValue has assigned generator=" + generatedValue.generator()
-									+ ", but can not find any @GenericGenerator with name=" + generatedValue.generator());
-						}
-						if (StringUtils.isEmpty(genericGenerator.strategy())) {
-							throw new MappingException("Id @GeneratedValue has assigned generator=" + generatedValue.generator()
-									+ ", but can not find strategy in @GenericGenerator with name=" + generatedValue.generator());
-						}
-
-						// TODO USE @GenericGenerator's strategy
-
-					} else {
-						if ("identity".equals(dialect.getNativeIdentifierGeneratorStrategy())) {
-							keyGenerator = handleSelectKeyFromIdProperty(idProperty, "_insert", domainClass, false,
-									generatedValue.generator());
-						} else if ("sequence".equals(dialect.getNativeIdentifierGeneratorStrategy())) {
-							keyGenerator = handleSelectKeyFromIdProperty(idProperty, "_insert", domainClass, true,
-									generatedValue.generator());
-						} else {
-							throw new MappingException("Id @GeneratedValue with strategy=AUTO, but dialect[" + dialect.getClass()
-									+ "] not support identity or sequence.");
-						}
-					}
-				} else if (generatedValue.strategy() == GenerationType.IDENTITY) {
-					if (!dialect.getIdentityColumnSupport().supportsIdentityColumns()) {
-						throw new MappingException(
-								domainClass + " Id @GeneratedValue set stratety=IDENTITY, but this database's dialect["
-										+ dialect.getClass() + "] not support identity.");
-					}
-					keyGenerator = handleSelectKeyFromIdProperty(idProperty, "_insert", domainClass, false,
-							generatedValue.generator());
-
-				} else if (generatedValue.strategy() == GenerationType.SEQUENCE) {
-					if (!dialect.supportsSequences()) {
-						throw new MappingException(
-								domainClass + " Id @GeneratedValue set stratety=SEQUENCE, but this database's dialect["
-										+ dialect.getClass() + "] not support sequence.");
-					}
-					keyGenerator = handleSelectKeyFromIdProperty(idProperty, "_insert", domainClass, true,
-							generatedValue.generator());
-				} else if (generatedValue.strategy() == GenerationType.TABLE) {
-					// TODO support table id
-				}
-			}
+		Table table = persistentEntity.getTable();
+		if (null != table.getIdColumn() && table.getIdColumn() instanceof GeneratedValueIdColumn) {
+			keyProperty = table.getIdColumn().getProperty().getName();
+			keyColumn = table.getIdColumn().getActualName(dialect);
+			keyGenerator = handleSelectKeyFromIdColumn((GeneratedValueIdColumn) table.getIdColumn(), "_insert");
 		}
-
-		SQL sql = new SQL() {
-			{
-				INSERT_INTO(TABLE_NAME());
-				persistentEntity.doWithProperties((SimplePropertyHandler) pp -> {
-					MyBatisPersistentProperty property = (MyBatisPersistentProperty) pp;
-					VALUES(COLUMN(property), VAR(property.getName(), property.getJdbcType()));
-				});
-				persistentEntity.doWithAssociations((SimpleAssociationHandler) ass -> {
-
-					MyBatisPersistentProperty inverseProperty = (MyBatisPersistentProperty) ass.getInverse();
-					MyBatisPersistentEntity<?> targetEntity = inverseProperty.getOwnerEntity().getMappingContext()
-							.getPersistentEntity(inverseProperty.getActualType());
-
-					// @Id + @Embeddable || @EmbeddedId
-					if ((inverseProperty.isAnnotationPresent(Id.class) && targetEntity.isAnnotationPresent(Embeddable.class))
-							|| inverseProperty.isAnnotationPresent(EmbeddedId.class)) {
-						targetEntity.doWithProperties((SimplePropertyHandler) idp1 -> {
-							MyBatisPersistentProperty idp = (MyBatisPersistentProperty) idp1;
-
-							VALUES(COLUMN(idp), VAR(targetEntity.getName() + "." + idp.getName(), idp.getJdbcType()));
-						});
-					}
-
-					// with @Id + @ManyToOne || @Id + @OneToOne
-					if (inverseProperty.isAnnotationPresent(Id.class) && (inverseProperty.isAnnotationPresent(ManyToOne.class)
-							|| inverseProperty.isAnnotationPresent(OneToOne.class))) {
-						// TODO
-					}
-				});
-			}
-		};
-
-		addMappedStatement("_insert", sql.toStrings(), INSERT, domainClass, null, null, keyGenerator, keyProperty,
-				keyColumn);
-	}
-
-	private void addUpdateStatement(boolean ignoreNull) {
-
-		SQL ql = new SQL() {
-			{
-				UPDATE(TABLE_NAME());
-			}
-		};
 
 		StringBuilder builder = new StringBuilder();
-		builder.append(ql.toString());
+		StringBuilder values = new StringBuilder();
+		builder.append("insert into ").append(table.getFullName(dialect)).append("(");
+		if (null != table.getIdColumn()) {
+			if (table.getIdColumn() instanceof CompositeIdColumn) {
+				builder.append(((CompositeIdColumn) table.getIdColumn()).getIdColumns().stream()
+						.map(idColumn -> idColumn.getActualName(dialect) + ',').collect(Collectors.joining()));
 
-		if (ignoreNull) {
-			builder.append("<set>");
-		} else {
-			builder.append(" set ");
-		}
-		persistentEntity.doWithProperties((SimplePropertyHandler) pp -> {
-			MyBatisPersistentProperty property = (MyBatisPersistentProperty) pp;
-			if (property.isIdProperty()) {
-				return;
-			}
-			if (property.isVersionProperty()) {
-				builder.append(ql.COLUMN(property) + "=" + ql.COLUMN(property) + "+1,");
-				return;
-			}
-			if (!ignoreNull) {
-				builder.append(ql.COLUMN(property) + "=" + ql.VAR(property) + ",");
+				values.append(((CompositeIdColumn) table.getIdColumn()).getIdColumns().stream().map(idColumn -> {
+					StringBuilder composite = new StringBuilder();
+					composite.append("#{").append(idColumn.getAlias()).append(",jdbcType=").append(idColumn.getJdbcType());
+					Class<? extends TypeHandler> specifiedTypeHandler = idColumn.getSpecifiedTypeHandler();
+					if (null != specifiedTypeHandler) {
+						composite.append(",typeHandler=").append(specifiedTypeHandler.getName());
+					}
+					composite.append("},");
+					return composite.toString();
+				}).collect(Collectors.joining()));
+
 			} else {
-				builder.append("<if test=\"" + property.getName() + " != null\">" + ql.COLUMN(property) + "=" + ql.VAR(property)
-						+ "," + "</if>");
+				IdColumn idColumn = table.getIdColumn();
+				builder.append(idColumn.getActualName(dialect)).append(',');
+				values.append("#{").append(idColumn.getAlias()).append(",jdbcType=").append(idColumn.getJdbcType());
+				Class<? extends TypeHandler> specifiedTypeHandler = idColumn.getSpecifiedTypeHandler();
+				if (null != specifiedTypeHandler) {
+					values.append(",typeHandler=").append(specifiedTypeHandler.getName());
+				}
+				values.append("},");
 			}
-		});
-
-		if (builder.charAt(builder.length() - 1) == ',') {
-			builder.deleteCharAt(builder.length() - 1);
 		}
 
-		if (ignoreNull) {
-			builder.append("</set>");
-		}
-		SQL where = new SQL() {
-			{
-				UPDATE(TABLE_NAME());
-				ID_CALUSE(false);
+		builder.append(Stream.concat(table.getColumns().stream().map(column -> column.getActualName(dialect)),
+				table.getAssociations().stream().map(association -> {
+					if (association instanceof ToOneJoinColumnAssociation) {
+						return Arrays.stream(((ToOneJoinColumnAssociation) association).getJoinColumns())
+								.map(joinColumn -> joinColumn.getActualName(dialect)).collect(Collectors.joining(","));
+					}
+					return "";
+				}).filter(StringUtils::hasText)).collect(Collectors.joining(",")));
+
+		values.append(Stream.concat(table.getColumns().stream().map(column -> {
+			StringBuilder columns = new StringBuilder();
+			columns.append("#{").append(column.getAlias()).append(",jdbcType=").append(column.getJdbcType());
+			Class<? extends TypeHandler> specifiedTypeHandler = column.getSpecifiedTypeHandler();
+			if (null != specifiedTypeHandler) {
+				columns.append(",typeHandler=").append(specifiedTypeHandler.getName());
 			}
-		};
-		builder.append(where.toString().replace(ql.toString(), ""));
+			columns.append("}");
+			return columns.toString();
+		}), table.getAssociations().stream().map(association -> {
+			if (association instanceof ToOneJoinColumnAssociation) {
+				return Arrays.stream(((ToOneJoinColumnAssociation) association).getJoinColumns())
+						.map(joinColumn -> "#{" + joinColumn.getAlias() + ",jdbcType=" + joinColumn.getJdbcType() + "}")
+						.collect(Collectors.joining(","));
+			}
+			return "";
+		}).filter(StringUtils::hasText)).collect(Collectors.joining(",")));
 
-		String[] sqls;
-		if (ignoreNull) {
-			sqls = new String[] { "<script>", builder.toString(), "</script>" };
-		} else {
-			sqls = new String[] { builder.toString() };
+		builder.append(") values(").append(values).append(')');
+
+		// TODO ASS
+
+		addMappedStatement("_insert", new String[] { builder.toString() }, INSERT, domainClass, null, null, keyGenerator,
+				keyProperty, keyColumn);
+	}
+
+	private void addUpdateStatement(final boolean ignoreNull) {
+		Table table = persistentEntity.getTable();
+
+		String idCaluse = buildIdCaluse(false);
+		if (StringUtils.isEmpty(idCaluse)) {
+			return; // FIXME throw new exception?
 		}
+
+		StringBuilder builder = new StringBuilder();
+		builder.append("update ").append(table.getFullName(dialect)).append(' ');
+
+		builder.append("<set>");
+
+		builder.append(table.getColumns().stream().map(column -> {
+			StringBuilder columns = new StringBuilder();
+			if (column.getProperty().isVersionProperty()) {
+				columns.append(column.getActualName(dialect)).append('=').append(column.getActualName(dialect)).append("+1");
+				return columns.toString();
+			}
+			if (ignoreNull) {
+				columns.append("<if test=\"").append(column.getAlias()).append(" != null\">");
+			}
+			columns.append(column.getActualName(dialect)).append("=#{").append(column.getAlias()).append(",jdbcType=")
+					.append(column.getJdbcType());
+			Class<? extends TypeHandler> specifiedTypeHandler = column.getSpecifiedTypeHandler();
+			if (null != specifiedTypeHandler) {
+				columns.append(",typeHandler=").append(specifiedTypeHandler.getName());
+			}
+			columns.append("},");
+			if (ignoreNull) {
+				columns.append("</if>");
+			}
+			return columns.toString();
+		}).collect(Collectors.joining()));
+
+		builder.append(table.getAssociations().stream().map(association -> {
+			if (association instanceof ToOneJoinColumnAssociation) {
+				return Arrays.stream(((ToOneJoinColumnAssociation) association).getJoinColumns()).map(joinColumn -> {
+					StringBuilder columns = new StringBuilder();
+
+					columns.append("<choose>");
+					columns.append("<when test=\"").append(((ToOneJoinColumnAssociation) association).getJoinProperty().getName())
+							.append(" == null\">");
+					if (!ignoreNull) {
+						columns.append(joinColumn.getActualName(dialect)).append("=null,");
+					}
+					columns.append("</when>");
+					columns.append("<otherwise>");
+
+					if (ignoreNull) {
+						columns.append("<if test=\"").append(joinColumn.getAlias()).append(" != null\">");
+					}
+					columns.append(joinColumn.getActualName(dialect)).append("=")
+							.append("#{" + joinColumn.getAlias() + ",jdbcType=" + joinColumn.getJdbcType() + "},");
+					if (ignoreNull) {
+						columns.append("</if>");
+					}
+
+					columns.append("</otherwise>");
+					columns.append("</choose>");
+
+					return columns.toString();
+				}).filter(StringUtils::hasText).collect(Collectors.joining());
+			}
+			return "";
+		}).filter(StringUtils::hasText).collect(Collectors.joining()));
+
+		builder.append("</set>");
+
+		builder.append(" where ");
+		builder.append(idCaluse);
+		String[] sqls = new String[] { "<script>", builder.toString(), "</script>" };
 		addMappedStatement(ignoreNull ? "_updateIgnoreNull" : "_update", sqls, UPDATE, domainClass);
 	}
 
 	private void addGetByIdStatement(boolean complex) {
+		Table table = persistentEntity.getTable();
+		if (null == table.getIdColumn()) {
+			return;
+		}
+		StringBuilder builder = new StringBuilder();
+		builder.append("select ");
+		builder.append(buildStandardSelectColumns(complex));
+		builder.append(" from ").append(buildStandardFrom(complex)).append(" where ");
+		builder.append(buildIdCaluse(complex));
 
-		SQL sql = new SQL() {
-			{
-				SELECT_WITH_COLUMNS(complex);
-				FROM_WITH_LEFT_OUTER_JOIN(complex);
-				if (complex) {
-					// TODO LEFT OUTER JOIN
-				}
-				ID_CALUSE();// process id cause
-			}
-		};
-		addMappedStatement(complex ? "_getById" : "_getBasicById", sql.toStrings(), SELECT, persistentEntity.getIdClass(),
-				domainClass);
+		addMappedStatement(complex ? "_getById" : "_getBasicById", new String[] { builder.toString() }, SELECT,
+				table.getIdColumn().getProperty().getType(), domainClass);
 	}
 
 	private void addCountStatement() {
-		SQL sql = new SQL() {
-			{
-				SELECT("count(*)");
-				FROM_WITH_LEFT_OUTER_JOIN(false);
-			}
-		};
-		addMappedStatement("_count", new String[] { sql.toString() }, SELECT, domainClass, long.class);
+		StringBuilder builder = new StringBuilder();
+		builder.append("select count(*) from ").append(buildStandardFrom(false));
+		addMappedStatement("_count", new String[] { builder.toString() }, SELECT, domainClass, long.class);
 	}
 
 	private void addDeleteAllStatement() {
-		addMappedStatement("_deleteAll", new String[] { "truncate table " + new SQL().TABLE_NAME() }, DELETE);
+		addMappedStatement("_deleteAll", new String[] { "delete from " + persistentEntity.getTable().getFullName(dialect) },
+				DELETE);
 	}
 
 	private void addDeleteByIdStatement() {
-
-		SQL sql = new SQL() {
-			{
-				DELETE_FROM(TABLE_NAME() + " " + ALIAS());
-				ID_CALUSE();// process id cause
-			}
-		};
-		addMappedStatement("_deleteById", sql.toStrings(), DELETE, persistentEntity.getIdClass());
+		Table table = persistentEntity.getTable();
+		if (null == table.getIdColumn()) {
+			return;
+		}
+		StringBuilder builder = new StringBuilder();
+		builder.append("delete from ").append(table.getFullName(dialect)).append(" where ").append(buildIdCaluse(false));
+		addMappedStatement("_deleteById", new String[] { builder.toString() }, DELETE,
+				table.getIdColumn().getProperty().getType());
 	}
 
 	private void addFindAllStatement() {
 
-		SQL sql = new SQL() {
-			{
-				SELECT_WITH_COLUMNS(true);
-				FROM_WITH_LEFT_OUTER_JOIN(true);
+		addMappedStatement("_findAll", new String[] { "<script>", buildFindSQL(true), "</script>" }, DELETE, Map.class,
+				domainClass);
+	}
 
+	private String buildIdCaluse(boolean complex) {
+		Table table = persistentEntity.getTable();
+		if (null == table.getIdColumn()) {
+			return "";
+		}
+		if (table.getIdColumn() instanceof CompositeIdColumn) {
+
+			return ((CompositeIdColumn) table.getIdColumn()).getIdColumns().stream().map(idColumn -> {
+				StringBuilder builder = new StringBuilder();
+				if (complex) {
+					builder.append(idColumn.getQuotedPrefix(dialect)).append('.');
+				}
+				builder.append(idColumn.getActualName(dialect)).append("=#{").append(idColumn.getAlias()).append(",jdbcType=")
+						.append(idColumn.getJdbcType());
+				Class<? extends TypeHandler> specifiedTypeHandler = idColumn.getSpecifiedTypeHandler();
+				if (null != specifiedTypeHandler) {
+					builder.append(",typeHandler=").append(specifiedTypeHandler.getName());
+				}
+				builder.append('}');
+				return builder.toString();
+			}).collect(Collectors.joining(" and "));
+
+		} else {
+			IdColumn idColumn = table.getIdColumn();
+			StringBuilder builder = new StringBuilder();
+			if (complex) {
+				builder.append(idColumn.getQuotedPrefix(dialect)).append('.');
 			}
-		};
-		addMappedStatement("_findAll",
-				new String[] { "<script>", sql.toString(), sql.FIND_CONDITION_SQL(true), sql.SORT_SQL(true), "</script>" },
-				DELETE, Map.class, domainClass);
+			builder.append(idColumn.getActualName(dialect)).append("=#{").append(idColumn.getAlias()).append(",jdbcType=")
+					.append(idColumn.getJdbcType());
+			Class<? extends TypeHandler> specifiedTypeHandler = idColumn.getSpecifiedTypeHandler();
+			if (null != specifiedTypeHandler) {
+				builder.append(",typeHandler=").append(specifiedTypeHandler.getName());
+			}
+			builder.append('}');
+			return builder.toString();
+		}
 
 	}
 
-	private void addFindByPagerStatement(boolean complex) {
-		SQL sql = new SQL() {
-			{
-				SELECT_WITH_COLUMNS(complex);
-				FROM_WITH_LEFT_OUTER_JOIN(complex);
+	private String buildFindSQL(boolean complex) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("select ").append(buildStandardSelectColumns(complex)).append(" from ")
+				.append(buildStandardFrom(complex)).append(buildConditionCaluse(complex)).append(buildStandardOrderBy(complex));
+		return builder.toString();
+	}
+
+	private String buildConditionCaluse(boolean complex) {
+		Table table = persistentEntity.getTable();
+		StringBuilder builder = new StringBuilder();
+
+		builder.append("<if test=\"_condition != null\">");
+		builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+		// builder.append(DYNAMIC_CONDITION(complex));
+		builder.append("</trim>");
+		builder.append("</if>");
+
+		if (null != table.getIdColumn()) {
+			builder.append("<if test=\"_ids != null\">");
+			builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+			if (table.getIdColumn() instanceof CompositeIdColumn) {
+				builder.append(
+						"<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\"or\" close=\")\">");
+				builder.append("<trim prefixOverrides=\"and \">");
+
+				builder.append(((CompositeIdColumn) table.getIdColumn()).getIdColumns().stream().map(idColumn -> {
+					StringBuilder composite = new StringBuilder();
+					if (complex) {
+						composite.append(idColumn.getQuotedPrefix(dialect)).append('.');
+					}
+					composite.append(idColumn.getActualName(dialect)).append(" = ").append("#{item.").append(idColumn.getAlias())
+							.append(",jdbcType=").append(idColumn.getJdbcType()).append("}");
+					return composite.toString();
+				}).collect(Collectors.joining(" and ")));
+
+				builder.append("</trim>");
+				builder.append("</foreach>");
+
+			} else {
+				if (complex) {
+					builder.append(table.getIdColumn().getQuotedPrefix(dialect)).append('.');
+				}
+				builder.append(table.getIdColumn().getActualName(dialect)).append(" in ");
+				builder.append(
+						"<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
 			}
-		};
+			builder.append("</trim>");
+			builder.append("</if>");
+		}
+		return builder.toString();
+	}
+
+	private void addFindByPagerStatement(boolean complex) {
 
 		addMappedStatement(complex ? "_findByPager" : "_findBasicByPager",
-				new String[] { "<script>",
-						dialect.getLimitHandler().processSql(sql.toString() + sql.FIND_CONDITION_SQL(complex), null), "</script>" },
+				new String[] { "<script>", dialect.getLimitHandler().processSql(buildFindSQL(complex), null), "</script>" },
 				SELECT, Map.class, domainClass);
 	}
 
 	private void addCountByConditionStatement(boolean complex) {
-		SQL sql = new SQL() {
-			{
-				SELECT("count(*)");
-				FROM_WITH_LEFT_OUTER_JOIN(complex);
-			}
-		};
+		StringBuilder builder = new StringBuilder();
+		builder.append("select count(*) from ").append(buildStandardFrom(complex)).append(buildConditionCaluse(complex));
 		addMappedStatement(complex ? "_countByCondition" : "_countBasicByCondition",
-				new String[] { "<script>", sql.toString(), sql.FIND_CONDITION_SQL(complex), "</script>" }, SELECT, Map.class,
-				long.class);
+				new String[] { "<script>", builder.toString(), "</script>" }, SELECT, Map.class, long.class);
 	}
 
-	private KeyGenerator handleSelectKeyFromIdProperty(MyBatisPersistentProperty idProperty, String baseStatementId,
-			Class<?> parameterTypeClass, boolean executeBefore, String generator) {
-		SQL sql = new SQL();
+	private KeyGenerator handleSelectKeyFromIdColumn(GeneratedValueIdColumn idColumn, String baseStatementId) {
 		String id = baseStatementId + SelectKeyGenerator.SELECT_KEY_SUFFIX;
-		Class<?> resultTypeClass = idProperty.getActualType();
-		String keyProperty = idProperty.getName();
-		String keyColumn = sql.COLUMN(idProperty);
-
 		String[] sqls;
-		if (executeBefore) {
+		boolean executeBefore;
+		if ((idColumn.getStrategy() == AUTO && "identity".equals(dialect.getNativeIdentifierGeneratorStrategy()))
+				|| idColumn.getStrategy() == IDENTITY) {
+			// before identity
+			sqls = new String[] {
+					dialect.getIdentityColumnSupport().getIdentitySelectString(idColumn.getTable().getFullName(dialect),
+							idColumn.getActualName(dialect), idColumn.getJdbcType().TYPE_CODE) };
+			executeBefore = false;
+		} else if ((idColumn.getStrategy() == AUTO && "sequence".equals(dialect.getNativeIdentifierGeneratorStrategy()))
+				|| idColumn.getStrategy() == SEQUENCE) {
 			String sequenceName = DEFAULT_SEQUENCE_NAME;
-			if (StringUtils.hasText(generator)) {
-				SequenceGenerator sequenceGenerator = sequenceGeneratorCache.get(generator);
-				if (null != sequenceGenerator && StringUtils.hasText(sequenceGenerator.sequenceName())) {
-					sequenceName = sequenceGenerator.sequenceName();
-				}
+			if (null != idColumn.getSequenceGenerator()
+					&& StringUtils.hasText(idColumn.getSequenceGenerator().sequenceName())) {
+				sequenceName = idColumn.getSequenceGenerator().sequenceName();
 			}
 			sqls = new String[] { dialect.getSequenceNextValString(sequenceName) };
+			executeBefore = true;
 		} else {
-			sqls = new String[] { dialect.getIdentityColumnSupport().getIdentitySelectString(sql.TABLE_NAME(),
-					idProperty.getColumnName(), idProperty.getJdbcType().TYPE_CODE) };
+			throw new UnsupportedOperationException("unsupported generated value id strategy: " + idColumn.getStrategy());
 		}
 
-		addMappedStatement(id, sqls, SELECT, parameterTypeClass, null, resultTypeClass, NoKeyGenerator.INSTANCE,
-				keyProperty, keyColumn);
+		addMappedStatement(id, sqls, SELECT, domainClass, null, idColumn.getProperty().getActualType(),
+				NoKeyGenerator.INSTANCE, idColumn.getProperty().getName(), idColumn.getName());
 
 		id = assistant.applyCurrentNamespace(id, false);
 
-		MappedStatement keyStatement = configuration.getMappedStatement(id, false);
+		MappedStatement keyStatement = sqlSessionTemplate.getConfiguration().getMappedStatement(id, false);
 		SelectKeyGenerator answer = new SelectKeyGenerator(keyStatement, executeBefore);
-		configuration.addKeyGenerator(id, answer);
+		sqlSessionTemplate.getConfiguration().addKeyGenerator(id, answer);
 		return answer;
 	}
 
@@ -432,67 +507,6 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 				}
 				genericGeneratorCache.put(generator.name(), generator);
 			}
-		}
-	}
-
-	/**
-	 * SQL Build.
-	 */
-	class SQL extends AbstractMyBatisMapperBuilderAssistant.SQL {
-
-		public String DYNAMIC_CONDITION(boolean complex) {
-			final StringBuilder builder = new StringBuilder();
-
-			return builder.toString();
-		}
-
-		public String FIND_CONDITION_SQL(boolean complex) {
-			final StringBuilder builder = new StringBuilder();
-			builder.append("<if test=\"_condition != null\">");
-			builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-			builder.append(DYNAMIC_CONDITION(complex));
-			builder.append("</trim>");
-			builder.append("</if>");
-			// process findByIds
-			if (entity.hasIdProperty()) {
-				builder.append("<if test=\"_ids != null\">");
-				builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
-
-				if (entity.hasCompositeIdProperty()) {
-					// TODO () OR () MODE
-					MyBatisPersistentEntity<?> compositeIdPersistentEntity = entity.getCompositeIdPersistentEntity();
-					builder.append(
-							"<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\"or\" close=\")\">");
-					builder.append("<trim prefixOverrides=\"and \">");
-					if (null != compositeIdPersistentEntity) {
-
-						if (entity.isAnnotationPresent(IdClass.class)) {
-							entity.doWithIdProperties(pp -> {
-								MyBatisPersistentProperty idProperty = entity.getIdProperty();
-								builder.append(" and ").append(dialect.quote(entity.getEntityName())).append('.')
-										.append(COLUMN(idProperty)).append("=").append(VAR(idProperty.getName()));
-							});
-						} else {
-							compositeIdPersistentEntity.doWithProperties((SimplePropertyHandler) pp -> {
-								MyBatisPersistentProperty idProperty = entity.getIdProperty();
-								builder.append(" and ").append(ALIAS()).append('.').append(COLUMN(idProperty)).append("=")
-										.append(VAR("item." + idProperty.getName()));
-							});
-						}
-					}
-					builder.append("</trim>");
-					builder.append("</foreach>");
-				} else {
-
-					MyBatisPersistentProperty idProperty = entity.getIdProperty();
-					builder.append(ALIAS()).append('.').append(COLUMN(idProperty)).append(" in ");
-					builder.append(
-							"<foreach item=\"item\" index=\"index\" collection=\"_ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
-				}
-				builder.append("</trim>");
-				builder.append("</if>");
-			}
-			return builder.toString();
 		}
 	}
 

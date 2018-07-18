@@ -3,6 +3,7 @@ package org.springframework.data.mybatis.repository.config;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.repository.support.MyBatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
 import org.springframework.data.repository.query.QueryLookupStrategy;
@@ -132,4 +133,7 @@ public @interface EnableMyBatisRepositories {
 	 * @return whether to enable default transactions, defaults to {@literal true}.
 	 */
 	boolean enableDefaultTransactions() default true;
+
+	Class<? extends Dialect> dialect() default Dialect.class;
+
 }

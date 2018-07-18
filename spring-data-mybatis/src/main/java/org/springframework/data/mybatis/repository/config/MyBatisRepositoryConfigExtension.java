@@ -3,12 +3,15 @@ package org.springframework.data.mybatis.repository.config;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
+import org.springframework.data.mybatis.dialect.Dialect;
+import org.springframework.data.mybatis.dialect.DialectFactoryBean;
 import org.springframework.data.mybatis.repository.MyBatisRepository;
 import org.springframework.data.mybatis.repository.support.MyBatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.config.XmlRepositoryConfigurationSource;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.Entity;
@@ -70,6 +73,7 @@ public class MyBatisRepositoryConfigExtension extends RepositoryConfigurationExt
 				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME));
 		builder.addPropertyReference("mappingContext",
 				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME).concat("_mappingContext"));
+
 	}
 
 	@Override
@@ -87,6 +91,7 @@ public class MyBatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		if (enableDefaultTransactions.isPresent() && StringUtils.hasText(enableDefaultTransactions.get())) {
 			builder.addPropertyValue(ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE, enableDefaultTransactions.get());
 		}
+
 	}
 
 	@Override
@@ -104,5 +109,28 @@ public class MyBatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		registerIfNotAlreadyRegistered(mappingContextBeanDefinitionBuilder.getBeanDefinition(), registry,
 				sqlSessionTemplateRef.concat("_mappingContext"), source);
 
+		Class<?> dialectClass = Dialect.class;
+		if (config instanceof AnnotationRepositoryConfigurationSource) {
+			AnnotationAttributes attributes = ((AnnotationRepositoryConfigurationSource) config).getAttributes();
+			dialectClass = attributes.getClass("dialect");
+		} else {
+			Optional<String> dialect = config.getAttribute("dialect");
+			if (dialect.isPresent()) {
+				try {
+					dialectClass = ClassUtils.forName(dialect.get(), ClassUtils.getDefaultClassLoader());
+				} catch (ClassNotFoundException e) {}
+			}
+		}
+		if (null == dialectClass || dialectClass == Dialect.class) {
+			BeanDefinitionBuilder dialectBeanDefinitionBuilder = BeanDefinitionBuilder
+					.rootBeanDefinition(DialectFactoryBean.class);
+			dialectBeanDefinitionBuilder.addConstructorArgReference(sqlSessionTemplateRef);
+			registerIfNotAlreadyRegistered(dialectBeanDefinitionBuilder.getBeanDefinition(), registry,
+					sqlSessionTemplateRef.concat("_dialect"), source);
+		} else {
+			BeanDefinitionBuilder dialectBeanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(dialectClass);
+			registerIfNotAlreadyRegistered(dialectBeanDefinitionBuilder.getBeanDefinition(), registry,
+					sqlSessionTemplateRef.concat("_dialect"), source);
+		}
 	}
 }

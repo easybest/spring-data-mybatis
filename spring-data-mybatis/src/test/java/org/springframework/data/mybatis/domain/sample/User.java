@@ -18,23 +18,44 @@ public class User {
 	private String lastname;
 	private int age;
 	private boolean active;
-	@Temporal(TemporalType.TIMESTAMP) private Date createdAt;
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date createdAt;
 
-	@Column(nullable = false, unique = true) private String emailAddress;
+	@Column(nullable = false, unique = true)
+	private String emailAddress;
 
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }) private Set<User> colleagues;
+	@ManyToMany
+	@JoinTable(name = "ds_colleagues",
+			joinColumns = @JoinColumn(referencedColumnName = "id", name = "user_id"),
+			inverseJoinColumns = @JoinColumn(name = "colleague_id"))
+	private Set<User> colleagues;
 
-	@ManyToMany private Set<Role> roles;
+	@ManyToMany
+	@JoinTable(name = "ds_user_ds_role",
+			joinColumns = @JoinColumn(referencedColumnName = "id",name = "user_id"),
+			inverseJoinColumns = @JoinColumn(referencedColumnName = "id", name = "role_id")
+	)
+	private Set<Role> roles;
 
-	@ManyToOne private User manager;
+	@ManyToOne
+	@JoinColumn(name = "manager_id",referencedColumnName = "id")
+	private User manager; // on `user.manager`.id = `user`.manager_id; `user.manager`.age as `manager.age`
 
-	@Embedded private Address address;
+	@Embedded @AttributeOverrides({
+			@AttributeOverride(name = "streetNo", column = @Column(name = "street_number")) })
+	private Address address;
 
-	@Lob private byte[] binaryData;
+	@Lob
+	private byte[] binaryData;
 
-	@ElementCollection private Set<String> attributes;
+	@ElementCollection
+	@CollectionTable(name = "ds_user_attributes", joinColumns = @JoinColumn(name = "user_id",referencedColumnName = "id"))
+	@Column(name = "attributes")
+	@OrderBy("attributes asc")
+	private Set<String> attributes;
 
-	@Temporal(TemporalType.DATE) private Date dateOfBirth;
+	@Temporal(TemporalType.DATE)
+	private Date dateOfBirth;
 
 	/**
 	 * Creates a new empty instance of {@code User}.
@@ -57,9 +78,9 @@ public class User {
 		this.lastname = lastname;
 		this.emailAddress = emailAddress;
 		this.active = true;
-		this.roles = new HashSet<Role>(Arrays.asList(roles));
-		this.colleagues = new HashSet<User>();
-		this.attributes = new HashSet<String>();
+		this.roles = new HashSet<>(Arrays.asList(roles));
+		this.colleagues = new HashSet<>();
+		this.attributes = new HashSet<>();
 		this.createdAt = new Date();
 	}
 

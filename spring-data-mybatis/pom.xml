@@ -18,6 +18,7 @@
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>com.ifrabbit</groupId>
             <artifactId>spring-data-mybatis-core</artifactId>
@@ -55,7 +56,6 @@
         <dependency>
             <groupId>javax.persistence</groupId>
             <artifactId>javax.persistence-api</artifactId>
-            <version>2.2</version>
         </dependency>
         <dependency>
             <groupId>javax.enterprise</groupId>
