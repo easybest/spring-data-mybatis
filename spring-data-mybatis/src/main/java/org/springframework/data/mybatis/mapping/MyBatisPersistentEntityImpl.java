@@ -310,4 +310,11 @@ public class MyBatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MyB
 		return this.table;
 	}
 
+	@Override
+	protected MyBatisPersistentProperty returnPropertyIfBetterIdPropertyCandidateOrNull(
+			MyBatisPersistentProperty property) {
+
+		return property.isIdProperty() ? property : null;
+	}
+
 }

@@ -73,7 +73,8 @@ public class MyBatisRepositoryConfigExtension extends RepositoryConfigurationExt
 				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME));
 		builder.addPropertyReference("mappingContext",
 				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME).concat("_mappingContext"));
-
+		builder.addPropertyReference("dialect",
+				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME).concat("_dialect"));
 	}
 
 	@Override

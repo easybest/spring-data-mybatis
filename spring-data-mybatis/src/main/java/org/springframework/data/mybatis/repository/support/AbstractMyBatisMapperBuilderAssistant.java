@@ -247,9 +247,9 @@ public abstract class AbstractMyBatisMapperBuilderAssistant implements MyBatisMa
 		builder.append("<if test=\"_sorts != null\">");
 		builder.append("<bind name=\"__columnsMap\" value='#{");
 		final Map<String, String> columnMap = fetchStandardOrderByColumns(complex);
-		builder.append(
-				columnMap.entrySet().stream().map(entry -> '"' + entry.getKey() + '"' + ':' + '"' + entry.getValue() + '"')
-						.collect(Collectors.joining(",")));
+		builder.append(columnMap.entrySet().stream()
+				.map(entry -> "&apos;" + entry.getKey() + "&apos;" + ':' + "&apos;" + entry.getValue() + "&apos;")
+				.collect(Collectors.joining(",")));
 
 		builder.append("}' />");
 		builder.append(" order by ");

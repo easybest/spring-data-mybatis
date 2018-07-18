@@ -39,6 +39,7 @@ public class MyBatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 	@Override
 	public void afterPropertiesSet() {
 		Assert.state(sqlSessionTemplate != null, "SqlSessionTemplate must not be null!");
+		Assert.state(dialect != null, "dialect must not be null!");
 
 		super.afterPropertiesSet();
 
