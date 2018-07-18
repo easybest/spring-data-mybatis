@@ -2,7 +2,6 @@
 <xsd:schema xmlns="http://www.springframework.org/schema/data/mybatis"
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:tool="http://www.springframework.org/schema/tool"
-            xmlns:context="http://www.springframework.org/schema/context"
             xmlns:repository="http://www.springframework.org/schema/data/repository"
             targetNamespace="http://www.springframework.org/schema/data/mybatis"
             elementFormDefault="qualified" attributeFormDefault="unqualified">
@@ -25,6 +24,17 @@
 							]]></xsd:documentation>
                         </xsd:annotation>
                     </xsd:attribute>
+                    <xsd:attribute name="ddl-auto">
+                        <xsd:simpleType>
+                            <xsd:restriction base="xsd:string">
+                                <xsd:enumeration value="none"/>
+                                <xsd:enumeration value="update"/>
+                                <xsd:enumeration value="create"/>
+                                <xsd:enumeration value="validate"/>
+                            </xsd:restriction>
+                        </xsd:simpleType>
+                    </xsd:attribute>
+                    <xsd:attribute name="dialect" type="xsd:string"/>
                 </xsd:extension>
             </xsd:complexContent>
         </xsd:complexType>

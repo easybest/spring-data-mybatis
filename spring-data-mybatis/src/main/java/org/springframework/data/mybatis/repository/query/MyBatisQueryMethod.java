@@ -44,6 +44,7 @@ public class MyBatisQueryMethod extends QueryMethod {
 	private final RepositoryMetadata metadata;
 	private final String namespace;
 	private final String statementName;
+	private Integer limitSize;
 
 	/**
 	 * Creates a new {@link QueryMethod} from the given parameters. Looks up the correct query to use for following
@@ -172,5 +173,13 @@ public class MyBatisQueryMethod extends QueryMethod {
 		}
 
 		return targetType.cast(AnnotationUtils.getValue(annotation, attribute));
+	}
+
+	public Integer getLimitSize() {
+		return limitSize;
+	}
+
+	public void setLimitSize(Integer limitSize) {
+		this.limitSize = limitSize;
 	}
 }

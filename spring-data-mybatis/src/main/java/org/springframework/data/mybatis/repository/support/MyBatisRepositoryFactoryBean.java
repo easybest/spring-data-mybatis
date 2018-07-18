@@ -1,6 +1,7 @@
 package org.springframework.data.mybatis.repository.support;
 
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MyBatisMappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
@@ -19,6 +20,7 @@ public class MyBatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 
 	private @Nullable SqlSessionTemplate sqlSessionTemplate;
 	private @Nullable MyBatisMappingContext mappingContext;
+	private @Nullable Dialect dialect;
 
 	/**
 	 * Creates a new {@link TransactionalRepositoryFactoryBeanSupport} for the given repository interface.
@@ -31,7 +33,7 @@ public class MyBatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-		return new MyBatisRepositoryFactory(sqlSessionTemplate, mappingContext);
+		return new MyBatisRepositoryFactory(sqlSessionTemplate, mappingContext, dialect);
 	}
 
 	@Override
@@ -39,6 +41,7 @@ public class MyBatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 		Assert.state(sqlSessionTemplate != null, "SqlSessionTemplate must not be null!");
 
 		super.afterPropertiesSet();
+
 	}
 
 	public void setMappingContext(MyBatisMappingContext mappingContext) {
@@ -50,4 +53,7 @@ public class MyBatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 		this.sqlSessionTemplate = sqlSessionTemplate;
 	}
 
+	public void setDialect(@Nullable Dialect dialect) {
+		this.dialect = dialect;
+	}
 }

@@ -10,10 +10,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.CollectionUtils;
 
 import javax.persistence.NoResultException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -107,25 +107,42 @@ public abstract class MyBatisQueryExecution {
 
 			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
 			if (parameters.hasSortParameter()) {
-				params.put("_sorts", values[parameters.getSortIndex()]);
-			} else {
-				params.put("_sorts", pageable.getSort());
+				Sort sort = (Sort) values[parameters.getSortIndex()];
+				params.put("_sorts", null != sort && sort.isSorted() ? sort : null);
+			} else if (null != pageable) {
+				params.put("_sorts", null != pageable.getSort() && pageable.getSort().isSorted() ? pageable.getSort() : null);
 			}
-			params.put("offset", pageable.getOffset());
-			params.put("pageSize", pageable.getPageSize() + 1);
-			params.put("offsetEnd", pageable.getOffset() + pageable.getPageSize());
-			List<Object> resultList = query.getTemplate().selectList(query.getQueryMethod().getStatementId(), params);
+
+			if (null == pageable || pageable == Pageable.unpaged()) {
+				List<Object> result = query.getTemplate().selectList(
+						query.getQueryMethod().getNamespace() + ".unpaged_" + query.getQueryMethod().getStatementName(), params);
+				return new SliceImpl(result);
+			}
 
 			int pageSize = pageable.getPageSize();
-			boolean hasNext = resultList.size() > pageSize;
+			long offset = pageable.getOffset();
+			long total = query.getTemplate().selectOne(query.getQueryMethod().getCountStatementId(), params);
+			Integer limit = query.getQueryMethod().getLimitSize();
+			if (null != limit) {
+				total = Math.min(total, limit);
+				if (limit < offset || offset > total) {
+					return new PageImpl(Collections.emptyList(), pageable, total);
+				} else if (limit >= offset && limit < (offset + pageSize)) {
+					pageSize = (int) (limit - offset);
+				}
+			}
 
-			return new SliceImpl<>(hasNext ? resultList.subList(0, pageSize) : resultList, pageable, hasNext);
+			params.put("offset", offset);
+			params.put("pageSize", pageSize);
+			params.put("offsetEnd", offset + pageSize);
+
+			List<Object> result = query.getTemplate().selectList(query.getQueryMethod().getStatementId(), params);
+			return new SliceImpl(result, pageable, total > offset);
 
 		}
 	}
 
 	static class PagedExecution extends MyBatisQueryExecution {
-
 		@Override
 		protected Object doExecute(AbstractMyBatisQuery query, Object[] values) {
 			final int[] c = { 0 };
@@ -139,46 +156,36 @@ public abstract class MyBatisQueryExecution {
 			if (parameters.hasSortParameter()) {
 				Sort sort = (Sort) values[parameters.getSortIndex()];
 				params.put("_sorts", null != sort && sort.isSorted() ? sort : null);
-			} else {
+			} else if (null != pageable) {
 				params.put("_sorts", null != pageable.getSort() && pageable.getSort().isSorted() ? pageable.getSort() : null);
 			}
 
-			if (pageable == Pageable.unpaged()) {
+			if (null == pageable || pageable == Pageable.unpaged()) {
 				List<Object> result = query.getTemplate().selectList(
 						query.getQueryMethod().getNamespace() + ".unpaged_" + query.getQueryMethod().getStatementName(), params);
 				return new PageImpl(result, pageable, null == result ? 0 : result.size());
 			}
 
-			params.put("offset", null == pageable ? 0 : pageable.getOffset());
-			params.put("pageSize", null == pageable ? Integer.MAX_VALUE : pageable.getPageSize());
-			params.put("offsetEnd", null == pageable ? Integer.MAX_VALUE : pageable.getOffset() + pageable.getPageSize());
+			int pageSize = pageable.getPageSize();
+			long offset = pageable.getOffset();
+			long total = query.getTemplate().selectOne(query.getQueryMethod().getCountStatementId(), params);
+			Integer limit = query.getQueryMethod().getLimitSize();
+			if (null != limit) {
+				total = Math.min(total, limit);
+				if (limit < offset || offset > total) {
+					return new PageImpl(Collections.emptyList(), pageable, total);
+				} else if (limit >= offset && limit < (offset + pageSize)) {
+					pageSize = (int) (limit - offset);
+				}
+			}
+
+			params.put("offset", offset);
+			params.put("pageSize", pageSize);
+			params.put("offsetEnd", offset + pageSize);
+
 			List<Object> result = query.getTemplate().selectList(query.getQueryMethod().getStatementId(), params);
-			if (null == pageable) {
-				return new PageImpl(result);
-			}
-			long total = calculateTotal(pageable, result);
-			if (total < 0) {
-				total = query.getTemplate().selectOne(query.getQueryMethod().getCountStatementId(), params);
-			}
 			return new PageImpl(result, pageable, total);
 		}
-
-		protected <X> long calculateTotal(Pageable pager, List<X> result) {
-			if (pager.hasPrevious()) {
-				if (CollectionUtils.isEmpty(result)) {
-					return -1;
-				}
-				if (result.size() == pager.getPageSize()) {
-					return -1;
-				}
-				return (pager.getPageNumber() - 1) * pager.getPageSize() + result.size();
-			}
-			if (result.size() < pager.getPageSize()) {
-				return result.size();
-			}
-			return -1;
-		}
-
 	}
 
 	static class StreamExecution extends MyBatisQueryExecution {

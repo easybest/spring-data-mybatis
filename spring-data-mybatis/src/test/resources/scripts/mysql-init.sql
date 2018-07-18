@@ -1,8 +1,12 @@
 DROP TABLE IF EXISTS ds_role;
 DROP TABLE IF EXISTS ds_user;
 DROP TABLE IF EXISTS ds_group;
+DROP TABLE IF EXISTS ds_colleagues;
+DROP TABLE IF EXISTS ds_user_ds_role;
+DROP TABLE IF EXISTS ds_user_attributes;
 DROP TABLE IF EXISTS department;
 DROP TABLE IF EXISTS ds_booking;
+
 CREATE TABLE ds_user (
   id            INT(11)      NOT NULL AUTO_INCREMENT,
   firstname     VARCHAR(32)  NULL,
@@ -17,7 +21,7 @@ CREATE TABLE ds_user (
   country       VARCHAR(64)  NULL,
   city          VARCHAR(64)  NULL,
   street_name   VARCHAR(64)  NULL,
-  street_no     VARCHAR(64)  NULL,
+  street_number     VARCHAR(64)  NULL,
   PRIMARY KEY (id)
 );
 CREATE TABLE ds_role (
@@ -32,6 +36,21 @@ CREATE TABLE ds_group (
   code VARCHAR(32) NULL,
   PRIMARY KEY (id)
 );
+create table ds_colleagues (
+  user_id      int(11) not null,
+  colleague_id int(11) not null,
+  primary key (user_id, colleague_id)
+);
+create table ds_user_ds_role (
+  user_id int(11) not null,
+  role_id int(11) not null,
+  primary key (user_id, role_id)
+);
+create table ds_user_attributes (
+  user_id int(11) not null,
+  attributes varchar(256) null
+);
+
 CREATE TABLE department (
   id                 INT(11)     NOT NULL AUTO_INCREMENT,
   name               VARCHAR(32) NULL,
