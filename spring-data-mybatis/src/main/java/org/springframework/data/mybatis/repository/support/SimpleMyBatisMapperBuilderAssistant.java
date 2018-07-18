@@ -279,7 +279,7 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 		builder.append(buildIdCaluse(complex));
 
 		addMappedStatement(complex ? "_getById" : "_getBasicById", new String[] { builder.toString() }, SELECT,
-				table.getIdColumn().getProperty().getType(), domainClass);
+				table.getIdColumn().getType(), domainClass);
 	}
 
 	private void addCountStatement() {
@@ -300,8 +300,7 @@ class SimpleMyBatisMapperBuilderAssistant extends AbstractMyBatisMapperBuilderAs
 		}
 		StringBuilder builder = new StringBuilder();
 		builder.append("delete from ").append(table.getFullName(dialect)).append(" where ").append(buildIdCaluse(false));
-		addMappedStatement("_deleteById", new String[] { builder.toString() }, DELETE,
-				table.getIdColumn().getProperty().getType());
+		addMappedStatement("_deleteById", new String[] { builder.toString() }, DELETE, table.getIdColumn().getType());
 	}
 
 	private void addFindAllStatement() {
