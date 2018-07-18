@@ -178,6 +178,18 @@ public class Column implements Cloneable {
 		this.columnAnnotation = ca;
 	}
 
+	public Class<?> getType() {
+		if (this instanceof CompositeIdColumn) {
+			return ((CompositeIdColumn) this).getIdClass();
+		}
+
+		if (null != property) {
+			return property.getActualType();
+		}
+
+		return null;
+	}
+
 	@Override
 	public Column clone() {
 		Column copy = new Column(this.table);

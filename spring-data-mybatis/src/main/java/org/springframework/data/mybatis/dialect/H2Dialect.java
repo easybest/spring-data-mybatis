@@ -6,6 +6,7 @@ import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.identity.impl.H2IdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.pagination.AbstractLimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.LimitHelper;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -18,7 +19,8 @@ public class H2Dialect extends Dialect {
 		@Override
 		public String processSql(String sql, RowSelection selection) {
 			if (null != selection && selection.getMaxRows() > 0) {
-				return sql + " limit #{offset}," + selection.getMaxRows();
+				return sql + " limit " + (LimitHelper.hasFirstRow(selection) ? (LimitHelper.getFirstRow(selection) + ",") : "")
+						+ selection.getMaxRows();
 			}
 			// final boolean hasOffset = LimitHelper.hasFirstRow(selection);
 			// return sql + (hasOffset ? " limit ? offset ?" : " limit ?");
