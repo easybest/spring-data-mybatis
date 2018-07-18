@@ -163,15 +163,15 @@ public abstract class SqlSessionRepositorySupport {
 		params.put("offset", pager.getOffset());
 		params.put("pageSize", pager.getPageSize());
 		params.put("offsetEnd", pager.getOffset() + pager.getPageSize());
-		if (condition instanceof Sort) {
+		if (condition instanceof Sort && ((Sort) condition).isSorted()) {
 			params.put("_sorts", condition);
-		} else {
+		} else if (null != pager && null != pager.getSort() && pager.getSort().isSorted()) {
 			params.put("_sorts", pager.getSort());
 		}
 		params.put("_condition", condition);
-//		if (null != columns) {
-//			params.put("_specifiedFields", columns);
-//		}
+		// if (null != columns) {
+		// params.put("_specifiedFields", columns);
+		// }
 		if (!CollectionUtils.isEmpty(otherParams)) {
 			params.putAll(otherParams);
 		}

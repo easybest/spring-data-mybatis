@@ -1,8 +1,6 @@
 package org.springframework.data.mybatis.repository.query;
 
 import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.DeleteExecution;
-import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.ExistsExecution;
 import org.springframework.data.repository.query.parser.PartTree;
 
 /**
@@ -41,10 +39,10 @@ public class PartTreeMyBatisQuery extends AbstractMyBatisQuery {
 	@Override
 	protected MyBatisQueryExecution createExecution() {
 		if (tree.isDelete()) {
-			return new DeleteExecution();
+			return new MyBatisQueryExecution.DeleteExecution();
 		}
 		if (tree.isExistsProjection()) {
-			return new ExistsExecution();
+			return new MyBatisQueryExecution.ExistsExecution();
 		}
 		return super.createExecution();
 	}

@@ -17,6 +17,9 @@ public class H2Dialect extends Dialect {
 	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 		@Override
 		public String processSql(String sql, RowSelection selection) {
+			if (null != selection && selection.getMaxRows() > 0) {
+				return sql + " limit #{offset}," + selection.getMaxRows();
+			}
 			// final boolean hasOffset = LimitHelper.hasFirstRow(selection);
 			// return sql + (hasOffset ? " limit ? offset ?" : " limit ?");
 			return sql + " limit #{offset}, #{pageSize}";
@@ -64,11 +67,6 @@ public class H2Dialect extends Dialect {
 	}
 
 	@Override
-	public String getAddColumnString() {
-		return "add column";
-	}
-
-	@Override
 	public String getForUpdateString() {
 		return " for update";
 	}
@@ -76,16 +74,6 @@ public class H2Dialect extends Dialect {
 	@Override
 	public LimitHandler getLimitHandler() {
 		return LIMIT_HANDLER;
-	}
-
-	@Override
-	public boolean supportsIfExistsAfterTableName() {
-		return true;
-	}
-
-	@Override
-	public boolean supportsIfExistsBeforeConstraintName() {
-		return true;
 	}
 
 	@Override
@@ -141,36 +129,6 @@ public class H2Dialect extends Dialect {
 	@Override
 	public boolean supportsUnionAll() {
 		return true;
-	}
-
-	// Overridden informational metadata ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	@Override
-	public boolean supportsLobValueChangePropogation() {
-		return false;
-	}
-
-	@Override
-	public boolean requiresParensForTupleDistinctCounts() {
-		return true;
-	}
-
-	@Override
-	public boolean doesReadCommittedCauseWritersToBlockReaders() {
-		// see http://groups.google.com/group/h2-database/browse_thread/thread/562d8a49e2dabe99?hl=en
-		return true;
-	}
-
-	@Override
-	public boolean supportsTuplesInSubqueries() {
-		return false;
-	}
-
-	@Override
-	public boolean dropConstraints() {
-		// We don't need to drop constraints before dropping tables, that just leads to error
-		// messages about missing tables when we don't have a schema in the database
-		return false;
 	}
 
 	@Override

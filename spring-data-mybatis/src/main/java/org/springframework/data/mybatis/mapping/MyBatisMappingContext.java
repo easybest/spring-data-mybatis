@@ -16,13 +16,21 @@ public class MyBatisMappingContext
 
 	@Override
 	protected <T> MyBatisPersistentEntityImpl<?> createPersistentEntity(TypeInformation<T> typeInformation) {
-		return new MyBatisPersistentEntityImpl<T>(this, typeInformation, new ResultMapComparator());
+		return new MyBatisPersistentEntityImpl<>(this, typeInformation, new ResultMapComparator());
 	}
 
 	@Override
 	protected MyBatisPersistentProperty createPersistentProperty(Property property, MyBatisPersistentEntityImpl<?> owner,
 			SimpleTypeHolder simpleTypeHolder) {
 		return new MyBatisPersistentPropertyImpl(property, owner, simpleTypeHolder);
+	}
+
+	@Override
+	public void initialize() {
+		super.initialize();
+
+		getPersistentEntities().forEach(entity -> entity.initTable());
+
 	}
 
 	private static final class ResultMapComparator implements Comparator<MyBatisPersistentProperty>, Serializable {
@@ -47,23 +55,8 @@ public class MyBatisMappingContext
 				return -1;
 			}
 
-			// if (o1.isAssociation() && o2.isAssociation()) {
-			// boolean o1ToOne = o1.isToOneAssociation();
-			// boolean o2ToOne = o2.isToOneAssociation();
-			// if (o1ToOne && !o2ToOne) {
-			// return -1;
-			// }
-			// if (!o1ToOne && o2ToOne) {
-			// return 1;
-			// }
-			// }
-
-			char o1F = o1.getName().charAt(0);
-			char o2F = o2.getName().charAt(0);
-			if (o1F == o2F) {
-				return 0;
-			}
-			return o1F < o2F ? -1 : 1;
+			return o1.getName().compareTo(o2.getName());
 		}
 	}
+
 }

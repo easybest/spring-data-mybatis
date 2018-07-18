@@ -48,9 +48,9 @@ public class MyBatisMappingContextFactoryBean extends AbstractFactoryBean<MyBati
 		return context;
 	}
 
-	private Class<?> loadRepositoryInterface(String respositoryInterface) {
+	private Class<?> loadRepositoryInterface(String repositoryInterface) {
 		try {
-			return ClassUtils.forName(respositoryInterface, classLoader);
+			return ClassUtils.forName(repositoryInterface, classLoader);
 		} catch (ClassNotFoundException e) {}
 		return null;
 	}
@@ -76,4 +76,5 @@ public class MyBatisMappingContextFactoryBean extends AbstractFactoryBean<MyBati
 	public void setInitialEntitySet(@Nullable Set<? extends Class<?>> initialEntitySet) {
 		this.initialEntitySet = initialEntitySet;
 	}
+
 }

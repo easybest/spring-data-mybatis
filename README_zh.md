@@ -19,6 +19,28 @@ Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 
 * 方便的与Spring集成
 * 支持MySQL、Oracle、SQL Server、H2、PostgreSQL等数据库
 
+## 支持的 Java Persistence API 注解
+```java
+@Entity
+@Table
+@Column
+@Index
+@Id
+@EmbeddedId
+@IdClass
+@GeneratedValue
+@Embeddable
+@MappedSuperclass
+@Transient
+@SequenceGenerator
+@TableGenerator
+@Temporal
+@OneToOne
+@OneToMany
+@ManyToOne
+@ManyToMany
+```
+
 
 ## 获得帮助 ##
 

@@ -1,76 +1,43 @@
 package org.springframework.data.mybatis.mapping;
 
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.annotation.AccessType;
 import org.springframework.data.mapping.Association;
-import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.ClassTypeInformation;
-import org.springframework.data.util.ParsingUtils;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
+import javax.persistence.Column;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-import static org.apache.ibatis.type.JdbcType.*;
-
+/**
+ * @author Jarvis Song
+ */
 class MyBatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<MyBatisPersistentProperty>
 		implements MyBatisPersistentProperty {
 
-	private static Map<Class<?>, JdbcType> javaTypesMappedToJdbcTypes = new HashMap<Class<?>, JdbcType>();
-
-	static {
-		javaTypesMappedToJdbcTypes.put(String.class, VARCHAR);
-		javaTypesMappedToJdbcTypes.put(java.math.BigDecimal.class, NUMERIC);
-		javaTypesMappedToJdbcTypes.put(boolean.class, BIT);
-		javaTypesMappedToJdbcTypes.put(byte.class, TINYINT);
-		javaTypesMappedToJdbcTypes.put(short.class, SMALLINT);
-		javaTypesMappedToJdbcTypes.put(int.class, INTEGER);
-		javaTypesMappedToJdbcTypes.put(long.class, BIGINT);
-		javaTypesMappedToJdbcTypes.put(float.class, REAL);
-		javaTypesMappedToJdbcTypes.put(double.class, DOUBLE);
-		javaTypesMappedToJdbcTypes.put(byte[].class, VARBINARY);
-		javaTypesMappedToJdbcTypes.put(java.util.Date.class, TIMESTAMP);
-		javaTypesMappedToJdbcTypes.put(java.sql.Date.class, DATE);
-		javaTypesMappedToJdbcTypes.put(java.sql.Time.class, TIME);
-		javaTypesMappedToJdbcTypes.put(java.sql.Timestamp.class, TIMESTAMP);
-
-		javaTypesMappedToJdbcTypes.put(Boolean.class, BIT);
-		javaTypesMappedToJdbcTypes.put(Integer.class, INTEGER);
-		javaTypesMappedToJdbcTypes.put(Long.class, BIGINT);
-		javaTypesMappedToJdbcTypes.put(Float.class, REAL);
-		javaTypesMappedToJdbcTypes.put(Double.class, DOUBLE);
-
-	}
-
-	private static final Collection<Class<? extends Annotation>> ASSOCIATION_ANNOTATIONS;
-	private static final Collection<Class<? extends Annotation>> ID_ANNOTATIONS;
-	private static final Collection<Class<? extends Annotation>> UPDATEABLE_ANNOTATIONS;
+	static final Collection<Class<? extends Annotation>> ASSOCIATION_ANNOTATIONS;
+	static final Collection<Class<? extends Annotation>> ID_ANNOTATIONS;
+	static final Collection<Class<? extends Annotation>> UPDATEABLE_ANNOTATIONS;
 
 	static {
 
 		Set<Class<? extends Annotation>> annotations = new HashSet<Class<? extends Annotation>>();
+		annotations.add(ElementCollection.class);
 		annotations.add(OneToMany.class);
 		annotations.add(OneToOne.class);
 		annotations.add(ManyToMany.class);
 		annotations.add(ManyToOne.class);
 		annotations.add(Embedded.class);
-		// annotations.add(Embeddable.class);
-		annotations.add(ElementCollection.class);
 
 		ASSOCIATION_ANNOTATIONS = Collections.unmodifiableSet(annotations);
 
@@ -90,6 +57,9 @@ class MyBatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	private final @Nullable Boolean usePropertyAccess;
 	private final @Nullable TypeInformation<?> associationTargetType;
 	private final boolean updateable;
+
+	private org.springframework.data.mybatis.mapping.Column column;
+	private org.springframework.data.mybatis.mapping.Association association;
 
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
@@ -146,19 +116,7 @@ class MyBatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 
 	@Override
 	protected Association<MyBatisPersistentProperty> createAssociation() {
-
-		MyBatisPersistentProperty obverse = null;
-
-		// if (isAssociation()) {
-		// Class<?> targetType = getActualType();
-		// MyBatisPersistentEntity owner = (MyBatisPersistentEntity) getOwner();
-		// MyBatisPersistentEntityImpl<?> targetEntity = owner.getMappingContext().getPersistentEntity(targetType);
-		//
-		//
-		//
-		// }
-
-		return new Association<>(this, obverse);
+		return new Association<>(this, null);
 	}
 
 	@Override
@@ -177,122 +135,23 @@ class MyBatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	}
 
 	@Override
-	public String getColumnName() {
-
-		for (Class<? extends Annotation> annotationType : UPDATEABLE_ANNOTATIONS) {
-
-			Annotation annotation = findAnnotation(annotationType);
-
-			if (null == annotation) {
-				continue;
-			}
-
-			String name = (String) AnnotationUtils.getValue(annotation, "name");
-			if (StringUtils.hasText(name)) {
-				return name;
-			}
-		}
-
-		return ParsingUtils.reconcatenateCamelCase(getName(), "_");
-	}
-
-	/**
-	 * 1 将组件类注解为@Embeddable,并将组件的属性注解为@Id <br/>
-	 * 2 将组件的属性注解为@EmbeddedId (方便) <br/>
-	 * 3 将类注解为@IdClass,并将该实体中所有属于主键的属性都注解为@Id<br/>
-	 * 第三种情况在此返回false.
-	 * 
-	 * @return
-	 */
-	@Override
-	public boolean isCompositeId() {
-
-		// 2.
-		if (isAnnotationPresent(EmbeddedId.class)) {
-			return true;
-		}
-
-		// 1.
-		if (isAnnotationPresent(Id.class) && isAssociation()) {
-
-			if (this.getAssociation().getInverse().getOwner().isAnnotationPresent(Embeddable.class)) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		return isIdProperty() && getOwner().isAnnotationPresent(IdClass.class);
+	public org.springframework.data.mybatis.mapping.Column getMappedColumn() {
+		return this.column;
 	}
 
 	@Override
-	public boolean isClearlyId() {
-
-		return (isAnnotationPresent(Id.class) && !isCompositeId())
-				|| (isAnnotationPresent(Id.class) && getOwner().isAnnotationPresent(IdClass.class));
+	public org.springframework.data.mybatis.mapping.Association getMappedAssociation() {
+		return this.association;
 	}
 
-	@Override
-	public boolean isSingleId() {
-		return isIdProperty() && !isCompositeId();
+	public void setMappedAssociation(org.springframework.data.mybatis.mapping.Association association) {
+		this.association = association;
 	}
 
-	/**
-	 * Java Type JDBC type String VARCHAR or LONGVARCHAR java.math.BigDecimal NUMERIC boolean BIT byte TINYINT short
-	 * SMALLINT int INTEGER long BIGINT float REAL double DOUBLE byte[] VARBINARY or LONGVARBINARY java.sql.Date DATE
-	 * java.sql.Time TIME java.sql.Timestamp TIMESTAMP ---------------------------------------- Java Object Type JDBC Type
-	 * String VARCHAR or LONGVARCHAR java.math.BigDecimal NUMERIC Boolean BIT Integer INTEGER Long BIGINT Float REAL
-	 * Double DOUBLE byte[] VARBINARY or LONGVARBINARY java.sql.Date DATE java.sql.Time TIME java.sql.Timestamp TIMESTAMP
-	 *
-	 * @return
-	 */
-	@Override
-	public JdbcType getJdbcType() {
-
-		org.springframework.data.mybatis.annotation.JdbcType jdbcType = findAnnotation(
-				org.springframework.data.mybatis.annotation.JdbcType.class);
-		if (null != jdbcType) {
-			return JdbcType.valueOf(jdbcType.value());
-		}
-		Class<?> type = getActualType();
-
-		JdbcType t = javaTypesMappedToJdbcTypes.get(type);
-		if (null != t) {
-			return t;
-		}
-
-		return UNDEFINED;
+	public void setMappedColumn(org.springframework.data.mybatis.mapping.Column column) {
+		this.column = column;
 	}
 
-	@Override
-	public Class<? extends TypeHandler> getSpecifiedTypeHandler() {
-		org.springframework.data.mybatis.annotation.TypeHandler typeHandler = findAnnotation(
-				org.springframework.data.mybatis.annotation.TypeHandler.class);
-		if (null != typeHandler && StringUtils.hasText(typeHandler.value())) {
-			try {
-				return (Class<? extends TypeHandler>) ClassUtils.forName(typeHandler.value(), null);
-			} catch (ClassNotFoundException e) {
-				throw new MappingException("@TypeHandler with class " + typeHandler.value() + " not found.", e);
-			}
-
-		}
-
-		return null;
-	}
-
-	@Override
-	public MyBatisPersistentEntity<?> getOwnerEntity() {
-		return (MyBatisPersistentEntity<?>) getOwner();
-	}
-
-	/**
-	 * Looks up both Spring Data's and JPA's access type definition annotations on the property or type level to determine
-	 * the access type to be used. Will consider property-level annotations over type-level ones, favoring the Spring Data
-	 * ones over the JPA ones if found on the same level. Returns {@literal null} if no explicit annotation can be found
-	 * falling back to the defaults implemented in the super class.
-	 *
-	 * @return
-	 */
 	@Nullable
 	private Boolean detectPropertyAccess() {
 

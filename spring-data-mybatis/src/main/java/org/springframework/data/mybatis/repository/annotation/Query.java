@@ -29,5 +29,5 @@ public @interface Query {
 
 	String countStatement() default "";
 
-	boolean withAssociations() default false;
+	boolean withAssociations() default true;
 }

@@ -12,6 +12,9 @@ import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
 
+/**
+ * @author Jarvis Song
+ */
 final class MyBatisResultConverters {
 
 	private MyBatisResultConverters() {}

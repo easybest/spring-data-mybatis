@@ -8,7 +8,7 @@
 
     <import resource="../infrastructure.xml"/>
 
-    <mybatis:repositories base-package="org.springframework.data.mybatis.repository.sample"/>
+    <mybatis:repositories base-package="org.springframework.data.mybatis.repository.sample" ddl-auto="update"/>
     <bean id="mappingContext"
           class="org.springframework.data.mybatis.repository.config.MyBatisMappingContextFactoryBean">
         <property name="initialEntitySet">
