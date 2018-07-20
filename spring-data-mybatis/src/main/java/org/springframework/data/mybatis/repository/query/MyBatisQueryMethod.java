@@ -3,7 +3,6 @@ package org.springframework.data.mybatis.repository.query;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mybatis.repository.annotation.Modifying;
-import org.springframework.data.mybatis.repository.annotation.Procedure;
 import org.springframework.data.mybatis.repository.annotation.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.EntityMetadata;
@@ -131,10 +130,6 @@ public class MyBatisQueryMethod extends QueryMethod {
 	public boolean isModifyingQuery() {
 
 		return null != AnnotationUtils.findAnnotation(method, Modifying.class);
-	}
-
-	public boolean isProcedureQuery() {
-		return AnnotationUtils.findAnnotation(method, Procedure.class) != null;
 	}
 
 	@Override

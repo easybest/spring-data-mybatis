@@ -38,7 +38,7 @@ public abstract class Dialect {
 
 	/**
 	 * Resolves the native generation strategy associated to this dialect.
-	 * <p/>
+	 * 
 	 * Comes into play whenever the user specifies the native generator.
 	 *
 	 * @return The native generator strategy.
@@ -75,7 +75,7 @@ public abstract class Dialect {
 
 	/**
 	 * Generate the appropriate select statement to to retrieve the next value of a sequence.
-	 * <p/>
+	 * 
 	 * This should be a "stand alone" select statement.
 	 *
 	 * @param sequenceName the name of the sequence
@@ -89,7 +89,7 @@ public abstract class Dialect {
 	/**
 	 * Generate the select expression fragment that will retrieve the next value of a sequence as part of another
 	 * (typically DML) statement.
-	 * <p/>
+	 * 
 	 * This differs from {@link #getSequenceNextValString(String)} in that this should return an expression usable within
 	 * another statement.
 	 *

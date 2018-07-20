@@ -76,10 +76,7 @@ public abstract class AbstractMyBatisMapperBuilderAssistant implements MyBatisMa
 	protected abstract void doPrepare();
 
 	/**
-	 * mapping property => query column
-	 * 
-	 * @param complex
-	 * @return
+	 * mapping property => query column.
 	 */
 	protected Map<String, String> fetchStandardSelectColumns(boolean complex) {
 		Table table = persistentEntity.getTable();
@@ -314,10 +311,6 @@ public abstract class AbstractMyBatisMapperBuilderAssistant implements MyBatisMa
 
 	/**
 	 * build sql source for mybatis from string concat by array.
-	 *
-	 * @param strings
-	 * @param parameterTypeClass
-	 * @return
 	 */
 	protected SqlSource buildSqlSourceFromStrings(String[] strings, Class<?> parameterTypeClass) {
 		final StringBuilder sql = new StringBuilder();

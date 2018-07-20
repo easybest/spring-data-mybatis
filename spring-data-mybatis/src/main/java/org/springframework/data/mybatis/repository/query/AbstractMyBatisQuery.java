@@ -62,9 +62,6 @@ public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 		if (method.isStreamQuery()) {
 			return new MyBatisQueryExecution.StreamExecution();
 		}
-		if (method.isProcedureQuery()) {
-			return new MyBatisQueryExecution.ProcedureExecution();
-		}
 		if (method.isCollectionQuery()) {
 			return new MyBatisQueryExecution.CollectionExecution();
 		}
