@@ -3,9 +3,6 @@ package org.springframework.data.mybatis.dialect.identity.impl;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupport;
 
-/**
- * @author Jarvis Song
- */
 public class IdentityColumnSupportImpl implements IdentityColumnSupport {
 	@Override
 	public boolean supportsIdentityColumns() {

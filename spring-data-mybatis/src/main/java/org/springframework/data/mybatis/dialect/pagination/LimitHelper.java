@@ -4,8 +4,6 @@ import org.springframework.data.mybatis.dialect.RowSelection;
 
 /**
  * A helper for dealing with LimitHandler implementations.
- * 
- * @author Jarvis Song
  */
 public class LimitHelper {
 	/**

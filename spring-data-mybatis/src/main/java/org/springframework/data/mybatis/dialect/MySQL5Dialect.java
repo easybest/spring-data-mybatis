@@ -5,8 +5,4 @@ public class MySQL5Dialect extends MySQLDialect {
 		super();
 	}
 
-	protected String getEngineKeyword() {
-		return "engine";
-	}
-
 }

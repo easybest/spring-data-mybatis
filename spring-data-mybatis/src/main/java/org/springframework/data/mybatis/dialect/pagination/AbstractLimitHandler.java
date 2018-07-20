@@ -7,8 +7,6 @@ import java.sql.SQLException;
 
 /**
  * Default implementation of {@link LimitHandler} interface.
- * 
- * @author Jarvis Song
  */
 public abstract class AbstractLimitHandler implements LimitHandler {
 	protected AbstractLimitHandler() {
