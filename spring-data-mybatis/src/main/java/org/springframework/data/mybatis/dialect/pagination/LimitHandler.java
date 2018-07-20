@@ -8,8 +8,6 @@ import java.sql.SQLException;
 /**
  * Contract defining dialect-specific LIMIT clause handling. Typically implementers might consider extending
  * {@link AbstractLimitHandler} class.
- *
- * @author Jarvis Song
  */
 public interface LimitHandler {
 	/**
