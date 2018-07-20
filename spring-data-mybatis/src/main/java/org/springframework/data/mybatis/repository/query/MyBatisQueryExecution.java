@@ -275,13 +275,6 @@ public abstract class MyBatisQueryExecution {
 		}
 	}
 
-	static class ProcedureExecution extends MyBatisQueryExecution {
-		@Override
-		protected Object doExecute(AbstractMyBatisQuery query, Object[] values) {
-			return null;
-		}
-	}
-
 	/**
 	 * Removes the converter being able to convert any object into an {@link Optional} from the given
 	 * {@link ConversionService} in case we're running on Java 8.

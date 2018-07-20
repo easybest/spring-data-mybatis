@@ -43,7 +43,7 @@ public abstract class SqlSessionRepositorySupport {
 	/**
 	 * get the mapper statement include namespace.
 	 *
-	 * @param partStatement
+	 * @param partStatement partStatement
 	 * @return Statement
 	 */
 	protected String getStatement(String partStatement) {
@@ -53,8 +53,8 @@ public abstract class SqlSessionRepositorySupport {
 	/**
 	 * select one query.
 	 *
-	 * @param statement
-	 * @param <T>
+	 * @param statement statement
+	 * @param <T> entity class
 	 * @return result
 	 */
 	protected <T> T selectOne(String statement) {
@@ -100,8 +100,6 @@ public abstract class SqlSessionRepositorySupport {
 	/**
 	 * Calculate total mount.
 	 *
-	 * @param pager
-	 * @param result
 	 * @return if return -1 means can not judge ,need count from database.
 	 */
 	protected <X> long calculateTotal(Pageable pager, List<X> result) {

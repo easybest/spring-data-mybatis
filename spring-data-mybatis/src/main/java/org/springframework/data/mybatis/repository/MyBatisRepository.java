@@ -60,33 +60,21 @@ public interface MyBatisRepository<T, ID> extends PagingAndSortingRepository<T, 
 
 	/**
 	 * insert entity.
-	 * 
-	 * @param entity
-	 * @return
 	 */
 	<S extends T> S insert(S entity);
 
 	/**
 	 * force update entity.
-	 * 
-	 * @param entity
-	 * @return
 	 */
 	<S extends T> S update(S entity);
 
 	/**
 	 * force update entity ignore null properties.
-	 * 
-	 * @param entity
-	 * @return
 	 */
 	<S extends T> S updateIgnoreNull(S entity);
 
 	/**
 	 * save entity ignore null properties.
-	 * 
-	 * @param entity
-	 * @return
 	 */
 	<S extends T> S saveIgnoreNull(S entity);
 
