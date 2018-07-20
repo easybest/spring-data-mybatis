@@ -1,8 +1,5 @@
 package org.springframework.data.mybatis.dialect.identity.impl;
 
-/**
- * @author Jarvis Song
- */
 public class H2IdentityColumnSupport extends IdentityColumnSupportImpl {
 
 	@Override

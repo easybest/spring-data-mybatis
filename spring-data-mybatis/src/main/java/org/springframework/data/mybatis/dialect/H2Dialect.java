@@ -69,11 +69,6 @@ public class H2Dialect extends Dialect {
 	}
 
 	@Override
-	public String getForUpdateString() {
-		return " for update";
-	}
-
-	@Override
 	public LimitHandler getLimitHandler() {
 		return LIMIT_HANDLER;
 	}
@@ -81,21 +76,6 @@ public class H2Dialect extends Dialect {
 	@Override
 	public boolean supportsSequences() {
 		return true;
-	}
-
-	@Override
-	public boolean supportsPooledSequences() {
-		return true;
-	}
-
-	@Override
-	public String getCreateSequenceString(String sequenceName) {
-		return "create sequence " + sequenceName;
-	}
-
-	@Override
-	public String getDropSequenceString(String sequenceName) {
-		return "drop sequence if exists " + sequenceName;
 	}
 
 	@Override
@@ -111,26 +91,6 @@ public class H2Dialect extends Dialect {
 	@Override
 	public String getQuerySequencesString() {
 		return querySequenceString;
-	}
-
-	@Override
-	public boolean supportsCurrentTimestampSelection() {
-		return true;
-	}
-
-	@Override
-	public boolean isCurrentTimestampSelectStringCallable() {
-		return false;
-	}
-
-	@Override
-	public String getCurrentTimestampSelectString() {
-		return "call current_timestamp()";
-	}
-
-	@Override
-	public boolean supportsUnionAll() {
-		return true;
 	}
 
 	@Override

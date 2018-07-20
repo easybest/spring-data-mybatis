@@ -2,9 +2,6 @@ package org.springframework.data.mybatis.dialect.identity.impl;
 
 import org.springframework.data.mapping.MappingException;
 
-/**
- * @author Jarvis Song
- */
 public class AbstractTransactSQLIdentityColumnSupport extends IdentityColumnSupportImpl {
 	@Override
 	public boolean supportsIdentityColumns() {
