@@ -215,7 +215,7 @@ public class UserRepositoryTests {
 	public void executesManipulatingQuery() throws Exception {
 
 		flushTestUsers();
-		// repository.renameAllUsersTo("newLastname");
+		repository.renameAllUsersTo("newLastname");
 
 		long expected = repository.count();
 		assertThat(repository.findByLastname("newLastname").size()).isEqualTo(Long.valueOf(expected).intValue());

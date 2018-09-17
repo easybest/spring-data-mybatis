@@ -2,10 +2,10 @@ package org.springframework.data.mybatis.repository.query;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.data.mybatis.repository.annotation.Basic;
 import org.springframework.data.mybatis.repository.annotation.Modifying;
 import org.springframework.data.mybatis.repository.annotation.Query;
 import org.springframework.data.projection.ProjectionFactory;
-import org.springframework.data.repository.core.EntityMetadata;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.lang.Nullable;
@@ -118,7 +118,14 @@ public class MyBatisQueryMethod extends QueryMethod {
 	}
 
 	public boolean isComplexQuery() {
-		return getAnnotationValue("withAssociations", Boolean.class).booleanValue();
+		Basic basic = AnnotatedElementUtils.findMergedAnnotation(method, Basic.class);
+		return null != basic;
+	}
+
+	@Nullable
+	String getCountQueryProjection() {
+		String countProjection = getAnnotationValue("countProjection", String.class);
+		return StringUtils.hasText(countProjection) ? countProjection : null;
 	}
 
 	@Override
@@ -143,7 +150,7 @@ public class MyBatisQueryMethod extends QueryMethod {
 	}
 
 	@Override
-	public EntityMetadata<?> getEntityInformation() {
+	public MyBatisEntityMetadata<?> getEntityInformation() {
 		return new DefaultMyBatisEntityMetadata<>(getDomainClass());
 	}
 

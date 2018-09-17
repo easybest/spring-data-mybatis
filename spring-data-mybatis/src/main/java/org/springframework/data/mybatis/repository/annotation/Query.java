@@ -29,5 +29,7 @@ public @interface Query {
 
 	String countStatement() default "";
 
-	boolean withAssociations() default true;
+	String countProjection() default "";
+
+	// boolean withAssociations() default true;
 }
