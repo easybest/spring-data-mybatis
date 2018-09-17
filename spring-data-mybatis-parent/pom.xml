@@ -22,16 +22,16 @@
         <dist.id>${project.artifactId}</dist.id>
         <jacoco.destfile>${project.build.directory}/jacoco.exec</jacoco.destfile>
 
-        <springdata.commons>2.0.6.RELEASE</springdata.commons>
+        <springdata.commons>2.0.9.RELEASE</springdata.commons>
 
         <apt>1.1.3</apt>
-        <aspectj>1.8.12</aspectj>
+        <aspectj>1.8.13</aspectj>
         <assertj>3.9.0</assertj>
         <cdi>1.0</cdi>
         <commons-io>2.5</commons-io>
         <guava>19.0</guava>
         <hamcrest>1.3</hamcrest>
-        <jackson>2.9.4</jackson>
+        <jackson>2.9.6</jackson>
         <jacoco>0.8.0</jacoco>
         <jodatime>2.9.9</jodatime>
         <jsonpath>2.4.0</jsonpath>
@@ -41,25 +41,25 @@
         <lombok>1.16.20</lombok>
         <mockito>2.8.47</mockito>
         <querydsl>4.1.4</querydsl>
-        <reactor>Bismuth-SR7</reactor>
-        <rxjava>1.3.6</rxjava>
+        <reactor>Bismuth-SR10</reactor>
+        <rxjava>1.3.8</rxjava>
         <rxjava-reactive-streams>1.2.1</rxjava-reactive-streams>
-        <rxjava2>2.1.12</rxjava2>
+        <rxjava2>2.1.14</rxjava2>
         <slf4j>1.7.25</slf4j>
         <spring>5.0.7.RELEASE</spring>
         <spring-hateoas>0.23.0.RELEASE</spring-hateoas>
         <threetenbp>1.3.6</threetenbp>
         <validation>1.1.0.Final</validation>
-        <webbeans>2.0.2</webbeans>
+        <webbeans>2.0.5</webbeans>
         <javax-annotation-api>1.3</javax-annotation-api>
 
-        <releasetrain>Kay-SR6</releasetrain>
+        <releasetrain>Kay-SR8</releasetrain>
 
         <!-- To be overridden by individual modules -->
         <java-module-name/>
 
         <!-- MyBatis version -->
-        <mybatis>3.4.6</mybatis>
+        <mybatis>3.5.0-SNAPSHOT</mybatis>
         <mybatis.spring>2.0.0-SNAPSHOT</mybatis.spring>
         <mybatis-spring-boot>2.0.0-SNAPSHOT</mybatis-spring-boot>
     </properties>
