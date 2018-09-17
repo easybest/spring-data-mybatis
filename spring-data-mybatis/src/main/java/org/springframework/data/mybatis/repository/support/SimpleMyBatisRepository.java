@@ -58,16 +58,17 @@ public class SimpleMyBatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 	@Override
 	public List<T> findAll() {
-		return findAll((T) null);
+		return selectList("_findAll");
 	}
 
 	@Override
 	public List<T> findAll(Sort sort) {
+		if (null == sort || sort.isUnsorted()) {
+			return findAll();
+		}
 		return selectList("_findAll", new HashMap<String, Object>(1) {
 			{
-				if (null != sort && sort.isSorted()) {
-					put("_sorts", sort);
-				}
+				put("_sorts", sort);
 			}
 		});
 	}
@@ -125,8 +126,8 @@ public class SimpleMyBatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 	@Override
 	public <X extends T> Page<T> findAll(Pageable pageable, X condition) {
-		if (isUnpaged(pageable)) {
-			return new PageImpl<>(findAll());
+		if (null == pageable || pageable.isUnpaged()) {
+			return new PageImpl<>(findAll(condition));
 		}
 		return findByPager(pageable, "_findByPager", "_countByCondition", condition);
 	}
@@ -205,7 +206,7 @@ public class SimpleMyBatisRepository<T, ID> extends SqlSessionRepositorySupport 
 	@Override
 	public boolean existsById(ID id) {
 		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
-		return findBasicById(id).isPresent();
+		return findById(id).isPresent();
 	}
 
 	@Override
@@ -295,91 +296,4 @@ public class SimpleMyBatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		super.delete("_deleteAll");
 	}
 
-	@Override
-	public Optional<T> findBasicById(ID id) {
-		return Optional.ofNullable(getBasicById(id));
-	}
-
-	@Override
-	public T getBasicById(ID id) {
-		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
-		return selectOne("_getBasicById", id);
-	}
-
-	@Override
-	public List<T> findBasicAll() {
-		return findBasicAll((T) null);
-	}
-
-	@Override
-	public List<T> findBasicAll(Sort sort) {
-		return selectList("_findBasicAll", new HashMap<String, Object>(1) {
-			{
-				put("_sorts", sort);
-			}
-		});
-	}
-
-	@Override
-	public List<T> findBasicAllById(Iterable<ID> ids) {
-		return selectList("_findBasicAll", new HashMap<String, Object>(1) {
-			{
-				put("_ids", ids);
-			}
-		});
-	}
-
-	@Override
-	public <X extends T> T getBasicOne(X condition) {
-		return selectOne("_findBasicAll", new HashMap<String, Object>() {
-			{
-				put("_condition", condition);
-			}
-		});
-	}
-
-	@Override
-	public <X extends T> Optional<T> findBasicOne(X condition) {
-		return Optional.ofNullable(getBasicOne(condition));
-	}
-
-	@Override
-	public <X extends T> List<T> findBasicAll(X condition) {
-		return selectList("_findBasicAll", new HashMap<String, Object>() {
-			{
-				put("_condition", condition);
-			}
-		});
-	}
-
-	@Override
-	public <X extends T> List<T> findBasicAll(Sort sort, X condition) {
-		return selectList("_findBasicAll", new HashMap<String, Object>() {
-			{
-				put("_sort", sort);
-				put("_condition", condition);
-			}
-		});
-	}
-
-	@Override
-	public <X extends T> Page<T> findBasicAll(Pageable pageable, X condition) {
-		if (isUnpaged(pageable)) {
-			return new PageImpl<>(findBasicAll());
-		}
-		return findByPager(pageable, "_findBasicByPager", "_countBasicByCondition", condition);
-	}
-
-	@Override
-	public <X extends T> long countBasicAll(X condition) {
-		return selectOne("_countBasicByCondition", new HashMap<String, Object>() {
-			{
-				put("_condition", condition);
-			}
-		});
-	}
-
-	private static boolean isUnpaged(Pageable pageable) {
-		return pageable.isUnpaged();
-	}
 }

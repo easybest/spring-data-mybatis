@@ -22,6 +22,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.domain.sample.Role;
 import org.springframework.data.mybatis.domain.sample.User;
 import org.springframework.data.mybatis.repository.MyBatisRepository;
+import org.springframework.data.mybatis.repository.annotation.Modifying;
+import org.springframework.data.mybatis.repository.annotation.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,9 +54,9 @@ public interface UserRepository extends MyBatisRepository<User, Integer>, UserRe
 
 	List<User> findByEmailAddressAndLastnameOrFirstname(String emailAddress, String lastname, String username);
 
-	// @Modifying
-	// @Query("update ds_user u set u.lastname = ?1")
-	// void renameAllUsersTo(String lastname);
+	@Modifying
+	@Query("update ds_user set lastname = ?1")
+	void renameAllUsersTo(String lastname);
 
 	List<User> findByFirstnameOrLastname(@Param("lastname") String lastname, @Param("firstname") String firstname);
 

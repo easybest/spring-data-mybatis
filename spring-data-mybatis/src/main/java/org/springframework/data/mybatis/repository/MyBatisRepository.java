@@ -90,28 +90,4 @@ public interface MyBatisRepository<T, ID> extends PagingAndSortingRepository<T, 
 	 */
 	void deleteAllInBatch();
 
-	/*** Query with non association ***/
-
-	Optional<T> findBasicById(ID id);
-
-	T getBasicById(ID id);
-
-	List<T> findBasicAll();
-
-	List<T> findBasicAll(Sort sort);
-
-	List<T> findBasicAllById(Iterable<ID> ids);
-
-	<X extends T> T getBasicOne(X condition);
-
-	<X extends T> Optional<T> findBasicOne(X condition);
-
-	<X extends T> List<T> findBasicAll(X condition);
-
-	<X extends T> List<T> findBasicAll(Sort sort, X condition);
-
-	<X extends T> Page<T> findBasicAll(Pageable pageable, X condition);
-
-	<X extends T> long countBasicAll(X condition);
-
 }

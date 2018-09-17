@@ -2,10 +2,17 @@ package org.springframework.data.mybatis.repository.query;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.CollectionExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.ModifyingExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.PagedExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.SingleEntityExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.SlicedExecution;
+import org.springframework.data.mybatis.repository.query.MyBatisQueryExecution.StreamExecution;
 import org.springframework.data.repository.query.ParametersParameterAccessor;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 import javax.persistence.Tuple;
@@ -15,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author songjiawei
+ * @author Jarvis Song
  */
 public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 
@@ -39,6 +46,7 @@ public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 	}
 
 	@Override
+	@Nullable
 	public Object execute(Object[] parameters) {
 		return doExecute(getExecution(), parameters);
 	}
@@ -50,8 +58,17 @@ public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 	 */
 	protected abstract MyBatisQueryExecution getExecution();
 
+	protected Query createQuery(Object[] values) {
+		return doCreateQuery(values);
+	}
+
+	protected abstract Query doCreateQuery(Object[] values);
+
+	@Nullable
 	private Object doExecute(MyBatisQueryExecution execution, Object[] values) {
+
 		Object result = execution.execute(this, values);
+
 		ParametersParameterAccessor accessor = new ParametersParameterAccessor(method.getParameters(), values);
 		ResultProcessor withDynamicProjection = method.getResultProcessor().withDynamicProjection(accessor);
 
@@ -59,23 +76,24 @@ public abstract class AbstractMyBatisQuery implements RepositoryQuery {
 	}
 
 	protected MyBatisQueryExecution createExecution() {
+
 		if (method.isStreamQuery()) {
-			return new MyBatisQueryExecution.StreamExecution();
+			return new StreamExecution();
 		}
 		if (method.isCollectionQuery()) {
-			return new MyBatisQueryExecution.CollectionExecution();
+			return new CollectionExecution();
 		}
 		if (method.isSliceQuery()) {
-			return new MyBatisQueryExecution.SlicedExecution();
+			return new SlicedExecution();
 		}
 		if (method.isPageQuery()) {
-			return new MyBatisQueryExecution.PagedExecution();
+			return new PagedExecution();
 		}
 		if (method.isModifyingQuery()) {
-			return new MyBatisQueryExecution.ModifyingExecution();
+			return new ModifyingExecution();
 		}
 
-		return new MyBatisQueryExecution.SingleEntityExecution();
+		return new SingleEntityExecution();
 	}
 
 	static class TupleConverter implements Converter<Object, Object> {
