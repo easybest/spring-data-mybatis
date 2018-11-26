@@ -27,6 +27,7 @@ import org.springframework.data.mybatis.domain.sample.User;
 import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.Query;
+import org.springframework.data.mybatis.repository.SelectColumns;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,15 +45,20 @@ public interface UserRepository
 	@Transactional
 	java.util.Optional<User> findById(Integer primaryKey);
 
+	@Transactional
+	@Modifying
+	@Query("delete from ds_user where id = ?1")
 	void deleteById(Integer id);
 
-	User findByEmailAddress(String emailAddress);
+	@Query(statement = "search_by_email")
+	User findByEmailAddress(@Param("emailAddress") String emailAddress);
 
 	User findByEmailAddressAndLastname(String emailAddress, String lastname);
 
 	List<User> findByEmailAddressAndLastnameOrFirstname(String emailAddress,
 			String lastname, String username);
 
+	@Transactional
 	@Modifying
 	@Query("update ds_user set lastname = ?1")
 	void renameAllUsersTo(String lastname);
@@ -153,6 +159,7 @@ public interface UserRepository
 
 	List<User> findByAgeIn(Collection<Integer> ages);
 
+	@SelectColumns("id,lastname")
 	List<User> queryByAgeIn(Integer[] ages);
 
 	List<User> queryByAgeInOrFirstname(Integer[] ages, String firstname);

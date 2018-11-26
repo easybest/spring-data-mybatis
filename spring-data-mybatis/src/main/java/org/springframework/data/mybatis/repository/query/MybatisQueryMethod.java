@@ -6,14 +6,17 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import org.apache.ibatis.mapping.SqlCommandType;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.mybatis.repository.Query;
+import org.springframework.data.mybatis.repository.SelectColumns;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.QueryMethod;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -81,6 +84,29 @@ public class MybatisQueryMethod extends QueryMethod {
 		return null != AnnotationUtils.findAnnotation(method, Modifying.class);
 	}
 
+	public SqlCommandType getModifyingType() {
+		if (!isModifyingQuery()) {
+			throw new IllegalStateException(String.format(
+					"No annotated @Modifying found for query method %s!", getName()));
+		}
+
+		String value = getMergedOrDefaultAnnotationValue("value", Modifying.class,
+				String.class);
+		if (StringUtils.isEmpty(value)) {
+			return null;
+		}
+		if ("insert".equalsIgnoreCase(value)) {
+			return SqlCommandType.INSERT;
+		}
+		if ("update".equalsIgnoreCase(value)) {
+			return SqlCommandType.UPDATE;
+		}
+		if ("delete".equalsIgnoreCase(value)) {
+			return SqlCommandType.DELETE;
+		}
+		return null;
+	}
+
 	@Override
 	protected MybatisParameters createParameters(Method method) {
 		return new MybatisParameters(method);
@@ -119,8 +145,70 @@ public class MybatisQueryMethod extends QueryMethod {
 		return targetType.cast(AnnotationUtils.getValue(annotation, attribute));
 	}
 
+	/**
+	 * If has {@link Query} annotation, will be a Simple Query. <br/>
+	 * Strategy: if just has value, will use value as SQL will generate a statement with
+	 * namespace as repository'name and statement name as method name + UUID; if no value
+	 * set, will scan mapper with defined statement.
+	 * @return
+	 */
 	public boolean isAnnotatedQuery() {
 		return null != AnnotationUtils.findAnnotation(method, Query.class);
+	}
+
+	public String getNamedQueryName() {
+		String annotatedName = getAnnotationValue("name", String.class);
+		return StringUtils.hasText(annotatedName) ? annotatedName
+				: super.getNamedQueryName();
+	}
+
+	@Nullable
+	public String getAnnotatedQuery() {
+
+		String query = getAnnotationValue("value", String.class);
+		return StringUtils.hasText(query) ? query : null;
+	}
+
+	public String getRequiredAnnotatedQuery() throws IllegalStateException {
+
+		String query = getAnnotatedQuery();
+
+		if (query != null) {
+			return query;
+		}
+
+		throw new IllegalStateException(String
+				.format("No annotated query found for query method %s!", getName()));
+	}
+
+	@Nullable
+	public String getCountQuery() {
+
+		String countQuery = getAnnotationValue("countQuery", String.class);
+		return StringUtils.hasText(countQuery) ? countQuery : null;
+	}
+
+	public String getNamedCountQueryName() {
+
+		String annotatedName = getAnnotationValue("countName", String.class);
+		return StringUtils.hasText(annotatedName) ? annotatedName
+				: getNamedQueryName() + ".count";
+	}
+
+	@Nullable
+	public String getQueryCountNamespace() {
+
+		String annotatedName = getAnnotationValue("countNamespace", String.class);
+		return StringUtils.hasText(annotatedName) ? annotatedName
+				: getNamespace() + ".count";
+
+	}
+
+	@Nullable
+	public String getQueryCountStatement() {
+		String annotatedName = getAnnotationValue("countStatement", String.class);
+		return StringUtils.hasText(annotatedName) ? annotatedName
+				: getStatementName() + ".count";
 	}
 
 	public RepositoryMetadata getMetadata() {
@@ -128,11 +216,16 @@ public class MybatisQueryMethod extends QueryMethod {
 	}
 
 	public String getNamespace() {
-		return namespace;
+
+		String namespace = getAnnotationValue("namespace", String.class);
+		return StringUtils.hasText(namespace) ? namespace : this.namespace;
+
 	}
 
 	public String getStatementName() {
-		return statementName;
+		String statement = getAnnotationValue("statement", String.class);
+		return StringUtils.hasText(statement) ? statement
+				: (isAnnotatedQuery() ? method.getName() : this.statementName);
 	}
 
 	public String getStatementId() {
@@ -147,14 +240,25 @@ public class MybatisQueryMethod extends QueryMethod {
 		this.limitSize = limitSize;
 	}
 
-	String getCountStatementName() {
+	public String getCountStatementName() {
 		String statementName = getAnnotationValue("countStatement", String.class);
 		return StringUtils.hasText(statementName) ? statementName
 				: ("count_" + getStatementName());
 	}
 
-	String getCountStatementId() {
+	public String getCountStatementId() {
 		return getNamespace() + "." + getCountStatementName();
+	}
+
+	public String getSelectColumns() {
+
+		SelectColumns columns = method.getAnnotation(SelectColumns.class);
+		if (null == columns || StringUtils.isEmpty(columns.value())) {
+			return null;
+		}
+
+		return columns.value();
+
 	}
 
 }

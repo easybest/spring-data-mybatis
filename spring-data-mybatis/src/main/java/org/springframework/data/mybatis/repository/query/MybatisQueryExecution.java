@@ -94,7 +94,7 @@ public abstract class MybatisQueryExecution {
 							param -> values[param.getIndex()]));
 
 			if (parameters.hasSortParameter()) {
-				params.put("_sorts", values[parameters.getSortIndex()]);
+				params.put("__sort", values[parameters.getSortIndex()]);
 			}
 
 			return query.getSqlSessionTemplate()
@@ -125,10 +125,10 @@ public abstract class MybatisQueryExecution {
 			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
 			if (parameters.hasSortParameter()) {
 				Sort sort = (Sort) values[parameters.getSortIndex()];
-				params.put("_sorts", null != sort && sort.isSorted() ? sort : null);
+				params.put("__sort", null != sort && sort.isSorted() ? sort : null);
 			}
 			else if (null != pageable) {
-				params.put("_sorts",
+				params.put("__sort",
 						null != pageable.getSort() && pageable.getSort().isSorted()
 								? pageable.getSort() : null);
 			}
@@ -157,9 +157,9 @@ public abstract class MybatisQueryExecution {
 				}
 			}
 
-			params.put("offset", offset);
-			params.put("pageSize", pageSize);
-			params.put("offsetEnd", offset + pageSize);
+			params.put("__offset", offset);
+			params.put("__pageSize", pageSize);
+			params.put("__offsetEnd", offset + pageSize);
 
 			List<Object> result = query.getSqlSessionTemplate()
 					.selectList(query.getQueryMethod().getStatementId(), params);
@@ -190,10 +190,10 @@ public abstract class MybatisQueryExecution {
 			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
 			if (parameters.hasSortParameter()) {
 				Sort sort = (Sort) values[parameters.getSortIndex()];
-				params.put("_sorts", null != sort && sort.isSorted() ? sort : null);
+				params.put("__sort", null != sort && sort.isSorted() ? sort : null);
 			}
 			else if (null != pageable) {
-				params.put("_sorts",
+				params.put("__sort",
 						null != pageable.getSort() && pageable.getSort().isSorted()
 								? pageable.getSort() : null);
 			}
@@ -222,9 +222,9 @@ public abstract class MybatisQueryExecution {
 				}
 			}
 
-			params.put("offset", offset);
-			params.put("pageSize", pageSize);
-			params.put("offsetEnd", offset + pageSize);
+			params.put("__offset", offset);
+			params.put("__pageSize", pageSize);
+			params.put("__offsetEnd", offset + pageSize);
 
 			List<Object> result = query.getSqlSessionTemplate()
 					.selectList(query.getQueryMethod().getStatementId(), params);
@@ -253,7 +253,7 @@ public abstract class MybatisQueryExecution {
 							param -> values[param.getIndex()]));
 
 			if (parameters.hasSortParameter()) {
-				params.put("_sorts", values[parameters.getSortIndex()]);
+				params.put("__sort", values[parameters.getSortIndex()]);
 			}
 
 			return query.getSqlSessionTemplate()
@@ -266,7 +266,18 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
-			return null;
+			final int[] c = { 0 };
+			MybatisParameters parameters = query.getQueryMethod().getParameters();
+			Map<String, Object> params = parameters.getBindableParameters().stream()
+					.filter(param -> null != values[param.getIndex()])
+					.collect(Collectors.toMap(
+							param -> param.getName().orElse("p" + c[0]++),
+							param -> values[param.getIndex()]));
+
+			int rows = query.getSqlSessionTemplate()
+					.update(query.getQueryMethod().getStatementId(), params);
+
+			return rows;
 		}
 
 	}
