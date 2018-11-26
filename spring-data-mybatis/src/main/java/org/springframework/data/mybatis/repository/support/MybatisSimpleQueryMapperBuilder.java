@@ -70,7 +70,7 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 		}
 
 		addMappedStatement(method.getStatementId(), new String[] { sql }, commandType,
-				Map.class, entity.getType());
+				Map.class, method.getReturnedObjectType());
 
 	}
 
