@@ -1,23 +1,24 @@
 package org.springframework.data.mybatis.autoconfigure;
 
+import java.lang.annotation.Annotation;
 import org.springframework.boot.autoconfigure.data.AbstractRepositoryConfigurationSourceSupport;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
-import org.springframework.data.mybatis.repository.config.EnableMyBatisRepositories;
-import org.springframework.data.mybatis.repository.config.MyBatisRepositoryConfigExtension;
+import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
+import org.springframework.data.mybatis.repository.config.MybatisRepositoryConfigExtension;
 import org.springframework.data.repository.config.RepositoryConfigurationExtension;
 
-import java.lang.annotation.Annotation;
-
 /**
- * {@link ImportBeanDefinitionRegistrar} used to auto-configure Spring Data MyBatis Repositories.
+ * {@link ImportBeanDefinitionRegistrar} used to auto-configure Spring Data MyBatis
+ * Repositories.
  * 
  * @author Jarvis Song
  */
-class MyBatisRepositoriesAutoConfigureRegistrar extends AbstractRepositoryConfigurationSourceSupport {
+class MyBatisRepositoriesAutoConfigureRegistrar
+		extends AbstractRepositoryConfigurationSourceSupport {
 
 	@Override
 	protected Class<? extends Annotation> getAnnotation() {
-		return EnableMyBatisRepositories.class;
+		return EnableMybatisRepositories.class;
 	}
 
 	@Override
@@ -27,11 +28,12 @@ class MyBatisRepositoriesAutoConfigureRegistrar extends AbstractRepositoryConfig
 
 	@Override
 	protected RepositoryConfigurationExtension getRepositoryConfigurationExtension() {
-		return new MyBatisRepositoryConfigExtension();
+		return new MybatisRepositoryConfigExtension();
 	}
 
-	@EnableMyBatisRepositories
+	@EnableMybatisRepositories
 	private static class EnableMyBatisRepositoriesConfiguration {
 
 	}
+
 }
