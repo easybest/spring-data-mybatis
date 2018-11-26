@@ -9,12 +9,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 @Documented
-public @interface Modifying {
+public @interface SelectColumns {
 
-	/**
-	 * select, insert, update, delete
-	 * @return
-	 */
-	String value() default "select";
+	String value() default "";
 
 }

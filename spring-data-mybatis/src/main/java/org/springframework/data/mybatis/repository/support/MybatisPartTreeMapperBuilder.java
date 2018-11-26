@@ -8,9 +8,11 @@ import static org.springframework.data.repository.query.parser.Part.Type.IN;
 import static org.springframework.data.repository.query.parser.Part.Type.NOT_IN;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.ibatis.session.Configuration;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentEntity;
@@ -76,6 +78,17 @@ public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
 			addSelectQueryStatement(getStatementName(), false);
 		}
 
+	}
+
+	@Override
+	protected List<MybatisPersistentProperty> findNormalColumns() {
+		if (null != method.getSelectColumns()) {
+
+			return Stream.of(method.getSelectColumns().split(","))
+					.map(c -> entity.getRequiredPersistentProperty(c))
+					.collect(Collectors.toList());
+		}
+		return super.findNormalColumns();
 	}
 
 	private void addCollectionQueryStatement() {

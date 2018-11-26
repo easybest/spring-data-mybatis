@@ -21,4 +21,10 @@ public @interface Query {
 
 	String statement() default "";
 
+	String countName() default "";
+
+	String countNamespace() default "";
+
+	String countStatement() default "";
+
 }

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springframework.data.mybatis.repository.sample.UserRepository">
+
+
+  <select id="search_by_email" resultType="org.springframework.data.mybatis.domain.sample.User"
+    parameterType="string">
+    select id,
+           firstname,
+           lastname,
+           age,
+           active,
+           created_at    as createdAt,
+           email_address as emailAddress,
+           binary_data   as binaryData,
+           date_of_birth as dateOfBirth
+    from ds_user
+    where email_address = #{emailAddress}
+  </select>
+
+
+</mapper>
