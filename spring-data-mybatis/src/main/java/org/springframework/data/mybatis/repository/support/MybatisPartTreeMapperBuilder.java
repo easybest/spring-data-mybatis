@@ -242,7 +242,11 @@ public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
 				builder.append(" or ");
 			}
 
+			int andCount = 0;
 			for (Part part : orPart) {
+				if (andCount++ > 0) {
+					builder.append(" and ");
+				}
 				MybatisPersistentProperty property = entity
 						.getPersistentProperty(part.getProperty().getSegment());
 				if (null == property) {

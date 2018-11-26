@@ -54,9 +54,8 @@ public class User {
 	 * @param firstname
 	 * @param lastname
 	 * @param emailAddress
-	 * @param roles
 	 */
-	public User(String firstname, String lastname, String emailAddress, Role... roles) {
+	public User(String firstname, String lastname, String emailAddress) {
 
 		this.firstname = firstname;
 		this.lastname = lastname;
