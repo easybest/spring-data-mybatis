@@ -170,4 +170,7 @@ public interface UserRepository
 
 	<T> List<T> findAsListByFirstnameLike(String name, Class<T> projectionType);
 
+	@Query("select firstname from ds_user where lastname = ?1")
+	String getFirstnameByLastname(String lastname);
+
 }

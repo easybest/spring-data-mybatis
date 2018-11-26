@@ -71,6 +71,15 @@ public class UserRepositoryTests {
 	}
 
 	@Test
+	public void testGetFirstnameByLastname() {
+		flushTestUsers();
+
+		String firstname = repository.getFirstnameByLastname("Gierke");
+		assertThat(firstname).isEqualTo("Oliver");
+
+	}
+
+	@Test
 	public void testCreation() {
 
 		long before = repository.count();
