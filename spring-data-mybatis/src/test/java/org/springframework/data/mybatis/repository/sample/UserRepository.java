@@ -15,28 +15,26 @@
  */
 package org.springframework.data.mybatis.repository.sample;
 
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Stream;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mybatis.domain.sample.Role;
 import org.springframework.data.mybatis.domain.sample.User;
-import org.springframework.data.mybatis.repository.MyBatisRepository;
-import org.springframework.data.mybatis.repository.annotation.Modifying;
-import org.springframework.data.mybatis.repository.annotation.Query;
+import org.springframework.data.mybatis.repository.Modifying;
+import org.springframework.data.mybatis.repository.MybatisRepository;
+import org.springframework.data.mybatis.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * Repository interface for {@code User}s.
  */
-public interface UserRepository extends MyBatisRepository<User, Integer>, UserRepositoryCustom {
+public interface UserRepository
+		extends MybatisRepository<User, Integer>, UserRepositoryCustom {
 
 	@Override
 	User getById(Integer integer);
@@ -52,23 +50,21 @@ public interface UserRepository extends MyBatisRepository<User, Integer>, UserRe
 
 	User findByEmailAddressAndLastname(String emailAddress, String lastname);
 
-	List<User> findByEmailAddressAndLastnameOrFirstname(String emailAddress, String lastname, String username);
+	List<User> findByEmailAddressAndLastnameOrFirstname(String emailAddress,
+			String lastname, String username);
 
 	@Modifying
 	@Query("update ds_user set lastname = ?1")
 	void renameAllUsersTo(String lastname);
 
-	List<User> findByFirstnameOrLastname(@Param("lastname") String lastname, @Param("firstname") String firstname);
+	List<User> findByFirstnameOrLastname(@Param("lastname") String lastname,
+			@Param("firstname") String firstname);
 
 	List<User> findByLastnameLikeOrderByFirstnameDesc(String lastname);
 
 	List<User> findByLastnameNotLike(String lastname);
 
 	List<User> findByLastnameNot(String lastname);
-
-	List<User> findByManagerLastname(String name);
-
-	List<User> findByColleaguesLastname(String lastname);
 
 	List<User> findByLastnameNotNull();
 
@@ -82,7 +78,8 @@ public interface UserRepository extends MyBatisRepository<User, Integer>, UserRe
 
 	List<User> findByLastnameIgnoringCaseLike(String lastname);
 
-	List<User> findByLastnameAndFirstnameAllIgnoringCase(String lastname, String firstname);
+	List<User> findByLastnameAndFirstnameAllIgnoringCase(String lastname,
+			String firstname);
 
 	List<User> findByAgeGreaterThanEqual(int age);
 
@@ -124,8 +121,6 @@ public interface UserRepository extends MyBatisRepository<User, Integer>, UserRe
 
 	Slice<User> findSliceByLastname(String lastname, Pageable pageable);
 
-	List<User> findByAttributesIn(Set<String> attributes);
-
 	Long removeByLastname(String lastname);
 
 	List<User> deleteByLastname(String lastname);
@@ -163,12 +158,6 @@ public interface UserRepository extends MyBatisRepository<User, Integer>, UserRe
 	List<User> queryByAgeInOrFirstname(Integer[] ages, String firstname);
 
 	List<User> findByLastnameNotContaining(String part);
-
-	List<User> findByRolesContaining(Role role);
-
-	List<User> findByRolesNotContaining(Role role);
-
-	List<User> findByRolesNameContaining(String name);
 
 	<T> Stream<T> findAsStreamByFirstnameLike(String name, Class<T> projectionType);
 

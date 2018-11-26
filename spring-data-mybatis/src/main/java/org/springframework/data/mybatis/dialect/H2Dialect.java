@@ -24,7 +24,7 @@ public class H2Dialect extends Dialect {
 			}
 			// final boolean hasOffset = LimitHelper.hasFirstRow(selection);
 			// return sql + (hasOffset ? " limit ? offset ?" : " limit ?");
-			return sql + " limit #{offset}, #{pageSize}";
+			return sql + " limit #{__offset}, #{__pageSize}";
 		}
 
 		@Override

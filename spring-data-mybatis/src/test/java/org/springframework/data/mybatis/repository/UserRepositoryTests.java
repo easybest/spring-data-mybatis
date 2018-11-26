@@ -1,5 +1,15 @@
 package org.springframework.data.mybatis.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.data.domain.Sort.Direction.ASC;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,31 +20,22 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mybatis.domain.sample.Address;
 import org.springframework.data.mybatis.domain.sample.User;
 import org.springframework.data.mybatis.repository.sample.UserRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.springframework.data.domain.Sort.Direction.*;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("classpath:application-context.xml")
 @Transactional
 public class UserRepositoryTests {
 
-	@Autowired UserRepository repository;
+	@Autowired
+	UserRepository repository;
+
 	User firstUser, secondUser, thirdUser, fourthUser;
+
 	Integer id;
 
 	@Before
@@ -84,7 +85,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findById(id)).map(User::getFirstname).contains(firstUser.getFirstname());
+		assertThat(repository.findById(id)).map(User::getFirstname)
+				.contains(firstUser.getFirstname());
 	}
 
 	@Test
@@ -92,8 +94,9 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findAllById(Arrays.asList(firstUser.getId(), secondUser.getId()))).contains(firstUser,
-				secondUser);
+		assertThat(repository
+				.findAllById(Arrays.asList(firstUser.getId(), secondUser.getId())))
+						.contains(firstUser, secondUser);
 	}
 
 	@Test
@@ -107,8 +110,8 @@ public class UserRepositoryTests {
 	@Test
 	public void savesCollectionCorrectly() throws Exception {
 
-		assertThat(repository.saveAll(Arrays.asList(firstUser, secondUser, thirdUser))).hasSize(3).contains(firstUser,
-				secondUser, thirdUser);
+		assertThat(repository.saveAll(Arrays.asList(firstUser, secondUser, thirdUser)))
+				.hasSize(3).contains(firstUser, secondUser, thirdUser);
 	}
 
 	@Test
@@ -124,7 +127,8 @@ public class UserRepositoryTests {
 		User foundPerson = repository.findById(id).get();
 		foundPerson.setLastname("Schlicht");
 
-		assertThat(repository.findById(id)).map(User::getFirstname).contains(foundPerson.getFirstname());
+		assertThat(repository.findById(id)).map(User::getFirstname)
+				.contains(foundPerson.getFirstname());
 	}
 
 	@Test
@@ -162,8 +166,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findAll(Sort.by(ASC, "lastname"))).hasSize(4).containsExactly(secondUser, firstUser,
-				thirdUser, fourthUser);
+		assertThat(repository.findAll(Sort.by(ASC, "lastname"))).hasSize(4)
+				.containsExactly(secondUser, firstUser, thirdUser, fourthUser);
 	}
 
 	@Test
@@ -174,8 +178,8 @@ public class UserRepositoryTests {
 		Sort.Order order = new Sort.Order(ASC, "firstname").ignoreCase();
 		List<User> result = repository.findAll(Sort.by(order));
 
-		assertThat(repository.findAll(Sort.by(order))).hasSize(4).containsExactly(thirdUser, secondUser, fourthUser,
-				firstUser);
+		assertThat(repository.findAll(Sort.by(order))).hasSize(4)
+				.containsExactly(thirdUser, secondUser, fourthUser, firstUser);
 	}
 
 	@Test
@@ -215,10 +219,11 @@ public class UserRepositoryTests {
 	public void executesManipulatingQuery() throws Exception {
 
 		flushTestUsers();
-		repository.renameAllUsersTo("newLastname");
+		// repository.renameAllUsersTo("newLastname");
 
 		long expected = repository.count();
-		assertThat(repository.findByLastname("newLastname").size()).isEqualTo(Long.valueOf(expected).intValue());
+		assertThat(repository.findByLastname("newLastname").size())
+				.isEqualTo(Long.valueOf(expected).intValue());
 	}
 
 	@Test
@@ -251,7 +256,8 @@ public class UserRepositoryTests {
 		flushTestUsers();
 
 		assertThat(repository.count()).isEqualTo(4L);
-		assertThat(repository.findAll()).contains(firstUser, secondUser, thirdUser, fourthUser);
+		assertThat(repository.findAll()).contains(firstUser, secondUser, thirdUser,
+				fourthUser);
 	}
 
 	@Test
@@ -291,8 +297,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByLastnameLikeOrderByFirstnameDesc("%r%")).hasSize(3).containsExactly(fourthUser,
-				firstUser, secondUser);
+		assertThat(repository.findByLastnameLikeOrderByFirstnameDesc("%r%")).hasSize(3)
+				.containsExactly(fourthUser, firstUser, secondUser);
 	}
 
 	@Test
@@ -300,7 +306,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByLastnameNotLike("%er%")).containsOnly(secondUser, thirdUser, fourthUser);
+		assertThat(repository.findByLastnameNotLike("%er%")).containsOnly(secondUser,
+				thirdUser, fourthUser);
 	}
 
 	@Test
@@ -308,7 +315,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByLastnameNot("Gierke")).containsOnly(secondUser, thirdUser, fourthUser);
+		assertThat(repository.findByLastnameNot("Gierke")).containsOnly(secondUser,
+				thirdUser, fourthUser);
 	}
 
 	@Test
@@ -322,33 +330,8 @@ public class UserRepositoryTests {
 	public void returnsAllAsPageIfNoPageableIsGiven() throws Exception {
 
 		flushTestUsers();
-		assertThat(repository.findAll(Pageable.unpaged())).isEqualTo(new PageImpl<>(repository.findAll()));
-	}
-
-	@Test
-	public void executesQueryMethodWithDeepTraversalCorrectly() throws Exception {
-
-		flushTestUsers();
-
-		firstUser.setManager(secondUser);
-		thirdUser.setManager(firstUser);
-		repository.saveAll(Arrays.asList(firstUser, thirdUser));
-		// `user.manager`.lastname = #{}
-		assertThat(repository.findByManagerLastname("Arrasz")).containsOnly(firstUser);
-	}
-
-	@Test
-	public void executesFindByColleaguesLastnameCorrectly() throws Exception {
-
-		flushTestUsers();
-
-		// firstUser.addColleague(secondUser);
-		// thirdUser.addColleague(firstUser);
-		// repository.saveAll(Arrays.asList(firstUser, thirdUser));
-
-		assertThat(repository.findByColleaguesLastname(secondUser.getLastname())).containsOnly(firstUser);
-
-		assertThat(repository.findByColleaguesLastname("Gierke")).containsOnly(thirdUser, secondUser);
+		assertThat(repository.findAll(Pageable.unpaged()))
+				.isEqualTo(new PageImpl<>(repository.findAll()));
 	}
 
 	@Test
@@ -356,7 +339,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByLastnameNotNull()).containsOnly(firstUser, secondUser, thirdUser, fourthUser);
+		assertThat(repository.findByLastnameNotNull()).containsOnly(firstUser, secondUser,
+				thirdUser, fourthUser);
 	}
 
 	@Test
@@ -373,8 +357,9 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByEmailAddressLike("%@%", Sort.by(Sort.Direction.ASC, "lastname")))
-				.containsExactly(secondUser, firstUser, thirdUser, fourthUser);
+		assertThat(repository.findByEmailAddressLike("%@%",
+				Sort.by(Sort.Direction.ASC, "lastname"))).containsExactly(secondUser,
+						firstUser, thirdUser, fourthUser);
 	}
 
 	@Test
@@ -382,7 +367,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByAgeLessThanEqual(35)).containsOnly(firstUser, secondUser, fourthUser);
+		assertThat(repository.findByAgeLessThanEqual(35)).containsOnly(firstUser,
+				secondUser, fourthUser);
 	}
 
 	@Test
@@ -390,7 +376,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByAgeGreaterThanEqual(35)).containsOnly(secondUser, thirdUser);
+		assertThat(repository.findByAgeGreaterThanEqual(35)).containsOnly(secondUser,
+				thirdUser);
 	}
 
 	@Test
@@ -400,7 +387,8 @@ public class UserRepositoryTests {
 		firstUser.setActive(false);
 		repository.save(firstUser);
 
-		assertThat(repository.findByActiveTrue()).containsOnly(secondUser, thirdUser, fourthUser);
+		assertThat(repository.findByActiveTrue()).containsOnly(secondUser, thirdUser,
+				fourthUser);
 	}
 
 	@Test
@@ -418,7 +406,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByCreatedAtAfter(secondUser.getCreatedAt())).containsOnly(thirdUser, fourthUser);
+		assertThat(repository.findByCreatedAtAfter(secondUser.getCreatedAt()))
+				.containsOnly(thirdUser, fourthUser);
 	}
 
 	@Test
@@ -426,7 +415,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByCreatedAtBefore(thirdUser.getCreatedAt())).containsOnly(firstUser, secondUser);
+		assertThat(repository.findByCreatedAtBefore(thirdUser.getCreatedAt()))
+				.containsOnly(firstUser, secondUser);
 	}
 
 	@Test
@@ -450,7 +440,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findByFirstnameContaining("a")).containsOnly(secondUser, thirdUser);
+		assertThat(repository.findByFirstnameContaining("a")).containsOnly(secondUser,
+				thirdUser);
 	}
 
 	@Test
@@ -466,7 +457,8 @@ public class UserRepositoryTests {
 
 		page = repository.findAll(Pageable.unpaged());
 		assertThat(page.getNumberOfElements()).isEqualTo(4);
-		assertThat(page.getContent()).contains(firstUser, secondUser, thirdUser, fourthUser);
+		assertThat(page.getContent()).contains(firstUser, secondUser, thirdUser,
+				fourthUser);
 	}
 
 	@Test
@@ -479,37 +471,6 @@ public class UserRepositoryTests {
 		set.add(secondUser.getId());
 
 		assertThat(repository.findAllById(set)).containsOnly(firstUser, secondUser);
-	}
-
-	@Test
-	public void ordersByReferencedEntityCorrectly() {
-
-		flushTestUsers();
-		firstUser.setManager(thirdUser);
-		repository.save(firstUser);
-
-		Page<User> all = repository.findAll(PageRequest.of(0, 10, Sort.by("manager.id")));
-
-		assertThat(all.getContent().isEmpty()).isFalse();
-	}
-
-	@Test
-	public void shouldGenerateLeftOuterJoinInfindAllWithPaginationAndSortOnNestedPropertyPath() {
-		flushTestUsers();
-		firstUser.setManager(null);
-		secondUser.setManager(null);
-		thirdUser.setManager(firstUser); // manager Oliver
-		fourthUser.setManager(secondUser); // manager Joachim
-
-		flushTestUsers();
-
-		Page<User> pages = repository.findAll(PageRequest.of(0, 4, Sort.by(Sort.Direction.ASC, "manager.firstname")));
-		assertThat(pages.getSize()).isEqualTo(4);
-		assertThat(pages.getContent().get(0).getManager()).isNull();
-		assertThat(pages.getContent().get(1).getManager()).isNull();
-		assertThat(pages.getContent().get(2).getManager().getFirstname()).isEqualTo("Joachim");
-		assertThat(pages.getContent().get(3).getManager().getFirstname()).isEqualTo("Oliver");
-		assertThat(pages.getTotalElements()).isEqualTo(4L);
 	}
 
 	@Test
@@ -540,7 +501,7 @@ public class UserRepositoryTests {
 	@Test
 	public void findAllReturnsEmptyIterableIfNoIdsGiven() {
 
-		assertThat(repository.findAllById(Collections.<Integer> emptySet())).isEmpty();
+		assertThat(repository.findAllById(Collections.<Integer>emptySet())).isEmpty();
 	}
 
 	@Test
@@ -557,7 +518,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		Collection<User> result = repository.findByIdIn(firstUser.getId(), secondUser.getId());
+		Collection<User> result = repository.findByIdIn(firstUser.getId(),
+				secondUser.getId());
 
 		assertThat(result).containsOnly(firstUser, secondUser);
 	}
@@ -567,43 +529,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		assertThat(repository.findAllByOrderByLastnameAsc()).containsOnly(secondUser, firstUser, thirdUser, fourthUser);
-	}
-
-	@Test
-	public void sortByAssociationPropertyShouldUseLeftOuterJoin() {
-
-		secondUser.getColleagues().add(firstUser);
-		fourthUser.getColleagues().add(thirdUser);
-		flushTestUsers();
-
-		List<User> result = repository.findAll(Sort.by(Sort.Direction.ASC, "colleagues.id"));
-
-		assertThat(result).hasSize(4);
-	}
-
-	@Test
-	public void sortByAssociationPropertyInPageableShouldUseLeftOuterJoin() {
-
-		secondUser.getColleagues().add(firstUser);
-		fourthUser.getColleagues().add(thirdUser);
-		flushTestUsers();
-
-		Page<User> page = repository.findAll(PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "colleagues.id")));
-
-		assertThat(page.getContent()).hasSize(4);
-	}
-
-	@Test
-	public void sortByEmbeddedProperty() {
-
-		thirdUser.setAddress(new Address("Germany", "Saarbrücken", "HaveItYourWay", "123"));
-		flushTestUsers();
-
-		Page<User> page = repository.findAll(PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "address.streetName")));
-
-		assertThat(page.getContent()).hasSize(4);
-		assertThat(page.getContent().get(3)).isEqualTo(thirdUser);
+		assertThat(repository.findAllByOrderByLastnameAsc()).containsOnly(secondUser,
+				firstUser, thirdUser, fourthUser);
 	}
 
 	@Test
@@ -617,20 +544,6 @@ public class UserRepositoryTests {
 		List<User> result = repository.findByBinaryData(data);
 		assertThat(result).containsOnly(firstUser);
 		assertThat(result.get(0).getBinaryData()).isEqualTo(data);
-	}
-
-	@Test
-	public void findByElementCollectionAttribute() {
-
-		firstUser.getAttributes().add("cool");
-		secondUser.getAttributes().add("hip");
-		thirdUser.getAttributes().add("rockstar");
-
-		flushTestUsers();
-		// from
-		List<User> result = repository.findByAttributesIn(new HashSet<>(Arrays.asList("cool", "hip")));
-
-		assertThat(result).containsOnly(firstUser, secondUser);
 	}
 
 	@Test
@@ -717,8 +630,10 @@ public class UserRepositoryTests {
 		User youngest1 = firstUser;
 		User youngest2 = fourthUser;
 
-		assertThat(repository.findFirst2UsersBy(Sort.by(ASC, "age"))).contains(youngest1, youngest2);
-		assertThat(repository.findTop2UsersBy(Sort.by(ASC, "age"))).contains(youngest1, youngest2);
+		assertThat(repository.findFirst2UsersBy(Sort.by(ASC, "age"))).contains(youngest1,
+				youngest2);
+		assertThat(repository.findTop2UsersBy(Sort.by(ASC, "age"))).contains(youngest1,
+				youngest2);
 	}
 
 	@Test
@@ -730,10 +645,12 @@ public class UserRepositoryTests {
 		User youngest2 = fourthUser;
 		User youngest3 = secondUser;
 
-		Page<User> firstPage = repository.findFirst3UsersBy(PageRequest.of(0, 2, ASC, "age"));
+		Page<User> firstPage = repository
+				.findFirst3UsersBy(PageRequest.of(0, 2, ASC, "age"));
 		assertThat(firstPage.getContent()).contains(youngest1, youngest2);
 
-		Page<User> secondPage = repository.findFirst3UsersBy(PageRequest.of(1, 2, ASC, "age"));
+		Page<User> secondPage = repository
+				.findFirst3UsersBy(PageRequest.of(1, 2, ASC, "age"));
 		assertThat(secondPage.getContent()).contains(youngest3);
 	}
 
@@ -746,10 +663,12 @@ public class UserRepositoryTests {
 		User youngest2 = fourthUser;
 		User youngest3 = secondUser;
 
-		Page<User> firstPage = repository.findFirst2UsersBy(PageRequest.of(0, 3, ASC, "age"));
+		Page<User> firstPage = repository
+				.findFirst2UsersBy(PageRequest.of(0, 3, ASC, "age"));
 		assertThat(firstPage.getContent()).contains(youngest1, youngest2);
 
-		Page<User> secondPage = repository.findFirst2UsersBy(PageRequest.of(1, 3, ASC, "age"));
+		Page<User> secondPage = repository
+				.findFirst2UsersBy(PageRequest.of(1, 3, ASC, "age"));
 		// assertThat(secondPage.getContent()).contains(youngest3);
 		assertThat(secondPage.getContent().isEmpty());
 	}
@@ -763,10 +682,12 @@ public class UserRepositoryTests {
 		User youngest2 = fourthUser;
 		User youngest3 = secondUser;
 
-		Slice<User> firstPage = repository.findTop3UsersBy(PageRequest.of(0, 2, ASC, "age"));
+		Slice<User> firstPage = repository
+				.findTop3UsersBy(PageRequest.of(0, 2, ASC, "age"));
 		assertThat(firstPage.getContent()).contains(youngest1, youngest2);// 0,2
 
-		Slice<User> secondPage = repository.findTop3UsersBy(PageRequest.of(1, 2, ASC, "age"));
+		Slice<User> secondPage = repository
+				.findTop3UsersBy(PageRequest.of(1, 2, ASC, "age"));
 		assertThat(secondPage.getContent()).contains(youngest3);// 2,1
 	}
 
@@ -779,10 +700,12 @@ public class UserRepositoryTests {
 		User youngest2 = fourthUser;
 		User youngest3 = secondUser;
 
-		Slice<User> firstPage = repository.findTop2UsersBy(PageRequest.of(0, 3, ASC, "age"));
+		Slice<User> firstPage = repository
+				.findTop2UsersBy(PageRequest.of(0, 3, ASC, "age"));
 		assertThat(firstPage.getContent()).contains(youngest1, youngest2);// 0,2
 
-		Slice<User> secondPage = repository.findTop2UsersBy(PageRequest.of(1, 3, ASC, "age"));
+		Slice<User> secondPage = repository
+				.findTop2UsersBy(PageRequest.of(1, 3, ASC, "age"));
 		// assertThat(secondPage.getContent()).contains(youngest3);
 		assertThat(secondPage.getContent().isEmpty());
 	}
@@ -816,24 +739,6 @@ public class UserRepositoryTests {
 	}
 
 	@Test
-	public void findByEmptyCollectionOfStrings() throws Exception {
-
-		flushTestUsers();
-
-		List<User> users = repository.findByAttributesIn(new HashSet<>());
-		assertThat(users).hasSize(0);
-	}
-
-	@Test
-	public void findByEmptyCollectionOfIntegers() throws Exception {
-
-		flushTestUsers();
-
-		List<User> users = repository.findByAgeIn(Collections.emptyList());
-		assertThat(users).hasSize(0);
-	}
-
-	@Test
 	public void findByEmptyArrayOfIntegers() throws Exception {
 
 		flushTestUsers();
@@ -847,7 +752,8 @@ public class UserRepositoryTests {
 
 		flushTestUsers();
 
-		List<User> users = repository.queryByAgeInOrFirstname(new Integer[0], secondUser.getFirstname());
+		List<User> users = repository.queryByAgeInOrFirstname(new Integer[0],
+				secondUser.getFirstname());
 		assertThat(users).containsOnly(secondUser);
 	}
 
@@ -860,7 +766,8 @@ public class UserRepositoryTests {
 		assertThat(repository.count()).isEqualTo(count);
 	}
 
-	private static <T> void assertSameElements(Collection<T> first, Collection<T> second) {
+	private static <T> void assertSameElements(Collection<T> first,
+			Collection<T> second) {
 
 		for (T element : first) {
 			assertThat(element).isIn(second);
