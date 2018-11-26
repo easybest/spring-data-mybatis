@@ -17,14 +17,14 @@ package org.springframework.data.mybatis.repository.sample;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.data.mybatis.repository.config.EnableMyBatisRepositories;
+import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
 
 /**
  * @author Oliver Gierke
  */
 @Configuration
 @ImportResource("classpath:infrastructure.xml")
-@EnableMyBatisRepositories
+@EnableMybatisRepositories
 public class SampleConfig {
 
 }

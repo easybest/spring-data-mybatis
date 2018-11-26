@@ -1,32 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:util="http://www.springframework.org/schema/util"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <!-- Database setup -->
-    <import resource="infrastructure.xml"/>
-    <bean id="mappingContext"
-          class="org.springframework.data.mybatis.repository.config.MyBatisMappingContextFactoryBean">
-        <property name="initialEntitySet">
-            <util:set>
-                <value>org.springframework.data.mybatis.domain.sample.User</value>
-            </util:set>
-        </property>
-    </bean>
-    <bean id="dialect" class="org.springframework.data.mybatis.dialect.MySQL5Dialect"/>
-    <!-- Configure a DAO for User class -->
-    <bean id="userDao" class="org.springframework.data.mybatis.repository.support.MyBatisRepositoryFactoryBean">
-        <constructor-arg value="org.springframework.data.mybatis.repository.sample.UserRepository"/>
-        <property name="customImplementation">
-            <bean class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl">
-                <constructor-arg ref="sqlSessionTemplate"/>
-            </bean>
-        </property>
-        <property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
-        <property name="mappingContext" ref="mappingContext"/>
-        <property name="dialect" ref="dialect"/>
-    </bean>
+  <!-- Database setup -->
+  <import resource="infrastructure.xml"/>
 
+  <!-- Configure a DAO for User class -->
+  <bean id="userDao" class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">
+    <constructor-arg value="org.springframework.data.mybatis.repository.sample.UserRepository"/>
+    <property name="customImplementation">
+      <bean class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl">
+        <constructor-arg ref="sqlSessionTemplate"/>
+      </bean>
+    </property>
+    <property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+    <property name="mappingContext" ref="mappingContext"/>
+  </bean>
+
+  <bean id="mappingContext"
+    class="org.springframework.data.mybatis.repository.config.MybatisMappingContextFactoryBean"/>
 </beans>
