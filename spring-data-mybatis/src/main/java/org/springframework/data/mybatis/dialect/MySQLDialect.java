@@ -20,7 +20,7 @@ public class MySQLDialect extends Dialect {
 			}
 
 			// return sql + (hasOffset ? " limit #{pageSize}, #{offset}" : " limit #{pageSize}");
-			return sql + " limit #{offset}, #{pageSize}";
+			return sql + " limit #{__offset}, #{__pageSize}";
 		}
 
 		@Override

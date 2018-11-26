@@ -1,5 +1,8 @@
 package org.springframework.data.mybatis.repository.support;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -8,19 +11,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
- * Convenient super class for MyBatis SqlSession data access objects. It gives you access to the template which can then
- * be used to execute SQL methods.
+ * Convenient super class for MyBatis SqlSession data access objects. It gives you access
+ * to the template which can then be used to execute SQL methods.
  *
- * @author Jarvis Song
+ * @author JARVIS SONG
  */
 public abstract class SqlSessionRepositorySupport {
 
 	public static final char DOT = '.';
+
 	private final SqlSessionTemplate sqlSession;
 
 	protected SqlSessionRepositorySupport(SqlSessionTemplate sqlSessionTemplate) {
@@ -34,14 +34,12 @@ public abstract class SqlSessionRepositorySupport {
 
 	/**
 	 * Sub class can override this method.
-	 *
 	 * @return Namespace
 	 */
 	protected abstract String getNamespace();
 
 	/**
 	 * get the mapper statement include namespace.
-	 *
 	 * @param partStatement partStatement
 	 * @return Statement
 	 */
@@ -51,7 +49,6 @@ public abstract class SqlSessionRepositorySupport {
 
 	/**
 	 * select one query.
-	 *
 	 * @param statement statement
 	 * @param <T> entity class
 	 * @return result
@@ -90,7 +87,6 @@ public abstract class SqlSessionRepositorySupport {
 
 	/**
 	 * Calculate total mount.
-	 *
 	 * @return if return -1 means can not judge ,need count from database.
 	 */
 	protected <X> long calculateTotal(Pageable pager, List<X> result) {
@@ -109,18 +105,19 @@ public abstract class SqlSessionRepositorySupport {
 		return -1;
 	}
 
-	protected <X, Y> Page<X> findByPager(Pageable pager, String selectStatement, String countStatement, Y condition,
-			Map<String, Object> otherParams) {
+	protected <X, Y> Page<X> findByPager(Pageable pager, String selectStatement,
+			String countStatement, Y condition, Map<String, Object> otherParams) {
 		Map<String, Object> params = new HashMap<>();
-		params.put("offset", pager.getOffset());
-		params.put("pageSize", pager.getPageSize());
-		params.put("offsetEnd", pager.getOffset() + pager.getPageSize());
+		params.put("__offset", pager.getOffset());
+		params.put("__pageSize", pager.getPageSize());
+		params.put("__offsetEnd", pager.getOffset() + pager.getPageSize());
 		if (condition instanceof Sort && ((Sort) condition).isSorted()) {
-			params.put("_sorts", condition);
-		} else if (null != pager && null != pager.getSort() && pager.getSort().isSorted()) {
-			params.put("_sorts", pager.getSort());
+			params.put("__sort", condition);
 		}
-		params.put("_condition", condition);
+		else if (null != pager && null != pager.getSort() && pager.getSort().isSorted()) {
+			params.put("__sort", pager.getSort());
+		}
+		params.put("__condition", condition);
 
 		if (!CollectionUtils.isEmpty(otherParams)) {
 			params.putAll(otherParams);
@@ -135,7 +132,8 @@ public abstract class SqlSessionRepositorySupport {
 		return new PageImpl<>(result, pager, total);
 	}
 
-	protected <X, Y> Page<X> findByPager(Pageable pager, String selectStatement, String countStatement, Y condition) {
+	protected <X, Y> Page<X> findByPager(Pageable pager, String selectStatement,
+			String countStatement, Y condition) {
 		return findByPager(pager, selectStatement, countStatement, condition, null);
 	}
 

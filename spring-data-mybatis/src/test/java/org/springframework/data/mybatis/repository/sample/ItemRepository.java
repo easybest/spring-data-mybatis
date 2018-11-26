@@ -17,6 +17,8 @@ package org.springframework.data.mybatis.repository.sample;
 
 import org.springframework.data.mybatis.domain.sample.Item;
 import org.springframework.data.mybatis.domain.sample.ItemId;
-import org.springframework.data.mybatis.repository.MyBatisRepository;
+import org.springframework.data.mybatis.repository.MybatisRepository;
 
-public interface ItemRepository extends MyBatisRepository<Item, ItemId> {}
+public interface ItemRepository extends MybatisRepository<Item, ItemId> {
+
+}
