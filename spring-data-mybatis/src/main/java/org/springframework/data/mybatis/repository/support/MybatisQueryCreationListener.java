@@ -31,7 +31,10 @@ public class MybatisQueryCreationListener
 					(PartTreeMybatisQuery) query).build();
 		}
 		else if (query instanceof SimpleMybatisQuery) {
-
+			new MybatisSimpleQueryMapperBuilder(configuration,
+					mappingContext.getPersistentEntity(
+							query.getQueryMethod().getEntityInformation().getJavaType()),
+					(SimpleMybatisQuery) query).build();
 		}
 	}
 
