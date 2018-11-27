@@ -1,5 +1,9 @@
 package org.springframework.data.mybatis.domain.sample;
 
+import static org.springframework.data.mybatis.annotation.Condition.IgnoreCaseType.ALWAYS;
+import static org.springframework.data.mybatis.annotation.Condition.Type.BETWEEN;
+import static org.springframework.data.mybatis.annotation.Condition.Type.CONTAINING;
+
 import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,6 +15,7 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import lombok.Data;
+import org.springframework.data.mybatis.annotation.Condition;
 
 @Data
 @Entity
@@ -21,10 +26,13 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Integer id;
 
+	@Condition
+	@Condition(properties = "fuzzyFirstname", type = CONTAINING, ignoreCaseType = ALWAYS)
 	private String firstname;
 
 	private String lastname;
 
+	@Condition(type = BETWEEN, properties = { "startAge", "endAge" })
 	private int age;
 
 	private boolean active;

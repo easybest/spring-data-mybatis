@@ -1,5 +1,8 @@
 package org.springframework.data.mybatis.repository.support;
 
+import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.ALWAYS;
+import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.WHEN_POSSIBLE;
+
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
@@ -34,6 +37,8 @@ import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntityImpl;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.MybatisPersistentPropertyImpl;
+import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
+import org.springframework.data.repository.query.parser.Part.Type;
 
 @Slf4j
 public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilder {
@@ -82,6 +87,121 @@ public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilde
 		entity.doWithProperties(
 				(PropertyHandler<MybatisPersistentProperty>) columns::add);
 		return columns;
+	}
+
+	protected String queryConditionLeft(String column, IgnoreCaseType ignoreCaseType) {
+		if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
+			return dialect.getLowercaseFunction() + "(" + column + ")";
+		}
+		return column;
+	}
+
+	protected String queryConditionRight(Type type, IgnoreCaseType ignoreCaseType,
+			String[] properties) {
+		StringBuilder builder = new StringBuilder();
+		switch (type) {
+		case BETWEEN:
+			return String.format(" between #{%s} and #{%s}", properties[0],
+					properties[1]);
+		case CONTAINING:
+		case NOT_CONTAINING:
+			String bind = "__bind_" + properties[0];
+			builder.append("<bind name=\"").append(bind)
+					.append("\" value=\"'%' + " + properties[0] + " + '%'\" />");
+			if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
+				builder.append(dialect.getLowercaseFunction()).append("(#{").append(bind)
+						.append("})");
+			}
+			else {
+				builder.append("#{").append(bind).append("}");
+			}
+			return builder.toString();
+		case STARTING_WITH:
+			bind = "__bind_" + properties[0];
+			builder.append("<bind name=\"").append(bind)
+					.append("\" value=\"" + properties[0] + " + '%'\" />");
+			if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
+				builder.append(dialect.getLowercaseFunction()).append("(#{").append(bind)
+						.append("})");
+			}
+			else {
+				builder.append("#{").append(bind).append("}");
+			}
+			return builder.toString();
+		case ENDING_WITH:
+			bind = "__bind_" + properties[0];
+			builder.append("<bind name=\"").append(bind)
+					.append("\" value=\"'%' + " + properties[0] + "\" />");
+			if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
+				builder.append(dialect.getLowercaseFunction()).append("(#{").append(bind)
+						.append("})");
+			}
+			else {
+				builder.append("#{").append(bind).append("}");
+			}
+			return builder.toString();
+		case IN:
+		case NOT_IN:
+			builder.append("<foreach item=\"item\" index=\"index\" collection=\"")
+					.append(properties[0])
+					.append("\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+			return builder.toString();
+		case IS_NOT_NULL:
+			return " is not null";
+		case IS_NULL:
+			return " is null";
+		case TRUE:
+			return " = true";
+		case FALSE:
+			return " = false";
+		default:
+			if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
+				builder.append(dialect.getLowercaseFunction()).append("(#{")
+						.append(properties[0]).append("})");
+			}
+			else {
+				builder.append("#{").append(properties[0]).append("}");
+			}
+			return builder.toString();
+		}
+	}
+
+	protected String calculateOperation(Type type) {
+
+		switch (type) {
+
+		case SIMPLE_PROPERTY:
+			return "=";
+		case NEGATING_SIMPLE_PROPERTY:
+			return "<![CDATA[<>]]>";
+		case LESS_THAN:
+		case BEFORE:
+			return "<![CDATA[<]]>";
+		case LESS_THAN_EQUAL:
+			return "<![CDATA[<=]]>";
+		case GREATER_THAN:
+		case AFTER:
+			return "<![CDATA[>]]>";
+		case GREATER_THAN_EQUAL:
+			return ">=";
+		case NOT_LIKE:
+			return " not like ";
+		case LIKE:
+		case STARTING_WITH:
+		case ENDING_WITH:
+			return " like ";
+		case CONTAINING:
+			return " like ";
+		case NOT_CONTAINING:
+			return " not like ";
+		case IN:
+			return " in ";
+		case NOT_IN:
+			return " not in ";
+
+		}
+
+		return "";
 	}
 
 	protected Dialect detectDialect() {

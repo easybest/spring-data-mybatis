@@ -2,8 +2,6 @@ package org.springframework.data.mybatis.repository.support;
 
 import static org.apache.ibatis.mapping.SqlCommandType.DELETE;
 import static org.apache.ibatis.mapping.SqlCommandType.SELECT;
-import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.ALWAYS;
-import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.WHEN_POSSIBLE;
 import static org.springframework.data.repository.query.parser.Part.Type.IN;
 import static org.springframework.data.repository.query.parser.Part.Type.NOT_IN;
 
@@ -22,8 +20,6 @@ import org.springframework.data.mybatis.repository.query.MybatisParameters;
 import org.springframework.data.mybatis.repository.query.MybatisQueryMethod;
 import org.springframework.data.mybatis.repository.query.PartTreeMybatisQuery;
 import org.springframework.data.repository.query.parser.Part;
-import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
-import org.springframework.data.repository.query.parser.Part.Type;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.util.StringUtils;
 
@@ -254,12 +250,9 @@ public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
 							"can not find property: " + part.getProperty().getSegment()
 									+ " in entity: " + entity.getName());
 				}
-				String columnName = property.getColumnName();
+				String columnName = queryConditionLeft(property.getColumnName(),
+						part.shouldIgnoreCase());
 
-				IgnoreCaseType ignoreCaseType = part.shouldIgnoreCase();
-				if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
-					columnName = dialect.getLowercaseFunction() + '(' + columnName + ')';
-				}
 				String operation = calculateOperation(part.getType());
 				String[] properties = new String[part.getType().getNumberOfArguments()];
 				for (int i = 0; i < properties.length; i++) {
@@ -291,14 +284,15 @@ public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
 						inBuilder.append(" 1 = 1");
 					}
 					inBuilder.append("</when><otherwise>");
-					inBuilder.append(columnName + operation
-							+ queryConditionRight(part, properties));
+					inBuilder.append(columnName + operation + queryConditionRight(
+							part.getType(), part.shouldIgnoreCase(), properties));
 					inBuilder.append("</otherwise></choose>");
 					builder.append(inBuilder);
 				}
 				else {
 					builder.append(columnName).append(operation)
-							.append(queryConditionRight(part, properties));
+							.append(queryConditionRight(part.getType(),
+									part.shouldIgnoreCase(), properties));
 				}
 
 			}
@@ -308,117 +302,12 @@ public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
 		return builder.toString().trim();
 	}
 
-	private String queryConditionRight(Part part, String[] properties) {
-		StringBuilder builder = new StringBuilder();
-		IgnoreCaseType ignoreCaseType = part.shouldIgnoreCase();
-		switch (part.getType()) {
-		case CONTAINING:
-		case NOT_CONTAINING:
-			String bind = "__bind_" + properties[0];
-			builder.append("<bind name=\"").append(bind)
-					.append("\" value=\"'%' + " + properties[0] + " + '%'\" />");
-			if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
-				builder.append(dialect.getLowercaseFunction()).append("(#{").append(bind)
-						.append("})");
-			}
-			else {
-				builder.append("#{").append(bind).append("}");
-			}
-			return builder.toString();
-		case STARTING_WITH:
-			bind = "__bind_" + properties[0];
-			builder.append("<bind name=\"").append(bind)
-					.append("\" value=\"" + properties[0] + " + '%'\" />");
-			if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
-				builder.append(dialect.getLowercaseFunction()).append("(#{").append(bind)
-						.append("})");
-			}
-			else {
-				builder.append("#{").append(bind).append("}");
-			}
-			return builder.toString();
-		case ENDING_WITH:
-			bind = "__bind_" + properties[0];
-			builder.append("<bind name=\"").append(bind)
-					.append("\" value=\"'%' + " + properties[0] + "\" />");
-			if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
-				builder.append(dialect.getLowercaseFunction()).append("(#{").append(bind)
-						.append("})");
-			}
-			else {
-				builder.append("#{").append(bind).append("}");
-			}
-			return builder.toString();
-		case IN:
-		case NOT_IN:
-			builder.append("<foreach item=\"item\" index=\"index\" collection=\"")
-					.append(properties[0])
-					.append("\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
-			return builder.toString();
-		case IS_NOT_NULL:
-			return " is not null";
-		case IS_NULL:
-			return " is null";
-		case TRUE:
-			return " = true";
-		case FALSE:
-			return " = false";
-		default:
-			if (ignoreCaseType == ALWAYS || ignoreCaseType == WHEN_POSSIBLE) {
-				builder.append(dialect.getLowercaseFunction()).append("(#{")
-						.append(properties[0]).append("})");
-			}
-			else {
-				builder.append("#{").append(properties[0]).append("}");
-			}
-			return builder.toString();
-		}
-	}
-
 	private String resolveParameterName(int position) {
 		MybatisParameters parameters = method.getParameters();
 		if (parameters.hasParameterAt(position)) {
 			return parameters.getParameter(position).getName().orElse("p" + position);
 		}
 		return "p" + position;
-	}
-
-	private String calculateOperation(Type type) {
-
-		switch (type) {
-
-		case SIMPLE_PROPERTY:
-			return "=";
-		case NEGATING_SIMPLE_PROPERTY:
-			return "<![CDATA[<>]]>";
-		case LESS_THAN:
-		case BEFORE:
-			return "<![CDATA[<]]>";
-		case LESS_THAN_EQUAL:
-			return "<![CDATA[<=]]>";
-		case GREATER_THAN:
-		case AFTER:
-			return "<![CDATA[>]]>";
-		case GREATER_THAN_EQUAL:
-			return ">=";
-		case NOT_LIKE:
-			return " not like ";
-		case LIKE:
-		case STARTING_WITH:
-		case ENDING_WITH:
-			return " like ";
-		case CONTAINING:
-			return " like ";
-		case NOT_CONTAINING:
-			return " not like ";
-		case IN:
-			return " in ";
-		case NOT_IN:
-			return " not in ";
-
-		}
-
-		return "";
 	}
 
 	private String getStatementName() {
