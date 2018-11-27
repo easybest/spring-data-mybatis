@@ -2,7 +2,7 @@ package org.springframework.data.mybatis.dialect.identity.impl;
 
 import java.sql.Types;
 
-public class PostgreSQL81IdentityColumnSupport extends IdentityColumnSupportImpl {
+public class PostgreSQLIdentityColumnSupport extends IdentityColumnSupportImpl {
 
 	@Override
 	public boolean supportsIdentityColumns() {

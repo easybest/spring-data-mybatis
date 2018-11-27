@@ -33,6 +33,9 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.H2Dialect;
 import org.springframework.data.mybatis.dialect.MySQLDialect;
+import org.springframework.data.mybatis.dialect.OracleSQLDialect;
+import org.springframework.data.mybatis.dialect.PostgreSQLDialect;
+import org.springframework.data.mybatis.dialect.SQLServerSQLDialect;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntityImpl;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
@@ -220,6 +223,15 @@ public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilde
 			}
 			else if (databaseName.toLowerCase().startsWith("h2")) {
 				dialect = new H2Dialect();
+			}
+			else if (databaseName.toLowerCase().startsWith("oracle")) {
+				dialect = new OracleSQLDialect();
+			}
+			else if (databaseName.toLowerCase().startsWith("postgresql")) {
+				dialect = new PostgreSQLDialect();
+			}
+			else if (databaseName.startsWith("Microsoft SQL Server")) {
+				dialect = new SQLServerSQLDialect();
 			}
 		}
 		catch (SQLException e) {
