@@ -1,6 +1,6 @@
 package org.springframework.data.mybatis.dialect.identity.impl;
 
-public class Oracle12cIdentityColumnSupport extends IdentityColumnSupportImpl {
+public class OracleIdentityColumnSupport extends IdentityColumnSupportImpl {
 
 	@Override
 	public boolean supportsIdentityColumns() {
