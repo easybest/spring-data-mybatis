@@ -9,8 +9,10 @@ import static org.apache.ibatis.mapping.SqlCommandType.SELECT;
 import static org.apache.ibatis.mapping.SqlCommandType.UPDATE;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.persistence.GeneratedValue;
@@ -21,9 +23,15 @@ import org.apache.ibatis.executor.keygen.NoKeyGenerator;
 import org.apache.ibatis.executor.keygen.SelectKeyGenerator;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.session.Configuration;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mybatis.annotation.Condition;
+import org.springframework.data.mybatis.annotation.Conditions;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
+import org.springframework.data.repository.query.parser.Part.Type;
 import org.springframework.util.StringUtils;
 
 public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
@@ -231,8 +239,28 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 	private void addCountStatement() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("select count(*) from ").append(entity.getTableName());
-		addMappedStatement("__count", new String[] { builder.toString() }, SELECT,
+		builder.append("select count(*) from ").append(entity.getTableName()).append(" ");
+
+		// find in
+		if (entity.hasIdProperty()) {
+			builder.append("<if test=\"__ids != null\">");
+			builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+			builder.append(entity.getIdProperty().getColumnName()).append(" in ");
+			builder.append(
+					"<foreach item=\"item\" index=\"index\" collection=\"__ids\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+			builder.append("</trim>");
+			builder.append("</if>");
+		}
+
+		// find condition
+		builder.append("<if test=\"__condition != null\">");
+		builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+		builder.append(buildCondition());
+		builder.append("</trim>");
+		builder.append("</if>");
+
+		addMappedStatement("__count",
+				new String[] { "<script>", builder.toString(), "</script>" }, SELECT,
 				entity.getType(), long.class);
 	}
 
@@ -282,6 +310,12 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 			builder.append("</if>");
 		}
 
+		// find condition
+		builder.append("<if test=\"__condition != null\">");
+		builder.append("<trim prefix=\" where \" prefixOverrides=\"and |or \">");
+		builder.append(buildCondition());
+		builder.append("</trim>");
+		builder.append("</if>");
 		// order by
 		builder.append(buildStandardOrderBy());
 
@@ -291,6 +325,66 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 								builder.toString(), null) : builder.toString(),
 						"</script>" },
 				DELETE, Map.class, entity.getType());
+	}
+
+	private String buildCondition() {
+
+		final StringBuilder builder = new StringBuilder();
+
+		entity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) p -> {
+
+			Set<Condition> set = new HashSet<>();
+
+			Conditions conditions = p.findAnnotation(Conditions.class);
+			if (null != conditions && conditions.value().length > 0) {
+				set.addAll(Stream.of(conditions.value()).collect(Collectors.toSet()));
+			}
+			Condition condition = p.findAnnotation(Condition.class);
+			if (null != condition) {
+				set.add(condition);
+			}
+
+			builder.append(set.stream().map(c -> {
+
+				String[] properties = c.properties();
+				if (null == properties || properties.length == 0) {
+					properties = new String[] { p.getName() };
+				}
+				Type type = Type.valueOf(c.type().name());
+				if (type.getNumberOfArguments() > 0
+						&& type.getNumberOfArguments() != properties.length) {
+					throw new MappingException("@Condition with type " + type + " needs "
+							+ type.getNumberOfArguments() + " arguments, but only find "
+							+ properties.length + " properties in this @Condition.");
+				}
+
+				StringBuilder sb = new StringBuilder();
+				sb.append("<if test=\"");
+				sb.append(Stream.of(properties).map(
+						property -> String.format("__condition.%s != null", property))
+						.collect(Collectors.joining(" and ")));
+
+				sb.append("\">");
+
+				sb.append(" and ")
+						.append(queryConditionLeft(
+								StringUtils.hasText(c.column()) ? c.column()
+										: p.getColumnName(),
+								IgnoreCaseType.valueOf(c.ignoreCaseType().name())))
+						.append(calculateOperation(type));
+
+				sb.append(queryConditionRight(type,
+						IgnoreCaseType.valueOf(c.ignoreCaseType().name()),
+						Stream.of(properties).map(p1 -> "__condition." + p1)
+								.toArray(String[]::new)));
+
+				sb.append("</if>");
+				return sb;
+			}).collect(Collectors.joining(" ")));
+
+		});
+
+		return builder.toString();
 	}
 
 	private String buildIdCaluse() {

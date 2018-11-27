@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.domain.sample.User;
+import org.springframework.data.mybatis.domain.sample.UserQuery;
 import org.springframework.data.mybatis.repository.sample.UserRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -68,6 +69,23 @@ public class UserRepositoryTests {
 		assertThat(repository.existsById(secondUser.getId())).isTrue();
 		assertThat(repository.existsById(thirdUser.getId())).isTrue();
 		assertThat(repository.existsById(fourthUser.getId())).isTrue();
+	}
+
+	@Test
+	public void testFindByCondition() {
+		flushTestUsers();
+
+		UserQuery query = new UserQuery();
+		query.setStartAge(20);
+		query.setEndAge(32);
+		assertThat(repository.findAll(Sort.by(ASC, "lastname"), query)).hasSize(2)
+				.containsExactly(firstUser, fourthUser);
+
+		query = new UserQuery();
+		query.setFuzzyFirstname("o");
+		assertThat(repository.findAll(Sort.by(ASC, "lastname"), query)).hasSize(2)
+				.containsExactly(secondUser, firstUser);
+
 	}
 
 	@Test
