@@ -21,7 +21,7 @@
     <source.level>1.8</source.level>
     <dist.id>${project.artifactId}</dist.id>
 
-    <springdata.commons>2.1.2.RELEASE</springdata.commons>
+    <springdata.commons>2.1.3.RELEASE</springdata.commons>
 
     <apt>1.1.3</apt>
     <aspectj>1.9.1</aspectj>
