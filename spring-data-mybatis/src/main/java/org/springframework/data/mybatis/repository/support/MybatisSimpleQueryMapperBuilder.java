@@ -64,14 +64,14 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 			}
 
 		}
-
-		if (null != parameters && !parameters.isEmpty()) {
-
+		if (null != method.getResultMap()) {
+			addMappedStatement(method.getStatementId(), new String[] { sql }, commandType,
+					Map.class, method.getResultMap());
 		}
-
-		addMappedStatement(method.getStatementId(), new String[] { sql }, commandType,
-				Map.class, method.getReturnedObjectType());
-
+		else {
+			addMappedStatement(method.getStatementId(), new String[] { sql }, commandType,
+					Map.class, method.getReturnedObjectType());
+		}
 	}
 
 }

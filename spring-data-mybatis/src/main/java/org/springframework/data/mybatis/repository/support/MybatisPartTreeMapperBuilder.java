@@ -191,9 +191,11 @@ public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
 			builder.append("distinct ");
 		}
 
-		builder.append(findNormalColumns().stream()
-				.map(p -> String.format("%s as %s", p.getColumnName(), p.getName()))
-				.collect(Collectors.joining(",")));
+		// builder.append(findNormalColumns().stream()
+		// .map(p -> String.format("%s as %s", p.getColumnName(), p.getName()))
+		// .collect(Collectors.joining(",")));
+
+		builder.append(" * ");
 
 		builder.append(" from ").append(entity.getTableName());
 		String condition = buildQueryCondition();
@@ -224,7 +226,8 @@ public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
 			sql = dialect.getLimitHandler().processSql(sql, rowSelection);
 		}
 		addMappedStatement(statementName, new String[] { "<script>", sql, "</script>" },
-				SELECT, Map.class, entity.getType());
+				SELECT, Map.class,
+				null == method.getResultMap() ? RESULT_MAP : method.getResultMap());
 	}
 
 	private String buildQueryCondition() {
