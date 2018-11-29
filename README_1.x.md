@@ -3,7 +3,8 @@
                                                                                                                                                                  
 
 
-[1.x Document](README_1.x.md)
+
+[Simplified Chinese](README_1.x_zh.md)
 
 The primary goal of the Spring Data project is to make it easier to build Spring-powered applications that use data access technologies. 
 This module deals with enhanced support for MyBatis based data access layers.
@@ -17,10 +18,7 @@ This module deals with enhanced support for MyBatis based data access layers.
 * Support for transparent auditing (created, last changed)
 * Possibility to integrate custom repository code
 * Easy Spring integration with custom namespace
-* Support MySQL, H2 for now
-* Support SpringBoot 2.x
-* Due to some reason we no longer support Features about query data from more than one tables, like: @ManyToOne, @OneToMany etc. we suggest to write sql in mapper files or use @Query with sql in repository methods.
-
+* Support MySQL, Oracle, Sql Server, H2, etc.
 
 
 ## Getting Help ##
@@ -37,12 +35,20 @@ Download the jar through Maven:
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>2.0.0.BUILD-SNAPSHOT</version>
+  <version>1.0.17.RELEASE</version>
 </dependency>
 ```
 
+If you want use snapshot version , you can download the jar through maven:
+```xml
+<dependency>
+  <groupId>com.ifrabbit</groupId>
+  <artifactId>spring-data-mybatis</artifactId>
+  <version>1.0.18.BUILD-SNAPSHOT</version>
+</dependency>
+```
 
-you should add repository configuration to your pom.xml like this:
+but you should add repository configuration to your pom.xml like this:
 
 ```xml
 <repository>
@@ -88,37 +94,23 @@ Create an entity:
 
 ```java
 @Entity
-@Table(name = "user")
 public class User extends LongId {
 
-  
-  @Condition
   private String firstname;
-  @Condition(type=Condition.Type.CONTAINING)  private String lastname;
-  private String fullName;
-  @Conditions({@Condition, @Condition(type=Condition.Type.CONTAINING,properties = "fuzzyName")})
-  private String fullName;
-  @Transient
-  private String fuzzyName;
-  @Column(name = "usertype")
-  private String status;
+  private String lastname;
+       
   // Getters and setters
   // (Firstname, Lastname)-constructor and noargs-constructor
   // equals / hashcode
 }
 
 ```
-When using findAll method of MybatisRepository the @Condition or @Conditions annotations will work
-
 
 Create a repository interface in `com.example.repositories`:
 
 ```java
-public interface UserRepository extends MybatisRepository<User, Long> {
+public interface UserRepository extends CrudRepository<User, Long> {
   List<User> findByLastname(String lastname);  
-  
-  @Query("select firstname from user")
-  List<String> findUsersFirstName();
   
 }
 
@@ -158,13 +150,13 @@ add the jar through Maven:
    <dependency>
        <groupId>com.ifrabbit</groupId>
        <artifactId>spring-boot-starter-data-mybatis</artifactId>
-       <version>2.0.0.BUILD-SNAPSHOT</version>
+       <version>1.0.17.RELEASE</version>
    </dependency>
    ```
 
 If you need custom Mapper, you should add property in your application.properties like this:
 ```
-mybatis.mapper-locations=classpath*:/mapper/**/**Mapper.xml
+spring.data.mybatis.mapper-locations=classpath*:/org/springframework/data/mybatis/samples/mappers/*Mapper.xml
 ```
 
 And you need not to define SqlSessionFactory manually.
@@ -194,7 +186,6 @@ interface ReservationRepository extends MybatisRepository<Reservation, Long> {
 }
 
 @Entity
-@Table(name = "user")
 class Reservation extends LongId {
 
     private String reservationName;
