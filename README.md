@@ -17,7 +17,7 @@ This module deals with enhanced support for MyBatis based data access layers.
 * Support for transparent auditing (created, last changed)
 * Possibility to integrate custom repository code
 * Easy Spring integration with custom namespace
-* Support MySQL, H2 for now
+* Support MySQL, Oracle, Sql Server, H2, etc.
 * Support SpringBoot 2.x
 * Due to some reason we no longer support Features about query data from more than one tables, like: @ManyToOne, @OneToMany etc. we suggest to write sql in mapper files or use @Query with sql in repository methods.
 
