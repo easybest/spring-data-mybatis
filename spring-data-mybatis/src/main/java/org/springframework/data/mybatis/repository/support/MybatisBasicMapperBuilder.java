@@ -8,6 +8,7 @@ import static org.apache.ibatis.mapping.SqlCommandType.INSERT;
 import static org.apache.ibatis.mapping.SqlCommandType.SELECT;
 import static org.apache.ibatis.mapping.SqlCommandType.UPDATE;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,7 +23,10 @@ import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.keygen.NoKeyGenerator;
 import org.apache.ibatis.executor.keygen.SelectKeyGenerator;
 import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.ResultMapping;
+import org.apache.ibatis.mapping.ResultMapping.Builder;
 import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.type.TypeHandler;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PropertyHandler;
@@ -38,6 +42,8 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 	public static final String DEFAULT_SEQUENCE_NAME = "seq_spring_data_mybatis";
 
+	private static Map<Class<? extends TypeHandler>, TypeHandler> typeHandlerCache = new HashMap<>();
+
 	public MybatisBasicMapperBuilder(Configuration configuration,
 			RepositoryInformation repositoryInformation,
 			PersistentEntity<?, ?> persistentEntity) {
@@ -49,6 +55,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 	@Override
 	protected void doBuild() {
+		addResultMap();
 
 		addInsertStatement();
 		addUpdateStatement(true);
@@ -60,6 +67,41 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		addDeleteAllStatement();
 		addFindStatement(true);
 		addFindStatement(false);
+	}
+
+	private TypeHandler getTypeHandler(Class<? extends TypeHandler> clz) {
+		TypeHandler typeHandler = typeHandlerCache.get(clz);
+		if (null != typeHandler) {
+			return typeHandler;
+		}
+		try {
+			typeHandler = clz.newInstance();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		typeHandlerCache.put(clz, typeHandler);
+		return typeHandler;
+
+	}
+
+	private void addResultMap() {
+
+		List<ResultMapping> resultMappings = new ArrayList<>();
+
+		entity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) p -> {
+			Builder builder = new Builder(configuration, p.getName(), p.getColumnName(),
+					p.getType()).javaType(p.getType()).jdbcType(p.getJdbcType());
+			if (null != p.getSpecifiedTypeHandler()) {
+				builder.typeHandler(getTypeHandler(p.getSpecifiedTypeHandler()));
+			}
+
+			resultMappings.add(builder.build());
+
+		});
+
+		addResultMap(RESULT_MAP, entity.getType(), resultMappings);
+
 	}
 
 	private void addInsertStatement() {
@@ -227,14 +269,14 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 	private void addGetByIdStatement() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("select ");
-		builder.append(findNormalColumns().stream()
-				.map(p -> String.format("%s as %s", p.getColumnName(), p.getName()))
-				.collect(Collectors.joining(",")));
+		builder.append("select * ");
+//		builder.append(findNormalColumns().stream()
+//				.map(p -> String.format("%s as %s", p.getColumnName(), p.getName()))
+//				.collect(Collectors.joining(",")));
 		builder.append(" from ").append(entity.getTableName()).append(" where ")
 				.append(buildIdCaluse());
 		addMappedStatement("__get_by_id", new String[] { builder.toString() }, SELECT,
-				entity.getIdProperty().getType(), entity.getType());
+				entity.getIdProperty().getType(), RESULT_MAP);
 	}
 
 	private void addCountStatement() {
@@ -293,10 +335,10 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 		StringBuilder builder = new StringBuilder();
 
-		builder.append("select ");
-		builder.append(findNormalColumns().stream()
-				.map(p -> String.format("%s as %s", p.getColumnName(), p.getName()))
-				.collect(Collectors.joining(",")));
+		builder.append("select * ");
+//		builder.append(findNormalColumns().stream()
+//				.map(p -> String.format("%s as %s", p.getColumnName(), p.getName()))
+//				.collect(Collectors.joining(",")));
 		builder.append(" from ").append(entity.getTableName());
 
 		// find in
@@ -324,7 +366,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 						pageable ? dialect.getLimitHandler().processSql(
 								builder.toString(), null) : builder.toString(),
 						"</script>" },
-				DELETE, Map.class, entity.getType());
+				DELETE, Map.class, RESULT_MAP);
 	}
 
 	private String buildCondition() {

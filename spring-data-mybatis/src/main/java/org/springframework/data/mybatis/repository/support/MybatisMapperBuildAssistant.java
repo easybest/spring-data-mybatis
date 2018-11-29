@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.keygen.NoKeyGenerator;
+import org.apache.ibatis.mapping.ResultMapping;
 import org.apache.ibatis.mapping.ResultSetType;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.mapping.SqlSource;
@@ -45,6 +46,8 @@ import org.springframework.data.repository.query.parser.Part.Type;
 
 @Slf4j
 public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilder {
+
+	protected static final String RESULT_MAP = "__result_map";
 
 	protected static Dialect dialect = null;
 
@@ -355,6 +358,19 @@ public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilde
 				fetchSize, timeout, parameterMap, parameterType, resultMap, resultType,
 				resultSetType, flushCache, useCache, resultOrdered, keyGenerator,
 				keyProperty, keyColumn, databaseId, lang, resultSets);
+
+	}
+
+	protected void addResultMap(String id, Class<?> type,
+			List<ResultMapping> resultMappings) {
+
+		assistant.addResultMap(id, type, null, null, resultMappings, false);
+
+		if (log.isDebugEnabled()) {
+			System.out.println(
+					"/*【" + this.assistant.getCurrentNamespace() + '.' + id + "】 */");
+			System.out.println(resultMappings);
+		}
 	}
 
 	/**

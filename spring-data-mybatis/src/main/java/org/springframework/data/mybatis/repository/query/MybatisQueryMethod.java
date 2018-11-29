@@ -11,6 +11,7 @@ import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.mybatis.repository.Query;
+import org.springframework.data.mybatis.repository.ResultMap;
 import org.springframework.data.mybatis.repository.SelectColumns;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -259,6 +260,14 @@ public class MybatisQueryMethod extends QueryMethod {
 
 		return columns.value();
 
+	}
+
+	public String getResultMap() {
+		ResultMap resultMap = method.getAnnotation(ResultMap.class);
+		if (null == resultMap || StringUtils.isEmpty(resultMap.value())) {
+			return null;
+		}
+		return resultMap.value();
 	}
 
 }
