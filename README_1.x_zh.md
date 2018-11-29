@@ -1,48 +1,52 @@
 # Spring Data MyBatis 
 [![Build Status](https://travis-ci.org/hatunet/spring-data-mybatis.svg?branch=master)](https://travis-ci.org/hatunet/spring-data-mybatis)   [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/spring-data-mybatis)
-                                                                                                                                                                 
 
 
-[1.x Document](README_1.x.md)
+Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 应用程序变得更加容易。此模块处理增强基于 MyBatis 的数据访问层的支持。
 
-The primary goal of the Spring Data project is to make it easier to build Spring-powered applications that use data access technologies. 
-This module deals with enhanced support for MyBatis based data access layers.
+通过使用此模块，你可以在基于MyBatis为ORM的结构下使用Spring Data模式带来的便利性。
 
-
-## Features ##
-
-* Implementation of CRUD methods for normal Entities
-* Dynamic query generation from query method names
-* Implementation domain base classes providing basic properties
-* Support for transparent auditing (created, last changed)
-* Possibility to integrate custom repository code
-* Easy Spring integration with custom namespace
-* Support MySQL, H2 for now
-* Support SpringBoot 2.x
-* Due to some reason we no longer support Features about query data from more than one tables, like: @ManyToOne, @OneToMany etc. we suggest to write sql in mapper files or use @Query with sql in repository methods.
+如果你还没有接触过[Spring Data](http://projects.spring.io/spring-data/)，建议先了解下该[项目](http://projects.spring.io/spring-data/)。
 
 
+## 支持的一些特性 ##
 
-## Getting Help ##
-This README as well as the [reference documentation](https://hatunet.github.io/spring-data-mybatis/) are the best places to start learning about Spring Data MyBatis. 
+* 对标准Entity支持完整CRUD操作
+* 支持通过接口中的方法名生成对应的查询
+* 提供基础属性的实体基类
+* 支持透明审计（如创建时间、最后修改)
+* 自持自定义编写基于MyBatis的查询，方便而不失灵活性
+* 方便的与Spring集成
+* 支持MySQL、Oracle、SQL Server、H2、PostgreSQL等数据库
 
-If you have any question, please record a [issue](https://github.com/hatunet/spring-data-mybatis/issues) to me.
 
+## 获得帮助 ##
 
-## Quick Start ##
+这里有一份文档可以帮助你快速学习 Spring Data Mybatis。 [reference documentation](https://hatunet.github.io/spring-data-mybatis/)  
 
-Download the jar through Maven:
+如果你有任何疑问或者建议，可以录一个[issue](https://github.com/hatunet/spring-data-mybatis/issues) 给我。
+
+## 快速开始 ##
+
+通过Maven引入依赖包:
 
 ```xml
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>2.0.0.BUILD-SNAPSHOT</version>
+  <version>1.0.17.RELEASE</version>
 </dependency>
 ```
 
-
-you should add repository configuration to your pom.xml like this:
+如果你想使用快照版本:
+```xml
+<dependency>
+  <groupId>com.ifrabbit</groupId>
+  <artifactId>spring-data-mybatis</artifactId>
+  <version>1.0.18.BUILD-SNAPSHOT</version>
+</dependency>
+```
+使用快照版本前，需要在pom.xml中配置:
 
 ```xml
 <repository>
@@ -54,7 +58,7 @@ you should add repository configuration to your pom.xml like this:
 ```
 
 
-The simple Spring Data Mybatis configuration with Java-Config looks like this: 
+最简单的通过Java注解配置的Spring Data Mybatis 配置如下所示：
 ```java
 @Configuration
 @EnableMybatisRepositories(
@@ -84,47 +88,33 @@ public class TestConfig {
 
 ```
 
-Create an entity:
+创建一个实体类:
 
 ```java
 @Entity
-@Table(name = "user")
 public class User extends LongId {
 
-  
-  @Condition
   private String firstname;
-  @Condition(type=Condition.Type.CONTAINING)  private String lastname;
-  private String fullName;
-  @Conditions({@Condition, @Condition(type=Condition.Type.CONTAINING,properties = "fuzzyName")})
-  private String fullName;
-  @Transient
-  private String fuzzyName;
-  @Column(name = "usertype")
-  private String status;
+  private String lastname;
+       
   // Getters and setters
   // (Firstname, Lastname)-constructor and noargs-constructor
   // equals / hashcode
 }
 
 ```
-When using findAll method of MybatisRepository the @Condition or @Conditions annotations will work
 
-
-Create a repository interface in `com.example.repositories`:
+创建一个数据操作接口,使用包名 `com.example.repositories`:
 
 ```java
-public interface UserRepository extends MybatisRepository<User, Long> {
+public interface UserRepository extends CrudRepository<User, Long> {
   List<User> findByLastname(String lastname);  
-  
-  @Query("select firstname from user")
-  List<String> findUsersFirstName();
   
 }
 
 ```
 
-Write a test client:
+编写一个测试用例:
 
 ```java
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -149,27 +139,30 @@ public class UserRepositoryIntegrationTest {
 
 ```
 
+这样就完成了。
 
-## Use Spring Boot
 
-add the jar through Maven:
+## 使用 Spring Boot
+
+通过maven引入:
    
    ```xml
    <dependency>
        <groupId>com.ifrabbit</groupId>
        <artifactId>spring-boot-starter-data-mybatis</artifactId>
-       <version>2.0.0.BUILD-SNAPSHOT</version>
+       <version>1.0.17.RELEASE</version>
    </dependency>
    ```
 
-If you need custom Mapper, you should add property in your application.properties like this:
+
+如果你需要使用自己编写的Mybatis Mapper，需要在application.properties中配置：
 ```
-mybatis.mapper-locations=classpath*:/mapper/**/**Mapper.xml
+spring.data.mybatis.mapper-locations=classpath*:/org/springframework/data/mybatis/samples/mappers/*Mapper.xml
 ```
 
-And you need not to define SqlSessionFactory manually.
+在Spring Boot中你不需要自己去定义SqlSessionFactory.
 
-The full test code like this:
+完整的代码如下：
 
 ```java
 @SpringBootApplication
@@ -194,7 +187,6 @@ interface ReservationRepository extends MybatisRepository<Reservation, Long> {
 }
 
 @Entity
-@Table(name = "user")
 class Reservation extends LongId {
 
     private String reservationName;
@@ -219,10 +211,10 @@ class Reservation extends LongId {
 }
 ```
 
-The full example you can find in [https://github.com/hatunet/spring-data-mybatis-samples](https://github.com/hatunet/spring-data-mybatis-samples)
+完整的例子可以在  [https://github.com/hatunet/spring-data-mybatis-samples](https://github.com/hatunet/spring-data-mybatis-samples) 找到。
 
 
-## Contributing to Spring Data MyBatis ##
+## 贡献代码给 Spring Data MyBatis ##
 
 Here are some ways for you to get involved in the community:
 
