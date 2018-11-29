@@ -17,6 +17,6 @@ public interface MybatisPersistentProperty
 
 	JdbcType getJdbcType();
 
-	Class<? extends TypeHandler> getSpecifiedTypeHandler();
+	Class<? extends TypeHandler<?>> getSpecifiedTypeHandler();
 
 }
