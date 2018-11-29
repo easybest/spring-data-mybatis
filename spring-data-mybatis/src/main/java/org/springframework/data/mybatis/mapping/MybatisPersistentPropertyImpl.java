@@ -268,7 +268,7 @@ public class MybatisPersistentPropertyImpl
 	}
 
 	@Override
-	public Class<? extends TypeHandler> getSpecifiedTypeHandler() {
+	public Class<? extends TypeHandler<?>> getSpecifiedTypeHandler() {
 		if (isAnnotationPresent(
 				org.springframework.data.mybatis.annotation.TypeHandler.class)) {
 			String value = getRequiredAnnotation(
@@ -283,7 +283,7 @@ public class MybatisPersistentPropertyImpl
 							+ value
 							+ " must implement from org.apache.ibatis.type.TypeHandler");
 				}
-				return (Class<? extends TypeHandler>) clz;
+				return (Class<? extends TypeHandler<?>>) clz;
 			}
 			catch (ClassNotFoundException e) {
 				throw new MappingException("The specified type handler with value: "
