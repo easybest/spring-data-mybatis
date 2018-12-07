@@ -308,9 +308,9 @@ public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
 	private String resolveParameterName(int position) {
 		MybatisParameters parameters = method.getParameters();
 		if (parameters.hasParameterAt(position)) {
-			return parameters.getParameter(position).getName().orElse("p" + position);
+			return parameters.getParameter(position).getName().orElse("__p" + position);
 		}
-		return "p" + position;
+		return "__p" + position;
 	}
 
 	private String getStatementName() {
