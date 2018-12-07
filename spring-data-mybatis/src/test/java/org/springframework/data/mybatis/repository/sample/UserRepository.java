@@ -173,4 +173,7 @@ public interface UserRepository
 	@Query("select firstname from ds_user where lastname = ?1")
 	String getFirstnameByLastname(String lastname);
 
+	@Query("select id from ds_user where firstname = ?1")
+	Integer getUserIdByFirstname(String firstname);
+
 }
