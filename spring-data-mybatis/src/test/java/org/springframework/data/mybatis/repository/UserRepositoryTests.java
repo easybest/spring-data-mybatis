@@ -98,6 +98,15 @@ public class UserRepositoryTests {
 	}
 
 	@Test
+	public void testGetUserIdByFirstname() {
+
+		flushTestUsers();
+		Integer kevin = repository.getUserIdByFirstname("kevin");
+		assertThat(kevin).isEqualTo(fourthUser.getId());
+
+	}
+
+	@Test
 	public void testCreation() {
 
 		long before = repository.count();
