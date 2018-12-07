@@ -90,7 +90,7 @@ public abstract class MybatisQueryExecution {
 			Map<String, Object> params = parameters.getBindableParameters().stream()
 					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(
-							param -> param.getName().orElse("p" + c[0]++),
+							param -> param.getName().orElse("__p" + c[0]++),
 							param -> values[param.getIndex()]));
 
 			if (parameters.hasSortParameter()) {
@@ -119,7 +119,7 @@ public abstract class MybatisQueryExecution {
 			Map<String, Object> params = parameters.getBindableParameters().stream()
 					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(
-							param -> param.getName().orElse("p" + c[0]++),
+							param -> param.getName().orElse("__p" + c[0]++),
 							param -> values[param.getIndex()]));
 
 			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
@@ -184,7 +184,7 @@ public abstract class MybatisQueryExecution {
 			Map<String, Object> params = parameters.getBindableParameters().stream()
 					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(
-							param -> param.getName().orElse("p" + c[0]++),
+							param -> param.getName().orElse("__p" + c[0]++),
 							param -> values[param.getIndex()]));
 
 			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
@@ -249,7 +249,7 @@ public abstract class MybatisQueryExecution {
 			Map<String, Object> params = parameters.getBindableParameters().stream()
 					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(
-							param -> param.getName().orElse("p" + c[0]++),
+							param -> param.getName().orElse("__p" + c[0]++),
 							param -> values[param.getIndex()]));
 
 			if (parameters.hasSortParameter()) {
@@ -271,7 +271,7 @@ public abstract class MybatisQueryExecution {
 			Map<String, Object> params = parameters.getBindableParameters().stream()
 					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(
-							param -> param.getName().orElse("p" + c[0]++),
+							param -> param.getName().orElse("__p" + c[0]++),
 							param -> values[param.getIndex()]));
 
 			int rows = query.getSqlSessionTemplate()
@@ -292,7 +292,7 @@ public abstract class MybatisQueryExecution {
 			Map<String, Object> params = parameters.getBindableParameters().stream()
 					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(
-							param -> param.getName().orElse("p" + c[0]++),
+							param -> param.getName().orElse("__p" + c[0]++),
 							param -> values[param.getIndex()]));
 
 			boolean collectionQuery = query.getQueryMethod().isCollectionQuery();
@@ -332,7 +332,7 @@ public abstract class MybatisQueryExecution {
 			Map<String, Object> params = parameters.getBindableParameters().stream()
 					.filter(param -> null != values[param.getIndex()])
 					.collect(Collectors.toMap(
-							param -> param.getName().orElse("p" + c[0]++),
+							param -> param.getName().orElse("__p" + c[0]++),
 							param -> values[param.getIndex()]));
 
 			return ((long) query.getSqlSessionTemplate()
