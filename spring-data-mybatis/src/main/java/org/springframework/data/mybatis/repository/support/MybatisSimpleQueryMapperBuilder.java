@@ -5,6 +5,7 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.session.Configuration;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mybatis.repository.query.InvalidMybatisQueryMethodException;
+import org.springframework.data.mybatis.repository.query.MybatisParameters.MybatisParameter;
 import org.springframework.data.mybatis.repository.query.MybatisQueryMethod;
 import org.springframework.data.mybatis.repository.query.SimpleMybatisQuery;
 import org.springframework.data.mybatis.repository.query.StringQuery;
@@ -58,8 +59,12 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 							"#{" + parameterBinding.getName() + "}");
 				}
 				else if (null != parameterBinding.getPosition()) {
+
+					MybatisParameter mp = method.getParameters().getBindableParameter(
+							parameterBinding.getRequiredPosition() - 1);
+
 					sql = sql.replace("?" + parameterBinding.getPosition(),
-							"#{p" + (parameterBinding.getPosition() - 1) + "}");
+							"#{" + (mp.getName().orElse("__p" + (mp.getIndex()))) + "}");
 				}
 			}
 
