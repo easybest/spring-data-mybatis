@@ -240,7 +240,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		builder.append("</set> where ").append(buildIdCaluse());
 
 		String[] sqls = new String[] { "<script>", builder.toString(), "</script>" };
-		addMappedStatement(ignoreNull ? "__updateIgnoreNull" : "__update", sqls, UPDATE,
+		addMappedStatement(ignoreNull ? "__update_ignore_null" : "__update", sqls, UPDATE,
 				entity.getType());
 	}
 
