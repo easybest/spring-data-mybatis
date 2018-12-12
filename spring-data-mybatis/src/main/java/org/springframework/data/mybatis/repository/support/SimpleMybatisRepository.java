@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import org.mybatis.spring.SqlSessionTemplate;
+
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -18,6 +18,8 @@ import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+
+import org.mybatis.spring.SqlSessionTemplate;
 
 /**
  * Default implementation of the {@link CrudRepository} and
@@ -141,6 +143,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Override
 	@Transactional
 	public <S extends T> S insert(S entity) {
+
 		insert("__insert", entity);
 		return entity;
 	}
@@ -148,6 +151,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Override
 	@Transactional
 	public <S extends T> S update(S entity) {
+
 		update("__update", entity);
 		return entity;
 	}
@@ -155,6 +159,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Override
 	@Transactional
 	public <S extends T> S updateIgnoreNull(S entity) {
+
 		update("__update_ignore_null", entity);
 		return entity;
 	}

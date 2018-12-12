@@ -7,65 +7,76 @@ DROP TABLE IF EXISTS ds_user_attributes;
 DROP TABLE IF EXISTS department;
 DROP TABLE IF EXISTS ds_booking;
 
-CREATE TABLE ds_user (
-  id            INT(11)      NOT NULL AUTO_INCREMENT,
-  firstname     VARCHAR(32)  NULL,
-  lastname      VARCHAR(32)  NULL,
-  age           INT(3)       NULL,
-  active        INT(1)       NULL,
-  created_at    TIMESTAMP    NULL,
-  email_address VARCHAR(128) NULL,
-  manager_id    INT(11)      NULL,
-  binary_data   BLOB         NULL,
-  date_of_birth DATE         NULL,
-  country       VARCHAR(64)  NULL,
-  city          VARCHAR(64)  NULL,
-  street_name   VARCHAR(64)  NULL,
-  street_number     VARCHAR(64)  NULL,
+CREATE TABLE ds_user
+(
+  id               INT(11) NOT NULL AUTO_INCREMENT,
+  firstname        VARCHAR(32) NULL,
+  lastname         VARCHAR(32) NULL,
+  age              INT(3) NULL,
+  active           INT(1) NULL,
+  created_at       TIMESTAMP NULL,
+  last_modified_at TIMESTAMP null,
+  created_by       INT(11) NULL,
+  last_modified_by INT(11) null,
+  email_address    VARCHAR(128) NULL,
+  manager_id       INT(11) NULL,
+  binary_data      BLOB NULL,
+  date_of_birth    DATE NULL,
+  country          VARCHAR(64) NULL,
+  city             VARCHAR(64) NULL,
+  street_name      VARCHAR(64) NULL,
+  street_number    VARCHAR(64) NULL,
   PRIMARY KEY (id)
 );
-CREATE TABLE ds_role (
-  id       INT(11)     NOT NULL AUTO_INCREMENT,
+CREATE TABLE ds_role
+(
+  id       INT(11) NOT NULL AUTO_INCREMENT,
   name     VARCHAR(32) NULL,
-  group_id INT(11)     NULL,
+  group_id INT(11) NULL,
   PRIMARY KEY (id)
 );
-CREATE TABLE ds_group (
-  id   INT(11)     NOT NULL AUTO_INCREMENT,
+CREATE TABLE ds_group
+(
+  id   INT(11) NOT NULL AUTO_INCREMENT,
   name VARCHAR(32) NULL,
   code VARCHAR(32) NULL,
   PRIMARY KEY (id)
 );
-create table ds_colleagues (
+create table ds_colleagues
+(
   user_id      int(11) not null,
   colleague_id int(11) not null,
   primary key (user_id, colleague_id)
 );
-create table ds_user_ds_role (
+create table ds_user_ds_role
+(
   user_id int(11) not null,
   role_id int(11) not null,
   primary key (user_id, role_id)
 );
-create table ds_user_attributes (
-  user_id int(11) not null,
+create table ds_user_attributes
+(
+  user_id    int(11) not null,
   attributes varchar(256) null
 );
 
-CREATE TABLE department (
-  id                 INT(11)     NOT NULL AUTO_INCREMENT,
+CREATE TABLE department
+(
+  id                 INT(11) NOT NULL AUTO_INCREMENT,
   name               VARCHAR(32) NULL,
-  version            INT(11)     NULL,
-  created_date       TIMESTAMP   NULL,
-  last_modified_date TIMESTAMP   NULL,
-  creator            INT(11)     NULL,
-  modifier           INT(11)     NULL,
+  version            INT(11) NULL,
+  created_date       TIMESTAMP NULL,
+  last_modified_date TIMESTAMP NULL,
+  creator            INT(11) NULL,
+  modifier           INT(11) NULL,
   PRIMARY KEY (id)
 );
 
-CREATE TABLE ds_booking (
-  id            INT(11)     NOT NULL AUTO_INCREMENT,
+CREATE TABLE ds_booking
+(
+  id            INT(11) NOT NULL AUTO_INCREMENT,
   serial_number VARCHAR(32) NULL,
-  amount        INT(11)     NULL,
-  user_id       INT(11)     NULL,
+  amount        INT(11) NULL,
+  user_id       INT(11) NULL,
   PRIMARY KEY (id)
 );

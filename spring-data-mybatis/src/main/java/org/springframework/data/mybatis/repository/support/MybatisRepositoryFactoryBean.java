@@ -1,12 +1,13 @@
 package org.springframework.data.mybatis.repository.support;
 
-import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import org.mybatis.spring.SqlSessionTemplate;
 
 /**
  * * Special adapter for Springs {@link org.springframework.beans.factory.FactoryBean}

@@ -5,6 +5,7 @@ import static org.springframework.data.mybatis.annotation.Condition.Type.BETWEEN
 import static org.springframework.data.mybatis.annotation.Condition.Type.CONTAINING;
 
 import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -14,8 +15,14 @@ import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import lombok.Data;
+
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.mybatis.annotation.Condition;
+import org.springframework.data.mybatis.annotation.CreatedDate;
+import org.springframework.data.mybatis.annotation.LastModifiedDate;
+
+import lombok.Data;
 
 @Data
 @Entity
@@ -37,8 +44,13 @@ public class User {
 
 	private boolean active;
 
+	@CreatedDate
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date createdAt;
+
+	@LastModifiedDate
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date lastModifiedAt;
 
 	@Column(nullable = false, unique = true)
 	private String emailAddress;
@@ -48,6 +60,12 @@ public class User {
 
 	@Temporal(TemporalType.DATE)
 	private Date dateOfBirth;
+
+	@CreatedBy
+	private Integer createdBy;
+
+	@LastModifiedBy
+	private Integer lastModifiedBy;
 
 	/**
 	 * Creates a new empty instance of {@code User}.
@@ -70,7 +88,6 @@ public class User {
 		this.emailAddress = emailAddress;
 		this.active = true;
 
-		this.createdAt = new Date();
 	}
 
 }
