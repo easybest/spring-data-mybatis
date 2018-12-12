@@ -6,7 +6,7 @@
 		  http://www.springframework.org/schema/data/mybatis http://www.springframework.org/schema/data/mybatis/spring-mybatis.xsd">
 
   <import resource="../infrastructure.xml"/>
-
+  <mybatis:auditing/>
   <mybatis:repositories base-package="org.springframework.data.mybatis.repository.sample"/>
 
   <!-- Register custom DAO implementation explicitly -->

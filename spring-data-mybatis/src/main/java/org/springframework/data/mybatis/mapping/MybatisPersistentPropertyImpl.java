@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Column;
@@ -41,8 +42,7 @@ import javax.persistence.OrderColumn;
 import javax.persistence.Temporal;
 import javax.persistence.Transient;
 import javax.persistence.Version;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
+
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.annotation.AccessType.Type;
 import org.springframework.data.mapping.Association;
@@ -57,6 +57,9 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
+
+import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.TypeHandler;
 
 public class MybatisPersistentPropertyImpl
 		extends AnnotationBasedPersistentProperty<MybatisPersistentProperty>
@@ -149,7 +152,7 @@ public class MybatisPersistentPropertyImpl
 
 		this.isIdProperty = Lazy.of(
 				() -> ID_ANNOTATIONS.stream().anyMatch(it -> isAnnotationPresent(it)));
-		this.isEntity = Lazy.of(getOwner().isAnnotationPresent(Entity.class));
+		this.isEntity = Lazy.of(getActualType().isAnnotationPresent(Entity.class));
 	}
 
 	@Override
