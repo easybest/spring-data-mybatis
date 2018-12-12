@@ -10,10 +10,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +25,10 @@ import org.springframework.data.mybatis.repository.sample.UserRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("classpath:application-context.xml")
@@ -69,6 +72,32 @@ public class UserRepositoryTests {
 		assertThat(repository.existsById(secondUser.getId())).isTrue();
 		assertThat(repository.existsById(thirdUser.getId())).isTrue();
 		assertThat(repository.existsById(fourthUser.getId())).isTrue();
+
+	}
+
+	@Autowired
+	private ApplicationContext applicationContext;
+
+	@Test
+	public void testAudit() {
+		flushTestUsers();
+		assertThat(firstUser.getCreatedAt()).isNotNull();
+		assertThat(firstUser.getLastModifiedAt()).isNotNull();
+		assertThat(firstUser.getCreatedAt()).isEqualTo(firstUser.getLastModifiedAt());
+
+		assertThat(firstUser.getCreatedBy()).isNotNull();
+		assertThat(firstUser.getLastModifiedBy()).isNotNull();
+		assertThat(firstUser.getCreatedBy()).isEqualTo(firstUser.getLastModifiedBy());
+
+		try {
+			Thread.sleep(10);
+		}
+		catch (InterruptedException e) {
+		}
+		firstUser.setAge(90);
+		repository.save(firstUser);
+		assertThat(firstUser.getLastModifiedAt()).isNotEqualTo(firstUser.getCreatedAt());
+		assertThat(firstUser.getLastModifiedBy()).isNotEqualTo(firstUser.getCreatedBy());
 	}
 
 	@Test

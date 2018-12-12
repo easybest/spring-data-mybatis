@@ -1,7 +1,7 @@
 package org.springframework.data.mybatis.repository.support;
 
 import java.util.Optional;
-import org.mybatis.spring.SqlSessionTemplate;
+
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mybatis.repository.query.MybatisQueryLookupStrategy;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.util.Assert;
+
+import org.mybatis.spring.SqlSessionTemplate;
 
 public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 

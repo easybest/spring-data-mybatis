@@ -1,23 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+  xmlns:mybatis="http://www.springframework.org/schema/data/mybatis"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/data/mybatis http://www.springframework.org/schema/data/mybatis/spring-mybatis.xsd">
 
   <!-- Database setup -->
   <import resource="infrastructure.xml"/>
 
-  <!-- Configure a DAO for User class -->
-  <bean id="userDao" class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">
-    <constructor-arg value="org.springframework.data.mybatis.repository.sample.UserRepository"/>
-    <property name="customImplementation">
-      <bean class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl">
-        <constructor-arg ref="sqlSessionTemplate"/>
-      </bean>
-    </property>
-    <property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
-    <property name="mappingContext" ref="mappingContext"/>
-  </bean>
+  <!--&lt;!&ndash; Configure a DAO for User class &ndash;&gt;-->
+  <!--<bean id="userDao" class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">-->
+  <!--<constructor-arg value="org.springframework.data.mybatis.repository.sample.UserRepository"/>-->
+  <!--<property name="customImplementation">-->
+  <!--<bean class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl">-->
+  <!--<constructor-arg ref="sqlSessionTemplate"/>-->
+  <!--</bean>-->
+  <!--</property>-->
+  <!--<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>-->
+  <!--<property name="mappingContext" ref="mappingContext"/>-->
+  <!--</bean>-->
 
-  <bean id="mappingContext"
-    class="org.springframework.data.mybatis.repository.config.MybatisMappingContextFactoryBean"/>
+  <!--<bean id="mappingContext"-->
+  <!--class="org.springframework.data.mybatis.repository.config.MybatisMappingContextFactoryBean"/>-->
+
+  <mybatis:auditing auditor-aware-ref="auditorAware"/>
+  <mybatis:repositories base-package="org.springframework.data.mybatis.repository.sample"/>
+
+  <bean id="auditorAware" class="org.springframework.data.mybatis.repository.CurrentUserAuditorAware"/>
 </beans>
