@@ -29,6 +29,19 @@
     </xsd:complexType>
   </xsd:element>
 
+  <xsd:element name="auditing">
+    <xsd:annotation>
+      <xsd:appinfo>
+        <tool:annotation>
+          <tool:exports type="org.springframework.data.mybatis.domain.support.AuditingEntityListener"/>
+          <tool:exports type="org.springframework.data.mybatis.auditing.MybatisAuditingHandler"/>
+        </tool:annotation>
+      </xsd:appinfo>
+    </xsd:annotation>
+    <xsd:complexType>
+      <xsd:attributeGroup ref="repository:auditing-attributes"/>
+    </xsd:complexType>
+  </xsd:element>
 
   <xsd:simpleType name="sqlSessionTemplateRef">
     <xsd:annotation>

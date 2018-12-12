@@ -1,7 +1,5 @@
 package org.springframework.data.mybatis.repository;
 
-import org.junit.Test;
-import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -11,11 +9,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.data.mybatis.domain.sample.User;
+import org.springframework.data.mybatis.repository.config.EnableMybatisAuditing;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
 import org.springframework.data.mybatis.repository.sample.UserRepository;
 import org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+
+import org.junit.Test;
+import org.mybatis.spring.SqlSessionTemplate;
 
 @ContextConfiguration(inheritLocations = false, loader = AnnotationConfigContextLoader.class)
 public class JavaConfigUserRepositoryTests extends UserRepositoryTests {
@@ -40,6 +42,11 @@ public class JavaConfigUserRepositoryTests extends UserRepositoryTests {
 			return factory.getObject();
 		}
 
+		@Bean
+		public CurrentUserAuditorAware auditorAware() {
+			return new CurrentUserAuditorAware();
+		}
+
 	}
 
 	@Test(expected = NoSuchBeanDefinitionException.class)
@@ -52,6 +59,7 @@ public class JavaConfigUserRepositoryTests extends UserRepositoryTests {
 	}
 
 	@Configuration
+	@EnableMybatisAuditing
 	@EnableMybatisRepositories(basePackageClasses = UserRepository.class)
 	// @EnableTransactionManagement
 	@ImportResource("classpath:infrastructure.xml")

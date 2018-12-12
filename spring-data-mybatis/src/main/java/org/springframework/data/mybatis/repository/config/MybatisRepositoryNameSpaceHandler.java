@@ -13,6 +13,7 @@ public class MybatisRepositoryNameSpaceHandler extends NamespaceHandlerSupport {
 				extension);
 
 		registerBeanDefinitionParser("repositories", repositoryBeanDefinitionParser);
+		registerBeanDefinitionParser("auditing", new AuditingBeanDefinitionParser());
 	}
 
 }
