@@ -25,6 +25,7 @@ import org.springframework.data.mybatis.repository.sample.UserRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -77,6 +78,16 @@ public class UserRepositoryTests {
 
 	@Autowired
 	private ApplicationContext applicationContext;
+
+	@Test
+	@Transactional(readOnly = true)
+	public void testReadonly() {
+
+		assertThat(TransactionSynchronizationManager.isCurrentTransactionReadOnly())
+				.isTrue();
+		repository.getFirstnameByLastname("Gierke");
+
+	}
 
 	@Test
 	public void testAudit() {
