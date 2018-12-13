@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Repository interface for {@code User}s.
  */
+@Transactional(readOnly = true)
 public interface UserRepository
 		extends MybatisRepository<User, Integer>, UserRepositoryCustom {
 
