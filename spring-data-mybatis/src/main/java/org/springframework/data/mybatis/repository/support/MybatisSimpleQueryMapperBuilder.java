@@ -1,18 +1,22 @@
 package org.springframework.data.mybatis.repository.support;
 
 import java.util.Map;
-import org.apache.ibatis.mapping.SqlCommandType;
-import org.apache.ibatis.session.Configuration;
+
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mybatis.repository.query.InvalidMybatisQueryMethodException;
 import org.springframework.data.mybatis.repository.query.MybatisParameters.MybatisParameter;
 import org.springframework.data.mybatis.repository.query.MybatisQueryMethod;
 import org.springframework.data.mybatis.repository.query.SimpleMybatisQuery;
 import org.springframework.data.mybatis.repository.query.StringQuery;
+import org.springframework.data.mybatis.repository.query.StringQuery.InParameterBinding;
+import org.springframework.data.mybatis.repository.query.StringQuery.LikeParameterBinding;
 import org.springframework.data.mybatis.repository.query.StringQuery.ParameterBinding;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import org.apache.ibatis.mapping.SqlCommandType;
+import org.apache.ibatis.session.Configuration;
 
 public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant {
 
@@ -29,6 +33,7 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 		method = query.getQueryMethod();
 		stringQuery = query.getStringQuery();
 		commandType = query.getCommandType();
+
 	}
 
 	@Override
@@ -42,7 +47,21 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 
 	private void buildQuery() {
 
-		String sql = method.getAnnotatedQuery();
+		if (method.getAnnotatedQuery().trim().startsWith("<script>")) {
+			if (null != method.getResultMap()) {
+				addMappedStatement(method.getStatementId(),
+						new String[] { method.getAnnotatedQuery() }, commandType,
+						Map.class, method.getResultMap());
+			}
+			else {
+				addMappedStatement(method.getStatementId(),
+						new String[] { method.getAnnotatedQuery() }, commandType,
+						Map.class, method.getReturnedObjectType());
+			}
+			return;
+		}
+
+		String sql = stringQuery.getQueryString();
 
 		Parameters<?, ?> parameters = method.getParameters();
 
@@ -54,28 +73,76 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 		if (!CollectionUtils.isEmpty(stringQuery.getParameterBindings())) {
 			for (ParameterBinding parameterBinding : stringQuery.getParameterBindings()) {
 
+				String replace, bindName;
 				if (StringUtils.hasText(parameterBinding.getName())) {
-					sql = sql.replace(":" + parameterBinding.getName(),
-							"#{" + parameterBinding.getName() + "}");
+					replace = ":" + parameterBinding.getName();
+					bindName = parameterBinding.getName();
 				}
-				else if (null != parameterBinding.getPosition()) {
-
+				else {
 					MybatisParameter mp = method.getParameters().getBindableParameter(
 							parameterBinding.getRequiredPosition() - 1);
-
-					sql = sql.replace("?" + parameterBinding.getPosition(),
-							"#{" + (mp.getName().orElse("__p" + (mp.getIndex()))) + "}");
+					replace = "?" + parameterBinding.getPosition();
+					bindName = mp.getName().orElse("__p" + mp.getIndex());
 				}
+
+				if (parameterBinding instanceof InParameterBinding) {
+					sql = sql.replace(replace,
+							"<foreach item=\"__item\" index=\"__index\" collection=\""
+									+ bindName
+									+ "\" open=\"(\" separator=\",\" close=\")\">#{__item}</foreach>");
+
+					continue;
+				}
+
+				if (parameterBinding instanceof LikeParameterBinding) {
+
+					LikeParameterBinding likeParameterBinding = (LikeParameterBinding) parameterBinding;
+
+					// "<bind name=\"").append(bind).append("\" value=\"" + properties[0]
+					// + " + '%'\" />"
+
+					String like = bindName;
+					switch (likeParameterBinding.getType()) {
+					case CONTAINING:
+					case LIKE:
+						like = "'%' + " + bindName + " + '%'";
+						break;
+					case STARTING_WITH:
+						like = bindName + " + '%'";
+						break;
+					case ENDING_WITH:
+						like = "'%' + " + bindName;
+						break;
+					}
+
+					sql = sql.replace(replace, "<bind name=\"__bind_" + bindName
+							+ "\" value=\"" + like + "\" /> #{__bind_" + bindName + "}");
+
+					continue;
+
+				}
+
+				sql = sql.replace(replace, "#{" + bindName + "}");
+
 			}
 
 		}
-		if (null != method.getResultMap()) {
-			addMappedStatement(method.getStatementId(), new String[] { sql }, commandType,
-					Map.class, method.getResultMap());
+
+		String[] sqls;
+		if (XML_PATTERN.matcher(sql).find()) {
+			sqls = new String[] { "<script>", sql, "</script>" };
 		}
 		else {
-			addMappedStatement(method.getStatementId(), new String[] { sql }, commandType,
-					Map.class, method.getReturnedObjectType());
+			sqls = new String[] { sql.replace("<![CDATA[", "").replace("]]>", "") };
+		}
+
+		if (null != method.getResultMap()) {
+			addMappedStatement(method.getStatementId(), sqls, commandType, Map.class,
+					method.getResultMap());
+		}
+		else {
+			addMappedStatement(method.getStatementId(), sqls, commandType, Map.class,
+					method.getReturnedObjectType());
 		}
 	}
 
