@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
@@ -49,6 +50,8 @@ import org.apache.ibatis.session.Configuration;
 
 @Slf4j
 public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilder {
+
+	protected static final Pattern XML_PATTERN = Pattern.compile("<[^>]+>");
 
 	protected static final String RESULT_MAP = "__result_map";
 
@@ -151,9 +154,9 @@ public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilde
 			return builder.toString();
 		case IN:
 		case NOT_IN:
-			builder.append("<foreach item=\"item\" index=\"index\" collection=\"")
+			builder.append("<foreach item=\"__item\" index=\"__index\" collection=\"")
 					.append(properties[0])
-					.append("\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>");
+					.append("\" open=\"(\" separator=\",\" close=\")\">#{__item}</foreach>");
 			return builder.toString();
 		case IS_NOT_NULL:
 			return " is not null";

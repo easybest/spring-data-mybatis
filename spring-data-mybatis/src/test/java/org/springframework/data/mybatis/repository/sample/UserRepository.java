@@ -172,10 +172,16 @@ public interface UserRepository
 
 	<T> List<T> findAsListByFirstnameLike(String name, Class<T> projectionType);
 
-	@Query("select firstname from ds_user where lastname = ?1")
+	@Query("select firstname from ds_user where lastname = ?1 limit 1")
 	String getFirstnameByLastname(String lastname);
 
-	@Query("select id from ds_user where firstname = ?1")
+	@Query("select id from ds_user where firstname = ?1 limit 1")
 	Integer getUserIdByFirstname(String firstname);
+
+	@Query("select firstname from ds_user where lastname in ?1 order by firstname asc")
+	List<String> findFirstnamesInLastnames(String... lastnames);
+
+	@Query("select firstname from ds_user where lastname like %?1% order by firstname asc")
+	List<String> findFirstnamesByLastnamesLike(String lastname);
 
 }
