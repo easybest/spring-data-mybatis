@@ -129,6 +129,23 @@ public class UserRepositoryTests {
 	}
 
 	@Test
+	public void testFindFirstnamesInLastnames() {
+		flushTestUsers();
+
+		List<String> firstnames = repository.findFirstnamesInLastnames("Gierke",
+				"Arrasz");
+		assertThat(firstnames).containsExactly("Joachim", "Oliver");
+	}
+
+	@Test
+	public void testFindFirstnamesByLastnamesLike() {
+		flushTestUsers();
+		List<String> firstnames = repository.findFirstnamesByLastnamesLike("ra");
+		assertThat(firstnames).containsExactly("Joachim", "kevin");
+
+	}
+
+	@Test
 	public void testGetFirstnameByLastname() {
 		flushTestUsers();
 

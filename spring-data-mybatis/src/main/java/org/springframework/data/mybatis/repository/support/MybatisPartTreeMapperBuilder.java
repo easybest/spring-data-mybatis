@@ -8,10 +8,9 @@ import static org.springframework.data.repository.query.parser.Part.Type.NOT_IN;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.ibatis.session.Configuration;
+
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mybatis.dialect.RowSelection;
@@ -23,9 +22,9 @@ import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.util.StringUtils;
 
-public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
+import org.apache.ibatis.session.Configuration;
 
-	private static final Pattern XML_PATTERN = Pattern.compile("<[^>]+>");
+public class MybatisPartTreeMapperBuilder extends MybatisMapperBuildAssistant {
 
 	private final PartTree tree;
 
