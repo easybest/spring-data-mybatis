@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.ToString;
+
 import org.springframework.data.repository.query.SpelQueryContext;
 import org.springframework.data.repository.query.SpelQueryContext.SpelExtractor;
 import org.springframework.data.repository.query.parser.Part.Type;
@@ -20,6 +20,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+
+import lombok.ToString;
 
 @ToString
 public class StringQuery {
@@ -587,7 +589,7 @@ public class StringQuery {
 	 *
 	 * @author Thomas Darimont
 	 */
-	static class InParameterBinding extends ParameterBinding {
+	public static class InParameterBinding extends ParameterBinding {
 
 		/**
 		 * Creates a new {@link InParameterBinding} for the parameter with the given name.
@@ -638,7 +640,7 @@ public class StringQuery {
 	 * @author Oliver Gierke
 	 * @author Thomas Darimont
 	 */
-	static class LikeParameterBinding extends ParameterBinding {
+	public static class LikeParameterBinding extends ParameterBinding {
 
 		private static final List<Type> SUPPORTED_TYPES = Arrays.asList(Type.CONTAINING,
 				Type.STARTING_WITH, Type.ENDING_WITH, Type.LIKE);
