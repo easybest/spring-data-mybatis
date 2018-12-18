@@ -24,6 +24,8 @@
 							]]></xsd:documentation>
             </xsd:annotation>
           </xsd:attribute>
+          <xsd:attribute name="support-multiple-datasources" type="xsd:boolean">
+          </xsd:attribute>
         </xsd:extension>
       </xsd:complexContent>
     </xsd:complexType>
@@ -33,7 +35,7 @@
     <xsd:annotation>
       <xsd:appinfo>
         <tool:annotation>
-          <tool:exports type="org.springframework.data.mybatis.domain.support.AuditingEntityListener"/>
+          <tool:exports type="org.springframework.data.mybatis.auditing.AuditingEntityListener"/>
           <tool:exports type="org.springframework.data.mybatis.auditing.MybatisAuditingHandler"/>
         </tool:annotation>
       </xsd:appinfo>

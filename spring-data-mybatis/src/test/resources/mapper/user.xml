@@ -10,5 +10,4 @@
     where email_address = #{emailAddress}
   </select>
 
-
 </mapper>

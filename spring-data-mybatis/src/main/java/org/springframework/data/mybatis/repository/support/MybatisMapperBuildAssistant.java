@@ -94,11 +94,15 @@ public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilde
 
 	protected abstract void doBuild();
 
-	protected List<MybatisPersistentProperty> findNormalColumns() {
+	protected List<MybatisPersistentProperty> findNormalColumns(PersistentEntity entity) {
 		List<MybatisPersistentProperty> columns = new ArrayList<>();
 		entity.doWithProperties(
 				(PropertyHandler<MybatisPersistentProperty>) columns::add);
 		return columns;
+	}
+
+	protected List<MybatisPersistentProperty> findNormalColumns() {
+		return findNormalColumns(this.entity);
 	}
 
 	protected String queryConditionLeft(String column, IgnoreCaseType ignoreCaseType) {

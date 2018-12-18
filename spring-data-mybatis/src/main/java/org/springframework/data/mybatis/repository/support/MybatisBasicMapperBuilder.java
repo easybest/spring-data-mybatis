@@ -16,25 +16,32 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.persistence.EmbeddedId;
 import javax.persistence.GeneratedValue;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.SequenceGenerators;
+
+import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mybatis.annotation.Condition;
+import org.springframework.data.mybatis.annotation.Conditions;
+import org.springframework.data.mybatis.annotation.Snowflake;
+import org.springframework.data.mybatis.id.SnowflakeKeyGenerator;
+import org.springframework.data.mybatis.mapping.MybatisPersistentEntityImpl;
+import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
+import org.springframework.data.repository.query.parser.Part.Type;
+import org.springframework.util.StringUtils;
+
 import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.keygen.NoKeyGenerator;
 import org.apache.ibatis.executor.keygen.SelectKeyGenerator;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ResultMapping;
 import org.apache.ibatis.session.Configuration;
-import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mapping.PersistentEntity;
-import org.springframework.data.mapping.PropertyHandler;
-import org.springframework.data.mybatis.annotation.Condition;
-import org.springframework.data.mybatis.annotation.Conditions;
-import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
-import org.springframework.data.repository.core.RepositoryInformation;
-import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
-import org.springframework.data.repository.query.parser.Part.Type;
-import org.springframework.util.StringUtils;
 
 public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
@@ -71,9 +78,33 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 		entity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) p -> {
 
-			resultMappings.add(assistant.buildResultMapping(p.getType(), p.getName(),
-					p.getColumnName(), p.getType(), p.getJdbcType(), null, null, null,
-					null, p.getSpecifiedTypeHandler(), null));
+			if (p.isAnnotationPresent(EmbeddedId.class) || p.isEmbeddable()) {
+
+				List<ResultMapping> nestedResultMappings = new ArrayList<>();
+
+				((MybatisPersistentEntityImpl) entity)
+						.getRequiredPersistentEntity(p.getActualType()).doWithProperties(
+								(PropertyHandler<MybatisPersistentProperty>) ep -> {
+									// build mybatis result map association
+									nestedResultMappings.add(assistant.buildResultMapping(
+											ep.getType(), ep.getName(),
+											ep.getColumnName(), ep.getType(),
+											ep.getJdbcType(), null, null, null, null,
+											ep.getSpecifiedTypeHandler(), null));
+
+								});
+				addResultMap(RESULT_MAP + "_" + p.getName(), p.getActualType(),
+						nestedResultMappings);
+				resultMappings.add(assistant.buildResultMapping(p.getType(), p.getName(),
+						p.getColumnName(), p.getType(), p.getJdbcType(), null,
+						RESULT_MAP + "_" + p.getName(), null, null,
+						p.getSpecifiedTypeHandler(), null));
+			}
+			else {
+				resultMappings.add(assistant.buildResultMapping(p.getType(), p.getName(),
+						p.getColumnName(), p.getType(), p.getJdbcType(), null, null, null,
+						null, p.getSpecifiedTypeHandler(), null));
+			}
 
 		});
 
@@ -91,18 +122,27 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		builder.append("insert into ").append(entity.getTableName()).append(" (");
 
 		MybatisPersistentProperty idProperty = entity.getIdProperty();
+
 		if (null != idProperty) {
-			if (idProperty.isAnnotationPresent(GeneratedValue.class)) {
+
+			keyProperty = idProperty.getName();
+			keyColumn = idProperty.getColumnName();
+
+			if (idProperty.isAnnotationPresent(Snowflake.class)) {
+				keyGenerator = new SnowflakeKeyGenerator(keyProperty,
+						((MybatisPersistentEntityImpl) this.entity).getMappingContext()
+								.getSnowflake());
+
+				configuration.addKeyGenerator(assistant.applyCurrentNamespace(
+						"__insert" + SnowflakeKeyGenerator.SELECT_KEY_SUFFIX, false),
+						keyGenerator);
+			}
+			else if (idProperty.isAnnotationPresent(GeneratedValue.class)) {
 				GeneratedValue gv = idProperty
 						.getRequiredAnnotation(GeneratedValue.class);
-
-				keyProperty = idProperty.getName();
-				keyColumn = idProperty.getColumnName();
-
 				String gid = "__insert" + SelectKeyGenerator.SELECT_KEY_SUFFIX;
 				String[] sqls;
 				boolean executeBefore;
-
 				if (gv.strategy() == IDENTITY || (gv.strategy() == AUTO && "identity"
 						.equals(dialect.getNativeIdentifierGeneratorStrategy()))) {
 					// identity
@@ -166,7 +206,6 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 					throw new UnsupportedOperationException(
 							"unsupported generated value id strategy: " + gv.strategy());
 				}
-
 				addMappedStatement(gid, sqls, SELECT, entity.getType(), null,
 						idProperty.getActualType(), NoKeyGenerator.INSTANCE,
 						idProperty.getName(), idProperty.getColumnName());
@@ -182,15 +221,42 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 		List<MybatisPersistentProperty> columns = findNormalColumns();
 
-		builder.append(columns.stream().map(p -> p.getColumnName())
-				.collect(Collectors.joining(",")));
+		builder.append(columns.stream().map(p -> {
+			if (p.isAnnotationPresent(EmbeddedId.class) || p.isEmbeddable()) {
+				return findNormalColumns(((MybatisPersistentEntityImpl) entity)
+						.getRequiredPersistentEntity(p.getActualType())).stream()
+								.map(ep -> ep.getColumnName())
+								.collect(Collectors.joining(","));
+			}
+			return p.getColumnName();
+		}).collect(Collectors.joining(",")));
 
 		builder.append(") values (");
 
-		builder.append(columns.stream().map(p -> null != p.getSpecifiedTypeHandler()
-				? String.format("#{%s,jdbcType=%s,typeHandler=%s}", p.getName(),
-						p.getJdbcType().name(), p.getSpecifiedTypeHandler().getName())
-				: String.format("#{%s,jdbcType=%s}", p.getName(), p.getJdbcType().name())
+		builder.append(columns.stream().map(p -> {
+
+			if (p.isAnnotationPresent(EmbeddedId.class) || p.isEmbeddable()) {
+				return findNormalColumns(((MybatisPersistentEntityImpl) entity)
+						.getRequiredPersistentEntity(p.getActualType()))
+								.stream()
+								.map(ep -> null != ep.getSpecifiedTypeHandler()
+										? String.format(
+												"#{%s.%s,jdbcType=%s,typeHandler=%s}",
+												p.getName(), ep.getName(),
+												ep.getJdbcType().name(),
+												ep.getSpecifiedTypeHandler().getName())
+										: String.format("#{%s.%s,jdbcType=%s}",
+												p.getName(), ep.getName(),
+												ep.getJdbcType().name()))
+								.collect(Collectors.joining(","));
+			}
+
+			return null != p.getSpecifiedTypeHandler()
+					? String.format("#{%s,jdbcType=%s,typeHandler=%s}", p.getName(),
+							p.getJdbcType().name(), p.getSpecifiedTypeHandler().getName())
+					: String.format("#{%s,jdbcType=%s}", p.getName(),
+							p.getJdbcType().name());
+		}
 
 		).collect(Collectors.joining(",")));
 
@@ -213,6 +279,45 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		builder.append(
 
 				findNormalColumns().stream().map(p -> {
+
+					if (p.isAnnotationPresent(EmbeddedId.class) || p.isEmbeddable()) {
+						return findNormalColumns(((MybatisPersistentEntityImpl) entity)
+								.getRequiredPersistentEntity(p.getActualType())).stream()
+										.map(ep -> {
+
+											StringBuilder sb = new StringBuilder();
+											if (ignoreNull) {
+												sb.append("<if test=\"")
+														.append(ep.getName())
+														.append("!=null\">");
+											}
+
+											sb.append(ep.getColumnName()).append("=");
+											sb.append(
+													(null != ep.getSpecifiedTypeHandler()
+															? String.format(
+																	"#{%s.%s,jdbcType=%s,typeHandler=%s}",
+																	p.getName(),
+																	ep.getName(),
+																	ep.getJdbcType()
+																			.name(),
+																	ep.getSpecifiedTypeHandler()
+																			.getName())
+															: String.format(
+																	"#{%s.%s,jdbcType=%s}",
+																	p.getName(),
+																	ep.getName(),
+																	ep.getJdbcType()
+																			.name())));
+											sb.append(",");
+											if (ignoreNull) {
+												sb.append("</if>");
+											}
+											return sb.toString();
+
+										}).collect(Collectors.joining(" "));
+					}
+
 					if (p.isVersionProperty()) {
 						return p.getColumnName() + "=" + p.getColumnName() + "+1,";
 					}
@@ -237,7 +342,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 				}).collect(Collectors.joining()));
 
-		builder.append("</set> where ").append(buildIdCaluse());
+		builder.append("</set> where ").append(buildIdCaluse(true));
 
 		String[] sqls = new String[] { "<script>", builder.toString(), "</script>" };
 		addMappedStatement(ignoreNull ? "__update_ignore_null" : "__update", sqls, UPDATE,
@@ -251,7 +356,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		// .map(p -> String.format("%s as %s", p.getColumnName(), p.getName()))
 		// .collect(Collectors.joining(",")));
 		builder.append(" from ").append(entity.getTableName()).append(" where ")
-				.append(buildIdCaluse());
+				.append(buildIdCaluse(false));
 		addMappedStatement("__get_by_id", new String[] { builder.toString() }, SELECT,
 				entity.getIdProperty().getType(), RESULT_MAP);
 	}
@@ -297,7 +402,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		StringBuilder builder = new StringBuilder();
 
 		builder.append("delete from ").append(entity.getTableName()).append(" where ")
-				.append(buildIdCaluse());
+				.append(buildIdCaluse(false));
 		addMappedStatement("__delete_by_id", new String[] { builder.toString() }, DELETE,
 				entity.getIdProperty().getType());
 
@@ -406,13 +511,33 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		return builder.toString();
 	}
 
-	private String buildIdCaluse() {
+	private String buildIdCaluse(boolean clearly) {
 
 		if (!entity.hasIdProperty()) {
 			return null;
 		}
 
-		MybatisPersistentProperty p = entity.getIdProperty();
+		MybatisPersistentProperty p = entity.getRequiredIdProperty();
+		if (p.isAnnotationPresent(EmbeddedId.class)) {
+			return findNormalColumns(((MybatisPersistentEntityImpl) this.entity)
+					.getRequiredPersistentEntity(p.getActualType()))
+							.stream()
+							.map(ep -> ep.getColumnName() + " = "
+									+ (null != ep.getSpecifiedTypeHandler()
+											? String.format(
+													"#{%s,jdbcType=%s,typeHandler=%s}",
+													clearly ? (p.getName() + '.'
+															+ ep.getName())
+															: ep.getName(),
+													ep.getJdbcType().name(),
+													ep.getSpecifiedTypeHandler()
+															.getName())
+											: String.format("#{%s,jdbcType=%s}", clearly
+													? (p.getName() + '.' + ep.getName())
+													: ep.getName(),
+													ep.getJdbcType().name())))
+							.collect(Collectors.joining(" and "));
+		}
 
 		return p.getColumnName() + " = " + (null != p.getSpecifiedTypeHandler()
 				? String.format("#{%s,jdbcType=%s,typeHandler=%s}", p.getName(),

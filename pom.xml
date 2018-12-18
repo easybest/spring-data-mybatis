@@ -1,239 +1,239 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ifrabbit</groupId>
-    <artifactId>spring-data-mybatis-build</artifactId>
-    <version>${revision}</version>
-    <packaging>pom</packaging>
-    <name>Spring Data MyBatis Build</name>
-    <description>Spring Data module for MyBatis repositories.</description>
+  <groupId>com.ifrabbit</groupId>
+  <artifactId>spring-data-mybatis-build</artifactId>
+  <version>${revision}</version>
+  <packaging>pom</packaging>
+  <name>Spring Data MyBatis Build</name>
+  <description>Spring Data module for MyBatis repositories.</description>
+  <url>https://github.com/hatunet/spring-data-mybatis</url>
+  <developers>
+    <developer>
+      <id>jarvis</id>
+      <name>Jarvis Song</name>
+      <email>iamjarvissong@gmail.com</email>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <scm>
     <url>https://github.com/hatunet/spring-data-mybatis</url>
-    <developers>
-        <developer>
-            <id>jarvis</id>
-            <name>Jarvis Song</name>
-            <email>iamjarvissong@gmail.com</email>
-        </developer>
-    </developers>
+    <connection>scm:git:git://github.com/hatunet/spring-data-mybatis.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/hatunet/spring-data-mybatis.git
+    </developerConnection>
+  </scm>
+  <prerequisites>
+    <maven>3.5</maven>
+  </prerequisites>
+  <properties>
+    <revision>2.0.0.BUILD-SNAPSHOT</revision>
 
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
+  </properties>
+  <modules>
+    <module>spring-data-mybatis-core</module>
+    <module>spring-data-mybatis</module>
+    <module>spring-data-mybatis-parent</module>
+    <module>spring-data-mybatis-boot-starter</module>
+  </modules>
 
-    <scm>
-        <url>https://github.com/hatunet/spring-data-mybatis</url>
-        <connection>scm:git:git://github.com/hatunet/spring-data-mybatis.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/hatunet/spring-data-mybatis.git
-        </developerConnection>
-    </scm>
-    <prerequisites>
-        <maven>3.5</maven>
-    </prerequisites>
-    <properties>
-        <revision>2.0.0.BUILD-SNAPSHOT</revision>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>1.0.1</version>
+        <configuration>
+          <updatePomFile>true</updatePomFile>
+        </configuration>
+        <executions>
+          <execution>
+            <id>flatten</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>flatten.clean</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  <profiles>
 
-    </properties>
-    <modules>
-        <module>spring-data-mybatis-core</module>
-        <module>spring-data-mybatis</module>
-        <module>spring-data-mybatis-parent</module>
-        <module>spring-data-mybatis-boot-starter</module>
-    </modules>
+    <!-- Common release setup -->
 
-    <build>
+    <profile>
+      <id>release</id>
+      <build>
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.0.1</version>
+
+          <!-- Make sure we build on Java 8 with only release dependencies -->
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>enforce-release-rules</id>
+                <goals>
+                  <goal>enforce</goal>
+                </goals>
                 <configuration>
-                    <updatePomFile>true</updatePomFile>
+                  <rules>
+                    <requireJavaVersion>
+                      <version>[1.8,1.9)</version>
+                    </requireJavaVersion>
+                    <requireReleaseDeps/>
+                    <requireReleaseVersion/>
+                  </rules>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>flatten</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>flatten</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>flatten.clean</id>
-                        <phase>clean</phase>
-                        <goals>
-                            <goal>clean</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+              </execution>
+            </executions>
+          </plugin>
+
         </plugins>
-    </build>
-    <profiles>
+      </build>
+    </profile>
+    <profile>
+      <id>central</id>
+      <build>
+        <pluginManagement>
+          <plugins>
 
-        <!-- Common release setup -->
+            <!-- Sign JARs -->
 
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-gpg-plugin</artifactId>
+              <version>1.5</version>
+              <executions>
+                <execution>
+                  <id>sign-artifacts</id>
+                  <phase>verify</phase>
+                  <goals>
+                    <goal>sign</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>
 
-                    <!-- Make sure we build on Java 8 with only release dependencies -->
+            <!-- Deploy to Sonatype OSS Nexus -->
 
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>enforce-release-rules</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <requireJavaVersion>
-                                            <version>[1.8,1.9)</version>
-                                        </requireJavaVersion>
-                                        <requireReleaseDeps/>
-                                        <requireReleaseVersion/>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
+            <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nexus-staging-maven-plugin</artifactId>
+              <version>1.6.7</version>
+              <extensions>true</extensions>
+              <configuration>
+                <serverId>sonatype</serverId>
+                <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                <autoReleaseAfterClose>false</autoReleaseAfterClose>
+              </configuration>
+            </plugin>
+          </plugins>
 
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>central</id>
-            <build>
-                <pluginManagement>
-                    <plugins>
+        </pluginManagement>
 
-                        <!-- Sign JARs -->
+        <plugins>
 
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-gpg-plugin</artifactId>
-                            <version>1.5</version>
-                            <executions>
-                                <execution>
-                                    <id>sign-artifacts</id>
-                                    <phase>verify</phase>
-                                    <goals>
-                                        <goal>sign</goal>
-                                    </goals>
-                                </execution>
-                            </executions>
-                        </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+          </plugin>
 
-                        <!-- Deploy to Sonatype OSS Nexus -->
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+          </plugin>
 
-                        <plugin>
-                            <groupId>org.sonatype.plugins</groupId>
-                            <artifactId>nexus-staging-maven-plugin</artifactId>
-                            <version>1.6.7</version>
-                            <extensions>true</extensions>
-                            <configuration>
-                                <serverId>sonatype</serverId>
-                                <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                                <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                            </configuration>
-                        </plugin>
-                    </plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.0.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.10.4</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <encoding>UTF-8</encoding>
+              <charset>UTF-8</charset>
+              <additionalJOptions>
+                <additionalJOption>-Xdoclint:none</additionalJOption>
+              </additionalJOptions>
+            </configuration>
+          </plugin>
 
-                </pluginManagement>
+        </plugins>
 
-                <plugins>
+      </build>
 
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.4</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <encoding>UTF-8</encoding>
-                            <charset>UTF-8</charset>
-                            <additionalJOptions>
-                                <additionalJOption>-Xdoclint:none</additionalJOption>
-                            </additionalJOptions>
-                        </configuration>
-                    </plugin>
-
-                </plugins>
-
-            </build>
-
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>oss</id>
-                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-                </snapshotRepository>
-                <repository>
-                    <id>oss</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
-            </distributionManagement>
-
-        </profile>
-    </profiles>
-
-    <repositories>
+      <distributionManagement>
+        <snapshotRepository>
+          <id>oss</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
         <repository>
-            <id>sonatype-oss-snapshots</id>
-            <name>Sonatype OSS Snapshots Repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
+          <id>oss</id>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
-        <repository>
-            <id>spring-libs-snapshot</id>
-            <url>https://repo.spring.io/libs-snapshot</url>
-        </repository>
-    </repositories>
+      </distributionManagement>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>spring-plugins-release</id>
-            <url>https://repo.spring.io/plugins-release</url>
-        </pluginRepository>
-    </pluginRepositories>
+    </profile>
+  </profiles>
+
+  <repositories>
+    <repository>
+      <id>sonatype-oss-snapshots</id>
+      <name>Sonatype OSS Snapshots Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>spring-libs-snapshot</id>
+      <url>https://repo.spring.io/libs-snapshot</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>spring-plugins-release</id>
+      <url>https://repo.spring.io/plugins-release</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>
