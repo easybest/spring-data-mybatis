@@ -38,6 +38,8 @@ public class MybatisRepositoryConfigExtension
 
 	public static final String DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME = "sqlSessionTemplate";
 
+	public static final String SUPPORT_MULTIPLE_DATA_SOURCES_ATTRIBUTE = "supportMultipleDatasources";
+
 	@Override
 	public String getModuleName() {
 		return "Mybatis";
@@ -88,6 +90,8 @@ public class MybatisRepositoryConfigExtension
 		AnnotationAttributes attributes = config.getAttributes();
 		builder.addPropertyValue(ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE,
 				attributes.getBoolean(ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE));
+		builder.addPropertyValue(SUPPORT_MULTIPLE_DATA_SOURCES_ATTRIBUTE,
+				attributes.getBoolean(SUPPORT_MULTIPLE_DATA_SOURCES_ATTRIBUTE));
 	}
 
 	@Override
@@ -101,6 +105,14 @@ public class MybatisRepositoryConfigExtension
 			builder.addPropertyValue(ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE,
 					enableDefaultTransactions.get());
 		}
+
+		Optional<String> supportMultipleDatasources = config
+				.getAttribute(SUPPORT_MULTIPLE_DATA_SOURCES_ATTRIBUTE);
+		if (supportMultipleDatasources.isPresent()) {
+			builder.addPropertyValue(SUPPORT_MULTIPLE_DATA_SOURCES_ATTRIBUTE,
+					supportMultipleDatasources.get());
+		}
+
 	}
 
 	@Override
@@ -114,6 +126,25 @@ public class MybatisRepositoryConfigExtension
 		registerLazyIfNotAlreadyRegistered(
 				() -> new RootBeanDefinition(MybatisMappingContextFactoryBean.class),
 				registry, MYBATIS_MAPPING_CONTEXT_BEAN_NAME, source);
+
+		boolean supportMultipleDatasources = false;
+		if (config instanceof AnnotationRepositoryConfigurationSource) {
+			supportMultipleDatasources = ((AnnotationRepositoryConfigurationSource) config)
+					.getAttributes().getBoolean(SUPPORT_MULTIPLE_DATA_SOURCES_ATTRIBUTE);
+		}
+		else if (config instanceof XmlRepositoryConfigurationSource) {
+			supportMultipleDatasources = config
+					.getAttribute(SUPPORT_MULTIPLE_DATA_SOURCES_ATTRIBUTE)
+					.map(c -> "true".equals(c)).orElse(false);
+		}
+
+		if (supportMultipleDatasources) {
+
+			registerIfNotAlreadyRegistered(
+					() -> new RootBeanDefinition(MultipleDataSourceAspect.class),
+					registry, "multipleDataSourceAspect", source);
+
+		}
 
 	}
 

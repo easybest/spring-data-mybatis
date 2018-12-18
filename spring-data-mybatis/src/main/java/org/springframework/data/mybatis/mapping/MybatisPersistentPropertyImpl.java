@@ -51,6 +51,7 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.mybatis.annotation.Snowflake;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
@@ -67,7 +68,7 @@ public class MybatisPersistentPropertyImpl
 
 	private static final Collection<Class<? extends Annotation>> ASSOCIATION_ANNOTATIONS;
 
-	private static final Collection<Class<? extends Annotation>> ID_ANNOTATIONS;
+	public static final Collection<Class<? extends Annotation>> ID_ANNOTATIONS;
 
 	private static final Collection<Class<? extends Annotation>> UPDATEABLE_ANNOTATIONS;
 
@@ -86,6 +87,7 @@ public class MybatisPersistentPropertyImpl
 		annotations = new HashSet<>();
 		annotations.add(Id.class);
 		annotations.add(EmbeddedId.class);
+		annotations.add(Snowflake.class);
 
 		ID_ANNOTATIONS = Collections.unmodifiableSet(annotations);
 

@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.domain.sample.User;
+import org.springframework.data.mybatis.repository.DataSource;
 import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.Query;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Repository interface for {@code User}s.
  */
+@DataSource("ds2")
 @Transactional(readOnly = true)
 public interface UserRepository
 		extends MybatisRepository<User, Integer>, UserRepositoryCustom {
@@ -172,6 +174,7 @@ public interface UserRepository
 
 	<T> List<T> findAsListByFirstnameLike(String name, Class<T> projectionType);
 
+	@DataSource("ds3")
 	@Query("select firstname from ds_user where lastname = ?1 limit 1")
 	String getFirstnameByLastname(String lastname);
 

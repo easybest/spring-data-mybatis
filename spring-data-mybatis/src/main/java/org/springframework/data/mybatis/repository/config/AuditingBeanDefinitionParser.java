@@ -15,7 +15,7 @@ import org.w3c.dom.Element;
 
 public class AuditingBeanDefinitionParser implements BeanDefinitionParser {
 
-	static final String AUDITING_ENTITY_LISTENER_CLASS_NAME = "org.springframework.data.mybatis.domain.support.AuditingEntityListener";
+	static final String AUDITING_ENTITY_LISTENER_CLASS_NAME = "org.springframework.data.mybatis.auditing.AuditingEntityListener";
 
 	private final MybatisAuditingHandlerBeanDefinitionParser auditingHandlerParser = new MybatisAuditingHandlerBeanDefinitionParser(
 			BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME);
