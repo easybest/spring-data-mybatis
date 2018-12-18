@@ -24,6 +24,8 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 
 	private MappingContext<?, ?> mappingContext;
 
+	private Boolean supportMultipleDatasources;
+
 	/**
 	 * Creates a new {@link TransactionalRepositoryFactoryBeanSupport} for the given
 	 * repository interface.
@@ -51,6 +53,10 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 
 	public void setSqlSessionTemplate(@Nullable SqlSessionTemplate sqlSessionTemplate) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
+	}
+
+	public void setSupportMultipleDatasources(Boolean supportMultipleDatasources) {
+		this.supportMultipleDatasources = supportMultipleDatasources;
 	}
 
 	@Override

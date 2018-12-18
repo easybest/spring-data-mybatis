@@ -26,4 +26,8 @@
   <mybatis:repositories base-package="org.springframework.data.mybatis.repository.sample"/>
 
   <bean id="auditorAware" class="org.springframework.data.mybatis.repository.CurrentUserAuditorAware"/>
+  <bean id="snowflake" class="org.springframework.data.mybatis.id.Snowflake">
+    <constructor-arg value="0"/>
+    <constructor-arg value="0"/>
+  </bean>
 </beans>

@@ -1,12 +1,18 @@
 package org.springframework.data.mybatis.mapping;
 
 import java.util.Comparator;
+import java.util.Optional;
+
 import javax.persistence.Entity;
 import javax.persistence.Table;
+
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mapping.PersistentEntity;
+import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.mapping.model.FieldNamingStrategy;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
@@ -14,15 +20,42 @@ public class MybatisPersistentEntityImpl<T>
 		extends BasicPersistentEntity<T, MybatisPersistentProperty>
 		implements MybatisPersistentEntity<T> {
 
+	private final MybatisMappingContext mappingContext;
+
 	private FieldNamingStrategy globalFieldNamingStrategy;
 
-	public MybatisPersistentEntityImpl(TypeInformation<T> information) {
+	public MybatisPersistentEntityImpl(TypeInformation<T> information,
+			MybatisMappingContext mappingContext) {
 		super(information);
+
+		this.mappingContext = mappingContext;
 	}
 
 	public MybatisPersistentEntityImpl(TypeInformation<T> information,
-			Comparator<MybatisPersistentProperty> comparator) {
+			Comparator<MybatisPersistentProperty> comparator,
+			MybatisMappingContext mappingContext) {
 		super(information, comparator);
+		this.mappingContext = mappingContext;
+
+	}
+
+	public MybatisMappingContext getMappingContext() {
+		return mappingContext;
+	}
+
+	public Optional<PersistentEntity<?, ? extends PersistentProperty<?>>> getPersistentEntity(
+			Class<?> type) {
+
+		return Optional.ofNullable(this.mappingContext.getPersistentEntity(type));
+	}
+
+	public PersistentEntity<?, ? extends PersistentProperty<?>> getRequiredPersistentEntity(
+			Class<?> type) {
+
+		Assert.notNull(type, "Domain type must not be null!");
+
+		return getPersistentEntity(type).orElseThrow(() -> new IllegalArgumentException(
+				String.format("Couldn't find PersistentEntity for type %s!", type)));
 	}
 
 	@Override

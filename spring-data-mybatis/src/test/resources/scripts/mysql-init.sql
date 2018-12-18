@@ -30,9 +30,8 @@ CREATE TABLE ds_user
 );
 CREATE TABLE ds_role
 (
-  id       INT(11) NOT NULL AUTO_INCREMENT,
-  name     VARCHAR(32) NULL,
-  group_id INT(11) NULL,
+  id   bigint NOT NULL AUTO_INCREMENT,
+  name VARCHAR(32) NULL,
   PRIMARY KEY (id)
 );
 CREATE TABLE ds_group
@@ -50,9 +49,13 @@ create table ds_colleagues
 );
 create table ds_user_ds_role
 (
-  user_id int(11) not null,
-  role_id int(11) not null,
-  primary key (user_id, role_id)
+  ds_user_id       int(11) not null,
+  ds_role_id       bigint not null,
+  created_at       timestamp null,
+  last_modified_at timestamp null,
+  created_by       INT(11) NULL,
+  last_modified_by INT(11) null,
+  primary key (ds_user_id, ds_role_id)
 );
 create table ds_user_attributes
 (

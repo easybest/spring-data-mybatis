@@ -14,6 +14,7 @@
     <logger name="org.springframework.data.mybatis.replication" level="debug"/>
     <logger name="org.springframework.transaction" level="debug"/>
     <logger name="org.springframework.jdbc.datasource" level="debug"/>
+    <logger name="org.springframework.data.repository.config" level="info"/>
     <root level="error">
         <appender-ref ref="console"/>
     </root>
