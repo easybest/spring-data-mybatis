@@ -19,9 +19,8 @@ create table if not exists ds_user (
   primary key (id)
 );
 create table if not exists ds_role (
-  id       int(11)     not null auto_increment,
+  id       int(19)     not null ,
   name     varchar(32) null,
-  group_id int(11)     null,
   primary key (id)
 );
 create table if not exists ds_group (
@@ -49,7 +48,11 @@ create table if not exists ds_user_ds_user (
 );
 create table if not exists ds_user_ds_role (
   ds_user_id int(11) not null,
-  ds_role_id int(11) not null,
+  ds_role_id int(19) not null,
+  created_at    timestamp    null,
+  last_modified_at timestamp   null,
+  created_by       INT(11) NULL,
+  last_modified_by INT(11) null,
   primary key (ds_user_id, ds_role_id)
 );
 

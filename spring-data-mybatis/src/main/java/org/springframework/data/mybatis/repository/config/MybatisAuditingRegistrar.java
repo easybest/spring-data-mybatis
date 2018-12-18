@@ -13,7 +13,7 @@ import org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarS
 import org.springframework.data.auditing.config.AuditingConfiguration;
 import org.springframework.data.config.ParsingUtils;
 import org.springframework.data.mybatis.auditing.MybatisAuditingHandler;
-import org.springframework.data.mybatis.domain.support.AuditingEntityListener;
+import org.springframework.data.mybatis.auditing.AuditingEntityListener;
 import org.springframework.util.Assert;
 
 class MybatisAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {

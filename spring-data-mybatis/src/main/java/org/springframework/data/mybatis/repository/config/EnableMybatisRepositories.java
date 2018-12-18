@@ -6,6 +6,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
@@ -150,5 +151,7 @@ public @interface EnableMybatisRepositories {
 	 * @since 2.1
 	 */
 	BootstrapMode bootstrapMode() default BootstrapMode.DEFAULT;
+
+	boolean supportMultipleDatasources() default false;
 
 }

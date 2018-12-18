@@ -13,35 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.domain.support;
-
-import static org.apache.ibatis.mapping.SqlCommandType.INSERT;
-import static org.apache.ibatis.mapping.SqlCommandType.UPDATE;
-
-import java.util.Properties;
+package org.springframework.data.mybatis.auditing;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.data.auditing.AuditingHandler;
-import org.springframework.data.mybatis.auditing.MybatisAuditingHandler;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
-import org.apache.ibatis.executor.Executor;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.SqlCommandType;
-import org.apache.ibatis.plugin.Interceptor;
-import org.apache.ibatis.plugin.Intercepts;
-import org.apache.ibatis.plugin.Invocation;
-import org.apache.ibatis.plugin.Plugin;
-import org.apache.ibatis.plugin.Signature;
 import org.mybatis.spring.SqlSessionTemplate;
 
-@Intercepts({ @Signature(type = Executor.class, method = "update", args = {
-		MappedStatement.class, Object.class }) })
 @Configurable
-public class AuditingEntityListener implements InitializingBean, Interceptor {
+public class AuditingEntityListener implements InitializingBean {
 
 	private @Nullable ObjectFactory<MybatisAuditingHandler> handler;
 
@@ -93,35 +77,8 @@ public class AuditingEntityListener implements InitializingBean, Interceptor {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		this.sqlSessionTemplate.getConfiguration().addInterceptor(this);
-	}
-
-	@Override
-	public Object intercept(Invocation invocation) throws Throwable {
-
-		MappedStatement mappedStatement = (MappedStatement) invocation.getArgs()[0];
-		SqlCommandType sqlCommandType = mappedStatement.getSqlCommandType();
-		Object target = invocation.getArgs()[1];
-		if (INSERT == sqlCommandType) {
-			touchForCreate(target);
-		}
-		else if (UPDATE == sqlCommandType) {
-			touchForUpdate(target);
-		}
-		return invocation.proceed();
-	}
-
-	@Override
-	public Object plugin(Object target) {
-		if (target instanceof Executor) {
-			return Plugin.wrap(target, this);
-		}
-		return target;
-	}
-
-	@Override
-	public void setProperties(Properties properties) {
-
+		this.sqlSessionTemplate.getConfiguration()
+				.addInterceptor(new AuditingInterceptor(this));
 	}
 
 }
