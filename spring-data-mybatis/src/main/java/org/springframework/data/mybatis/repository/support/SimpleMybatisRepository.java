@@ -157,6 +157,28 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	}
 
 	@Override
+	public <S extends T> S update(ID id, S entity) {
+		update("__update_by_id", new HashMap<String, Object>() {
+			{
+				put("__id", id);
+				put("__entity", entity);
+			}
+		});
+		return entity;
+	}
+
+	@Override
+	public <S extends T> S updateIgnoreNull(ID id, S entity) {
+		update("__update_by_id_ignore_null", new HashMap<String, Object>() {
+			{
+				put("__id", id);
+				put("__entity", entity);
+			}
+		});
+		return entity;
+	}
+
+	@Override
 	@Transactional
 	public <S extends T> S updateIgnoreNull(S entity) {
 
