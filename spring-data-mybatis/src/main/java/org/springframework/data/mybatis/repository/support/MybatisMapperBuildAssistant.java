@@ -351,8 +351,8 @@ public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilde
 				keyProperty, keyColumn, null, getLanguageDriver(), null);
 
 		if (log.isDebugEnabled()) {
-			System.out.println(
-					"/*【" + this.assistant.getCurrentNamespace() + '.' + id + "】 */");
+			System.out.println("/*【" + this.assistant.getCurrentNamespace() + '.' + id
+					+ "】ResultMap=" + resultMap + " */");
 			System.out.println((sqls.length > 1 ? sqls[1] : sqls[0]) + ";\n");
 		}
 	}
