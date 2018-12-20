@@ -17,10 +17,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "ds_user_ds_role")
+@Table(name = UserRole.TABLE_NAME)
 @Data
 @NoArgsConstructor
 public class UserRole {
+
+	public static final String TABLE_NAME = "ds_user_ds_role";
 
 	@EmbeddedId
 	private UserRoleKey id;

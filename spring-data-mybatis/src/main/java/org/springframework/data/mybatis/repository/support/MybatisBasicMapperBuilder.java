@@ -27,6 +27,8 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.annotation.Condition;
 import org.springframework.data.mybatis.annotation.Conditions;
+import org.springframework.data.mybatis.annotation.CreatedBy;
+import org.springframework.data.mybatis.annotation.CreatedDate;
 import org.springframework.data.mybatis.annotation.Snowflake;
 import org.springframework.data.mybatis.id.SnowflakeKeyGenerator;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntityImpl;
@@ -61,8 +63,10 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		addResultMap();
 
 		addInsertStatement();
-		addUpdateStatement(true);
-		addUpdateStatement(false);
+		addUpdateStatement(true, true);
+		addUpdateStatement(false, true);
+		addUpdateStatement(true, false);
+		addUpdateStatement(false, false);
 		addGetByIdStatement();
 		addCountStatement();
 		addCountAllStatement();
@@ -267,7 +271,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 	}
 
-	private void addUpdateStatement(boolean ignoreNull) {
+	private void addUpdateStatement(boolean ignoreNull, boolean byId) {
 
 		if (!entity.hasIdProperty()) {
 			return;
@@ -278,75 +282,138 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 		builder.append(
 
-				findNormalColumns().stream().map(p -> {
+				findNormalColumns().stream().filter(p -> !(p
+						.isAnnotationPresent(CreatedDate.class)
+						|| p.isAnnotationPresent(
+								org.springframework.data.annotation.CreatedDate.class)
+						|| p.isAnnotationPresent(CreatedBy.class)
+						|| p.isAnnotationPresent(
+								org.springframework.data.annotation.CreatedBy.class)))
+						.map(p -> {
 
-					if (p.isAnnotationPresent(EmbeddedId.class) || p.isEmbeddable()) {
-						return findNormalColumns(((MybatisPersistentEntityImpl) entity)
-								.getRequiredPersistentEntity(p.getActualType())).stream()
-										.map(ep -> {
+							if (p.isAnnotationPresent(EmbeddedId.class)
+									|| p.isEmbeddable()) {
+								return findNormalColumns(
+										((MybatisPersistentEntityImpl) entity)
+												.getRequiredPersistentEntity(
+														p.getActualType())).stream()
+																.map(ep -> {
 
-											StringBuilder sb = new StringBuilder();
-											if (ignoreNull) {
-												sb.append("<if test=\"")
-														.append(ep.getName())
-														.append("!=null\">");
-											}
+																	StringBuilder sb = new StringBuilder();
+																	if (ignoreNull) {
+																		sb.append(
+																				"<if test=\"");
+																		if (byId) {
+																			sb.append(
+																					"__entity != null and ");
+																			sb.append(
+																					"__entity."
+																							+ p.getName()
+																							+ " != null and ");
+																			sb.append(
+																					"__entity."
+																							+ p.getName()
+																							+ '.'
+																							+ ep.getName()
+																							+ " != null");
+																		}
+																		else {
+																			sb.append(p
+																					.getName()
+																					+ " != null and ");
+																			sb.append(p
+																					.getName()
+																					+ '.'
+																					+ ep.getName()
+																					+ " != null");
+																		}
+																		sb.append("\">");
+																	}
 
-											sb.append(ep.getColumnName()).append("=");
-											sb.append(
-													(null != ep.getSpecifiedTypeHandler()
-															? String.format(
-																	"#{%s.%s,jdbcType=%s,typeHandler=%s}",
-																	p.getName(),
-																	ep.getName(),
-																	ep.getJdbcType()
-																			.name(),
-																	ep.getSpecifiedTypeHandler()
-																			.getName())
-															: String.format(
-																	"#{%s.%s,jdbcType=%s}",
-																	p.getName(),
-																	ep.getName(),
-																	ep.getJdbcType()
-																			.name())));
-											sb.append(",");
-											if (ignoreNull) {
-												sb.append("</if>");
-											}
-											return sb.toString();
+																	sb.append(ep
+																			.getColumnName())
+																			.append("=");
+																	sb.append((null != ep
+																			.getSpecifiedTypeHandler()
+																					? String.format(
+																							"#{%s.%s,jdbcType=%s,typeHandler=%s}",
+																							byId ? ("__entity."
+																									+ p.getName())
+																									: p.getName(),
+																							ep.getName(),
+																							ep.getJdbcType()
+																									.name(),
+																							ep.getSpecifiedTypeHandler()
+																									.getName())
+																					: String.format(
+																							"#{%s.%s,jdbcType=%s}",
+																							byId ? ("__entity."
+																									+ p.getName())
+																									: p.getName(),
+																							ep.getName(),
+																							ep.getJdbcType()
+																									.name())));
+																	sb.append(",");
+																	if (ignoreNull) {
+																		sb.append(
+																				"</if>");
+																	}
+																	return sb.toString();
 
-										}).collect(Collectors.joining(" "));
-					}
+																}).collect(Collectors
+																		.joining(" "));
+							}
 
-					if (p.isVersionProperty()) {
-						return p.getColumnName() + "=" + p.getColumnName() + "+1,";
-					}
+							if (p.isVersionProperty()) {
+								return p.getColumnName() + "=" + p.getColumnName()
+										+ "+1,";
+							}
 
-					StringBuilder sb = new StringBuilder();
-					if (ignoreNull) {
-						sb.append("<if test=\"").append(p.getName()).append("!=null\">");
-					}
+							StringBuilder sb = new StringBuilder();
+							if (ignoreNull) {
 
-					sb.append(p.getColumnName()).append("=");
-					sb.append((null != p.getSpecifiedTypeHandler()
-							? String.format("#{%s,jdbcType=%s,typeHandler=%s}",
-									p.getName(), p.getJdbcType().name(),
-									p.getSpecifiedTypeHandler().getName())
-							: String.format("#{%s,jdbcType=%s}", p.getName(),
-									p.getJdbcType().name())));
-					sb.append(",");
-					if (ignoreNull) {
-						sb.append("</if>");
-					}
-					return sb.toString();
+								if (ignoreNull) {
+									sb.append("<if test=\"");
+									if (byId) {
+										sb.append("__entity != null and ");
+										sb.append("__entity." + p.getName() + " != null");
 
-				}).collect(Collectors.joining()));
+									}
+									else {
+										sb.append(p.getName() + " != null");
+									}
+									sb.append("\">");
+								}
 
-		builder.append("</set> where ").append(buildIdCaluse(true));
+							}
+
+							sb.append(p.getColumnName()).append("=");
+							sb.append((null != p.getSpecifiedTypeHandler()
+									? String.format("#{%s,jdbcType=%s,typeHandler=%s}",
+											byId ? ("__entity." + p.getName())
+													: p.getName(),
+											p.getJdbcType().name(),
+											p.getSpecifiedTypeHandler().getName())
+									: String.format("#{%s,jdbcType=%s}",
+											byId ? ("__entity." + p.getName())
+													: p.getName(),
+											p.getJdbcType().name())));
+							sb.append(",");
+							if (ignoreNull) {
+								sb.append("</if>");
+							}
+							return sb.toString();
+
+						}).collect(Collectors.joining()));
+
+		builder.append("</set> where ").append(buildIdCaluse(true, byId));
 
 		String[] sqls = new String[] { "<script>", builder.toString(), "</script>" };
-		addMappedStatement(ignoreNull ? "__update_ignore_null" : "__update", sqls, UPDATE,
-				entity.getType());
+		addMappedStatement(
+				ignoreNull
+						? (byId ? "__update_by_id_ignore_null" : "__update_ignore_null")
+						: (byId ? "__update_by_id" : "__update"),
+				sqls, UPDATE, entity.getType());
 	}
 
 	private void addGetByIdStatement() {
@@ -356,7 +423,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		// .map(p -> String.format("%s as %s", p.getColumnName(), p.getName()))
 		// .collect(Collectors.joining(",")));
 		builder.append(" from ").append(entity.getTableName()).append(" where ")
-				.append(buildIdCaluse(false));
+				.append(buildIdCaluse(false, false));
 		addMappedStatement("__get_by_id", new String[] { builder.toString() }, SELECT,
 				entity.getIdProperty().getType(), RESULT_MAP);
 	}
@@ -402,7 +469,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		StringBuilder builder = new StringBuilder();
 
 		builder.append("delete from ").append(entity.getTableName()).append(" where ")
-				.append(buildIdCaluse(false));
+				.append(buildIdCaluse(false, false));
 		addMappedStatement("__delete_by_id", new String[] { builder.toString() }, DELETE,
 				entity.getIdProperty().getType());
 
@@ -511,7 +578,7 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 		return builder.toString();
 	}
 
-	private String buildIdCaluse(boolean clearly) {
+	private String buildIdCaluse(boolean clearly, boolean byId) {
 
 		if (!entity.hasIdProperty()) {
 			return null;
@@ -526,24 +593,28 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 									+ (null != ep.getSpecifiedTypeHandler()
 											? String.format(
 													"#{%s,jdbcType=%s,typeHandler=%s}",
-													clearly ? (p.getName() + '.'
+													clearly ? ((byId ? "__id"
+															: p.getName()) + '.'
 															+ ep.getName())
 															: ep.getName(),
 													ep.getJdbcType().name(),
 													ep.getSpecifiedTypeHandler()
 															.getName())
 											: String.format("#{%s,jdbcType=%s}", clearly
-													? (p.getName() + '.' + ep.getName())
+													? ((byId ? "__id" : p.getName()) + '.'
+															+ ep.getName())
 													: ep.getName(),
 													ep.getJdbcType().name())))
 							.collect(Collectors.joining(" and "));
 		}
 
-		return p.getColumnName() + " = " + (null != p.getSpecifiedTypeHandler()
-				? String.format("#{%s,jdbcType=%s,typeHandler=%s}", p.getName(),
-						p.getJdbcType().name(), p.getSpecifiedTypeHandler().getName())
-				: String.format("#{%s,jdbcType=%s}", p.getName(),
-						p.getJdbcType().name()));
+		return p.getColumnName() + " = "
+				+ (null != p.getSpecifiedTypeHandler()
+						? String.format("#{%s,jdbcType=%s,typeHandler=%s}",
+								byId ? "__id" : p.getName(), p.getJdbcType().name(),
+								p.getSpecifiedTypeHandler().getName())
+						: String.format("#{%s,jdbcType=%s}", byId ? "__id" : p.getName(),
+								p.getJdbcType().name()));
 	}
 
 }

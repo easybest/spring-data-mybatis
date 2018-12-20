@@ -1,6 +1,7 @@
 package org.springframework.data.mybatis.repository.support;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mybatis.repository.query.InvalidMybatisQueryMethodException;
@@ -27,6 +28,9 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 
 	private final SqlCommandType commandType;
 
+	private final static Pattern SELECT_ALL_FROM = Pattern
+			.compile("^\\s*select\\s+\\*\\s+from\\s+.*", Pattern.CASE_INSENSITIVE);
+
 	public MybatisSimpleQueryMapperBuilder(Configuration configuration,
 			PersistentEntity<?, ?> persistentEntity, SimpleMybatisQuery query) {
 		super(configuration, persistentEntity, query.getQueryMethod().getNamespace());
@@ -49,15 +53,18 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 	private void buildQuery() {
 
 		if (method.getAnnotatedQuery().trim().startsWith("<script>")) {
+			String sql = method.getAnnotatedQuery().trim();
 			if (null != method.getResultMap()) {
-				addMappedStatement(method.getStatementId(),
-						new String[] { method.getAnnotatedQuery() }, commandType,
-						Map.class, method.getResultMap());
+				addMappedStatement(method.getStatementName(), new String[] { sql },
+						commandType, Map.class, method.getResultMap());
+			}
+			else if (SELECT_ALL_FROM.matcher(sql).matches()) {
+				addMappedStatement(method.getStatementName(), new String[] { sql },
+						commandType, Map.class, RESULT_MAP);
 			}
 			else {
-				addMappedStatement(method.getStatementId(),
-						new String[] { method.getAnnotatedQuery() }, commandType,
-						Map.class, method.getReturnedObjectType());
+				addMappedStatement(method.getStatementName(), new String[] { sql },
+						commandType, Map.class, method.getReturnedObjectType());
 			}
 			return;
 		}
@@ -151,11 +158,15 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 		}
 
 		if (null != method.getResultMap()) {
-			addMappedStatement(method.getStatementId(), sqls, commandType, Map.class,
+			addMappedStatement(method.getStatementName(), sqls, commandType, Map.class,
 					method.getResultMap());
 		}
+		else if (SELECT_ALL_FROM.matcher(sql).matches()) {
+			addMappedStatement(method.getStatementName(), sqls, commandType, Map.class,
+					RESULT_MAP);
+		}
 		else {
-			addMappedStatement(method.getStatementId(), sqls, commandType, Map.class,
+			addMappedStatement(method.getStatementName(), sqls, commandType, Map.class,
 					method.getReturnedObjectType());
 		}
 	}
