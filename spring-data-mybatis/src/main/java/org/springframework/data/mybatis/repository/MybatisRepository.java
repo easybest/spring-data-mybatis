@@ -2,6 +2,7 @@ package org.springframework.data.mybatis.repository;
 
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -72,7 +73,11 @@ public interface MybatisRepository<T, ID>
 	 */
 	<S extends T> S update(S entity);
 
+	<S extends T> S update(ID id, S entity);
+
 	<S extends T> S updateIgnoreNull(S entity);
+
+	<S extends T> S updateIgnoreNull(ID id, S entity);
 
 	<S extends T> S saveIgnoreNull(S entity);
 
