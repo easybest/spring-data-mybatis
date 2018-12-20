@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.type.TypeHandler;
 
 public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant {
 
@@ -74,13 +75,18 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 			for (ParameterBinding parameterBinding : stringQuery.getParameterBindings()) {
 
 				String replace, bindName;
+
+				MybatisParameter mp = method.getParameters()
+						.getBindableParameter(parameterBinding.getRequiredPosition() - 1);
+
+				Class<? extends TypeHandler<?>> typeHandler = mp
+						.getSpecifiedTypeHandler();
+
 				if (StringUtils.hasText(parameterBinding.getName())) {
 					replace = ":" + parameterBinding.getName();
 					bindName = parameterBinding.getName();
 				}
 				else {
-					MybatisParameter mp = method.getParameters().getBindableParameter(
-							parameterBinding.getRequiredPosition() - 1);
 					replace = "?" + parameterBinding.getPosition();
 					bindName = mp.getName().orElse("__p" + mp.getIndex());
 				}
@@ -89,7 +95,11 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 					sql = sql.replace(replace,
 							"<foreach item=\"__item\" index=\"__index\" collection=\""
 									+ bindName
-									+ "\" open=\"(\" separator=\",\" close=\")\">#{__item}</foreach>");
+									+ "\" open=\"(\" separator=\",\" close=\")\">#{__item"
+									+ (null != typeHandler
+											? (",typeHandler=" + typeHandler.getName())
+											: "")
+									+ "}</foreach>");
 
 					continue;
 				}
@@ -122,7 +132,11 @@ public class MybatisSimpleQueryMapperBuilder extends MybatisMapperBuildAssistant
 
 				}
 
-				sql = sql.replace(replace, "#{" + bindName + "}");
+				sql = sql.replace(replace,
+						"#{" + bindName
+								+ (null != typeHandler
+										? (",typeHandler=" + typeHandler.getName()) : "")
+								+ "}");
 
 			}
 
