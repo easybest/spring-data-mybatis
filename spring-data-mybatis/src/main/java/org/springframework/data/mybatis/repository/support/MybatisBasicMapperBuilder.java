@@ -9,6 +9,7 @@ import static org.apache.ibatis.mapping.SqlCommandType.SELECT;
 import static org.apache.ibatis.mapping.SqlCommandType.UPDATE;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +43,7 @@ import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.keygen.NoKeyGenerator;
 import org.apache.ibatis.executor.keygen.SelectKeyGenerator;
 import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.ResultFlag;
 import org.apache.ibatis.mapping.ResultMapping;
 import org.apache.ibatis.session.Configuration;
 
@@ -84,31 +86,31 @@ public class MybatisBasicMapperBuilder extends MybatisMapperBuildAssistant {
 
 			if (p.isAnnotationPresent(EmbeddedId.class) || p.isEmbeddable()) {
 
-				List<ResultMapping> nestedResultMappings = new ArrayList<>();
-
 				((MybatisPersistentEntityImpl) entity)
 						.getRequiredPersistentEntity(p.getActualType()).doWithProperties(
 								(PropertyHandler<MybatisPersistentProperty>) ep -> {
-									// build mybatis result map association
-									nestedResultMappings.add(assistant.buildResultMapping(
-											ep.getType(), ep.getName(),
-											ep.getColumnName(), ep.getType(),
-											ep.getJdbcType(), null, null, null, null,
-											ep.getSpecifiedTypeHandler(), null));
+
+									resultMappings.add(
+											assistant.buildResultMapping(ep.getType(),
+													String.format("%s.%s", p.getName(),
+															ep.getName()),
+													ep.getColumnName(), ep.getType(),
+													ep.getJdbcType(), null, null, null,
+													null, ep.getSpecifiedTypeHandler(),
+													p.isIdProperty()
+															? Collections.singletonList(
+																	ResultFlag.ID)
+															: null));
 
 								});
-				addResultMap(RESULT_MAP + "_" + p.getName(), p.getActualType(),
-						nestedResultMappings);
-				resultMappings.add(assistant.buildResultMapping(p.getType(), p.getName(),
-						p.getColumnName(), p.getType(), p.getJdbcType(), null,
-						RESULT_MAP + "_" + p.getName(), null, null,
-						p.getSpecifiedTypeHandler(), null));
+
+				return;
 			}
-			else {
-				resultMappings.add(assistant.buildResultMapping(p.getType(), p.getName(),
-						p.getColumnName(), p.getType(), p.getJdbcType(), null, null, null,
-						null, p.getSpecifiedTypeHandler(), null));
-			}
+
+			resultMappings.add(assistant.buildResultMapping(p.getType(), p.getName(),
+					p.getColumnName(), p.getType(), p.getJdbcType(), null, null, null,
+					null, p.getSpecifiedTypeHandler(),
+					p.isIdProperty() ? Collections.singletonList(ResultFlag.ID) : null));
 
 		});
 

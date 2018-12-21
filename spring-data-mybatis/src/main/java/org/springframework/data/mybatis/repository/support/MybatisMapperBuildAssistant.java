@@ -380,7 +380,7 @@ public abstract class MybatisMapperBuildAssistant implements MybatisMapperBuilde
 		if (log.isDebugEnabled()) {
 			System.out.println(
 					"/*【" + this.assistant.getCurrentNamespace() + '.' + id + "】 */");
-			System.out.println(resultMappings);
+			resultMappings.stream().forEach(System.out::println);
 		}
 	}
 
