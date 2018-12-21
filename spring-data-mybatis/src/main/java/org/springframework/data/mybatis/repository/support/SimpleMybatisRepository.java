@@ -16,6 +16,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -30,7 +31,7 @@ import org.mybatis.spring.SqlSessionTemplate;
  * @author JARVIS SONG
  */
 @Repository
-@Transactional(readOnly = true)
+@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 		implements MybatisRepository<T, ID> {
 
