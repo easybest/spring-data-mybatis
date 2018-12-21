@@ -64,8 +64,8 @@ public interface UserRepository
 
 	@Transactional
 	@Modifying
-	@Query("update ds_user set lastname = ?1")
-	void renameAllUsersTo(String lastname);
+	@Query("update ds_user set lastname=:lastname")
+	void renameAllUsersTo(@Param("lastname") String lastname);
 
 	List<User> findByFirstnameOrLastname(@Param("lastname") String lastname,
 			@Param("firstname") String firstname);
