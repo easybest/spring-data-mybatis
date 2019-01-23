@@ -151,9 +151,10 @@ add the jar through Maven:
    </dependency>
    ```
 
-If you need custom Mapper, you should add property in your application.properties like this:
+If you need custom Mapper, you should add property in your application.yml like this:
 ```
-mybatis.mapper-locations=classpath*:/mapper/**/**Mapper.xml
+mybatis:
+  mapper-locations: "classpath*:/mapper/**/**Mapper.xml"
 ```
 
 And you need not to define SqlSessionFactory manually.
