@@ -13,6 +13,28 @@
     <artifactId>spring-data-mybatis-core</artifactId>
     <name>Spring Data MyBatis Core</name>
     <description>Spring Data module for MyBatis repositories.</description>
+    <url>https://github.com/hatunet/spring-data-mybatis</url>
+    <developers>
+        <developer>
+            <id>jarvis</id>
+            <name>Jarvis Song</name>
+            <email>iamjarvissong@gmail.com</email>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/hatunet/spring-data-mybatis</url>
+        <connection>scm:git:git://github.com/hatunet/spring-data-mybatis.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/hatunet/spring-data-mybatis.git
+        </developerConnection>
+    </scm>
     <dependencies>
         <dependency>
             <groupId>javax.persistence</groupId>
