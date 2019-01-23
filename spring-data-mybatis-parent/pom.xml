@@ -13,7 +13,28 @@
   <artifactId>spring-data-mybatis-parent</artifactId>
   <name>Spring Data MyBatis Parent</name>
   <description>Spring Data module for MyBatis repositories.</description>
+  <url>https://github.com/hatunet/spring-data-mybatis</url>
+  <developers>
+    <developer>
+      <id>jarvis</id>
+      <name>Jarvis Song</name>
+      <email>iamjarvissong@gmail.com</email>
+    </developer>
+  </developers>
 
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <url>https://github.com/hatunet/spring-data-mybatis</url>
+    <connection>scm:git:git://github.com/hatunet/spring-data-mybatis.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/hatunet/spring-data-mybatis.git
+    </developerConnection>
+  </scm>
   <properties>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,7 +42,7 @@
     <source.level>1.8</source.level>
     <dist.id>${project.artifactId}</dist.id>
 
-    <springdata.commons>2.1.3.RELEASE</springdata.commons>
+    <springdata.commons>2.1.4.RELEASE</springdata.commons>
 
     <apt>1.1.3</apt>
     <aspectj>1.9.1</aspectj>
@@ -56,9 +77,9 @@
     <java-module-name/>
 
     <!-- MyBatis version -->
-    <mybatis>3.5.0-SNAPSHOT</mybatis>
-    <mybatis.spring>2.0.0-SNAPSHOT</mybatis.spring>
-    <mybatis-spring-boot>2.0.0-SNAPSHOT</mybatis-spring-boot>
+    <mybatis>3.5.0</mybatis>
+    <mybatis.spring>2.0.0</mybatis.spring>
+    <mybatis-spring-boot>2.0.0</mybatis-spring-boot>
   </properties>
 
   <dependencyManagement>

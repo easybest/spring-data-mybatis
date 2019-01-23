@@ -38,20 +38,8 @@ Download the jar through Maven:
 <dependency>
   <groupId>com.ifrabbit</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>2.0.0.BUILD-SNAPSHOT</version>
+  <version>2.0.0.RELEASE</version>
 </dependency>
-```
-
-
-you should add repository configuration to your pom.xml like this:
-
-```xml
-<repository>
- <id>oss-snapshots-repo</id>
- <url>https://oss.sonatype.org/content/repositories/snapshots</url>
- <releases><enabled>false</enabled></releases>
- <snapshots><enabled>true</enabled></snapshots>
-</repository>
 ```
 
 
@@ -159,7 +147,7 @@ add the jar through Maven:
    <dependency>
        <groupId>com.ifrabbit</groupId>
        <artifactId>spring-boot-starter-data-mybatis</artifactId>
-       <version>2.0.0.BUILD-SNAPSHOT</version>
+       <version>2.0.0.RELEASE</version>
    </dependency>
    ```
 
