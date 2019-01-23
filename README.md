@@ -25,7 +25,6 @@ This module deals with enhanced support for MyBatis based data access layers.
 
 
 ## Getting Help ##
-This README as well as the [reference documentation](https://hatunet.github.io/spring-data-mybatis/) are the best places to start learning about Spring Data MyBatis. 
 
 If you have any question, please record a [issue](https://github.com/hatunet/spring-data-mybatis/issues) to me.
 
