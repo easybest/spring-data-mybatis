@@ -146,7 +146,7 @@ add the jar through Maven:
    ```xml
    <dependency>
        <groupId>com.ifrabbit</groupId>
-       <artifactId>spring-boot-starter-data-mybatis</artifactId>
+       <artifactId>spring-data-mybatis-boot-starter</artifactId>
        <version>2.0.0.RELEASE</version>
    </dependency>
    ```
