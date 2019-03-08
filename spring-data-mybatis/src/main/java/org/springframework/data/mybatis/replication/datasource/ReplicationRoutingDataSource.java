@@ -71,12 +71,16 @@ public class ReplicationRoutingDataSource extends AbstractRoutingDataSource {
 
 		// determine by transaction
 
-		boolean readOnly = isCurrentTransactionReadOnly();
-		if (readOnly && slaveSize > 0) {
-			return SLAVE_PREFIX + getSlaveIndex();
+		Boolean readOnly = isCurrentTransactionReadOnly();
+		if (null != readOnly && readOnly && slaveSize > 0) {
+			return getSlave();
 		}
 
 		return MASTER_KEY;
+	}
+
+	protected String getSlave() {
+		return SLAVE_PREFIX + getSlaveIndex();
 	}
 
 	private int getSlaveIndex() {
@@ -86,12 +90,13 @@ public class ReplicationRoutingDataSource extends AbstractRoutingDataSource {
 		return index % slaveSize;
 	}
 
-	public static boolean isCurrentTransactionReadOnly() {
-		return (currentTransactionReadOnly.get() != null);
+	public static Boolean isCurrentTransactionReadOnly() {
+		return currentTransactionReadOnly.get();
+
 	}
 
 	public static void setCurrentTransactionReadOnly(boolean readOnly) {
-		currentTransactionReadOnly.set(readOnly ? Boolean.TRUE : null);
+		currentTransactionReadOnly.set(readOnly);
 	}
 
 	public static void clear() {
