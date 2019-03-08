@@ -180,7 +180,7 @@ public class MybatisPersistentPropertyImpl
 
 	@Override
 	public boolean isVersionProperty() {
-		return isAnnotationPresent(Version.class);
+		return isAnnotationPresent(Version.class) || super.isVersionProperty();
 	}
 
 	@Override
