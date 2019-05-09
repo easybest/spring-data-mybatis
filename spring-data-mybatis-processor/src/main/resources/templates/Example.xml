@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="{{metadata.repositoryClazzName}}">
+
+  <resultMap id="__result_map" type="{{metadata.domainClazzName}}">
+    {{#metadata.primaryMetadata}}
+    <id column="{{columnName}}" property="{{fieldName}}" {{#typeHandler}}typeHandler="{{typeHandler}}" {{/typeHandler}}/>
+    {{/metadata.primaryMetadata}}
+{{#metadata.columnMetadataList}}
+    {{^primary}}
+    <result column="{{columnName}}"  property="{{fieldName}}" {{#typeHandler}}typeHandler="{{typeHandler}}" {{/typeHandler}}/>
+    {{/primary}}
+{{/metadata.columnMetadataList}}
+{{#metadata.oneToOne}}
+    <association column="{{columnName}}" property="{{fieldName}}" fetchType="{{fetchType}}" select="{{mappedBy}}"/>
+{{/metadata.oneToOne}}
+{{#metadata.oneToMany}}
+    <collection  column="{{columnName}}" property="{{fieldName}}" fetchType="{{fetchType}}" select="{{mappedBy}}"/>
+{{/metadata.oneToMany}}
+  </resultMap>
+  <sql id="Example_Where_Clause">
+    <where>
+      <foreach collection="oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause">
+    <where>
+      <foreach collection="example.oredCriteria" item="criteria" separator="or">
+        <if test="criteria.valid">
+          <trim prefix="(" prefixOverrides="and" suffix=")">
+            <foreach collection="criteria.criteria" item="criterion">
+              <choose>
+                <when test="criterion.noValue">
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue">
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue">
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue">
+                  and ${criterion.condition}
+                  <foreach close=")" collection="criterion.value" item="listItem" open="(" separator=",">
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+
+  <sql id="Base_Column_List">
+    {{metadata.columns}}
+  </sql>
+
+  <sql id="TABLE_NAME">
+    {{metadata.tableName}}
+  </sql>
+
+  <sql id="Table_Name_Dy">
+    <if test="table==null">
+      <include refid="TABLE_NAME" />
+    </if>
+    <if test="table!=null">
+        ${table}
+    </if>
+  </sql>
+
+  <sql id="Base_Column_List_Dy">
+    <if test="columns==null">
+      <include refid="Base_Column_List" />
+    </if>
+    <if test="columns!=null">
+      <foreach collection="columns" item="column" separator=",">
+        ${column}
+      </foreach>
+    </if>
+  </sql>
+
+  <select id="selectByExample" parameterType="{{metadata.exampleClazzName}}" resultMap="__result_map">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List_Dy" />
+    from
+    <include refid="Table_Name_Dy" />
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null">
+      limit
+      <foreach collection="limit" item="num" separator=",">
+        ${num}
+      </foreach>
+    </if>
+  </select>
+  <select id="streamByExample" parameterType="{{metadata.exampleClazzName}}" resultMap="__result_map">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List_Dy" />
+    from
+    <include refid="Table_Name_Dy" />
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null">
+      limit
+      <foreach collection="limit" item="num" separator=",">
+        ${num}
+      </foreach>
+    </if>
+   </select>
+  <select id="cursorByExample" parameterType="{{metadata.exampleClazzName}}" resultMap="__result_map">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List_Dy" />
+    from
+    <include refid="Table_Name_Dy" />
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null">
+      limit
+      <foreach collection="limit" item="num" separator=",">
+        ${num}
+      </foreach>
+    </if>
+   </select>
+
+  <select id="selectByExampleWithMap" parameterType="{{metadata.exampleClazzName}}" resultType="java.util.LinkedHashMap">
+    select
+    <if test="distinct">
+      distinct
+    </if>
+    <include refid="Base_Column_List_Dy" />
+    from <include refid="Table_Name_Dy"></include>
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null">
+      order by ${orderByClause}
+    </if>
+    <if test="limit != null">
+      limit
+      <foreach collection="limit" item="num" separator=",">
+        ${num}
+      </foreach>
+    </if>
+  </select>
+
+  {{#metadata.primaryMetadata}}
+  <select id="selectByPrimaryKey" parameterType="{{metadata.primaryMetadata.javaType}}" resultMap="__result_map">
+    select 
+    <include refid="Base_Column_List" />
+    from {{metadata.tableName}}
+    where {{metadata.primaryMetadata.columnName}} = #{ {{metadata.primaryMetadata.fieldName}} }
+  </select>
+  {{/metadata.primaryMetadata}}
+
+  {{#metadata.primaryMetadata}}
+  <delete id="deleteByPrimaryKey" parameterType="{{metadata.primaryMetadata.javaType}}">
+    delete from {{metadata.tableName}}
+    where {{metadata.primaryMetadata.columnName}} = #{ {{metadata.primaryMetadata.fieldName}} }
+  </delete>
+  {{/metadata.primaryMetadata}}
+
+
+  {{#metadata.primaryMetadata}}
+  <delete id="deleteByPrimaryKeys" parameterType="{{metadata.primaryMetadata.javaType}}">
+    delete from {{metadata.tableName}}
+    where {{metadata.primaryMetadata.columnName}} in
+    <foreach close=")" collection="list" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+  </delete>
+  {{/metadata.primaryMetadata}}
+
+  <delete id="deleteByExample" parameterType="{{metadata.exampleClazzName}}">
+    delete from <include refid="Table_Name_Dy"></include>
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="limit != null">
+      limit
+      <foreach collection="limit" item="num" separator=",">
+        ${num}
+      </foreach>
+    </if>
+  </delete>
+
+  <insert id="insert" parameterType="{{metadata.domainClazzName}}" {{#metadata.primaryMetadata}} {{#metadata.primaryMetadata.useGeneratedKeys}} keyProperty="{{metadata.primaryMetadata.fieldName}}" useGeneratedKeys="{{metadata.primaryMetadata.useGeneratedKeys}}" {{/metadata.primaryMetadata.useGeneratedKeys}} {{/metadata.primaryMetadata}}>
+    insert into {{metadata.tableName}} ({{metadata.columns}})
+    values (
+    <trim  suffixOverrides=",">
+      {{#metadata.columnMetadataList}}
+        #{ {{fieldName}} } ,
+      {{/metadata.columnMetadataList}}
+    </trim>
+    )
+  </insert>
+
+  <insert id="insertSelective" parameterType="{{metadata.domainClazzName}}" {{#metadata.primaryMetadata}} {{#metadata.primaryMetadata.useGeneratedKeys}} keyProperty="{{metadata.primaryMetadata.fieldName}}" useGeneratedKeys="{{metadata.primaryMetadata.useGeneratedKeys}}" {{/metadata.primaryMetadata.useGeneratedKeys}} {{/metadata.primaryMetadata}}>
+    insert into {{metadata.tableName}}
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      {{#metadata.columnMetadataList}}
+      <if test="{{fieldName}} != null">
+        {{columnName}},
+      </if>
+      {{/metadata.columnMetadataList}}
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      {{#metadata.columnMetadataList}}
+      <if test="{{fieldName}} != null">
+        #{ {{fieldName}}  } ,
+      </if>
+      {{/metadata.columnMetadataList}}
+    </trim>
+  </insert>
+
+
+  <insert id="insertBatch" parameterType="java.util.List"  {{#metadata.primaryMetadata}} {{#metadata.primaryMetadata.useGeneratedKeys}} keyProperty="{{metadata.primaryMetadata.fieldName}}" useGeneratedKeys="{{metadata.primaryMetadata.useGeneratedKeys}}" {{/metadata.primaryMetadata.useGeneratedKeys}} {{/metadata.primaryMetadata}}>
+    insert into {{metadata.tableName}}
+    (<include refid="Base_Column_List" />)
+    values
+    <foreach collection="list" index="index" item="item" separator=",">
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      {{#metadata.columnMetadataList}}
+      #{ item.{{fieldName}} },
+      {{/metadata.columnMetadataList}}
+    </trim>
+    </foreach>
+  </insert>
+  <insert id="insertByExample" parameterType="{{metadata.exampleClazzName}}" {{#metadata.primaryMetadata}} {{#metadata.primaryMetadata.useGeneratedKeys}} keyProperty="record.{{metadata.primaryMetadata.fieldName}}" useGeneratedKeys="{{metadata.primaryMetadata.useGeneratedKeys}}" {{/metadata.primaryMetadata.useGeneratedKeys}} {{/metadata.primaryMetadata}}>
+    insert into <include refid="Table_Name_Dy"></include> ({{metadata.columns}})
+    values (
+      <trim  suffixOverrides=",">
+      {{#metadata.columnMetadataList}}
+      #{ record.{{fieldName}} } ,
+      {{/metadata.columnMetadataList}}
+      </trim>
+        )
+  </insert>
+
+  <insert id="insertSelectiveByExample" parameterType="{{metadata.exampleClazzName}}" {{#metadata.primaryMetadata}} {{#metadata.primaryMetadata.useGeneratedKeys}} keyProperty="record.{{metadata.primaryMetadata.fieldName}}" useGeneratedKeys="{{metadata.primaryMetadata.useGeneratedKeys}}" {{/metadata.primaryMetadata.useGeneratedKeys}} {{/metadata.primaryMetadata}}>
+    insert into <include refid="Table_Name_Dy"></include>
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+    {{#metadata.columnMetadataList}}
+    <if test="record.{{fieldName}} != null">
+      {{columnName}},
+    </if>
+    {{/metadata.columnMetadataList}}
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+    {{#metadata.columnMetadataList}}
+    <if test="record.{{fieldName}} != null">
+      #{ record.{{fieldName}} } ,
+    </if>
+    {{/metadata.columnMetadataList}}
+    </trim>
+  </insert>
+
+
+  <insert id="insertBatchByExample" parameterType="{{metadata.exampleClazzName}}" {{#metadata.primaryMetadata}} {{#metadata.primaryMetadata.useGeneratedKeys}} keyProperty="{{metadata.primaryMetadata.fieldName}}" useGeneratedKeys="{{metadata.primaryMetadata.useGeneratedKeys}}" {{/metadata.primaryMetadata.useGeneratedKeys}} {{/metadata.primaryMetadata}}>
+            insert into <include refid="Table_Name_Dy"></include>(
+    <include refid="Base_Column_List" />
+            )
+            values
+    <foreach collection="records" index="index" item="item" separator=",">
+      <trim prefix="(" suffix=")" suffixOverrides=",">
+        {{#metadata.columnMetadataList}}
+        #{ item.{{fieldName}} },
+        {{/metadata.columnMetadataList}}
+      </trim>
+    </foreach>
+  </insert>
+
+  <select id="countByExample" parameterType="{{metadata.exampleClazzName}}" resultType="long">
+    select count(*) from <include refid="Table_Name_Dy"></include>
+    <if test="_parameter != null">
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+
+  <update id="updateByExampleSelective" parameterType="map">
+    update
+    <if test="example.table==null">
+      <include refid="TABLE_NAME" />
+    </if>
+    <if test="example.table!=null">
+      ${example.table}
+    </if>
+    <set>
+    {{#metadata.columnMetadataList}}
+    <if test="record.{{fieldName}} != null">
+      {{columnName}} = #{ record.{{fieldName}} } ,
+    </if>
+    {{/metadata.columnMetadataList}}
+    </set>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+    <if test="example.limit != null">
+      limit
+      <foreach collection="example.limit" item="num" separator=",">
+        ${num}
+      </foreach>
+    </if>
+  </update>
+
+  <update id="updateByExample" parameterType="map">
+    update
+    <if test="example.table==null">
+      <include refid="TABLE_NAME" />
+    </if>
+    <if test="example.table!=null">
+      ${example.table}
+    </if>
+    set
+    <trim  suffixOverrides=",">
+    {{#metadata.columnMetadataList}}
+      {{columnName}} = #{ {{fieldName}} } ,
+    {{/metadata.columnMetadataList}}
+    </trim>
+    <if test="_parameter != null">
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+    <if test="example.limit != null">
+      limit
+      <foreach collection="example.limit" item="num" separator=",">
+        ${num}
+      </foreach>
+    </if>
+  </update>
+
+
+  {{#metadata.primaryMetadata}}
+  <update id="updateByPrimaryKey" parameterType="{{metadata.domainClazzName}}">
+    update {{metadata.tableName}}
+    set
+    <trim  suffixOverrides=",">
+    {{#metadata.columnMetadataList}}
+      {{columnName}} = #{ {{fieldName}} } ,
+    {{/metadata.columnMetadataList}}
+    </trim>
+    where
+     {{columnName}} = #{ {{fieldName}} }
+  </update>
+  {{/metadata.primaryMetadata}}
+
+  {{#metadata.primaryMetadata}}
+  <update id="updateByPrimaryKeySelective" parameterType="{{metadata.domainClazzName}}">
+    update {{metadata.tableName}}
+    <set>
+    {{#metadata.columnMetadataList}}
+      <if test="{{fieldName}} != null">
+        {{columnName}} = #{ {{fieldName}} } ,
+      </if>
+    {{/metadata.columnMetadataList}}
+    </set>
+    where
+     {{columnName}} = #{ {{fieldName}} }
+  </update>
+  {{/metadata.primaryMetadata}}
+
+
+  {{#metadata.primaryMetadata}}
+  <select id="selectByPrimaryKeys" resultMap="__result_map">
+    select 
+    <include refid="Base_Column_List" />
+    from {{metadata.tableName}}
+    where {{metadata.primaryMetadata.columnName}}  in
+
+    <foreach open="(" close=")" collection="list" item="id" separator=",">
+      #{id}
+    </foreach>
+  </select>
+  {{/metadata.primaryMetadata}}
+
+  {{#metadata.primaryMetadata}}
+  <select id="existsById" parameterType="{{metadata.primaryMetadata.javaType}}" resultType="boolean">
+    select count(*)>0 from {{metadata.tableName}}
+    where {{metadata.primaryMetadata.columnName}} = #{ {{metadata.primaryMetadata.fieldName}} }
+  </select>
+  {{/metadata.primaryMetadata}}
+
+
+  <select id="existsByExample" parameterType="{{metadata.exampleClazzName}}" resultType="Boolean">
+  select count(*)>0 from
+    <include refid="Table_Name_Dy"></include>
+      <if test="_parameter != null">
+        <include refid="Example_Where_Clause"/>
+      </if>
+  </select>
+
+
+  <select id="selectAll" resultMap="__result_map">
+    select <include refid="Base_Column_List" /> from {{metadata.tableName}}
+  </select>
+
+
+  <select id="streamAll" resultMap="__result_map">
+    select <include refid="Base_Column_List" /> from {{metadata.tableName}}
+  </select>
+
+
+  <select id="cursorAll" resultMap="__result_map">
+    select <include refid="Base_Column_List" /> from {{metadata.tableName}}
+  </select>
+
+  <select id="count" resultType="long">
+    select count(*) from {{metadata.tableName}}
+  </select>
+
+</mapper>
