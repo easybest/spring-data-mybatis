@@ -9,8 +9,6 @@ import java.util.stream.Stream;
 
 public interface MybatisExampleRepository<T, ID, Example> {
 
-    List<T> selectAll();
-
     Cursor<T> cursorAll();
 
     Cursor<T> cursorByExample(Example query);

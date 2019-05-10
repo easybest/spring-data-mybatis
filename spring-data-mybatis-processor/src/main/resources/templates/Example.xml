@@ -232,12 +232,6 @@
       </if>
   </select>
 
-
-  <select id="selectAll" resultMap="__result_map">
-    select <include refid="Base_Column_List" /> from {{metadata.tableName}}
-  </select>
-
-
   <select id="streamAll" resultMap="__result_map">
     select <include refid="Base_Column_List" /> from {{metadata.tableName}}
   </select>

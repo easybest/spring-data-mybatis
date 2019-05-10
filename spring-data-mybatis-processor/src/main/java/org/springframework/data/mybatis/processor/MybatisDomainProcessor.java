@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@SupportedAnnotationTypes("org.springframework.data.mybatis.processor.Example")
+@SupportedAnnotationTypes(value = "org.springframework.data.mybatis.processor.Example")
 public class MybatisDomainProcessor extends AbstractProcessor {
 
     private final DomainTypeVisitor domainTypeVisitor = new DomainTypeVisitor();
@@ -92,7 +92,7 @@ public class MybatisDomainProcessor extends AbstractProcessor {
     }
 
 
-    public TableMetadata read(Element element) {
+    private TableMetadata read(Element element) {
         Example example = element.getAnnotation(Example.class);
         Table table = element.getAnnotation(Table.class);
         PackageElement packageOf = processingEnv.getElementUtils().getPackageOf(element);
@@ -101,16 +101,13 @@ public class MybatisDomainProcessor extends AbstractProcessor {
 
         String exampleName = (clazzName + "Example");
 
-        String partitionKey = example.partitionKey().equals("") ? null : example.partitionKey();
 
         TableMetadata tableMetadata = new TableMetadata()
                 .setDomainClazzName(clazzName)
                 .setExampleClazzName(exampleName)
-                .setPackageName(packageOf.toString())
-                .setShard(0 == example.shard() ? null : example.shard());
+                .setPackageName(packageOf.toString());
 
-        String repositoryName = !example.namespace().equals("") ? example.namespace() :
-                exampleName + "." + tableMetadata.getExampleClazzSimpleName() + "Repository";
+        String repositoryName = example.value();
         tableMetadata.setRepositoryClazzName(repositoryName)
                 .setTableName(table != null ? table.name() : String.join("_",
                         CamelUtils.split(tableMetadata.getDomainClazzSimpleName(), true)));
@@ -118,6 +115,7 @@ public class MybatisDomainProcessor extends AbstractProcessor {
         for (Element member : element.getEnclosedElements()) {
             if (member.getModifiers().contains(Modifier.STATIC) || !member.getKind().isField() ||
                     member.getAnnotation(Transient.class) != null ||
+                    member.getAnnotation(ManyToMany.class) != null ||
                     member.getAnnotation(ManyToOne.class) != null) {
                 continue;
             }
@@ -126,7 +124,6 @@ public class MybatisDomainProcessor extends AbstractProcessor {
             JoinColumn joinColumn = member.getAnnotation(JoinColumn.class);
             OneToOne oneToOne = member.getAnnotation(OneToOne.class);
             OneToMany oneToMany = member.getAnnotation(OneToMany.class);
-            ManyToMany manyToMany = member.getAnnotation(ManyToMany.class);
 
             if (joinColumn != null) {
                 if (!"".equals(joinColumn.name())) {
@@ -142,12 +139,6 @@ public class MybatisDomainProcessor extends AbstractProcessor {
                     if (oneToMany != null) {
                         joinMetadata.setMappedBy(oneToMany.mappedBy())
                                 .setFetchType(oneToMany.fetch().name().toLowerCase());
-                        tableMetadata.getOneToMany().add(joinMetadata);
-                    }
-
-                    if (manyToMany != null) {
-                        joinMetadata.setMappedBy(manyToMany.mappedBy())
-                                .setFetchType(manyToMany.fetch().name().toLowerCase());
                         tableMetadata.getOneToMany().add(joinMetadata);
                     }
                 }
@@ -180,14 +171,6 @@ public class MybatisDomainProcessor extends AbstractProcessor {
             if (id != null) {
                 tableMetadata.setPrimaryMetadata(columnMetadata);
             }
-
-            if ((columnMetadata.getColumnName().equals(partitionKey) || columnMetadata.getFieldName().equals(partitionKey))) {
-                columnMetadata.setPartitionKey(true);
-                tableMetadata.setPartitionKey(columnMetadata)
-                        .setShard(example.shard());
-
-            }
-
 
             tableMetadata.getColumnMetadataList().add(columnMetadata);
 

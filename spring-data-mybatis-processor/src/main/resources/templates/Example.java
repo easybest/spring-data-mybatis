@@ -350,30 +350,6 @@ public class {{metadata.exampleClazzSimpleName}} implements Serializable {
     {{/stringType}}
 {{/metadata.columnMetadataList}}
 
-    {{#metadata.partitionKey}}
-    protected void shardTable(Integer value){
-        if(value==null){
-            throw new RuntimeException("value for "+partitionKey+ "cannot be null");
-        }
-        this.table = shardTables.get(value.intValue() % this.shard);
-    }
-
-    protected void shardTable(Long value){
-        if(value==null){
-            throw new RuntimeException("value for "+partitionKey+" cannot be null");
-        }
-        this.table = shardTables.get((int)value.longValue() % this.shard);
-    }
-
-    protected void shardTable(String value){
-        if(value==null){
-            throw new RuntimeException("value for "+partitionKey+" cannot be null");
-        }
-        int slot = com.vcg.mybatis.example.processor.util.Crc16Utils.getSlot(value);
-        this.table = shardTables.get(slot % this.shard);
-    }
-    {{/metadata.partitionKey}}
-
 
     private Criteria getCriteria(){
         if(this.currentCriteria == null){
