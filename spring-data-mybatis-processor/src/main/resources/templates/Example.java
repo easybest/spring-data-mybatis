@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 
 import {{metadata.domainClazzName}};
 
-public class {{metadata.exampleClazzSimpleName}} implements Serializable {
+public class {{metadata.exampleClazzSimpleName}} implements Serializable,org.springframework.data.domain.Example<{{metadata.domainClazzSimpleName}}> {
 
     private static final long serialVersionUID = {{metadata.randomId}}L;
 
@@ -357,6 +357,20 @@ public class {{metadata.exampleClazzSimpleName}} implements Serializable {
             getOredCriteria().add(this.currentCriteria);
         }
         return this.currentCriteria;
+    }
+
+
+    @Override
+    public {{metadata.domainClazzSimpleName}} getProbe() {
+        if (this.record == null) {
+            this.record = new {{metadata.domainClazzSimpleName}}();
+        }
+        return this.record;
+    }
+
+    @Override
+    public org.springframework.data.domain.ExampleMatcher getMatcher() {
+        return org.springframework.data.domain.ExampleMatcher.matchingAll();
     }
 
     protected abstract static class GeneratedCriteria implements Serializable {
