@@ -6,7 +6,6 @@ import com.github.mustachejava.MustacheFactory;
 import org.springframework.data.mybatis.processor.domain.ColumnMetadata;
 import org.springframework.data.mybatis.processor.domain.JoinMetadata;
 import org.springframework.data.mybatis.processor.domain.TableMetadata;
-import org.springframework.data.mybatis.processor.handler.Separator;
 import org.springframework.data.mybatis.processor.util.CamelUtils;
 import org.springframework.data.mybatis.processor.visitor.DomainTypeVisitor;
 
@@ -31,11 +30,10 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@SupportedAnnotationTypes("com.vcg.mybatis.example.processor.Example")
+@SupportedAnnotationTypes("org.springframework.data.mybatis.processor.Example")
 public class MybatisDomainProcessor extends AbstractProcessor {
 
     private final DomainTypeVisitor domainTypeVisitor = new DomainTypeVisitor();
@@ -160,7 +158,6 @@ public class MybatisDomainProcessor extends AbstractProcessor {
             Id id = member.getAnnotation(Id.class);
             Column column = member.getAnnotation(Column.class);
             GeneratedValue generatedValue = member.getAnnotation(GeneratedValue.class);
-            Separator typeHandler = member.getAnnotation(Separator.class);
             ColumnMetadata columnMetadata = new ColumnMetadata();
             member.asType().accept(domainTypeVisitor, columnMetadata);
             columnMetadata.setFieldName(name)
@@ -173,8 +170,7 @@ public class MybatisDomainProcessor extends AbstractProcessor {
             }
 
             if (column != null && !"".equals(column.columnDefinition())) {
-                String jdbcType = JDBC_TYPE_MAPPING.get(column.columnDefinition().replaceAll("\\s+", " ").toUpperCase());
-                columnMetadata.setJdbcType(jdbcType != null ? jdbcType : column.columnDefinition());
+                columnMetadata.setJdbcType(column.columnDefinition());
             }
 
             if (column != null && !"".equals(column.name())) {
@@ -192,10 +188,6 @@ public class MybatisDomainProcessor extends AbstractProcessor {
 
             }
 
-            if (typeHandler != null && !"".equals(typeHandler.typeHandler())) {
-                columnMetadata.setTypeHandler(typeHandler.typeHandler());
-            }
-
 
             tableMetadata.getColumnMetadataList().add(columnMetadata);
 
@@ -208,25 +200,6 @@ public class MybatisDomainProcessor extends AbstractProcessor {
 
         return tableMetadata.setColumns(columns);
     }
-
-    private static final Map<String, String> JDBC_TYPE_MAPPING = new HashMap<>();
-
-    static {
-        JDBC_TYPE_MAPPING.put("INT", "INTEGER");
-        JDBC_TYPE_MAPPING.put("INT UNSIGNED", "INTEGER");
-        JDBC_TYPE_MAPPING.put("SMALLINT UNSIGNED", "SMALLINT");
-        JDBC_TYPE_MAPPING.put("BIGINT UNSIGNED", "BIGINT");
-        JDBC_TYPE_MAPPING.put("DOUBLE UNSIGNED", "DOUBLE");
-        JDBC_TYPE_MAPPING.put("FLOAT UNSIGNED", "DOUBLE");
-        JDBC_TYPE_MAPPING.put("DECIMAL UNSIGNED", "DECIMAL");
-        JDBC_TYPE_MAPPING.put("TINY UNSIGNED", "TINY");
-        JDBC_TYPE_MAPPING.put("TEXT", "LONGVARCHAR");
-        JDBC_TYPE_MAPPING.put("TINYTEXT", "VARCHAR");
-        JDBC_TYPE_MAPPING.put("MEDIUMTEXT", "LONGVARCHAR");
-        JDBC_TYPE_MAPPING.put("LONGTEXT", "LONGVARCHAR");
-        JDBC_TYPE_MAPPING.put("DATETIME", "TIMESTAMP");
-    }
-
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
