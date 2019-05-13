@@ -36,7 +36,7 @@
         </developerConnection>
     </scm>
     <properties>
-        <spring.boot>2.1.2.RELEASE</spring.boot>
+        <spring.boot>2.1.4.RELEASE</spring.boot>
     </properties>
     <dependencies>
         <dependency>
@@ -76,11 +76,7 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
+
     </dependencies>
 
     <dependencyManagement>
