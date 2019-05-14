@@ -7,14 +7,14 @@
         </encoder>
     </appender>
 
-    <logger name="org.springframework.data" level="error"/>
-    <logger name="org.springframework.data.mybatis.dialect" level="info"/>
-    <logger name="org.springframework.data.mybatis.repository.support" level="debug"/>
-    <logger name="org.springframework.data.mybatis.repository.sample" level="debug"/>
-    <logger name="org.springframework.data.mybatis.replication" level="debug"/>
-    <logger name="org.springframework.transaction" level="debug"/>
-    <logger name="org.springframework.jdbc.datasource" level="debug"/>
-    <logger name="org.springframework.data.repository.config" level="info"/>
+<!--    <logger name="org.springframework.data" level="error"/>-->
+<!--    <logger name="org.springframework.data.mybatis.dialect" level="info"/>-->
+<!--    <logger name="org.springframework.data.mybatis.repository.support" level="debug"/>-->
+<!--    <logger name="org.springframework.data.mybatis.repository.sample" level="debug"/>-->
+<!--    <logger name="org.springframework.data.mybatis.replication" level="debug"/>-->
+<!--    <logger name="org.springframework.transaction" level="debug"/>-->
+<!--    <logger name="org.springframework.jdbc.datasource" level="debug"/>-->
+<!--    <logger name="org.springframework.data.repository.config" level="info"/>-->
     <root level="error">
         <appender-ref ref="console"/>
     </root>
