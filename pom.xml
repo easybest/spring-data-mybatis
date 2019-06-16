@@ -11,7 +11,7 @@
         <version>2.1.8.RELEASE</version>
     </parent>
 
-    <groupId>com.ifrabbit</groupId>
+    <groupId>io.easybest</groupId>
     <artifactId>spring-data-mybatis-build</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
