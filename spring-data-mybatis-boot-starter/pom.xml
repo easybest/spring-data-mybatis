@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>spring-data-mybatis-parent</artifactId>
-        <groupId>com.ifrabbit</groupId>
+        <groupId>io.easybest</groupId>
         <version>${revision}</version>
         <relativePath>../spring-data-mybatis-parent</relativePath>
     </parent>
@@ -48,7 +48,7 @@
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.ifrabbit</groupId>
+            <groupId>io.easybest</groupId>
             <artifactId>spring-data-mybatis</artifactId>
             <version>${revision}</version>
         </dependency>
