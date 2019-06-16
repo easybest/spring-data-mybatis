@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>com.ifrabbit</groupId>
+        <groupId>io.easybest</groupId>
         <artifactId>spring-data-mybatis-build</artifactId>
         <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
@@ -53,7 +53,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.ifrabbit</groupId>
+                <groupId>io.easybest</groupId>
                 <artifactId>spring-data-mybatis-core</artifactId>
                 <version>${revision}</version>
             </dependency>
@@ -78,7 +78,7 @@
                 <version>${mybatis-spring-boot}</version>
             </dependency>
             <dependency>
-                <groupId>com.ifrabbit</groupId>
+                <groupId>io.easybest</groupId>
                 <artifactId>spring-data-mybatis-boot-starter</artifactId>
                 <version>${revision}</version>
             </dependency>
