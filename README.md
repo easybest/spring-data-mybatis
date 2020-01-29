@@ -1,1 +1,1 @@
-# spring-data-mybatis
+# Spring Data MyBatis

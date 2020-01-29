@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!DOCTYPE import-control PUBLIC "-//Puppy Crawl//DTD Import Control 1.1//EN"
+		"https://checkstyle.org/dtds/import_control_1_1.dtd">
+<import-control pkg="org.springframework.data.mybatis">
+	<allow pkg=".*" regex="true"/>
+
+	<subpackage name="annotation">
+		<disallow pkg="org.springframework.web.servlet"/>
+		<disallow pkg="org.springframework.web.reactive"/>
+		<disallow pkg="javax.servlet"/>
+	</subpackage>
+
+</import-control>
