@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<artifactId>spring-data-mybatis-parent</artifactId>
+		<groupId>io.easybest</groupId>
+		<version>${revision}</version>
+		<relativePath>../spring-data-mybatis-parent</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>spring-data-mybatis-core</artifactId>
+
+	<name>Spring Data MyBatis Core</name>
+	<description>Spring Data module for MyBatis repositories.</description>
+	<url>https://github.com/easybest/spring-data-mybatis</url>
+	<developers>
+		<developer>
+			<id>jarvis</id>
+			<name>Jarvis Song</name>
+			<email>iamjarvissong@gmail.com</email>
+		</developer>
+	</developers>
+	<organization>
+		<name>EasyBest</name>
+		<url>https://easybest.io</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	<scm>
+		<url>https://github.com/easybest/spring-data-mybatis</url>
+		<connection>scm:git:git://github.com/easybest/spring-data-mybatis.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/easybest/spring-data-mybatis.git
+		</developerConnection>
+	</scm>
+
+	<dependencies>
+		<dependency>
+			<groupId>javax.persistence</groupId>
+			<artifactId>javax.persistence-api</artifactId>
+		</dependency>
+	</dependencies>
+</project>

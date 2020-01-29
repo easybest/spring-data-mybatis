@@ -51,7 +51,11 @@
         <nohttp-checkstyle.version>0.0.4.RELEASE</nohttp-checkstyle.version>
     </properties>
     <modules>
-    </modules>
+        <module>spring-data-mybatis-parent</module>
+		<module>spring-data-mybatis-core</module>
+		<module>spring-data-mybatis</module>
+		<module>spring-data-mybatis-boot-starter</module>
+	</modules>
     <build>
         <plugins>
             <plugin>

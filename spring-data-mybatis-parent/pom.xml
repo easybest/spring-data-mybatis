@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<artifactId>spring-data-mybatis-build</artifactId>
+		<groupId>io.easybest</groupId>
+		<version>${revision}</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>spring-data-mybatis-parent</artifactId>
+	<packaging>pom</packaging>
+
+	<name>Spring Data MyBatis Parent</name>
+	<description>Spring Data module for MyBatis repositories.</description>
+	<url>https://github.com/easybest/spring-data-mybatis</url>
+	<developers>
+		<developer>
+			<id>jarvis</id>
+			<name>Jarvis Song</name>
+			<email>iamjarvissong@gmail.com</email>
+		</developer>
+	</developers>
+	<organization>
+		<name>EasyBest</name>
+		<url>https://easybest.io</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	<scm>
+		<url>https://github.com/easybest/spring-data-mybatis</url>
+		<connection>scm:git:git://github.com/easybest/spring-data-mybatis.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/easybest/spring-data-mybatis.git
+		</developerConnection>
+	</scm>
+	<properties>
+
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.root>${basedir}</project.root>
+		<main.basedir>${basedir}/..</main.basedir>
+		<source.level>1.8</source.level>
+		<dist.id>${project.artifactId}</dist.id>
+
+		<springdata.commons>2.2.4.RELEASE</springdata.commons>
+
+		<!-- MyBatis version -->
+		<mybatis>3.5.3</mybatis>
+		<mybatis.spring>2.0.3</mybatis.spring>
+		<mybatis-spring-boot>2.1.1</mybatis-spring-boot>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>io.easybest</groupId>
+				<artifactId>spring-data-mybatis-core</artifactId>
+				<version>${revision}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.data</groupId>
+				<artifactId>spring-data-commons</artifactId>
+				<version>${springdata.commons}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mybatis</groupId>
+				<artifactId>mybatis-spring</artifactId>
+				<version>${mybatis.spring}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mybatis</groupId>
+				<artifactId>mybatis</artifactId>
+				<version>${mybatis}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mybatis.spring.boot</groupId>
+				<artifactId>mybatis-spring-boot-starter</artifactId>
+				<version>${mybatis-spring-boot}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.easybest</groupId>
+				<artifactId>spring-data-mybatis-boot-starter</artifactId>
+				<version>${revision}</version>
+			</dependency>
+			<dependency>
+				<groupId>javax.persistence</groupId>
+				<artifactId>javax.persistence-api</artifactId>
+				<version>2.2</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+</project>
