@@ -17,9 +17,13 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.mybatis.spring.SqlSessionTemplate;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
+import org.springframework.data.querydsl.EntityPathResolver;
+import org.springframework.data.querydsl.SimpleEntityPathResolver;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
@@ -39,11 +43,13 @@ import org.springframework.util.Assert;
 public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> {
 
-	private EscapeCharacter escapeCharacter = EscapeCharacter.DEFAULT;
-
 	private @Nullable SqlSessionTemplate sqlSessionTemplate;
 
 	private @Nullable MybatisMappingContext mappingContext;
+
+	private EntityPathResolver entityPathResolver;
+
+	private EscapeCharacter escapeCharacter = EscapeCharacter.DEFAULT;
 
 	/**
 	 * Creates a new {@link TransactionalRepositoryFactoryBeanSupport} for the given
@@ -73,6 +79,7 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 		Assert.state(null != this.sqlSessionTemplate, "SqlSessionTemplate must not be null!");
 
 		MybatisRepositoryFactory repositoryFactory = new MybatisRepositoryFactory(mappingContext, sqlSessionTemplate);
+		repositoryFactory.setEntityPathResolver(this.entityPathResolver);
 		repositoryFactory.setEscapeCharacter(this.escapeCharacter);
 		return repositoryFactory;
 	}
@@ -89,6 +96,11 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 
 	public void setSqlSessionTemplate(@Nullable SqlSessionTemplate sqlSessionTemplate) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
+	}
+
+	@Autowired
+	public void setEntityPathResolver(ObjectProvider<EntityPathResolver> resolver) {
+		this.entityPathResolver = resolver.getIfAvailable(() -> SimpleEntityPathResolver.INSTANCE);
 	}
 
 }

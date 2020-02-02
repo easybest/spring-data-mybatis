@@ -32,13 +32,16 @@ public class MybatisMappingContext
 
 	@Override
 	protected <T> MybatisPersistentEntityImpl<?> createPersistentEntity(TypeInformation<T> typeInformation) {
-		return null;
+
+		MybatisPersistentEntityImpl<T> entity = new MybatisPersistentEntityImpl(typeInformation);
+
+		return entity;
 	}
 
 	@Override
 	protected MybatisPersistentProperty createPersistentProperty(Property property,
 			MybatisPersistentEntityImpl<?> owner, SimpleTypeHolder simpleTypeHolder) {
-		return null;
+		return new MybatisPersistentPropertyImpl(property, owner, simpleTypeHolder);
 	}
 
 }

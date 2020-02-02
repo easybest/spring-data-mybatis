@@ -45,4 +45,14 @@ class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPer
 		return this.table;
 	}
 
+	@Override
+	public boolean hasCompositeId() {
+		return false;
+	}
+
+	@Override
+	public Class<?> getIdClass() {
+		return null;
+	}
+
 }

@@ -29,4 +29,8 @@ public interface MybatisPersistentEntity<T> extends PersistentEntity<T, MybatisP
 
 	Table getTable();
 
+	boolean hasCompositeId();
+
+	Class<?> getIdClass();
+
 }
