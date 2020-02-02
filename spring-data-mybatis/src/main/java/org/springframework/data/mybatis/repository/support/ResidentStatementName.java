@@ -57,6 +57,11 @@ public final class ResidentStatementName {
 	public static final String DELETE_ALL = PREFIX + "delete_all";
 
 	/**
+	 * For <code>__delete_by_ids</code>.
+	 */
+	public static final String DELETE_BY_IDS = PREFIX + "delete_by_ids";
+
+	/**
 	 * For <code>__find_by_pager</code>.
 	 */
 	public static final String FIND_BY_PAGER = PREFIX + "find_by_pager";

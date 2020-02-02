@@ -19,9 +19,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.mybatis.spring.SqlSessionTemplate;
 
@@ -145,16 +147,50 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Transactional
 	public void deleteAll(Iterable<? extends T> entities) {
 		Assert.notNull(entities, "Entities must not be null.");
-		if (!entities.iterator().hasNext()) {
-			return;
+		for (T entity : entities) {
+			this.delete(entity);
 		}
 
-		entities.forEach(this::delete);
 	}
 
 	@Override
 	@Transactional
 	public void deleteAll() {
+		this.deleteAll(this.findAll());
+	}
+
+	@Override
+	@Transactional
+	public void deleteInBatch(Iterable<T> entities) {
+		Assert.notNull(entities, "Entities must not be null.");
+		if (!entities.iterator().hasNext()) {
+			return;
+		}
+
+		Set<ID> ids = new HashSet<>();
+		for (T entity : entities) {
+			ID id = this.entityInformation.getRequiredId(entity);
+			ids.add(id);
+		}
+
+		this.deleteInBatchById(ids);
+	}
+
+	@Override
+	@Transactional
+	public void deleteInBatchById(Iterable<ID> ids) {
+		Assert.notNull(ids, "The given iterable of ids must not be null.");
+		if (!ids.iterator().hasNext()) {
+			return;
+		}
+
+		this.delete(ResidentStatementName.DELETE_BY_IDS,
+				Collections.singletonMap(ResidentParameterName.IDS, toCollection(ids)));
+	}
+
+	@Override
+	@Transactional
+	public void deleteAllInBatch() {
 		this.delete(ResidentStatementName.DELETE_ALL);
 	}
 
@@ -196,7 +232,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	@Override
 	public <X extends T> T getOne(X condition) {
-		return selectOne(ResidentStatementName.FIND,
+		return this.selectOne(ResidentStatementName.FIND,
 				Collections.singletonMap(ResidentParameterName.CONDITION, condition));
 	}
 

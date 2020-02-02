@@ -78,7 +78,7 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 	}
 
 	@Override
-	protected void setMappingContext(MappingContext<?, ?> mappingContext) {
+	public void setMappingContext(MappingContext<?, ?> mappingContext) {
 		super.setMappingContext(mappingContext);
 		this.mappingContext = (MybatisMappingContext) mappingContext;
 	}

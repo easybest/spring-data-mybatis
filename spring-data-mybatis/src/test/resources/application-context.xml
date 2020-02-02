@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:util="http://www.springframework.org/schema/util"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util https://www.springframework.org/schema/util/spring-util.xsd">
+
+	<!-- Database setup -->
+	<import resource="infrastructure.xml"/>
+
+	<!-- Configure a DAO for User class -->
+	<bean id="userDao" class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">
+		<constructor-arg value="org.springframework.data.mybatis.repository.sample.UserRepository"/>
+		<property name="customImplementation">
+			<bean class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl">
+				<constructor-arg>
+					<bean class="org.mybatis.spring.SqlSessionTemplate" autowire="constructor"/>
+				</constructor-arg>
+			</bean>
+		</property>
+		<property name="mappingContext" ref="mappingContext"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="namedQueries">
+			<bean class="org.springframework.data.repository.core.support.PropertiesBasedNamedQueries">
+				<constructor-arg>
+					<util:properties location="META-INF/mybatis-named-queries.properties"/>
+				</constructor-arg>
+			</bean>
+		</property>
+		<property name="evaluationContextProvider" ref="expressionEvaluationContextProvider"/>
+	</bean>
+
+	<bean id="roleDao" class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">
+		<constructor-arg value="org.springframework.data.mybatis.repository.sample.RoleRepository"/>
+		<property name="mappingContext" ref="mappingContext"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="evaluationContextProvider" ref="expressionEvaluationContextProvider"/>
+	</bean>
+
+	<bean id="mappingContext"
+		  class="org.springframework.data.mybatis.repository.config.MybatisMappingContextFactoryBean">
+		<constructor-arg>
+			<util:set>
+				<value>org.springframework.data.mybatis.domain.sample.User</value>
+				<value>org.springframework.data.mybatis.domain.sample.Role</value>
+			</util:set>
+		</constructor-arg>
+	</bean>
+
+
+	<!-- Adds transaparent exception translation to the DAOs -->
+	<bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
+
+	<bean id="expressionEvaluationContextProvider"
+		  class="org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider"
+		  autowire="constructor"/>
+
+
+</beans>

@@ -83,4 +83,10 @@ public interface MybatisRepository<T, ID> extends PagingAndSortingRepository<T, 
 
 	<S extends T> S updateSelective(ID id, S entity);
 
+	void deleteAllInBatch();
+
+	void deleteInBatchById(Iterable<ID> ids);
+
+	void deleteInBatch(Iterable<T> entities);
+
 }
