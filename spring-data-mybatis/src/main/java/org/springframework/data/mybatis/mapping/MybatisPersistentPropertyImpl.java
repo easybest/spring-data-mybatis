@@ -153,32 +153,24 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	 */
 	@Nullable
 	private Boolean detectPropertyAccess() {
-
 		org.springframework.data.annotation.AccessType accessType = this
 				.findAnnotation(org.springframework.data.annotation.AccessType.class);
-
 		if (null != accessType) {
 			return org.springframework.data.annotation.AccessType.Type.PROPERTY.equals(accessType.value());
 		}
-
 		Access access = this.findAnnotation(Access.class);
-
 		if (null != access) {
 			return AccessType.PROPERTY.equals(access.value());
 		}
-
 		accessType = this.findPropertyOrOwnerAnnotation(org.springframework.data.annotation.AccessType.class);
-
 		if (null != accessType) {
 			return org.springframework.data.annotation.AccessType.Type.PROPERTY.equals(accessType.value());
 		}
-
 		access = this.findPropertyOrOwnerAnnotation(Access.class);
 
 		if (null != access) {
 			return AccessType.PROPERTY.equals(access.value());
 		}
-
 		return null;
 	}
 
@@ -189,28 +181,20 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	 */
 	@Nullable
 	private TypeInformation<?> detectAssociationTargetType() {
-
 		if (!this.isAssociation()) {
 			return null;
 		}
-
 		for (Class<? extends Annotation> annotationType : ASSOCIATION_ANNOTATIONS) {
-
 			Annotation annotation = this.findAnnotation(annotationType);
-
 			if (null == annotation) {
 				continue;
 			}
-
 			Object entityValue = AnnotationUtils.getValue(annotation, "targetEntity");
-
 			if (null == entityValue || entityValue.equals(void.class)) {
 				continue;
 			}
-
 			return ClassTypeInformation.from((Class<?>) entityValue);
 		}
-
 		return null;
 	}
 
@@ -220,18 +204,13 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	 * @return updatability
 	 */
 	private boolean detectUpdatability() {
-
 		for (Class<? extends Annotation> annotationType : UPDATEABLE_ANNOTATIONS) {
-
 			Annotation annotation = this.findAnnotation(annotationType);
-
 			if (null == annotation) {
 				continue;
 			}
-
 			return (boolean) AnnotationUtils.getValue(annotation, "updatable");
 		}
-
 		return true;
 	}
 

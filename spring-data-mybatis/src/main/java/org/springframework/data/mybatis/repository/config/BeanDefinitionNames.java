@@ -15,22 +15,17 @@
  */
 package org.springframework.data.mybatis.repository.config;
 
-import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
-
 /**
- * Simple namespace handler for {@literal repositories} namespace.
+ * Helper class to manage bean definition names in a single place.
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 1.0.0
  */
-public class MybatisRepositoryNameSpaceHandler extends NamespaceHandlerSupport {
+public abstract class BeanDefinitionNames {
 
-	@Override
-	public void init() {
-		RepositoryBeanDefinitionParser repositoryBeanDefinitionParser = new RepositoryBeanDefinitionParser();
-
-		registerBeanDefinitionParser("repositories", repositoryBeanDefinitionParser);
-		registerBeanDefinitionParser("auditing", new AuditingBeanDefinitionParser());
-	}
+	/**
+	 * The bean's name of mybatis-mapping-context.
+	 */
+	public static final String MYBATIS_MAPPING_CONTEXT_BEAN_NAME = "mybatisMappingContext";
 
 }
