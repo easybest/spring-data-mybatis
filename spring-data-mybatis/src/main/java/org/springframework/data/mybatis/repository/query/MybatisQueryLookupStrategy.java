@@ -41,18 +41,18 @@ public final class MybatisQueryLookupStrategy {
 
 	public static QueryLookupStrategy create(SqlSessionTemplate sqlSessionTemplate,
 			@Nullable QueryLookupStrategy.Key key, QueryMethodEvaluationContextProvider evaluationContextProvider,
-			EscapeCharacter escapeCharacter) {
+			EscapeCharacter escape) {
 		Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null!");
 		Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null!");
 		switch ((null != key) ? key : QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND) {
 
 		case CREATE:
-			return new CreateQueryLookupStrategy(sqlSessionTemplate);
+			return new CreateQueryLookupStrategy(sqlSessionTemplate, escape);
 		case USE_DECLARED_QUERY:
 			return new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider);
 		case CREATE_IF_NOT_FOUND:
 			return new CreateIfNotFoundQueryLookupStrategy(sqlSessionTemplate,
-					new CreateQueryLookupStrategy(sqlSessionTemplate),
+					new CreateQueryLookupStrategy(sqlSessionTemplate, escape),
 					new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider));
 		default:
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
@@ -81,14 +81,18 @@ public final class MybatisQueryLookupStrategy {
 
 	private static class CreateQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
-		protected CreateQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate) {
+		private final EscapeCharacter escape;
+
+		protected CreateQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate, EscapeCharacter escape) {
 			super(sqlSessionTemplate);
+			this.escape = escape;
 		}
 
 		@Override
 		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, SqlSessionTemplate sqlSessionTemplate,
 				NamedQueries namedQueries) {
-			return null;
+
+			return new PartTreeMybatisQuery(method, this.escape);
 		}
 
 	}
@@ -106,7 +110,29 @@ public final class MybatisQueryLookupStrategy {
 		@Override
 		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, SqlSessionTemplate sqlSessionTemplate,
 				NamedQueries namedQueries) {
-			return null;
+			RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromQueryAnnotation(method,
+					this.evaluationContextProvider);
+			if (null != query) {
+				return query;
+			}
+			query = MybatisQueryFactory.INSTANCE.fromProcedureAnnotation(method);
+			if (null != query) {
+				return query;
+			}
+
+			String name = method.getNamedQueryName();
+			if (namedQueries.hasQuery(name)) {
+				return MybatisQueryFactory.INSTANCE.fromMethodWithQueryString(method, namedQueries.getQuery(name),
+						this.evaluationContextProvider);
+			}
+
+			query = NamedQuery.lookupFrom(method);
+			if (null != query) {
+				return query;
+			}
+
+			throw new IllegalStateException(
+					String.format("Did neither find a NamedQuery nor an annotated query for method %s!", method));
 		}
 
 	}
