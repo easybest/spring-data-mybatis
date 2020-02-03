@@ -23,10 +23,13 @@ import java.util.Set;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.mybatis.repository.Procedure;
 import org.springframework.data.mybatis.repository.Query;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
@@ -60,7 +63,11 @@ public class MybatisQueryMethod extends QueryMethod {
 
 	private final Lazy<MybatisEntityMetadata<?>> entityMetadata;
 
+	private final Lazy<Boolean> isCollectionQuery;
+
 	private final Lazy<Boolean> isProcedureQuery;
+
+	private final Lazy<Modifying> modifying;
 
 	/**
 	 * Creates a new {@link QueryMethod} from the given parameters. Looks up the correct
@@ -73,13 +80,48 @@ public class MybatisQueryMethod extends QueryMethod {
 		super(method, metadata, factory);
 		Assert.notNull(method, "Method must not be null!");
 		this.method = method;
+		this.isCollectionQuery = Lazy
+				.of(() -> super.isCollectionQuery() && !NATIVE_ARRAY_TYPES.contains(method.getReturnType()));
 		this.isProcedureQuery = Lazy.of(() -> AnnotationUtils.findAnnotation(method, Procedure.class) != null);
 		this.entityMetadata = Lazy.of(() -> new DefaultMybatisEntityMetadata<>(this.getDomainClass()));
+		this.modifying = Lazy.of(() -> AnnotatedElementUtils.findMergedAnnotation(method, Modifying.class));
 
+		Assert.isTrue(!(this.isModifyingQuery() && this.getParameters().hasSpecialParameter()),
+				String.format("Modifying method must not contain %s!", Parameters.TYPES));
+		this.assertParameterNamesInAnnotatedQuery();
+	}
+
+	private void assertParameterNamesInAnnotatedQuery() {
+
+		String annotatedQuery = this.getAnnotatedQuery();
+
+		if (!DeclaredQuery.of(annotatedQuery).hasNamedParameter()) {
+			return;
+		}
+
+		for (Parameter parameter : this.getParameters()) {
+
+			if (!parameter.isNamedParameter()) {
+				continue;
+			}
+
+			if (StringUtils.isEmpty(annotatedQuery)
+					|| !annotatedQuery.contains(String.format(":%s", parameter.getName().get()))
+							&& !annotatedQuery.contains(String.format("#%s", parameter.getName().get()))) {
+				throw new IllegalStateException(String.format(
+						"Using named parameters for method %s but parameter '%s' not found in annotated query '%s'!",
+						this.method, parameter.getName(), annotatedQuery));
+			}
+		}
 	}
 
 	Class<?> getReturnType() {
 		return this.method.getReturnType();
+	}
+
+	@Override
+	protected MybatisParameters createParameters(Method method) {
+		return new MybatisParameters(method);
 	}
 
 	@Override
@@ -94,6 +136,29 @@ public class MybatisQueryMethod extends QueryMethod {
 
 	public boolean isProcedureQuery() {
 		return this.isProcedureQuery.get();
+	}
+
+	@Override
+	public boolean isCollectionQuery() {
+		return this.isCollectionQuery.get();
+	}
+
+	@Override
+	public boolean isModifyingQuery() {
+		return null != this.modifying.getNullable();
+	}
+
+	@Override
+	public String getNamedQueryName() {
+
+		String annotatedName = this.getAnnotationValue("name", String.class);
+		return StringUtils.hasText(annotatedName) ? annotatedName : super.getNamedQueryName();
+	}
+
+	String getNamedCountQueryName() {
+
+		String annotatedName = getAnnotationValue("countName", String.class);
+		return StringUtils.hasText(annotatedName) ? annotatedName : getNamedQueryName() + ".count";
 	}
 
 	@Nullable
