@@ -19,6 +19,7 @@ import java.lang.reflect.Method;
 
 import org.mybatis.spring.SqlSessionTemplate;
 
+import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -40,8 +41,8 @@ public final class MybatisQueryLookupStrategy {
 	}
 
 	public static QueryLookupStrategy create(SqlSessionTemplate sqlSessionTemplate,
-			@Nullable QueryLookupStrategy.Key key, QueryMethodEvaluationContextProvider evaluationContextProvider,
-			EscapeCharacter escape) {
+			MybatisMappingContext mappingContext, @Nullable QueryLookupStrategy.Key key,
+			QueryMethodEvaluationContextProvider evaluationContextProvider, EscapeCharacter escape) {
 		Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null!");
 		Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null!");
 		switch ((null != key) ? key : QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND) {
@@ -49,11 +50,11 @@ public final class MybatisQueryLookupStrategy {
 		case CREATE:
 			return new CreateQueryLookupStrategy(sqlSessionTemplate, escape);
 		case USE_DECLARED_QUERY:
-			return new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider);
+			return new DeclaredQueryLookupStrategy(sqlSessionTemplate, mappingContext, evaluationContextProvider);
 		case CREATE_IF_NOT_FOUND:
 			return new CreateIfNotFoundQueryLookupStrategy(sqlSessionTemplate,
 					new CreateQueryLookupStrategy(sqlSessionTemplate, escape),
-					new DeclaredQueryLookupStrategy(sqlSessionTemplate, evaluationContextProvider));
+					new DeclaredQueryLookupStrategy(sqlSessionTemplate, mappingContext, evaluationContextProvider));
 		default:
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
@@ -99,22 +100,27 @@ public final class MybatisQueryLookupStrategy {
 
 	private static class DeclaredQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
+		private final MybatisMappingContext mappingContext;
+
 		private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
 		protected DeclaredQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate,
-				QueryMethodEvaluationContextProvider evaluationContextProvider) {
+				MybatisMappingContext mappingContext, QueryMethodEvaluationContextProvider evaluationContextProvider) {
 			super(sqlSessionTemplate);
+			this.mappingContext = mappingContext;
 			this.evaluationContextProvider = evaluationContextProvider;
 		}
 
 		@Override
 		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, SqlSessionTemplate sqlSessionTemplate,
 				NamedQueries namedQueries) {
+
 			RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromQueryAnnotation(method,
 					this.evaluationContextProvider);
 			if (null != query) {
 				return query;
 			}
+
 			query = MybatisQueryFactory.INSTANCE.fromProcedureAnnotation(method);
 			if (null != query) {
 				return query;
@@ -126,7 +132,7 @@ public final class MybatisQueryLookupStrategy {
 						this.evaluationContextProvider);
 			}
 
-			query = NamedQuery.lookupFrom(method);
+			query = NamedQuery.lookupFrom(method, this.mappingContext);
 			if (null != query) {
 				return query;
 			}

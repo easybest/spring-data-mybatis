@@ -17,6 +17,8 @@ package org.springframework.data.mybatis.mapping;
 
 import java.util.Comparator;
 
+import javax.persistence.IdClass;
+
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.mybatis.mapping.model.Table;
 import org.springframework.data.util.TypeInformation;
@@ -33,11 +35,17 @@ class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPer
 	private Table table;
 
 	MybatisPersistentEntityImpl(TypeInformation<T> information) {
-		super(information);
+		this(information, null);
 	}
 
 	MybatisPersistentEntityImpl(TypeInformation<T> information, Comparator<MybatisPersistentProperty> comparator) {
 		super(information, comparator);
+
+		this.initialize();
+	}
+
+	private void initialize() {
+
 	}
 
 	@Override
@@ -52,7 +60,18 @@ class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPer
 
 	@Override
 	public Class<?> getIdClass() {
-		return null;
+		if (this.isAnnotationPresent(IdClass.class)) {
+			IdClass idClass = this.getRequiredAnnotation(IdClass.class);
+			return idClass.value();
+		}
+
+		return this.getRequiredIdProperty().getActualType();
+	}
+
+	@Override
+	protected MybatisPersistentProperty returnPropertyIfBetterIdPropertyCandidateOrNull(
+			MybatisPersistentProperty property) {
+		return property.isIdProperty() ? property : null;
 	}
 
 }

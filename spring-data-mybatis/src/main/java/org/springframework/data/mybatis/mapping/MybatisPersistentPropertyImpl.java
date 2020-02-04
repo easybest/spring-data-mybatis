@@ -25,6 +25,7 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -34,6 +35,8 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderColumn;
+import javax.persistence.Transient;
+import javax.persistence.Version;
 
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mapping.Association;
@@ -128,18 +131,64 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	}
 
 	@Override
-	protected Association<MybatisPersistentProperty> createAssociation() {
+	public Column getColumn() {
 		return null;
+	}
+
+	@Override
+	public Class<?> getActualType() {
+		return (null != this.associationTargetType) ? this.associationTargetType.getType() : super.getActualType();
+	}
+
+	@Override
+	public Iterable<? extends TypeInformation<?>> getPersistentEntityTypes() {
+		return (null != this.associationTargetType) ? Collections.singleton(this.associationTargetType)
+				: super.getPersistentEntityTypes();
+	}
+
+	@Override
+	public boolean isIdProperty() {
+		return this.isIdProperty.get();
+	}
+
+	@Override
+	public boolean isEntity() {
+		return this.isEntity.get();
+	}
+
+	@Override
+	public boolean isAssociation() {
+		return this.isAssociation.get();
+	}
+
+	@Override
+	public boolean isTransient() {
+		return this.isAnnotationPresent(Transient.class) || super.isTransient();
+	}
+
+	@Override
+	protected Association<MybatisPersistentProperty> createAssociation() {
+		return new Association<>(this, null);
+	}
+
+	@Override
+	public boolean usePropertyAccess() {
+		return (null != this.usePropertyAccess) ? this.usePropertyAccess : super.usePropertyAccess();
+	}
+
+	@Override
+	public boolean isVersionProperty() {
+		return this.isAnnotationPresent(Version.class) || super.isVersionProperty();
+	}
+
+	@Override
+	public boolean isWritable() {
+		return this.updateable && super.isWritable();
 	}
 
 	@Override
 	public boolean isEmbeddable() {
-		return false;
-	}
-
-	@Override
-	public Column getColumn() {
-		return null;
+		return this.isAnnotationPresent(Embedded.class) || this.hasActualTypeAnnotation(Embeddable.class);
 	}
 
 	/**

@@ -8,10 +8,7 @@
     </appender>
 
     <logger name="org.springframework.data" level="error"/>
-    <logger name="org.springframework.data.mybatis.repository.precompile" level="debug"/>
-    <logger name="org.springframework.data.mybatis.repository.support" level="debug"/>
-    <logger name="org.springframework.data.mybatis.repository.sample" level="debug"/>
-    <logger name="org.springframework.data.mybatis.replication" level="debug"/>
+    <logger name="org.springframework.data.mybatis" level="debug"/>
     <!--    <logger name="org.springframework.transaction" level="debug"/>-->
     <!--    <logger name="org.springframework.jdbc.datasource" level="debug"/>-->
     <!--    <logger name="org.springframework.data.repository.config" level="info"/>-->

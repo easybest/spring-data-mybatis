@@ -118,8 +118,8 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable QueryLookupStrategy.Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		return Optional.of(MybatisQueryLookupStrategy.create(this.sqlSessionTemplate, key, evaluationContextProvider,
-				this.escapeCharacter));
+		return Optional.of(MybatisQueryLookupStrategy.create(this.sqlSessionTemplate, this.mappingContext, key,
+				evaluationContextProvider, this.escapeCharacter));
 	}
 
 	@Override

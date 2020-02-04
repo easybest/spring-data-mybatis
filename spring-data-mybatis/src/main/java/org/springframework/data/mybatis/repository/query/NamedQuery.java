@@ -15,8 +15,14 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.NamedQueries;
+
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.lang.Nullable;
 
@@ -33,19 +39,48 @@ final class NamedQuery extends AbstractMybatisQuery {
 		super(method);
 	}
 
-	private static boolean hasNamedQuery(String queryName) {
-		// TODO
-		return false;
+	private static boolean hasNamedQuery(String queryName, MybatisMappingContext mappingContext) {
+
+		return mappingContext.getPersistentEntities().stream().anyMatch((MybatisPersistentEntity<?> entity) -> {
+			javax.persistence.NamedQuery namedQuery = entity.findAnnotation(javax.persistence.NamedQuery.class);
+			if (null != namedQuery && queryName.equals(namedQuery.name())) {
+				return true;
+			}
+			NamedQueries namedQueries = entity.findAnnotation(NamedQueries.class);
+			if (null != namedQueries) {
+				for (javax.persistence.NamedQuery nq : namedQueries.value()) {
+					if (queryName.equals(nq.name())) {
+						return true;
+					}
+				}
+			}
+
+			NamedNativeQuery namedNativeQuery = entity.findAnnotation(NamedNativeQuery.class);
+			if (null != namedNativeQuery && queryName.equals(namedNativeQuery.name())) {
+				return true;
+			}
+			NamedNativeQueries namedNativeQueries = entity.findAnnotation(NamedNativeQueries.class);
+			if (null != namedNativeQueries) {
+				for (NamedNativeQuery nq : namedNativeQueries.value()) {
+					if (queryName.equals(nq.name())) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		});
+
 	}
 
 	@Nullable
-	public static RepositoryQuery lookupFrom(MybatisQueryMethod method) {
+	public static RepositoryQuery lookupFrom(MybatisQueryMethod method, MybatisMappingContext mappingContext) {
 
 		final String queryName = method.getNamedQueryName();
 
 		log.debug("Looking up named query {}", queryName);
 
-		if (!hasNamedQuery(queryName)) {
+		if (!hasNamedQuery(queryName, mappingContext)) {
 			return null;
 		}
 
