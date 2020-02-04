@@ -52,7 +52,7 @@
         <springdata.commons>2.2.4.RELEASE</springdata.commons>
 
         <!-- MyBatis version -->
-        <mybatis>3.5.3</mybatis>
+        <mybatis>3.5.4</mybatis>
         <mybatis.spring>2.0.3</mybatis.spring>
         <mybatis-spring-boot>2.1.1</mybatis-spring-boot>
     </properties>
