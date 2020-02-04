@@ -17,11 +17,14 @@ package org.springframework.data.mybatis.mapping;
 
 import java.util.Comparator;
 
+import javax.persistence.Entity;
 import javax.persistence.IdClass;
 
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.mybatis.mapping.model.Table;
+import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.util.StringUtils;
 
 /**
  * Implementation of {@link MybatisPersistentEntity}.
@@ -32,7 +35,7 @@ import org.springframework.data.util.TypeInformation;
 class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPersistentProperty>
 		implements MybatisPersistentEntity<T> {
 
-	private Table table;
+	private Lazy<Table> table;
 
 	MybatisPersistentEntityImpl(TypeInformation<T> information) {
 		this(information, null);
@@ -41,16 +44,36 @@ class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPer
 	MybatisPersistentEntityImpl(TypeInformation<T> information, Comparator<MybatisPersistentProperty> comparator) {
 		super(information, comparator);
 
-		this.initialize();
-	}
+		this.table = Lazy.of(() -> {
 
-	private void initialize() {
-
+			String schema = null;
+			String catelog = null;
+			String name = null;
+			if (this.isAnnotationPresent(javax.persistence.Table.class)) {
+				javax.persistence.Table t = this.getRequiredAnnotation(javax.persistence.Table.class);
+				schema = t.schema();
+				catelog = t.catalog();
+				name = t.name();
+			}
+			if (StringUtils.isEmpty(name)) {
+				Entity entity = this.findAnnotation(Entity.class);
+				name = ((null != entity) && StringUtils.hasText(entity.name())) ? entity.name()
+						: this.getType().getSimpleName();
+			}
+			Table table = new Table(schema, catelog, name);
+			return table;
+		});
 	}
 
 	@Override
 	public Table getTable() {
-		return this.table;
+		return this.table.get();
+	}
+
+	@Override
+	public String getName() {
+		Entity entity = this.findAnnotation(Entity.class);
+		return ((null != entity) && StringUtils.hasText(entity.name())) ? entity.name() : super.getName();
 	}
 
 	@Override

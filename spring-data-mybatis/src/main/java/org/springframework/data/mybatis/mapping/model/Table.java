@@ -15,6 +15,8 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
+import lombok.Getter;
+
 /**
  * Table model.
  *
@@ -23,10 +25,29 @@ package org.springframework.data.mybatis.mapping.model;
  */
 public class Table {
 
+	@Getter
 	private Identifier schema;
 
+	@Getter
 	private Identifier catelog;
 
+	@Getter
 	private Identifier name;
+
+	public Table(String schema, String catelog, String name) {
+		this.schema = Identifier.toIdentifier(schema);
+		this.catelog = Identifier.toIdentifier(catelog);
+		this.name = Identifier.toIdentifier(name);
+	}
+
+	public Table(String name) {
+		this.name = Identifier.toIdentifier(name);
+	}
+
+	public String getFullName() {
+		return ((null != this.schema) ? (this.schema.getCanonicalName() + '.') : "") + //
+				((null != this.catelog) ? (this.catelog.getCanonicalName() + '.') : "") + //
+				this.name.getCanonicalName();
+	}
 
 }

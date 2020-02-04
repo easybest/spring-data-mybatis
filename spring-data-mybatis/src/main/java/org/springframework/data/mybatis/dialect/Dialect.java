@@ -15,13 +15,25 @@
  */
 package org.springframework.data.mybatis.dialect;
 
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupport;
+import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupportImpl;
+
 /**
  * Database dialect.
  *
  * @author JARVIS SONG
  * @since 1.0.0
  */
+@Slf4j
 public abstract class Dialect {
+
+	protected Dialect() {
+		log.info("Using dialect: {}", this);
+
+	}
 
 	/**
 	 * The character specific to this dialect used to begin a quoted identifier.
@@ -60,6 +72,28 @@ public abstract class Dialect {
 		else {
 			return name;
 		}
+	}
+
+	public IdentityColumnSupport getIdentityColumnSupport() {
+		return new IdentityColumnSupportImpl();
+	}
+
+	public String getNativeIdentifierGeneratorStrategy() {
+		if (getIdentityColumnSupport().supportsIdentityColumns()) {
+			return "identity";
+		}
+		else {
+			return "sequence";
+		}
+	}
+
+	public String getSequenceNextValString(String sequenceName) throws MappingException {
+		throw new MappingException(getClass().getName() + " does not support sequences");
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getName();
 	}
 
 }

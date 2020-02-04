@@ -32,6 +32,11 @@ public final class ResidentStatementName {
 	private static final String PREFIX = "__";
 
 	/**
+	 * For <code>__result_map</code>.
+	 */
+	public static final String RESULT_MAP = PREFIX + "result_map";
+
+	/**
 	 * For <code>__get_by_id</code>.
 	 */
 	public static final String GET_BY_ID = PREFIX + "get_by_id";
@@ -100,5 +105,9 @@ public final class ResidentStatementName {
 	 * For <code>__update_selective_by_id</code>.
 	 */
 	public static final String UPDATE_SELECTIVE_BY_ID = UPDATE_SELECTIVE + "_by_id";
+
+	public static String statementName(String namespace, String statement) {
+		return namespace + '.' + statement;
+	}
 
 }

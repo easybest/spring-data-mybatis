@@ -13,38 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.mapping.model;
-
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
+package org.springframework.data.mybatis.dialect;
 
 /**
- * Column model.
+ * Exposes information about the database and JDBC driver that can be used in resolving
+ * the appropriate Dialect to use.
+ * <p/>
+ * The information here mimics part of the JDBC {@link java.sql.DatabaseMetaData}
+ * contract, specifically the portions about database and driver names and versions.
  *
  * @author JARVIS SONG
  * @since 2.0.0
  */
-@Getter
-@Setter
-public class Column {
+public interface DialectResolutionInfo {
 
-	private Identifier name;
+	/**
+	 * Constant used to indicate that no version is defined.
+	 */
+	int NO_VERSION = -9999;
 
-	private JdbcType jdbcType;
+	String getDatabaseName();
 
-	private Class<?> javaType;
+	int getDatabaseMajorVersion();
 
-	private Class<? extends TypeHandler<?>> typeHandler;
+	int getDatabaseMinorVersion();
 
-	public Column(String name) {
-		this.name = Identifier.toIdentifier(name);
-	}
+	String getDriverName();
 
-	public Column(String name, JdbcType jdbcType) {
-		this.name = Identifier.toIdentifier(name);
-		this.jdbcType = jdbcType;
-	}
+	int getDriverMajorVersion();
+
+	int getDriverMinorVersion();
 
 }

@@ -13,38 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.mapping.model;
-
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
+package org.springframework.data.mybatis.dialect;
 
 /**
- * Column model.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 1.0.0
  */
-@Getter
-@Setter
-public class Column {
+public class MySQL55Dialect extends MySQL5Dialect {
 
-	private Identifier name;
-
-	private JdbcType jdbcType;
-
-	private Class<?> javaType;
-
-	private Class<? extends TypeHandler<?>> typeHandler;
-
-	public Column(String name) {
-		this.name = Identifier.toIdentifier(name);
-	}
-
-	public Column(String name, JdbcType jdbcType) {
-		this.name = Identifier.toIdentifier(name);
-		this.jdbcType = jdbcType;
+	public MySQL55Dialect() {
+		super();
 	}
 
 }

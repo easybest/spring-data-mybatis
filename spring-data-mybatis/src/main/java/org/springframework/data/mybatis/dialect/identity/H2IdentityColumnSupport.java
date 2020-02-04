@@ -13,38 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.mapping.model;
+package org.springframework.data.mybatis.dialect.identity;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
+import org.springframework.data.mapping.MappingException;
 
 /**
- * Column model.
+ * H2IdentityColumnSupport.
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 1.0.0
  */
-@Getter
-@Setter
-public class Column {
+public class H2IdentityColumnSupport extends IdentityColumnSupportImpl {
 
-	private Identifier name;
-
-	private JdbcType jdbcType;
-
-	private Class<?> javaType;
-
-	private Class<? extends TypeHandler<?>> typeHandler;
-
-	public Column(String name) {
-		this.name = Identifier.toIdentifier(name);
+	@Override
+	public boolean supportsIdentityColumns() {
+		return true;
 	}
 
-	public Column(String name, JdbcType jdbcType) {
-		this.name = Identifier.toIdentifier(name);
-		this.jdbcType = jdbcType;
+	@Override
+	public String getIdentitySelectString(String table, String column, int type) throws MappingException {
+		return "call identity()";
 	}
 
 }

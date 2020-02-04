@@ -690,7 +690,7 @@ public class UserRepositoryTests {
 
 		this.roleRepository.save(this.adminRole);
 
-		this.firstUser = this.repository.save(this.firstUser);
+		this.firstUser = this.repository.saveSelective(this.firstUser);
 		this.secondUser = this.repository.save(this.secondUser);
 		this.thirdUser = this.repository.save(this.thirdUser);
 		this.fourthUser = this.repository.save(this.fourthUser);

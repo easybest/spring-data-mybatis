@@ -18,7 +18,9 @@ package org.springframework.data.mybatis.mapping;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.Access;
@@ -29,20 +31,26 @@ import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderColumn;
+import javax.persistence.Temporal;
 import javax.persistence.Transient;
 import javax.persistence.Version;
+
+import org.apache.ibatis.type.JdbcType;
 
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
+import org.springframework.data.mapping.model.FieldNamingStrategy;
 import org.springframework.data.mapping.model.Property;
+import org.springframework.data.mapping.model.PropertyNameFieldNamingStrategy;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.mybatis.annotation.Snowflake;
 import org.springframework.data.mybatis.mapping.model.Column;
@@ -50,6 +58,7 @@ import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
 
 /**
  * {@link MybatisPersistentProperty} implementation.
@@ -66,6 +75,8 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	private static final Collection<Class<? extends Annotation>> ID_ANNOTATIONS;
 
 	private static final Collection<Class<? extends Annotation>> UPDATEABLE_ANNOTATIONS;
+
+	private static final Map<Class<?>, JdbcType> JAVA_MAPPED_TO_JDBC_TYPES;
 
 	static {
 
@@ -97,6 +108,29 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 		annotations.add(Embeddable.class);
 
 		ENTITY_ANNOTATIONS = Collections.unmodifiableSet(annotations);
+
+		Map<Class<?>, JdbcType> javaTypesMappedToJdbcTypes = new HashMap<>();
+		javaTypesMappedToJdbcTypes.put(String.class, JdbcType.VARCHAR);
+		javaTypesMappedToJdbcTypes.put(java.math.BigDecimal.class, JdbcType.NUMERIC);
+		javaTypesMappedToJdbcTypes.put(boolean.class, JdbcType.BIT);
+		javaTypesMappedToJdbcTypes.put(byte.class, JdbcType.TINYINT);
+		javaTypesMappedToJdbcTypes.put(short.class, JdbcType.SMALLINT);
+		javaTypesMappedToJdbcTypes.put(int.class, JdbcType.INTEGER);
+		javaTypesMappedToJdbcTypes.put(long.class, JdbcType.BIGINT);
+		javaTypesMappedToJdbcTypes.put(float.class, JdbcType.REAL);
+		javaTypesMappedToJdbcTypes.put(double.class, JdbcType.DOUBLE);
+		javaTypesMappedToJdbcTypes.put(byte[].class, JdbcType.VARBINARY);
+		javaTypesMappedToJdbcTypes.put(java.util.Date.class, JdbcType.TIMESTAMP);
+		javaTypesMappedToJdbcTypes.put(java.sql.Date.class, JdbcType.DATE);
+		javaTypesMappedToJdbcTypes.put(java.sql.Time.class, JdbcType.TIME);
+		javaTypesMappedToJdbcTypes.put(java.sql.Timestamp.class, JdbcType.TIMESTAMP);
+		javaTypesMappedToJdbcTypes.put(Boolean.class, JdbcType.BIT);
+		javaTypesMappedToJdbcTypes.put(Integer.class, JdbcType.INTEGER);
+		javaTypesMappedToJdbcTypes.put(Long.class, JdbcType.BIGINT);
+		javaTypesMappedToJdbcTypes.put(Float.class, JdbcType.REAL);
+		javaTypesMappedToJdbcTypes.put(Double.class, JdbcType.DOUBLE);
+
+		JAVA_MAPPED_TO_JDBC_TYPES = Collections.unmodifiableMap(javaTypesMappedToJdbcTypes);
 	}
 
 	private final @Nullable Boolean usePropertyAccess;
@@ -111,28 +145,86 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 
 	private final Lazy<Boolean> isEntity;
 
+	private final Lazy<Column> column;
+
 	/**
 	 * Creates a new {@link AnnotationBasedPersistentProperty}.
 	 * @param property must not be {@literal null}.
 	 * @param owner must not be {@literal null}.
 	 * @param simpleTypeHolder simple type holder
+	 * @param fieldNamingStrategy naming strategy
 	 */
 	MybatisPersistentPropertyImpl(Property property, PersistentEntity<?, MybatisPersistentProperty> owner,
-			SimpleTypeHolder simpleTypeHolder) {
+			SimpleTypeHolder simpleTypeHolder, FieldNamingStrategy fieldNamingStrategy) {
 		super(property, owner, simpleTypeHolder);
 
 		this.isAssociation = Lazy.of(() -> ASSOCIATION_ANNOTATIONS.stream().anyMatch(this::isAnnotationPresent));
+
 		this.usePropertyAccess = this.detectPropertyAccess();
 		this.associationTargetType = this.detectAssociationTargetType();
 		this.updateable = this.detectUpdatability();
 
-		this.isIdProperty = Lazy.of(() -> ID_ANNOTATIONS.stream().anyMatch(it -> this.isAnnotationPresent(it)));
-		this.isEntity = Lazy.of(() -> ENTITY_ANNOTATIONS.stream().anyMatch(it -> this.isAnnotationPresent(it)));
+		this.isIdProperty = Lazy.of(() -> ID_ANNOTATIONS.stream().anyMatch(this::isAnnotationPresent));
+		this.isEntity = Lazy.of(() -> ENTITY_ANNOTATIONS.stream().anyMatch(this::isAnnotationPresent));
+
+		this.column = Lazy.of(() -> {
+			String columnName = PropertyNameFieldNamingStrategy.INSTANCE.getFieldName(this);
+			Class<?> actualType = this.getActualType();
+
+			javax.persistence.Column column = this.findAnnotation(javax.persistence.Column.class);
+			if (null != column && StringUtils.hasText(column.name())) {
+				columnName = column.name();
+			}
+			else {
+				OrderColumn orderColumn = this.findAnnotation(OrderColumn.class);
+				if (null != orderColumn && StringUtils.hasText(orderColumn.name())) {
+					columnName = orderColumn.name();
+				}
+				else if (null != fieldNamingStrategy) {
+					columnName = fieldNamingStrategy.getFieldName(this);
+				}
+			}
+			JdbcType jdbcType = JdbcType.UNDEFINED;
+			org.springframework.data.mybatis.annotation.JdbcType jdbcTypeAnn = this
+					.findAnnotation(org.springframework.data.mybatis.annotation.JdbcType.class);
+			if (null != jdbcTypeAnn) {
+				jdbcType = JdbcType.valueOf(jdbcTypeAnn.value());
+			}
+			else if (this.isAnnotationPresent(Temporal.class)) {
+				Temporal temporal = this.getRequiredAnnotation(Temporal.class);
+				switch (temporal.value()) {
+
+				case DATE:
+					jdbcType = JdbcType.DATE;
+					break;
+				case TIME:
+					jdbcType = JdbcType.TIME;
+					break;
+				case TIMESTAMP:
+					jdbcType = JdbcType.TIMESTAMP;
+					break;
+				}
+			}
+			else {
+				if (this.isAnnotationPresent(Lob.class)) {
+					jdbcType = (actualType != String.class) ? JdbcType.BLOB : JdbcType.CLOB;
+				}
+				else {
+					JdbcType jt = JAVA_MAPPED_TO_JDBC_TYPES.get(actualType);
+					if (null != jt) {
+						jdbcType = jt;
+					}
+				}
+			}
+			Column col = new Column(columnName, jdbcType);
+			col.setJavaType(actualType);
+			return col;
+		});
 	}
 
 	@Override
 	public Column getColumn() {
-		return null;
+		return this.column.get();
 	}
 
 	@Override

@@ -13,38 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.mapping.model;
+package org.springframework.data.mybatis.dialect;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
+import org.springframework.dao.DataAccessException;
 
 /**
- * Column model.
+ * Database Dialect Exception.
  *
  * @author JARVIS SONG
  * @since 2.0.0
  */
-@Getter
-@Setter
-public class Column {
+public class DialectException extends DataAccessException {
 
-	private Identifier name;
-
-	private JdbcType jdbcType;
-
-	private Class<?> javaType;
-
-	private Class<? extends TypeHandler<?>> typeHandler;
-
-	public Column(String name) {
-		this.name = Identifier.toIdentifier(name);
+	public DialectException(String msg) {
+		super(msg);
 	}
 
-	public Column(String name, JdbcType jdbcType) {
-		this.name = Identifier.toIdentifier(name);
-		this.jdbcType = jdbcType;
+	/**
+	 * Constructor for UncategorizedDataAccessException.
+	 * @param msg the detail message
+	 * @param cause the exception thrown by underlying data access API
+	 */
+	public DialectException(String msg, Throwable cause) {
+		super(msg, cause);
 	}
 
 }

@@ -17,6 +17,7 @@ package org.springframework.data.mybatis.mapping;
 
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mapping.model.FieldNamingStrategy;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.TypeInformation;
@@ -30,6 +31,8 @@ import org.springframework.data.util.TypeInformation;
 public class MybatisMappingContext
 		extends AbstractMappingContext<MybatisPersistentEntityImpl<?>, MybatisPersistentProperty> {
 
+	private FieldNamingStrategy fieldNamingStrategy;
+
 	@Override
 	protected <T> MybatisPersistentEntityImpl<?> createPersistentEntity(TypeInformation<T> typeInformation) {
 
@@ -41,7 +44,11 @@ public class MybatisMappingContext
 	@Override
 	protected MybatisPersistentProperty createPersistentProperty(Property property,
 			MybatisPersistentEntityImpl<?> owner, SimpleTypeHolder simpleTypeHolder) {
-		return new MybatisPersistentPropertyImpl(property, owner, simpleTypeHolder);
+		return new MybatisPersistentPropertyImpl(property, owner, simpleTypeHolder, this.fieldNamingStrategy);
+	}
+
+	public void setFieldNamingStrategy(FieldNamingStrategy fieldNamingStrategy) {
+		this.fieldNamingStrategy = fieldNamingStrategy;
 	}
 
 }
