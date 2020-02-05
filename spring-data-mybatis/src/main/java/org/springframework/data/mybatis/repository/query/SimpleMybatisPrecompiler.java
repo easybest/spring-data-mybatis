@@ -15,8 +15,11 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -28,14 +31,18 @@ import javax.persistence.SequenceGenerators;
 
 import org.apache.ibatis.session.Configuration;
 
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PropertyHandler;
+import org.springframework.data.mybatis.annotation.Condition;
+import org.springframework.data.mybatis.annotation.Conditions;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.model.Column;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.data.repository.query.parser.Part;
 import org.springframework.util.StringUtils;
 
 /**
@@ -58,9 +65,13 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		builder.append(this.addResultMap());
 		builder.append(this.addInsertStatement(true));
 		builder.append(this.addInsertStatement(false));
+		builder.append(this.addDeleteByIdStatement());
+		builder.append(this.addDeleteByIdsStatement());
+		builder.append(this.addDeleteAllStatement());
 		builder.append(this.addGetByIdStatement());
 		builder.append(this.addFindStatement(true));
 		builder.append(this.addFindStatement(false));
+		builder.append(this.addCountAllStatement());
 		return builder.toString();
 	}
 
@@ -201,6 +212,35 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 				idProperty.getType().getName(), sql);
 	}
 
+	private String addDeleteByIdStatement() {
+		if (this.configuration.hasStatement(this.namespace + '.' + ResidentStatementName.DELETE_BY_ID, false)) {
+			return "";
+		}
+		if (null == this.persistentEntity.getIdClass()) {
+			return "";
+		}
+
+		return String.format("<delete id=\"%s\" parameterType=\"%s\">delete from %s where %s</delete>",
+				ResidentStatementName.DELETE_BY_ID, this.persistentEntity.getIdClass().getName(), this.getTableName(),
+				this.buildByIdQueryCondition());
+	}
+
+	private String addDeleteByIdsStatement() {
+		if (this.configuration.hasStatement(this.namespace + '.' + ResidentStatementName.DELETE_BY_IDS, false)) {
+			return "";
+		}
+		return String.format("<delete id=\"%s\">delete from %s where %s</delete>", ResidentStatementName.DELETE_BY_IDS,
+				this.getTableName(), this.buildByIdsQueryCondition());
+	}
+
+	private String addDeleteAllStatement() {
+		if (this.configuration.hasStatement(this.namespace + '.' + ResidentStatementName.DELETE_ALL, false)) {
+			return "";
+		}
+		return String.format("<delete id=\"%s\">delete from %s</delete>", ResidentStatementName.DELETE_ALL,
+				this.getTableName());
+	}
+
 	private String addGetByIdStatement() {
 		if (this.configuration.hasStatement(this.namespace + '.' + ResidentStatementName.GET_BY_ID, false)) {
 			return "";
@@ -248,7 +288,47 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String buildByConditionQueryCondition() {
-		return String.format("<if test=\"__condition != null\"><trim prefixOverrides=\"and |or \"></trim></if>");
+
+		this.findProperties().stream().map(pp -> {
+			Set<Condition> set = new HashSet<>();
+			Conditions conditions = pp.findAnnotation(Conditions.class);
+			if (null != conditions && conditions.value().length > 0) {
+				set.addAll(Arrays.asList(conditions.value()));
+			}
+			Condition condition = pp.findAnnotation(Condition.class);
+			if (null != condition) {
+				set.add(condition);
+			}
+			if (set.isEmpty()) {
+				return "";
+			}
+
+			return set.stream().map(c -> {
+				String[] properties = c.properties();
+				if (null == properties || properties.length == 0) {
+					properties = new String[] { pp.getName() };
+				}
+
+				Part.Type type = Part.Type.valueOf(c.type().name());
+				if (type.getNumberOfArguments() > 0 && type.getNumberOfArguments() != properties.length) {
+					throw new MappingException("@Condition with type " + type + " needs " + type.getNumberOfArguments()
+							+ " arguments, but only find " + properties.length + " properties in this @Condition.");
+				}
+				String cond = Stream.of(properties).map(property -> String.format("__condition.%s != null", property))
+						.collect(Collectors.joining(" and "));
+				Part.IgnoreCaseType ignoreCaseType = Part.IgnoreCaseType.valueOf(c.ignoreCaseType().name());
+				String columnName = StringUtils.hasText(c.column()) ? c.column()
+						: pp.getColumn().getName().render(this.dialect);
+				String left = (ignoreCaseType == Part.IgnoreCaseType.ALWAYS
+						|| ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE)
+								? (this.dialect.getLowercaseFunction() + '(' + columnName + ')') : columnName;
+				String operator = this.buildQueryByConditionOperator(type);
+				String right = this.buildQueryByConditionRightSegment(type, ignoreCaseType, properties);
+				return String.format("<if test=\"%s\"> and %s %s %s</if>", cond, left, operator, right);
+			}).collect(Collectors.joining());
+		});
+		String sql = "";
+		return String.format("<if test=\"__condition != null\"><trim prefixOverrides=\"and |or \">%s</trim></if>", sql);
 	}
 
 	private String buildStandardOrderBySegment() {
@@ -288,6 +368,93 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 					idProperty.getColumn().getName().render(this.dialect));
 		}
 		return String.format("<if test=\"__ids != null\"><trim prefixOverrides=\"and |or \"> and %s</trim></if>", sql);
+	}
+
+	private String buildQueryByConditionOperator(Part.Type type) {
+		switch (type) {
+		case BETWEEN:
+			return " between ";
+		case SIMPLE_PROPERTY:
+			return "=";
+		case NEGATING_SIMPLE_PROPERTY:
+			return "<![CDATA[<>]]>";
+		case LESS_THAN:
+		case BEFORE:
+			return "<![CDATA[<]]>";
+		case LESS_THAN_EQUAL:
+			return "<![CDATA[<=]]>";
+		case GREATER_THAN:
+		case AFTER:
+			return "<![CDATA[>]]>";
+		case GREATER_THAN_EQUAL:
+			return ">=";
+		case NOT_LIKE:
+		case NOT_CONTAINING:
+			return " not like ";
+		case LIKE:
+		case STARTING_WITH:
+		case ENDING_WITH:
+		case CONTAINING:
+			return " like ";
+		case IN:
+			return " in ";
+		case NOT_IN:
+			return " not in ";
+		}
+
+		return "";
+	}
+
+	private String buildQueryByConditionRightSegment(Part.Type type, Part.IgnoreCaseType ignoreCaseType,
+			String[] properties) {
+		switch (type) {
+		case BETWEEN:
+			return String.format("#{%s} and #{%s}", properties[0], properties[1]);
+		case IS_NOT_NULL:
+			return " is not null";
+		case IS_NULL:
+			return " is null";
+		case STARTING_WITH:
+			return this.buildLikeRightSegment(properties[0], false, true, ignoreCaseType);
+		case ENDING_WITH:
+			return this.buildLikeRightSegment(properties[0], true, false, ignoreCaseType);
+		case NOT_CONTAINING:
+		case CONTAINING:
+			return this.buildLikeRightSegment(properties[0], true, true, ignoreCaseType);
+		case NOT_IN:
+		case IN:
+			return String.format(
+					"<foreach item=\"__item\" index=\"__index\" collection=\"%s\" open=\"(\" separator=\",\" close=\")\">#{__item}</foreach>",
+					properties[0]);
+		case TRUE:
+			return " = true";
+		case FALSE:
+			return " = false";
+		default:
+			if (ignoreCaseType == Part.IgnoreCaseType.ALWAYS || ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE) {
+				return String.format("%s(#{%s})", this.dialect.getLowercaseFunction(), properties[0]);
+			}
+			return String.format("#{%s}", properties[0]);
+
+		}
+	}
+
+	private String buildLikeRightSegment(String property, boolean left, boolean right,
+			Part.IgnoreCaseType ignoreCaseType) {
+		return String.format("<bind name=\"__bind_%s\" value=\"%s%s%s\" />%s", property, (left ? "'%' + " : ""),
+				property, (right ? " + '%'" : ""),
+				(((ignoreCaseType == Part.IgnoreCaseType.ALWAYS)
+						|| (ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE))
+								? String.format("%s(#{__bind_%s})", this.dialect.getLowercaseFunction(), property)
+								: String.format("#{__bind_%s}", property)));
+	}
+
+	private String addCountAllStatement() {
+		if (this.configuration.hasStatement(this.namespace + '.' + ResidentStatementName.COUNT_ALL, false)) {
+			return "";
+		}
+		return String.format("<select id=\"%s\" resultType=\"long\">select count(*) from %s</select>",
+				ResidentStatementName.COUNT_ALL, this.getTableName());
 	}
 
 }
