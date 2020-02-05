@@ -17,7 +17,9 @@ package org.springframework.data.mybatis.repository.query;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -146,6 +148,16 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		}
 		String test = Stream.of(conditions).map(c -> c + " != null").collect(Collectors.joining(" and "));
 		return String.format("<if test=\"%s\">%s</if>", test, content);
+	}
+
+	protected List<MybatisPersistentProperty> findProperties(MybatisPersistentEntity<?> entity) {
+		List<MybatisPersistentProperty> properties = new ArrayList<>();
+		entity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) properties::add);
+		return properties;
+	}
+
+	protected List<MybatisPersistentProperty> findProperties() {
+		return this.findProperties(this.persistentEntity);
 	}
 
 }

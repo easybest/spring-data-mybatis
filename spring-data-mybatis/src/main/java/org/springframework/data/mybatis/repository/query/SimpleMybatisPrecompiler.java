@@ -28,6 +28,7 @@ import javax.persistence.SequenceGenerators;
 
 import org.apache.ibatis.session.Configuration;
 
+import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
@@ -57,6 +58,9 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		builder.append(this.addResultMap());
 		builder.append(this.addInsertStatement(true));
 		builder.append(this.addInsertStatement(false));
+		builder.append(this.addGetByIdStatement());
+		builder.append(this.addFindStatement(true));
+		builder.append(this.addFindStatement(false));
 		return builder.toString();
 	}
 
@@ -72,11 +76,11 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 				MybatisPersistentEntity<?> embeddedEntity = this.mappingContext
 						.getRequiredPersistentEntity(pp.getActualType());
 				embeddedEntity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) epp -> associationBuilder
-						.append(resultMapSegment(epp.isIdProperty(), epp.getName(), epp.getColumn())));
+						.append(this.resultMapSegment(epp.isIdProperty(), epp.getName(), epp.getColumn())));
 				associationBuilder.append("</association>");
 				return;
 			}
-			builder.append(resultMapSegment(pp.isIdProperty(), pp.getName(), pp.getColumn()));
+			builder.append(this.resultMapSegment(pp.isIdProperty(), pp.getName(), pp.getColumn()));
 		});
 
 		builder.append(associationBuilder);
@@ -195,6 +199,95 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 				"<selectKey keyProperty=\"%s\" keyColumn=\"%s\" order=\"%s\" resultType=\"%s\">%s</selectKey>",
 				idProperty.getName(), idProperty.getColumn().getName().getText(), executeBefore ? "BEFORE" : "AFTER",
 				idProperty.getType().getName(), sql);
+	}
+
+	private String addGetByIdStatement() {
+		if (this.configuration.hasStatement(this.namespace + '.' + ResidentStatementName.GET_BY_ID, false)) {
+			return "";
+		}
+		if (null == this.persistentEntity.getIdClass()) {
+			return "";
+		}
+		String sql = String.format("select * from %s where %s", this.getTableName(), this.buildByIdQueryCondition());
+		return String.format("<select id=\"%s\" parameterType=\"%s\" resultMap=\"%s\">%s</select>",
+				ResidentStatementName.GET_BY_ID, this.persistentEntity.getIdClass().getName(),
+				ResidentStatementName.RESULT_MAP, sql);
+	}
+
+	private String buildByIdQueryCondition() {
+
+		MybatisPersistentProperty idProperty = this.persistentEntity.getRequiredIdProperty();
+		if (idProperty.isAnnotationPresent(EmbeddedId.class)) {
+			MybatisPersistentEntity<?> embeddedEntity = this.mappingContext
+					.getRequiredPersistentEntity(idProperty.getActualType());
+			return this
+					.findProperties(embeddedEntity).stream().map(epp -> String.format("%s = %s.%s",
+							epp.getColumn().getName().render(this.dialect), idProperty.getName(), epp.getName()))
+					.collect(Collectors.joining(" and "));
+		}
+
+		return this
+				.findProperties().stream().filter(PersistentProperty::isIdProperty).map(p -> String.format("%s = %s",
+						p.getColumn().getName().render(this.dialect), this.variableSegment(p.getName(), p.getColumn())))
+				.collect(Collectors.joining(" and "));
+	}
+
+	private String addFindStatement(boolean pageable) {
+		if (this.configuration.hasStatement(
+				this.namespace + '.' + ((pageable) ? ResidentStatementName.FIND_BY_PAGER : ResidentStatementName.FIND),
+				false)) {
+			return "";
+		}
+		String conditions = String.format("<where>%s%s</where> %s", this.buildByIdsQueryCondition(),
+				this.buildByConditionQueryCondition(), this.buildStandardOrderBySegment());
+		String sql = String.format("select * from %s %s", this.getTableName(), conditions);
+		return String.format("<select id=\"%s\" resultMap=\"%s\">%s</select>",
+				pageable ? ResidentStatementName.FIND_BY_PAGER : ResidentStatementName.FIND,
+				ResidentStatementName.RESULT_MAP,
+				pageable ? this.dialect.getLimitHandler().processSql(sql, null) : sql);
+	}
+
+	private String buildByConditionQueryCondition() {
+		return String.format("<if test=\"__condition != null\"><trim prefixOverrides=\"and |or \"></trim></if>");
+	}
+
+	private String buildStandardOrderBySegment() {
+		String mapping = this.mappingPropertyToColumn().entrySet().stream()
+				.map(entry -> String.format("&apos;%s&apos;:&apos;%s&apos;", entry.getKey(),
+						entry.getValue().getName().render(this.dialect)))
+				.collect(Collectors.joining(","));
+		String bind = String.format("<bind name=\"__columnsMap\" value='#{%s}'/>", mapping);
+		String sql = String.format("order by "
+				+ " <foreach collection=\"__sort\" item=\"item\" index=\"idx\" open=\"\" close=\"\" separator=\",\">"
+				+ "<if test=\"item.ignoreCase\">%s(</if>" + "${__columnsMap[item.property]}"
+				+ "<if test=\"item.ignoreCase\">)</if> " + "${item.direction.name().toLowerCase()}" + "</foreach>",
+				this.dialect.getLowercaseFunction());
+		return String.format("<if test=\"__sort != null\">%s %s</if>", bind, sql);
+	}
+
+	private String buildByIdsQueryCondition() {
+		if (null == this.persistentEntity.getIdClass()) {
+			return "";
+		}
+
+		String sql;
+		MybatisPersistentProperty idProperty = this.persistentEntity.getRequiredIdProperty();
+		if (idProperty.isAnnotationPresent(EmbeddedId.class)) {
+			String conditions = this
+					.findProperties(this.mappingContext.getRequiredPersistentEntity(idProperty.getActualType()))
+					.stream().map(epp -> String.format("%s = #{item.%s}",
+							epp.getColumn().getName().render(this.dialect), epp.getName()))
+					.collect(Collectors.joining(" and "));
+			sql = String.format(
+					"<foreach collection=\"__ids\" item=\"item\" index=\"index\" open=\"(\" separator=\") or (\" close=\")\">%s</foreach>",
+					conditions);
+		}
+		else {
+			sql = String.format(
+					"%s in <foreach collection=\"__ids\" item=\"item\" index=\"index\" open=\"(\" separator=\",\" close=\")\">#{item}</foreach>",
+					idProperty.getColumn().getName().render(this.dialect));
+		}
+		return String.format("<if test=\"__ids != null\"><trim prefixOverrides=\"and |or \"> and %s</trim></if>", sql);
 	}
 
 }

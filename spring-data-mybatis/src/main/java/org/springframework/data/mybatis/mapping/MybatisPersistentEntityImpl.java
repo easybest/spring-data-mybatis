@@ -17,6 +17,7 @@ package org.springframework.data.mybatis.mapping;
 
 import java.util.Comparator;
 
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.IdClass;
 
@@ -78,6 +79,12 @@ class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPer
 
 	@Override
 	public boolean hasCompositeId() {
+		if (this.isAnnotationPresent(IdClass.class)) {
+			return true;
+		}
+		if (this.hasIdProperty()) {
+			return this.getRequiredIdProperty().isAnnotationPresent(EmbeddedId.class);
+		}
 		return false;
 	}
 
@@ -87,8 +94,10 @@ class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPer
 			IdClass idClass = this.getRequiredAnnotation(IdClass.class);
 			return idClass.value();
 		}
-
-		return this.getRequiredIdProperty().getActualType();
+		if (this.hasIdProperty()) {
+			return this.getRequiredIdProperty().getActualType();
+		}
+		return null;
 	}
 
 	@Override

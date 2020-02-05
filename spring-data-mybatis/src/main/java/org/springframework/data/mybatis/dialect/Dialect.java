@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupportImpl;
+import org.springframework.data.mybatis.dialect.pagination.LegacyLimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
 
 /**
  * Database dialect.
@@ -79,7 +81,7 @@ public abstract class Dialect {
 	}
 
 	public String getNativeIdentifierGeneratorStrategy() {
-		if (getIdentityColumnSupport().supportsIdentityColumns()) {
+		if (this.getIdentityColumnSupport().supportsIdentityColumns()) {
 			return "identity";
 		}
 		else {
@@ -88,12 +90,20 @@ public abstract class Dialect {
 	}
 
 	public String getSequenceNextValString(String sequenceName) throws MappingException {
-		throw new MappingException(getClass().getName() + " does not support sequences");
+		throw new MappingException(this.getClass().getName() + " does not support sequences");
+	}
+
+	public LimitHandler getLimitHandler() {
+		return new LegacyLimitHandler(this);
+	}
+
+	public String getLowercaseFunction() {
+		return "lower";
 	}
 
 	@Override
 	public String toString() {
-		return getClass().getName();
+		return this.getClass().getName();
 	}
 
 }

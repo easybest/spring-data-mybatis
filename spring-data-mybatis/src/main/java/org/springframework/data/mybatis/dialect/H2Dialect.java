@@ -20,6 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.dialect.identity.H2IdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupport;
+import org.springframework.data.mybatis.dialect.pagination.AbstractLimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.LimitHelper;
+import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -30,6 +34,25 @@ import org.springframework.util.ClassUtils;
  */
 @Slf4j
 public class H2Dialect extends Dialect {
+
+	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
+		@Override
+		public String processSql(String sql, RowSelection selection) {
+			if (null != selection && selection.getMaxRows() > 0) {
+				return sql + " limit "
+						+ (LimitHelper.hasFirstRow(selection) ? (LimitHelper.getFirstRow(selection) + ",") : "")
+						+ selection.getMaxRows();
+			}
+			// final boolean hasOffset = LimitHelper.hasFirstRow(selection);
+			// return sql + (hasOffset ? " limit ? offset ?" : " limit ?");
+			return sql + " limit #{__offset}, #{__pageSize}";
+		}
+
+		@Override
+		public boolean supportsLimit() {
+			return true;
+		}
+	};
 
 	private final String querySequenceString;
 
@@ -70,6 +93,11 @@ public class H2Dialect extends Dialect {
 	@Override
 	public String getSequenceNextValString(String sequenceName) throws MappingException {
 		return "call next value for " + sequenceName;
+	}
+
+	@Override
+	public LimitHandler getLimitHandler() {
+		return LIMIT_HANDLER;
 	}
 
 }
