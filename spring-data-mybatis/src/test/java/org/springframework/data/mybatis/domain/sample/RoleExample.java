@@ -15,7 +15,6 @@
  */
 package org.springframework.data.mybatis.domain.sample;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +24,7 @@ import java.util.List;
  * @author JARVIS SONG
  * @since 1.0.0
  */
-public class RoleExample implements Serializable {
+public class RoleExample {
 
 	protected String orderByClause;
 
@@ -37,18 +36,16 @@ public class RoleExample implements Serializable {
 		this.oredCriteria = new ArrayList<>();
 	}
 
-	public RoleExample setOrderByClause(String orderByClause) {
+	public void setOrderByClause(String orderByClause) {
 		this.orderByClause = orderByClause;
-		return this;
 	}
 
 	public String getOrderByClause() {
 		return this.orderByClause;
 	}
 
-	public RoleExample setDistinct(boolean distinct) {
+	public void setDistinct(boolean distinct) {
 		this.distinct = distinct;
-		return this;
 	}
 
 	public boolean isDistinct() {

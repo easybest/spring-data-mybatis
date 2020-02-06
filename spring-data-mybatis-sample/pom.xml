@@ -10,9 +10,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>spring-data-mybatis-example</artifactId>
+    <artifactId>spring-data-mybatis-sample</artifactId>
 
-    <name>Spring Data MyBatis Example</name>
+    <name>Spring Data MyBatis Sample</name>
     <description>Spring Data module for MyBatis repositories.</description>
     <url>https://github.com/easybest/spring-data-mybatis</url>
     <developers>
@@ -40,6 +40,9 @@
             scm:git:ssh://git@github.com/easybest/spring-data-mybatis.git
         </developerConnection>
     </scm>
+    <properties>
+        <disable.checks>true</disable.checks>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>io.easybest</groupId>
@@ -48,6 +51,7 @@
         <dependency>
             <groupId>io.easybest</groupId>
             <artifactId>spring-data-mybatis-processor</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>

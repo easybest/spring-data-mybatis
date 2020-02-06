@@ -52,12 +52,15 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.springframework.data.mybatis.annotation.Example;
+
 /**
  * User entity.
  *
  * @author JARVIS SONG
  * @since 2.0.0
  */
+@Example
 @Entity
 @NamedEntityGraphs({ @NamedEntityGraph(name = "User.overview", attributeNodes = { @NamedAttributeNode("roles") }),
 		@NamedEntityGraph(name = "User.detail",

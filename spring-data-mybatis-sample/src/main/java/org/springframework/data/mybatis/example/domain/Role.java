@@ -19,12 +19,15 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
+import org.springframework.data.mybatis.annotation.Example;
+
 /**
  * Role entity.
  *
  * @author JARVIS SONG
  * @since 2.0.0
  */
+@Example
 @Entity
 public class Role {
 
@@ -59,7 +62,6 @@ public class Role {
 	}
 
 	public boolean isNew() {
-
 		return this.id == null;
 	}
 
