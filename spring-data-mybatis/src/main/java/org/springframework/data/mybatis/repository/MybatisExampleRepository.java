@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.repository.sample;
+package org.springframework.data.mybatis.repository;
 
-import org.springframework.data.mybatis.domain.sample.Role;
-import org.springframework.data.mybatis.domain.sample.RoleExample;
-import org.springframework.data.mybatis.repository.MybatisExampleRepository;
+import java.util.List;
 
 /**
- * Repository interface for {@code Role}s.
+ * MybatisExampleRepository.
  *
+ * @param <T> entity type
+ * @param <ID> entity id
+ * @param <EXAMPLE> entity's example type
  * @author JARVIS SONG
+ * @since 2.0.0
  */
-public interface RoleRepository extends MybatisExampleRepository<Role, Long, RoleExample> {
+public interface MybatisExampleRepository<T, ID, EXAMPLE> extends MybatisRepository<T, ID> {
+
+	<S extends T> List<S> findByExample(EXAMPLE example);
+
+	long countByExample(EXAMPLE example);
+
+	int deleteByExample(EXAMPLE example);
 
 }

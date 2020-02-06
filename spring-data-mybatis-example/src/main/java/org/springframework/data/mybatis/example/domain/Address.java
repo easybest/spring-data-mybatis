@@ -13,17 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.repository.sample;
+package org.springframework.data.mybatis.example.domain;
 
-import org.springframework.data.mybatis.domain.sample.Role;
-import org.springframework.data.mybatis.domain.sample.RoleExample;
-import org.springframework.data.mybatis.repository.MybatisExampleRepository;
+import javax.persistence.Embeddable;
+
+import lombok.Getter;
 
 /**
- * Repository interface for {@code Role}s.
+ * Address domain.
  *
  * @author JARVIS SONG
+ * @since 2.0.0
  */
-public interface RoleRepository extends MybatisExampleRepository<Role, Long, RoleExample> {
+@Embeddable
+@Getter
+public class Address {
+
+	private String country;
+
+	private String city;
+
+	private String streetName;
+
+	private String streetNo;
+
+	public Address() {
+	}
+
+	public Address(String country, String city, String streetName, String streetNo) {
+		this.country = country;
+		this.city = city;
+		this.streetName = streetName;
+		this.streetNo = streetNo;
+	}
 
 }

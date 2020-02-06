@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.repository.sample;
+package org.springframework.data.mybatis.example.domain;
 
-import org.springframework.data.mybatis.domain.sample.Role;
-import org.springframework.data.mybatis.domain.sample.RoleExample;
-import org.springframework.data.mybatis.repository.MybatisExampleRepository;
+import javax.persistence.Entity;
 
 /**
- * Repository interface for {@code Role}s.
+ * SpecialUser entity.
  *
  * @author JARVIS SONG
+ * @since 2.0.0
  */
-public interface RoleRepository extends MybatisExampleRepository<Role, Long, RoleExample> {
+@Entity
+public class SpecialUser extends User {
 
 }

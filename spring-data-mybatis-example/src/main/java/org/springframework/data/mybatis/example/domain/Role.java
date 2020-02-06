@@ -13,17 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.repository.sample;
+package org.springframework.data.mybatis.example.domain;
 
-import org.springframework.data.mybatis.domain.sample.Role;
-import org.springframework.data.mybatis.domain.sample.RoleExample;
-import org.springframework.data.mybatis.repository.MybatisExampleRepository;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 
 /**
- * Repository interface for {@code Role}s.
+ * Role entity.
  *
  * @author JARVIS SONG
+ * @since 2.0.0
  */
-public interface RoleRepository extends MybatisExampleRepository<Role, Long, RoleExample> {
+@Entity
+public class Role {
+
+	private static final String PREFIX = "ROLE_";
+
+	@Id
+	@GeneratedValue
+	private Integer id;
+
+	private String name;
+
+	public Role() {
+	}
+
+	public Role(final String name) {
+		this.name = name;
+	}
+
+	public Integer getId() {
+
+		return this.id;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	@Override
+	public String toString() {
+
+		return PREFIX + this.name;
+	}
+
+	public boolean isNew() {
+
+		return this.id == null;
+	}
 
 }

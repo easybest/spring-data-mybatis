@@ -55,6 +55,8 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	protected final String namespace;
 
+	protected final RepositoryInformation repositoryInformation;
+
 	protected final MybatisPersistentEntity<?> persistentEntity;
 
 	protected final Dialect dialect;
@@ -64,6 +66,7 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		this.mappingContext = mappingContext;
 		this.configuration = configuration;
 		this.namespace = repositoryInformation.getRepositoryInterface().getName();
+		this.repositoryInformation = repositoryInformation;
 		this.persistentEntity = mappingContext.getRequiredPersistentEntity(repositoryInformation.getDomainType());
 
 		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(

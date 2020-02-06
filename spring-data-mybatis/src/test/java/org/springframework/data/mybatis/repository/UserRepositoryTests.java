@@ -52,6 +52,7 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mybatis.domain.sample.Address;
 import org.springframework.data.mybatis.domain.sample.Role;
+import org.springframework.data.mybatis.domain.sample.RoleExample;
 import org.springframework.data.mybatis.domain.sample.User;
 import org.springframework.data.mybatis.repository.sample.RoleRepository;
 import org.springframework.data.mybatis.repository.sample.UserRepository;
@@ -706,6 +707,8 @@ public class UserRepositoryTests {
 		Assertions.assertThat(this.repository.existsById(this.secondUser.getId())).isTrue();
 		Assertions.assertThat(this.repository.existsById(this.thirdUser.getId())).isTrue();
 		Assertions.assertThat(this.repository.existsById(this.fourthUser.getId())).isTrue();
+
+		this.roleRepository.findByExample(new RoleExample().setDistinct(true));
 	}
 
 	private static <T> void assertSameElements(Collection<T> first, Collection<T> second) {

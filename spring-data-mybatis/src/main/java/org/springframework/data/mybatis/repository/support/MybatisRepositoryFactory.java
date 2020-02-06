@@ -24,6 +24,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
 import org.springframework.data.mybatis.repository.query.MybatisQueryLookupStrategy;
 import org.springframework.data.mybatis.repository.query.MybatisQueryPrepareProcessor;
@@ -114,6 +115,9 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
 	@Override
 	protected Class<?> getRepositoryBaseClass(RepositoryMetadata metadata) {
+		if (MybatisExampleRepository.class.isAssignableFrom(metadata.getRepositoryInterface())) {
+			return SimpleMybatisExampleRepository.class;
+		}
 		return SimpleMybatisRepository.class;
 	}
 

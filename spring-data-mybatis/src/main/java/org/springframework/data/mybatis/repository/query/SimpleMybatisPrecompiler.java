@@ -36,13 +36,16 @@ import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.annotation.Condition;
 import org.springframework.data.mybatis.annotation.Conditions;
+import org.springframework.data.mybatis.annotation.Example;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.model.Column;
+import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.query.parser.Part;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -63,6 +66,9 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	protected String doPrecompile() {
 		StringBuilder builder = new StringBuilder();
 		builder.append(this.addResultMap());
+
+		builder.append(this.addBaseColumnListSQL());
+
 		builder.append(this.addInsertStatement(true));
 		builder.append(this.addInsertStatement(false));
 		builder.append(this.addUpdateStatement(true, true));
@@ -77,6 +83,29 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		builder.append(this.addFindStatement(false));
 		builder.append(this.addCountAllStatement());
 		builder.append(this.addCountStatement());
+
+		if (MybatisExampleRepository.class.isAssignableFrom(this.repositoryInformation.getRepositoryInterface())) {
+			if (this.persistentEntity.isAnnotationPresent(Example.class)) {
+
+				try {
+					ClassUtils.forName(this.persistentEntity.getType().getName() + "Example",
+							this.persistentEntity.getType().getClassLoader());
+				}
+				catch (ClassNotFoundException ex) {
+					throw new MappingException(
+							"Are you forget to generate " + this.persistentEntity.getType().getName() + "Example ?");
+				}
+
+				builder.append(this.addExampleWhereClauseSQL());
+				builder.append(this.addFindByExampleStatement());
+			}
+			else {
+				throw new MappingException(String.format(
+						"The %s extends MybatisExampleRepository, but could not find @Example on the entity: %s",
+						this.repositoryInformation.getRepositoryInterface().getName(),
+						this.persistentEntity.getType().getName()));
+			}
+		}
 		return builder.toString();
 	}
 
@@ -161,7 +190,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 
 	private String buildUpdateSetSelectiveSQL() {
 		return this.mappingPropertyToColumn().entrySet().stream().filter(entry -> !entry.getValue().isPrimaryKey())
-				.map(entry -> testNotNullSegment("__entity." + entry.getKey(),
+				.map(entry -> this.testNotNullSegment("__entity." + entry.getKey(),
 						String.format("%s=%s", entry.getValue().getName().render(this.dialect),
 								this.variableSegment("__entity." + entry.getKey(), entry.getValue()))))
 				.collect(Collectors.joining(","));
@@ -524,6 +553,40 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		return String.format(
 				"<select id=\"%s\" resultType=\"long\">select count(*) from %s <where><if test=\"__condition != null\"><trim prefixOverrides=\"and |or \">%s</trim></if></where></select>",
 				ResidentStatementName.COUNT, this.getTableName(), where);
+	}
+
+	private String addFindByExampleStatement() {
+		if (this.configuration.hasStatement(this.namespace + '.' + ResidentStatementName.FIND_BY_EXAMPLE, false)) {
+			return "";
+		}
+
+		return String.format("<select id=\"%s\" parameterType=\"%sExample\" resultMap=\"%s\">" + "select "
+				+ "<if test=\"distinct\">distinct</if>" + "<include refid=\"__base_column_list\"/> " + "from %s "
+				+ "<if test=\"_parameter != null\">" + "<include refid=\"__example_where_clause\"/>" + "</if>"
+				+ "<if test=\"orderByClause != null\"> " + "order by ${orderByClause} " + "</if>" + "</select>",
+				ResidentStatementName.FIND_BY_EXAMPLE, this.persistentEntity.getType().getName(),
+				ResidentStatementName.RESULT_MAP, this.getTableName());
+	}
+
+	private String addBaseColumnListSQL() {
+		String sql = this.mappingPropertyToColumn().values().stream().map(c -> c.getName().render(this.dialect))
+				.collect(Collectors.joining(","));
+		return String.format("<sql id=\"__base_column_list\">%s</sql>", sql);
+	}
+
+	private String addExampleWhereClauseSQL() {
+		return "<sql id=\"__example_where_clause\">" + "<where>"
+				+ "<foreach collection=\"oredCriteria\" item=\"criteria\" separator=\"or\">"
+				+ "<if test=\"criteria.valid\">" + "<trim prefix=\"(\" prefixOverrides=\"and\" suffix=\")\">"
+				+ "<foreach collection=\"criteria.criteria\" item=\"criterion\">" + "<choose>"
+				+ "<when test=\"criterion.noValue\"> " + "and ${criterion.condition}" + "</when>"
+				+ "<when test=\"criterion.singleValue\"> " + "and ${criterion.condition} #{criterion.value}" + "</when>"
+				+ "<when test=\"criterion.betweenValue\"> "
+				+ "and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}" + "</when>"
+				+ "<when test=\"criterion.listValue\"> " + "and ${criterion.condition}"
+				+ "<foreach close=\")\" collection=\"criterion.value\" item=\"listItem\" open=\"(\" separator=\",\">"
+				+ "#{listItem}" + "</foreach>" + "</when>" + "</choose>" + "</foreach>" + "</trim>" + "</if>"
+				+ "</foreach>" + "</where>" + "</sql>";
 	}
 
 }

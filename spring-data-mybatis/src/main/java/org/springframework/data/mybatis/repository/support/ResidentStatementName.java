@@ -67,14 +67,29 @@ public final class ResidentStatementName {
 	public static final String DELETE_BY_IDS = PREFIX + "delete_by_ids";
 
 	/**
+	 * For <code>__delete_by_example</code>.
+	 */
+	public static final String DELETE_BY_EXAMPLE = PREFIX + "delete_by_example";
+
+	/**
 	 * For <code>__find_by_pager</code>.
 	 */
 	public static final String FIND_BY_PAGER = PREFIX + "find_by_pager";
 
 	/**
+	 * For <code>__find_by_example</code>.
+	 */
+	public static final String FIND_BY_EXAMPLE = PREFIX + "find_by_example";
+
+	/**
 	 * For <code>__count</code>.
 	 */
 	public static final String COUNT = PREFIX + "count";
+
+	/**
+	 * For <code>__count_by_example</code>.
+	 */
+	public static final String COUNT_BY_EXAMPLE = PREFIX + "count_by_example";
 
 	/**
 	 * For <code>__insert</code>.
