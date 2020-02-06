@@ -57,6 +57,7 @@
         <module>spring-data-mybatis-core</module>
         <module>spring-data-mybatis</module>
         <module>spring-data-mybatis-boot-starter</module>
+        <module>spring-data-mybatis-processor</module>
     </modules>
     <build>
         <plugins>
