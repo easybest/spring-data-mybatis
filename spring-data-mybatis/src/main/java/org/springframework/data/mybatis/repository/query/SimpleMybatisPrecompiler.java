@@ -65,6 +65,10 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		builder.append(this.addResultMap());
 		builder.append(this.addInsertStatement(true));
 		builder.append(this.addInsertStatement(false));
+		builder.append(this.addUpdateStatement(true, true));
+		builder.append(this.addUpdateStatement(true, false));
+		builder.append(this.addUpdateStatement(false, true));
+		builder.append(this.addUpdateStatement(false, false));
 		builder.append(this.addDeleteByIdStatement());
 		builder.append(this.addDeleteByIdsStatement());
 		builder.append(this.addDeleteAllStatement());
@@ -72,6 +76,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		builder.append(this.addFindStatement(true));
 		builder.append(this.addFindStatement(false));
 		builder.append(this.addCountAllStatement());
+		builder.append(this.addCountStatement());
 		return builder.toString();
 	}
 
@@ -126,6 +131,40 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 				this.persistentEntity.getType().getName(), keyProperty, keyColumn, useGeneratedKeys,
 				builder.toString());
 
+	}
+
+	private String addUpdateStatement(boolean selective, boolean byId) {
+		String statement = (selective
+				? (byId ? ResidentStatementName.UPDATE_SELECTIVE_BY_ID : ResidentStatementName.UPDATE_SELECTIVE)
+				: (byId ? ResidentStatementName.UPDATE_BY_ID : ResidentStatementName.UPDATE));
+		if (this.configuration.hasStatement(this.namespace + '.' + statement)) {
+			return "";
+		}
+
+		if (null == this.persistentEntity.getIdClass()) {
+			return "";
+		}
+
+		String set = selective ? this.buildUpdateSetSelectiveSQL() : this.buildUpdateSetSQL();
+		String where = byId ? this.buildByIdQueryCondition("", "__id")
+				: this.buildByIdQueryCondition("__entity.", null);
+		return String.format("<update id=\"%s\">update %s <set>%s</set> where %s</update>", statement,
+				this.getTableName(), set, where);
+	}
+
+	private String buildUpdateSetSQL() {
+		return this.mappingPropertyToColumn().entrySet().stream().filter(entry -> !entry.getValue().isPrimaryKey())
+				.map(entry -> String.format("%s=%s", entry.getValue().getName().render(this.dialect),
+						this.variableSegment("__entity." + entry.getKey(), entry.getValue())))
+				.collect(Collectors.joining(","));
+	}
+
+	private String buildUpdateSetSelectiveSQL() {
+		return this.mappingPropertyToColumn().entrySet().stream().filter(entry -> !entry.getValue().isPrimaryKey())
+				.map(entry -> testNotNullSegment("__entity." + entry.getKey(),
+						String.format("%s=%s", entry.getValue().getName().render(this.dialect),
+								this.variableSegment("__entity." + entry.getKey(), entry.getValue()))))
+				.collect(Collectors.joining(","));
 	}
 
 	private String buildInsertSQL() {
@@ -269,6 +308,25 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		return this
 				.findProperties().stream().filter(PersistentProperty::isIdProperty).map(p -> String.format("%s = %s",
 						p.getColumn().getName().render(this.dialect), this.variableSegment(p.getName(), p.getColumn())))
+				.collect(Collectors.joining(" and "));
+	}
+
+	private String buildByIdQueryCondition(String propertyPrefix, String idPropertyName) {
+		MybatisPersistentProperty idProperty = this.persistentEntity.getRequiredIdProperty();
+		final String prefix = (null != propertyPrefix) ? propertyPrefix : "";
+		final String name = StringUtils.isEmpty(idPropertyName) ? idProperty.getName() : idPropertyName;
+
+		if (idProperty.isAnnotationPresent(EmbeddedId.class)) {
+			MybatisPersistentEntity<?> embeddedEntity = this.mappingContext
+					.getRequiredPersistentEntity(idProperty.getActualType());
+			return this
+					.findProperties(embeddedEntity).stream().map(epp -> String.format("%s = %s.%s",
+							epp.getColumn().getName().render(this.dialect), prefix + name, epp.getName()))
+					.collect(Collectors.joining(" and "));
+		}
+
+		return this.findProperties().stream().filter(PersistentProperty::isIdProperty).map(p -> String.format("%s = %s",
+				p.getColumn().getName().render(this.dialect), this.variableSegment(prefix + name, p.getColumn())))
 				.collect(Collectors.joining(" and "));
 	}
 
@@ -455,6 +513,17 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		}
 		return String.format("<select id=\"%s\" resultType=\"long\">select count(*) from %s</select>",
 				ResidentStatementName.COUNT_ALL, this.getTableName());
+	}
+
+	private String addCountStatement() {
+		if (this.configuration.hasStatement(this.namespace + '.' + ResidentStatementName.COUNT, false)) {
+			return "";
+		}
+
+		String where = this.buildByConditionQueryCondition();
+		return String.format(
+				"<select id=\"%s\" resultType=\"long\">select count(*) from %s <where><if test=\"__condition != null\"><trim prefixOverrides=\"and |or \">%s</trim></if></where></select>",
+				ResidentStatementName.COUNT, this.getTableName(), where);
 	}
 
 }

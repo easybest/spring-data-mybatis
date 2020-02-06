@@ -218,6 +218,7 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 			}
 			Column col = new Column(columnName, jdbcType);
 			col.setJavaType(actualType);
+			col.setPrimaryKey(this.isIdProperty.get());
 			return col;
 		});
 	}

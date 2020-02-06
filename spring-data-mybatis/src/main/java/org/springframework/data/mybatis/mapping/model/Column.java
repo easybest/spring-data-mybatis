@@ -38,6 +38,8 @@ public class Column {
 
 	private Class<? extends TypeHandler<?>> typeHandler;
 
+	private boolean primaryKey;
+
 	public Column(String name) {
 		this.name = Identifier.toIdentifier(name);
 	}
