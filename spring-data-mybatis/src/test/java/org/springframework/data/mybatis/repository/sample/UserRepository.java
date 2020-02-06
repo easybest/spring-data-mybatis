@@ -30,8 +30,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.domain.sample.Role;
 import org.springframework.data.mybatis.domain.sample.SpecialUser;
 import org.springframework.data.mybatis.domain.sample.User;
+import org.springframework.data.mybatis.domain.sample.UserExample;
 import org.springframework.data.mybatis.repository.Modifying;
-import org.springframework.data.mybatis.repository.MybatisRepository;
+import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.Procedure;
 import org.springframework.data.mybatis.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -42,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author JARVIS SONG
  */
-public interface UserRepository extends MybatisRepository<User, Integer>, UserRepositoryCustom {
+public interface UserRepository extends MybatisExampleRepository<User, Integer, UserExample>, UserRepositoryCustom {
 
 	List<User> findByLastname(String lastname);
 

@@ -52,8 +52,8 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mybatis.domain.sample.Address;
 import org.springframework.data.mybatis.domain.sample.Role;
-import org.springframework.data.mybatis.domain.sample.RoleExample;
 import org.springframework.data.mybatis.domain.sample.User;
+import org.springframework.data.mybatis.domain.sample.UserExample;
 import org.springframework.data.mybatis.repository.sample.RoleRepository;
 import org.springframework.data.mybatis.repository.sample.UserRepository;
 import org.springframework.test.context.ContextConfiguration;
@@ -107,6 +107,15 @@ public class UserRepositoryTests {
 		this.fourthUser.setAge(31);
 		this.adminRole = new Role("admin");
 
+	}
+
+	@Test
+	public void testFindByExample() {
+		this.flushTestUsers();
+		UserExample example = UserExample.create();
+		example.createCriteria().andAgeGreaterThan(30);
+		Assertions.assertThat(this.repository.findByExample(example)).contains(this.secondUser, this.thirdUser,
+				this.fourthUser);
 	}
 
 	@Test
@@ -708,7 +717,6 @@ public class UserRepositoryTests {
 		Assertions.assertThat(this.repository.existsById(this.thirdUser.getId())).isTrue();
 		Assertions.assertThat(this.repository.existsById(this.fourthUser.getId())).isTrue();
 
-		this.roleRepository.findByExample(new RoleExample().setDistinct(true));
 	}
 
 	private static <T> void assertSameElements(Collection<T> first, Collection<T> second) {

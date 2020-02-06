@@ -22,20 +22,26 @@ public class {{metadata.exampleClassSimpleName}} {
 
 	protected List<Criteria> oredCriteria;
 
+	public static {{metadata.exampleClassSimpleName}} create() {
+	    return new {{metadata.exampleClassSimpleName}}();
+	}
+
 	public {{metadata.exampleClassSimpleName}}() {
 		this.oredCriteria = new ArrayList<>();
 	}
 
-	public void setOrderByClause(String orderByClause) {
+	public {{metadata.exampleClassSimpleName}} setOrderByClause(String orderByClause) {
 		this.orderByClause = orderByClause;
+		return this;
 	}
 
 	public String getOrderByClause() {
 		return this.orderByClause;
 	}
 
-	public void setDistinct(boolean distinct) {
+	public {{metadata.exampleClassSimpleName}} setDistinct(boolean distinct) {
 		this.distinct = distinct;
+		return this;
 	}
 
 	public boolean isDistinct() {
@@ -46,8 +52,9 @@ public class {{metadata.exampleClassSimpleName}} {
 		return this.oredCriteria;
 	}
 
-	public void or(Criteria criteria) {
+	public {{metadata.exampleClassSimpleName}} or(Criteria criteria) {
 		this.oredCriteria.add(criteria);
+		return this;
 	}
 
 	public Criteria or() {

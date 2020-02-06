@@ -16,14 +16,13 @@
 package org.springframework.data.mybatis.repository.sample;
 
 import org.springframework.data.mybatis.domain.sample.Role;
-import org.springframework.data.mybatis.domain.sample.RoleExample;
-import org.springframework.data.mybatis.repository.MybatisExampleRepository;
+import org.springframework.data.mybatis.repository.MybatisRepository;
 
 /**
  * Repository interface for {@code Role}s.
  *
  * @author JARVIS SONG
  */
-public interface RoleRepository extends MybatisExampleRepository<Role, Long, RoleExample> {
+public interface RoleRepository extends MybatisRepository<Role, Long> {
 
 }

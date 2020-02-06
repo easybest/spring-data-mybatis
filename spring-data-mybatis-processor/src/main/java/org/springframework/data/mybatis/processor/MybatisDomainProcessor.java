@@ -37,6 +37,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Id;
@@ -175,6 +176,21 @@ public class MybatisDomainProcessor extends AbstractProcessor {
 			ColumnMeta column = new ColumnMeta();
 			column.setPropertyName(member.toString());
 			member.asType().accept(this.domainTypeVisitor, column);
+
+			Column columnAnn = member.getAnnotation(Column.class);
+			if (null != columnAnn && null != columnAnn.name() && columnAnn.name().trim().length() > 0) {
+				column.setName(columnAnn.name());
+			}
+			if (null == column.getName()) {
+				OrderColumn orderColumnAnn = member.getAnnotation(OrderColumn.class);
+				if (null != orderColumnAnn && null != orderColumnAnn.name()
+						&& orderColumnAnn.name().trim().length() > 0) {
+					column.setName(orderColumnAnn.name());
+				}
+			}
+			if (null == column.getName()) {
+				column.setName(column.getPropertyName());
+			}
 
 			if (DomainTypeVisitor.PACKING.values().stream().anyMatch(t -> t.equals(column.getType()))) {
 				meta.addColumn(column);
