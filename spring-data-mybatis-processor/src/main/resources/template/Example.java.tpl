@@ -164,6 +164,18 @@ public class {{metadata.exampleClassSimpleName}} {
 			return (Criteria) this;
 		}
 
+{{#hasLike}}
+        public Criteria and{{upperPropertyName}}Like({{type}} value) {
+            this.addCriterion("{{name}} like", value, "name");
+            return (Criteria) this;
+        }
+
+        public Criteria and{{upperPropertyName}}NotLike({{type}} value) {
+            this.addCriterion("{{name}} not like", value, "name");
+            return (Criteria) this;
+        }
+
+{{/hasLike}}
 		public Criteria and{{upperPropertyName}}In(List<{{type}}> values) {
 			this.addCriterion("{{name}} in", values, "{{propertyName}}");
 			return (Criteria) this;

@@ -31,6 +31,8 @@ public class ColumnMeta {
 
 	private String type;
 
+	private boolean hasLike;
+
 	public String getName() {
 		return this.name;
 	}
@@ -59,6 +61,10 @@ public class ColumnMeta {
 
 	public void setType(String type) {
 		this.type = type;
+
+		if ("String".equals(this.getType())) {
+			this.hasLike = true;
+		}
 	}
 
 	public String getUpperPropertyName() {
@@ -67,6 +73,14 @@ public class ColumnMeta {
 
 	public void setUpperPropertyName(String upperPropertyName) {
 		this.upperPropertyName = upperPropertyName;
+	}
+
+	public boolean isHasLike() {
+		return this.hasLike;
+	}
+
+	public void setHasLike(boolean hasLike) {
+		this.hasLike = hasLike;
 	}
 
 }

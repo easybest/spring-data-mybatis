@@ -54,6 +54,8 @@ public class DomainTypeVisitor implements TypeVisitor<DomainTypeVisitor, ColumnM
 		PACKING.put("char", "Character");
 		PACKING.put("float", "Float");
 		PACKING.put("double", "Double");
+		PACKING.put("String", "String");
+		PACKING.put("java.util.Date", "java.util.Date");
 	}
 
 	@Override

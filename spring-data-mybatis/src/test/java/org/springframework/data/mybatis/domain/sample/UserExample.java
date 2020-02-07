@@ -194,6 +194,146 @@ public class UserExample {
 			return (Criteria) this;
 		}
 
+		public Criteria andFirstnameIsNull() {
+			this.addCriterion("firstname is null");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameIsNotNull() {
+			this.addCriterion("firstname is not null");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameEqualTo(String value) {
+			this.addCriterion("firstname =", value, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameNotEqualTo(String value) {
+			this.addCriterion("firstname <>", value, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameGreaterThan(String value) {
+			this.addCriterion("firstname >", value, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameGreaterThanOrEqualTo(String value) {
+			this.addCriterion("firstname >=", value, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameLessThan(String value) {
+			this.addCriterion("firstname <", value, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameLessThanOrEqualTo(String value) {
+			this.addCriterion("firstname <=", value, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameLike(String value) {
+			this.addCriterion("firstname like", value, "name");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameNotLike(String value) {
+			this.addCriterion("firstname not like", value, "name");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameIn(List<String> values) {
+			this.addCriterion("firstname in", values, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameNotIn(List<String> values) {
+			this.addCriterion("firstname not in", values, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameBetween(String value1, String value2) {
+			this.addCriterion("firstname between", value1, value2, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andFirstnameNotBetween(String value1, String value2) {
+			this.addCriterion("firstname not between", value1, value2, "firstname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameIsNull() {
+			this.addCriterion("lastname is null");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameIsNotNull() {
+			this.addCriterion("lastname is not null");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameEqualTo(String value) {
+			this.addCriterion("lastname =", value, "lastname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameNotEqualTo(String value) {
+			this.addCriterion("lastname <>", value, "lastname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameGreaterThan(String value) {
+			this.addCriterion("lastname >", value, "lastname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameGreaterThanOrEqualTo(String value) {
+			this.addCriterion("lastname >=", value, "lastname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameLessThan(String value) {
+			this.addCriterion("lastname <", value, "lastname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameLessThanOrEqualTo(String value) {
+			this.addCriterion("lastname <=", value, "lastname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameLike(String value) {
+			this.addCriterion("lastname like", value, "name");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameNotLike(String value) {
+			this.addCriterion("lastname not like", value, "name");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameIn(List<String> values) {
+			this.addCriterion("lastname in", values, "lastname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameNotIn(List<String> values) {
+			this.addCriterion("lastname not in", values, "lastname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameBetween(String value1, String value2) {
+			this.addCriterion("lastname between", value1, value2, "lastname");
+			return (Criteria) this;
+		}
+
+		public Criteria andLastnameNotBetween(String value1, String value2) {
+			this.addCriterion("lastname not between", value1, value2, "lastname");
+			return (Criteria) this;
+		}
+
 		public Criteria andAgeIsNull() {
 			this.addCriterion("age is null");
 			return (Criteria) this;
@@ -311,6 +451,196 @@ public class UserExample {
 
 		public Criteria andActiveNotBetween(Boolean value1, Boolean value2) {
 			this.addCriterion("active not between", value1, value2, "active");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtIsNull() {
+			this.addCriterion("createdAt is null");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtIsNotNull() {
+			this.addCriterion("createdAt is not null");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtEqualTo(java.util.Date value) {
+			this.addCriterion("createdAt =", value, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtNotEqualTo(java.util.Date value) {
+			this.addCriterion("createdAt <>", value, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtGreaterThan(java.util.Date value) {
+			this.addCriterion("createdAt >", value, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtGreaterThanOrEqualTo(java.util.Date value) {
+			this.addCriterion("createdAt >=", value, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtLessThan(java.util.Date value) {
+			this.addCriterion("createdAt <", value, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtLessThanOrEqualTo(java.util.Date value) {
+			this.addCriterion("createdAt <=", value, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtIn(List<java.util.Date> values) {
+			this.addCriterion("createdAt in", values, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtNotIn(List<java.util.Date> values) {
+			this.addCriterion("createdAt not in", values, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtBetween(java.util.Date value1, java.util.Date value2) {
+			this.addCriterion("createdAt between", value1, value2, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andCreatedAtNotBetween(java.util.Date value1, java.util.Date value2) {
+			this.addCriterion("createdAt not between", value1, value2, "createdAt");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressIsNull() {
+			this.addCriterion("emailAddress is null");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressIsNotNull() {
+			this.addCriterion("emailAddress is not null");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressEqualTo(String value) {
+			this.addCriterion("emailAddress =", value, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressNotEqualTo(String value) {
+			this.addCriterion("emailAddress <>", value, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressGreaterThan(String value) {
+			this.addCriterion("emailAddress >", value, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressGreaterThanOrEqualTo(String value) {
+			this.addCriterion("emailAddress >=", value, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressLessThan(String value) {
+			this.addCriterion("emailAddress <", value, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressLessThanOrEqualTo(String value) {
+			this.addCriterion("emailAddress <=", value, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressLike(String value) {
+			this.addCriterion("emailAddress like", value, "name");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressNotLike(String value) {
+			this.addCriterion("emailAddress not like", value, "name");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressIn(List<String> values) {
+			this.addCriterion("emailAddress in", values, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressNotIn(List<String> values) {
+			this.addCriterion("emailAddress not in", values, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressBetween(String value1, String value2) {
+			this.addCriterion("emailAddress between", value1, value2, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andEmailAddressNotBetween(String value1, String value2) {
+			this.addCriterion("emailAddress not between", value1, value2, "emailAddress");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthIsNull() {
+			this.addCriterion("dateOfBirth is null");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthIsNotNull() {
+			this.addCriterion("dateOfBirth is not null");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthEqualTo(java.util.Date value) {
+			this.addCriterion("dateOfBirth =", value, "dateOfBirth");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthNotEqualTo(java.util.Date value) {
+			this.addCriterion("dateOfBirth <>", value, "dateOfBirth");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthGreaterThan(java.util.Date value) {
+			this.addCriterion("dateOfBirth >", value, "dateOfBirth");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthGreaterThanOrEqualTo(java.util.Date value) {
+			this.addCriterion("dateOfBirth >=", value, "dateOfBirth");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthLessThan(java.util.Date value) {
+			this.addCriterion("dateOfBirth <", value, "dateOfBirth");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthLessThanOrEqualTo(java.util.Date value) {
+			this.addCriterion("dateOfBirth <=", value, "dateOfBirth");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthIn(List<java.util.Date> values) {
+			this.addCriterion("dateOfBirth in", values, "dateOfBirth");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthNotIn(List<java.util.Date> values) {
+			this.addCriterion("dateOfBirth not in", values, "dateOfBirth");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthBetween(java.util.Date value1, java.util.Date value2) {
+			this.addCriterion("dateOfBirth between", value1, value2, "dateOfBirth");
+			return (Criteria) this;
+		}
+
+		public Criteria andDateOfBirthNotBetween(java.util.Date value1, java.util.Date value2) {
+			this.addCriterion("dateOfBirth not between", value1, value2, "dateOfBirth");
 			return (Criteria) this;
 		}
 

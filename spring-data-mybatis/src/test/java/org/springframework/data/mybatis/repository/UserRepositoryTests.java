@@ -113,9 +113,8 @@ public class UserRepositoryTests {
 	public void testFindByExample() {
 		this.flushTestUsers();
 		UserExample example = UserExample.create();
-		example.createCriteria().andAgeGreaterThan(30);
-		Assertions.assertThat(this.repository.findByExample(example)).contains(this.secondUser, this.thirdUser,
-				this.fourthUser);
+		example.createCriteria().andAgeGreaterThan(30).andEmailAddressLike("%gmail%");
+		Assertions.assertThat(this.repository.findByExample(example)).contains(this.fourthUser);
 	}
 
 	@Test
