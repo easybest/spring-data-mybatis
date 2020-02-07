@@ -16,6 +16,7 @@
 package org.springframework.data.mybatis.repository.query;
 
 import lombok.extern.slf4j.Slf4j;
+import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -36,32 +37,34 @@ enum MybatisQueryFactory {
 	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
 	@Nullable
-	AbstractMybatisQuery fromQueryAnnotation(MybatisQueryMethod method,
+	AbstractMybatisQuery fromQueryAnnotation(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		log.debug("Looking up query for method {}", method.getName());
-		return fromMethodWithQueryString(method, method.getAnnotatedQuery(), evaluationContextProvider);
+		return fromMethodWithQueryString(sqlSessionTemplate, method, method.getAnnotatedQuery(),
+				evaluationContextProvider);
 	}
 
 	@Nullable
-	AbstractMybatisQuery fromMethodWithQueryString(MybatisQueryMethod method, @Nullable String queryString,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
+	AbstractMybatisQuery fromMethodWithQueryString(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
+			@Nullable String queryString, QueryMethodEvaluationContextProvider evaluationContextProvider) {
 
 		if (queryString == null) {
 			return null;
 		}
 
-		return new SimpleMybatisQuery(method, queryString, evaluationContextProvider, PARSER);
+		return new SimpleMybatisQuery(sqlSessionTemplate, method, queryString, evaluationContextProvider, PARSER);
 	}
 
 	@Nullable
-	public StoredProcedureMybatisQuery fromProcedureAnnotation(MybatisQueryMethod method) {
+	public StoredProcedureMybatisQuery fromProcedureAnnotation(SqlSessionTemplate sqlSessionTemplate,
+			MybatisQueryMethod method) {
 
 		if (!method.isProcedureQuery()) {
 			return null;
 		}
 
-		return new StoredProcedureMybatisQuery(method);
+		return new StoredProcedureMybatisQuery(sqlSessionTemplate, method);
 	}
 
 }

@@ -15,7 +15,13 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import javax.persistence.Query;
+
+import org.mybatis.spring.SqlSessionTemplate;
+
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.repository.query.ResultProcessor;
+import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
 
@@ -26,13 +32,18 @@ import org.springframework.util.Assert;
  */
 abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 
+	private final DeclaredQuery query;
+
 	private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
 	private final SpelExpressionParser parser;
 
-	AbstractStringBasedMybatisQuery(MybatisQueryMethod method, String queryString,
-			QueryMethodEvaluationContextProvider evaluationContextProvider, SpelExpressionParser parser) {
-		super(method);
+	private final QueryParameterSetter.QueryMetadataCache metadataCache = new QueryParameterSetter.QueryMetadataCache();
+
+	AbstractStringBasedMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
+			String queryString, QueryMethodEvaluationContextProvider evaluationContextProvider,
+			SpelExpressionParser parser) {
+		super(sqlSessionTemplate, method);
 
 		Assert.hasText(queryString, "Query string must not be null or empty!");
 		Assert.notNull(evaluationContextProvider, "ExpressionEvaluationContextProvider must not be null!");
@@ -40,6 +51,33 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 
 		this.evaluationContextProvider = evaluationContextProvider;
 		this.parser = parser;
+
+		this.query = new ExpressionBasedStringQuery(queryString, method.getEntityInformation(), parser);
+
+	}
+
+	public DeclaredQuery getQuery() {
+		return this.query;
+	}
+
+	@Override
+	protected Query doCreateQuery(MybatisParametersParameterAccessor accessor) {
+		String sortedQueryString = QueryUtils.applySorting(this.query.getQueryString(), accessor.getSort(),
+				this.query.getAlias());
+		ResultProcessor processor = this.getQueryMethod().getResultProcessor().withDynamicProjection(accessor);
+
+		Query query = this.createMybatisQuery(sortedQueryString, processor.getReturnedType());
+		QueryParameterSetter.QueryMetadata metadata = this.metadataCache.getMetadata(sortedQueryString, query);
+
+		// it is ok to reuse the binding contained in the ParameterBinder although we
+		// create a new query String because the
+		// parameters in the query do not change.
+		return this.parameterBinder.get().bindAndPrepare(query, metadata, accessor);
+	}
+
+	protected Query createMybatisQuery(String queryString, ReturnedType returnedType) {
+
+		return new MybatisQuery(this.getSqlSessionTemplate(), this.getQueryMethod().getStatementId());
 	}
 
 }

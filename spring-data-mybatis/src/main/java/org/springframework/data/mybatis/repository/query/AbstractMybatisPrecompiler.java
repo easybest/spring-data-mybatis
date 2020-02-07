@@ -28,6 +28,7 @@ import javax.persistence.EmbeddedId;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
+import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.session.Configuration;
 
 import org.springframework.data.mapping.PropertyHandler;
@@ -55,20 +56,27 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	protected final String namespace;
 
-	protected final RepositoryInformation repositoryInformation;
-
 	protected final MybatisPersistentEntity<?> persistentEntity;
 
 	protected final Dialect dialect;
 
+	protected Class<?> repositoryInterface;
+
 	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			RepositoryInformation repositoryInformation) {
+
+		this(mappingContext, configuration, repositoryInformation.getRepositoryInterface().getName(),
+				repositoryInformation.getDomainType());
+
+		this.repositoryInterface = repositoryInformation.getRepositoryInterface();
+	}
+
+	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, String namespace,
+			Class<?> domainType) {
 		this.mappingContext = mappingContext;
 		this.configuration = configuration;
-		this.namespace = repositoryInformation.getRepositoryInterface().getName();
-		this.repositoryInformation = repositoryInformation;
-		this.persistentEntity = mappingContext.getRequiredPersistentEntity(repositoryInformation.getDomainType());
-
+		this.namespace = namespace;
+		this.persistentEntity = mappingContext.getRequiredPersistentEntity(domainType);
 		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(
 				new DatabaseMetaDataDialectResolutionInfoAdapter(configuration.getEnvironment().getDataSource()));
 	}
@@ -161,6 +169,28 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	protected List<MybatisPersistentProperty> findProperties() {
 		return this.findProperties(this.persistentEntity);
+	}
+
+	protected SqlCommandType extractSqlCommandType(String queryString) {
+		if (StringUtils.isEmpty(queryString)) {
+			return SqlCommandType.UNKNOWN;
+		}
+
+		queryString = queryString.trim().toLowerCase();
+		if (queryString.startsWith("insert")) {
+			return SqlCommandType.INSERT;
+		}
+		if (queryString.startsWith("update")) {
+			return SqlCommandType.UPDATE;
+		}
+		if (queryString.startsWith("delete")) {
+			return SqlCommandType.DELETE;
+		}
+		if (queryString.startsWith("select")) {
+			return SqlCommandType.SELECT;
+		}
+
+		return SqlCommandType.UNKNOWN;
 	}
 
 }

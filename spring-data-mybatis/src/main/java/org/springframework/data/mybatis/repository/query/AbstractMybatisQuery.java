@@ -23,8 +23,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.persistence.Query;
 import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
+
+import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.repository.query.RepositoryQuery;
@@ -42,16 +45,41 @@ import org.springframework.util.Assert;
  */
 public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
+	private final SqlSessionTemplate sqlSessionTemplate;
+
 	private final MybatisQueryMethod method;
 
 	private final Lazy<MybatisQueryExecution> execution;
 
-	public AbstractMybatisQuery(MybatisQueryMethod method) {
+	final Lazy<ParameterBinder> parameterBinder = new Lazy<>(this::createBinder);
+
+	public AbstractMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
+
+		Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null!");
 		Assert.notNull(method, "MybatisQueryMethod must not be null!");
 
+		this.sqlSessionTemplate = sqlSessionTemplate;
 		this.method = method;
 
 		this.execution = Lazy.of(() -> {
+			if (method.isStreamQuery()) {
+				return new MybatisQueryExecution.StreamExecution();
+			}
+			if (method.isProcedureQuery()) {
+				return new MybatisQueryExecution.ProcedureExecution();
+			}
+			if (method.isCollectionQuery()) {
+				return new MybatisQueryExecution.CollectionExecution();
+			}
+			if (method.isSliceQuery()) {
+				return new MybatisQueryExecution.SlicedExecution();
+			}
+			if (method.isPageQuery()) {
+				return new MybatisQueryExecution.PagedExecution();
+			}
+			if (method.isModifyingQuery()) {
+				return null;
+			}
 			return new MybatisQueryExecution.SingleEntityExecution();
 		});
 	}
@@ -92,6 +120,20 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 			return new MybatisQueryExecution.SingleEntityExecution();
 		}
 	}
+
+	protected ParameterBinder createBinder() {
+		return ParameterBinderFactory.createBinder(this.getQueryMethod().getParameters());
+	}
+
+	public SqlSessionTemplate getSqlSessionTemplate() {
+		return this.sqlSessionTemplate;
+	}
+
+	protected Query createQuery(MybatisParametersParameterAccessor parameters) {
+		return this.doCreateQuery(parameters);
+	}
+
+	protected abstract Query doCreateQuery(MybatisParametersParameterAccessor parameters);
 
 	static class TupleConverter implements Converter<Object, Object> {
 

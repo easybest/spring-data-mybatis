@@ -15,6 +15,10 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import javax.persistence.Query;
+
+import org.mybatis.spring.SqlSessionTemplate;
+
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.data.util.Streamable;
@@ -33,12 +37,12 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	private final EscapeCharacter escape;
 
-	PartTreeMybatisQuery(MybatisQueryMethod method) {
-		this(method, EscapeCharacter.DEFAULT);
+	PartTreeMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
+		this(sqlSessionTemplate, method, EscapeCharacter.DEFAULT);
 	}
 
-	PartTreeMybatisQuery(MybatisQueryMethod method, EscapeCharacter escape) {
-		super(method);
+	PartTreeMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, EscapeCharacter escape) {
+		super(sqlSessionTemplate, method);
 		this.escape = escape;
 		Class<?> domainClass = method.getEntityInformation().getJavaType();
 		this.parameters = method.getParameters();
@@ -57,6 +61,11 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	@Override
 	public Object execute(Object[] parameters) {
+		return null;
+	}
+
+	@Override
+	protected Query doCreateQuery(MybatisParametersParameterAccessor parameters) {
 		return null;
 	}
 

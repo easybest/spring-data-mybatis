@@ -18,8 +18,10 @@ package org.springframework.data.mybatis.repository.query;
 import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
+import javax.persistence.Query;
 
 import lombok.extern.slf4j.Slf4j;
+import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
@@ -35,15 +37,20 @@ import org.springframework.lang.Nullable;
 @Slf4j
 final class NamedQuery extends AbstractMybatisQuery {
 
-	NamedQuery(MybatisQueryMethod method) {
-		super(method);
+	NamedQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
+		super(sqlSessionTemplate, method);
+	}
+
+	@Override
+	protected Query doCreateQuery(MybatisParametersParameterAccessor parameters) {
+		return null;
 	}
 
 	private static boolean hasNamedQuery(String queryName, MybatisMappingContext mappingContext) {
 
 		return mappingContext.getPersistentEntities().stream().anyMatch((MybatisPersistentEntity<?> entity) -> {
 			javax.persistence.NamedQuery namedQuery = entity.findAnnotation(javax.persistence.NamedQuery.class);
-			if (null != namedQuery && queryName.equals(namedQuery.name())) {
+			if ((null != namedQuery) && queryName.equals(namedQuery.name())) {
 				return true;
 			}
 			NamedQueries namedQueries = entity.findAnnotation(NamedQueries.class);
@@ -74,7 +81,8 @@ final class NamedQuery extends AbstractMybatisQuery {
 	}
 
 	@Nullable
-	public static RepositoryQuery lookupFrom(MybatisQueryMethod method, MybatisMappingContext mappingContext) {
+	public static RepositoryQuery lookupFrom(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
+			MybatisMappingContext mappingContext) {
 
 		final String queryName = method.getNamedQueryName();
 
@@ -85,7 +93,7 @@ final class NamedQuery extends AbstractMybatisQuery {
 		}
 
 		try {
-			RepositoryQuery query = new NamedQuery(method);
+			RepositoryQuery query = new NamedQuery(sqlSessionTemplate, method);
 			log.debug("Found named query {}!", queryName);
 			return query;
 		}

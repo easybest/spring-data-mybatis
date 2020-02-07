@@ -23,6 +23,8 @@ import javax.persistence.NoResultException;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.repository.core.support.SurroundingTransactionDetectorMethodInterceptor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -124,6 +126,60 @@ public abstract class MybatisQueryExecution {
 			Assert.isTrue(isInt || isVoid, "Modifying queries can only use void or int/Integer as return type!");
 
 		}
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+
+			return query.createQuery(accessor).executeUpdate();
+
+		}
+
+	}
+
+	static class StreamExecution extends MybatisQueryExecution {
+
+		private static final String NO_SURROUNDING_TRANSACTION = "You're trying to execute a streaming query method without a surrounding transaction that keeps the connection open so that the Stream can actually be consumed. Make sure the code consuming the stream uses @Transactional or any other way of declaring a (read-only) transaction.";
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+
+			if (!SurroundingTransactionDetectorMethodInterceptor.INSTANCE.isSurroundingTransactionActive()) {
+				throw new InvalidDataAccessApiUsageException(NO_SURROUNDING_TRANSACTION);
+			}
+
+			return null;
+		}
+
+	}
+
+	static class ProcedureExecution extends MybatisQueryExecution {
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			return null;
+		}
+
+	}
+
+	static class CollectionExecution extends MybatisQueryExecution {
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			return null;
+		}
+
+	}
+
+	static class SlicedExecution extends MybatisQueryExecution {
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			return null;
+		}
+
+	}
+
+	static class PagedExecution extends MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {

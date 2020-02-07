@@ -93,7 +93,7 @@ public final class MybatisQueryLookupStrategy {
 		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, SqlSessionTemplate sqlSessionTemplate,
 				NamedQueries namedQueries) {
 
-			return new PartTreeMybatisQuery(method, this.escape);
+			return new PartTreeMybatisQuery(sqlSessionTemplate, method, this.escape);
 		}
 
 	}
@@ -115,24 +115,24 @@ public final class MybatisQueryLookupStrategy {
 		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, SqlSessionTemplate sqlSessionTemplate,
 				NamedQueries namedQueries) {
 
-			RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromQueryAnnotation(method,
+			RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromQueryAnnotation(sqlSessionTemplate, method,
 					this.evaluationContextProvider);
 			if (null != query) {
 				return query;
 			}
 
-			query = MybatisQueryFactory.INSTANCE.fromProcedureAnnotation(method);
+			query = MybatisQueryFactory.INSTANCE.fromProcedureAnnotation(sqlSessionTemplate, method);
 			if (null != query) {
 				return query;
 			}
 
 			String name = method.getNamedQueryName();
 			if (namedQueries.hasQuery(name)) {
-				return MybatisQueryFactory.INSTANCE.fromMethodWithQueryString(method, namedQueries.getQuery(name),
-						this.evaluationContextProvider);
+				return MybatisQueryFactory.INSTANCE.fromMethodWithQueryString(sqlSessionTemplate, method,
+						namedQueries.getQuery(name), this.evaluationContextProvider);
 			}
 
-			query = NamedQuery.lookupFrom(method, this.mappingContext);
+			query = NamedQuery.lookupFrom(sqlSessionTemplate, method, this.mappingContext);
 			if (null != query) {
 				return query;
 			}

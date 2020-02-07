@@ -21,11 +21,16 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import lombok.Getter;
+import org.apache.ibatis.mapping.SqlCommandType;
+
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.mybatis.repository.Procedure;
 import org.springframework.data.mybatis.repository.Query;
+import org.springframework.data.mybatis.repository.ResultMap;
+import org.springframework.data.mybatis.repository.SelectColumns;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.Parameter;
@@ -69,6 +74,12 @@ public class MybatisQueryMethod extends QueryMethod {
 
 	private final Lazy<Modifying> modifying;
 
+	@Getter
+	private final String namespace;
+
+	@Getter
+	private final String statementName;
+
 	/**
 	 * Creates a new {@link QueryMethod} from the given parameters. Looks up the correct
 	 * query to use for following invocations of the method given.
@@ -89,6 +100,11 @@ public class MybatisQueryMethod extends QueryMethod {
 		Assert.isTrue(!(this.isModifyingQuery() && this.getParameters().hasSpecialParameter()),
 				String.format("Modifying method must not contain %s!", Parameters.TYPES));
 		this.assertParameterNamesInAnnotatedQuery();
+
+		String namespace = this.getAnnotationValue("namespace", String.class);
+		String statementName = this.getAnnotationValue("statement", String.class);
+		this.namespace = StringUtils.hasText(namespace) ? namespace : metadata.getRepositoryInterface().getName();
+		this.statementName = StringUtils.hasLength(statementName) ? statementName : (method.getName());
 	}
 
 	private void assertParameterNamesInAnnotatedQuery() {
@@ -146,6 +162,41 @@ public class MybatisQueryMethod extends QueryMethod {
 	@Override
 	public boolean isModifyingQuery() {
 		return null != this.modifying.getNullable();
+	}
+
+	public String getResultMap() {
+		ResultMap resultMap = AnnotationUtils.findAnnotation(this.method, ResultMap.class);
+		return (null != resultMap && StringUtils.hasText(resultMap.value())) ? resultMap.value() : null;
+	}
+
+	public String getSelectColumns() {
+		SelectColumns columns = AnnotationUtils.findAnnotation(this.method, SelectColumns.class);
+		return (null != columns && StringUtils.hasText(columns.value())) ? columns.value() : null;
+	}
+
+	public String getStatementId() {
+		return this.getNamespace() + '.' + getStatementName();
+	}
+
+	public SqlCommandType getModifyingType() {
+		if (!this.isModifyingQuery()) {
+			return null;
+		}
+
+		String value = this.getMergedOrDefaultAnnotationValue("value", Modifying.class, String.class);
+		if (StringUtils.isEmpty(value)) {
+			return null;
+		}
+		if ("insert".equalsIgnoreCase(value)) {
+			return SqlCommandType.INSERT;
+		}
+		if ("update".equalsIgnoreCase(value)) {
+			return SqlCommandType.UPDATE;
+		}
+		if ("delete".equalsIgnoreCase(value)) {
+			return SqlCommandType.DELETE;
+		}
+		return null;
 	}
 
 	@Override

@@ -41,6 +41,22 @@ public class MybatisQueryPrepareProcessor implements QueryCreationListener<Repos
 	@Override
 	public void onCreation(RepositoryQuery query) {
 
+		if (query instanceof SimpleMybatisQuery) {
+			new SimpleMybatisQueryPrecompiler(this.mappingContext, this.configuration, (SimpleMybatisQuery) query)
+					.precompile();
+			return;
+		}
+		if (query instanceof PartTreeMybatisQuery) {
+
+			return;
+		}
+		if (query instanceof NamedQuery) {
+			return;
+		}
+		if (query instanceof StoredProcedureMybatisQuery) {
+			return;
+		}
+
 	}
 
 }

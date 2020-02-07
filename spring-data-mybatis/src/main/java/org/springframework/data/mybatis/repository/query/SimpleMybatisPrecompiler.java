@@ -84,7 +84,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		builder.append(this.addCountAllStatement());
 		builder.append(this.addCountStatement());
 
-		if (MybatisExampleRepository.class.isAssignableFrom(this.repositoryInformation.getRepositoryInterface())) {
+		if (null != this.repositoryInterface
+				&& MybatisExampleRepository.class.isAssignableFrom(this.repositoryInterface)) {
 			if (this.persistentEntity.isAnnotationPresent(Example.class)) {
 
 				try {
@@ -102,8 +103,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			else {
 				throw new MappingException(String.format(
 						"The %s extends MybatisExampleRepository, but could not find @Example on the entity: %s",
-						this.repositoryInformation.getRepositoryInterface().getName(),
-						this.persistentEntity.getType().getName()));
+						this.repositoryInterface.getName(), this.persistentEntity.getType().getName()));
 			}
 		}
 		return builder.toString();

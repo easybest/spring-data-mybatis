@@ -17,6 +17,8 @@ package org.springframework.data.mybatis.repository.query;
 
 import javax.persistence.Query;
 
+import org.mybatis.spring.SqlSessionTemplate;
+
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -31,9 +33,14 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
  */
 final class SimpleMybatisQuery extends AbstractStringBasedMybatisQuery {
 
-	SimpleMybatisQuery(MybatisQueryMethod method, String queryString,
+	SimpleMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, String queryString,
 			QueryMethodEvaluationContextProvider evaluationContextProvider, SpelExpressionParser parser) {
-		super(method, queryString, evaluationContextProvider, parser);
+		super(sqlSessionTemplate, method, queryString, evaluationContextProvider, parser);
+	}
+
+	SimpleMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
+			QueryMethodEvaluationContextProvider evaluationContextProvider, SpelExpressionParser parser) {
+		super(sqlSessionTemplate, method, method.getRequiredAnnotatedQuery(), evaluationContextProvider, parser);
 	}
 
 }
