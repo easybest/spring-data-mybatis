@@ -18,7 +18,6 @@ package org.springframework.data.mybatis.repository.query;
 import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
-import javax.persistence.Query;
 
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.SqlSessionTemplate;
@@ -39,11 +38,6 @@ final class NamedQuery extends AbstractMybatisQuery {
 
 	NamedQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
 		super(sqlSessionTemplate, method);
-	}
-
-	@Override
-	protected Query doCreateQuery(MybatisParametersParameterAccessor parameters) {
-		return null;
 	}
 
 	private static boolean hasNamedQuery(String queryName, MybatisMappingContext mappingContext) {

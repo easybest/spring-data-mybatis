@@ -47,7 +47,8 @@ public class MybatisQueryPrepareProcessor implements QueryCreationListener<Repos
 			return;
 		}
 		if (query instanceof PartTreeMybatisQuery) {
-
+			new PartTreeMyBatisQueryPrecompiler(this.mappingContext, this.configuration, (PartTreeMybatisQuery) query)
+					.precompile();
 			return;
 		}
 		if (query instanceof NamedQuery) {

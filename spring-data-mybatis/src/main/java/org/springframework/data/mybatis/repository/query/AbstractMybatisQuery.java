@@ -23,13 +23,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.persistence.Query;
 import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
 
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
@@ -51,6 +51,8 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 	private final Lazy<MybatisQueryExecution> execution;
 
+	private final MybatisExecutableQuery executableQuery;
+
 	final Lazy<ParameterBinder> parameterBinder = new Lazy<>(this::createBinder);
 
 	public AbstractMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
@@ -60,6 +62,8 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 		this.sqlSessionTemplate = sqlSessionTemplate;
 		this.method = method;
+
+		this.executableQuery = this.createExecutableQuery();
 
 		this.execution = Lazy.of(() -> {
 			if (method.isStreamQuery()) {
@@ -82,6 +86,29 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 			}
 			return new MybatisQueryExecution.SingleEntityExecution();
 		});
+	}
+
+	private MybatisExecutableQuery createExecutableQuery() {
+		return this.doCreateExecutableQuery();
+	}
+
+	protected MybatisExecutableQuery doCreateExecutableQuery() {
+		MybatisExecutableQuery query = new MybatisExecutableQuery(this.getSqlSessionTemplate(),
+				this.getQueryMethod().getStatementId(), accessor -> {
+
+					Parameters<?, ?> parameters = accessor.getParameters();
+					Parameters<?, ?> bindableParameters = parameters.getBindableParameters();
+					Map<String, Object> params = bindableParameters.stream()
+							.collect(Collectors.toMap(
+									p -> p.isNamedParameter() ? p.getName().get() : "__p" + (p.getIndex() + 1),
+									p -> accessor.getValue(p)));
+					return params;
+				});
+		return query;
+	}
+
+	public MybatisExecutableQuery getExecutableQuery() {
+		return this.executableQuery;
 	}
 
 	@Override
@@ -128,12 +155,6 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 	public SqlSessionTemplate getSqlSessionTemplate() {
 		return this.sqlSessionTemplate;
 	}
-
-	protected Query createQuery(MybatisParametersParameterAccessor parameters) {
-		return this.doCreateQuery(parameters);
-	}
-
-	protected abstract Query doCreateQuery(MybatisParametersParameterAccessor parameters);
 
 	static class TupleConverter implements Converter<Object, Object> {
 

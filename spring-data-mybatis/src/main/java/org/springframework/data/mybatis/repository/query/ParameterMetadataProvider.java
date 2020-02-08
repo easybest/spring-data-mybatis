@@ -15,17 +15,26 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.ParameterExpression;
 
+import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ParametersParameterAccessor;
 import org.springframework.data.repository.query.parser.Part;
+import org.springframework.expression.Expression;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -35,6 +44,90 @@ import org.springframework.util.ObjectUtils;
  * @author JARVIS SONG
  */
 class ParameterMetadataProvider {
+
+	private final CriteriaBuilder builder;
+
+	private final Iterator<? extends Parameter> parameters;
+
+	private final List<ParameterMetadata<?>> expressions;
+
+	private final @Nullable Iterator<Object> bindableParameterValues;
+
+	private final EscapeCharacter escape;
+
+	ParameterMetadataProvider(CriteriaBuilder builder, ParametersParameterAccessor accessor, EscapeCharacter escape) {
+		this(builder, accessor.iterator(), accessor.getParameters(), escape);
+	}
+
+	ParameterMetadataProvider(CriteriaBuilder builder, Parameters<?, ?> parameters, EscapeCharacter escape) {
+		this(builder, null, parameters, escape);
+	}
+
+	private ParameterMetadataProvider(CriteriaBuilder builder, @Nullable Iterator<Object> bindableParameterValues,
+			Parameters<?, ?> parameters, EscapeCharacter escape) {
+
+		// Assert.notNull(builder, "CriteriaBuilder must not be null!");
+		// Assert.notNull(parameters, "Parameters must not be null!");
+		// Assert.notNull(escape, "EscapeCharacter must not be null!");
+
+		this.builder = builder;
+		this.parameters = parameters.getBindableParameters().iterator();
+		this.expressions = new ArrayList<>();
+		this.bindableParameterValues = bindableParameterValues;
+		this.escape = escape;
+	}
+
+	public List<ParameterMetadata<?>> getExpressions() {
+		return this.expressions;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> ParameterMetadata<T> next(Part part) {
+
+		Assert.isTrue(this.parameters.hasNext(), () -> String.format("No parameter available for part %s.", part));
+
+		Parameter parameter = this.parameters.next();
+		return (ParameterMetadata<T>) this.next(part, parameter.getType(), parameter);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> ParameterMetadata<? extends T> next(Part part, Class<T> type) {
+
+		Parameter parameter = this.parameters.next();
+		Class<?> typeToUse = ClassUtils.isAssignable(type, parameter.getType()) ? parameter.getType() : type;
+		return (ParameterMetadata<? extends T>) this.next(part, typeToUse, parameter);
+	}
+
+	private <T> ParameterMetadata<T> next(Part part, Class<T> type, Parameter parameter) {
+
+		Assert.notNull(type, "Type must not be null!");
+
+		/*
+		 * We treat Expression types as Object vales since the real value to be bound as a
+		 * parameter is determined at query time.
+		 */
+		@SuppressWarnings("unchecked")
+		Class<T> reifiedType = Expression.class.equals(type) ? (Class<T>) Object.class : type;
+
+		Supplier<String> name = () -> parameter.getName()
+				.orElseThrow(() -> new IllegalArgumentException("o_O Parameter needs to be named"));
+
+		ParameterExpression<T> expression = parameter.isExplicitlyNamed() //
+				? this.builder.parameter(reifiedType, name.get()) //
+				: this.builder.parameter(reifiedType);
+
+		Object value = (this.bindableParameterValues != null) ? this.bindableParameterValues.next()
+				: ParameterMetadata.PLACEHOLDER;
+
+		ParameterMetadata<T> metadata = new ParameterMetadata<>(expression, part, value, this.escape);
+		this.expressions.add(metadata);
+
+		return metadata;
+	}
+
+	EscapeCharacter getEscape() {
+		return this.escape;
+	}
 
 	static class ParameterMetadata<T> {
 

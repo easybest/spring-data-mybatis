@@ -15,8 +15,6 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
-import javax.persistence.Query;
-
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.data.repository.query.parser.Part;
@@ -60,13 +58,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 	}
 
 	@Override
-	public Object execute(Object[] parameters) {
-		return null;
-	}
-
-	@Override
-	protected Query doCreateQuery(MybatisParametersParameterAccessor parameters) {
-		return null;
+	protected MybatisQueryExecution getExecution() {
+		return super.getExecution();
 	}
 
 	private static void validate(PartTree tree, MybatisParameters parameters, String methodName) {
@@ -121,6 +114,18 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	private static boolean expectsCollection(Part.Type type) {
 		return type == Part.Type.IN || type == Part.Type.NOT_IN;
+	}
+
+	public PartTree getTree() {
+		return this.tree;
+	}
+
+	public MybatisParameters getParameters() {
+		return this.parameters;
+	}
+
+	public EscapeCharacter getEscape() {
+		return this.escape;
 	}
 
 }

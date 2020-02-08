@@ -94,6 +94,7 @@ class SimpleMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 	private String parseMybatisSQL(String sql, List<StringQuery.ParameterBinding> parameterBindings,
 			MybatisQueryMethod method) {
+
 		for (StringQuery.ParameterBinding parameterBinding : parameterBindings) {
 			String replace = null;
 			String bindName = null;

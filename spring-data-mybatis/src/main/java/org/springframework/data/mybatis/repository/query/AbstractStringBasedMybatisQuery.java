@@ -60,8 +60,9 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 		return this.query;
 	}
 
-	@Override
+	// @Override
 	protected Query doCreateQuery(MybatisParametersParameterAccessor accessor) {
+
 		String sortedQueryString = QueryUtils.applySorting(this.query.getQueryString(), accessor.getSort(),
 				this.query.getAlias());
 		ResultProcessor processor = this.getQueryMethod().getResultProcessor().withDynamicProjection(accessor);

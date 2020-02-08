@@ -62,6 +62,8 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	protected Class<?> repositoryInterface;
 
+	protected EscapeCharacter escape;
+
 	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			RepositoryInformation repositoryInformation) {
 

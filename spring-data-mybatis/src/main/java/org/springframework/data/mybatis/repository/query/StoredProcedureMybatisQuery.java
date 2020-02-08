@@ -15,8 +15,6 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
-import javax.persistence.Query;
-
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.data.mybatis.repository.Procedure;
@@ -40,11 +38,6 @@ class StoredProcedureMybatisQuery extends AbstractMybatisQuery {
 
 		this.procedureAttributes = method.getProcedureAttributes();
 		this.useNamedParameters = useNamedParameters(method);
-	}
-
-	@Override
-	protected Query doCreateQuery(MybatisParametersParameterAccessor parameters) {
-		return null;
 	}
 
 	private static boolean useNamedParameters(QueryMethod method) {

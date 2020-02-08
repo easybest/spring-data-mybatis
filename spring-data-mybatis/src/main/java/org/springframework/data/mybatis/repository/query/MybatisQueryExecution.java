@@ -16,18 +16,14 @@
 package org.springframework.data.mybatis.repository.query;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.NoResultException;
-import javax.persistence.Query;
 
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.repository.core.support.SurroundingTransactionDetectorMethodInterceptor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -113,8 +109,7 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
-
-			return query.createQuery(accessor).getSingleResult();
+			return query.getExecutableQuery().getSingleResult(accessor);
 		}
 
 	}
@@ -134,7 +129,7 @@ public abstract class MybatisQueryExecution {
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
 
-			return query.createQuery(accessor).executeUpdate();
+			return query.getExecutableQuery().executeUpdate(accessor);
 
 		}
 
@@ -169,7 +164,7 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
-			return query.createQuery(accessor).getResultList();
+			return query.getExecutableQuery().getResultList(accessor);
 		}
 
 	}
@@ -178,21 +173,23 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
-			Pageable pageable = accessor.getPageable();
-			Query createQuery = query.createQuery(accessor);
-
-			int pageSize = 0;
-			if (pageable.isPaged()) {
-
-				pageSize = pageable.getPageSize();
-				createQuery.setMaxResults(pageSize + 1);
-			}
-
-			List<Object> resultList = createQuery.getResultList();
-
-			boolean hasNext = pageable.isPaged() && resultList.size() > pageSize;
-
-			return new SliceImpl<>(hasNext ? resultList.subList(0, pageSize) : resultList, pageable, hasNext);
+			// Pageable pageable = accessor.getPageable();
+			// Query createQuery = query.createQuery(accessor);
+			//
+			// int pageSize = 0;
+			// if (pageable.isPaged()) {
+			//
+			// pageSize = pageable.getPageSize();
+			// createQuery.setMaxResults(pageSize + 1);
+			// }
+			//
+			// List<Object> resultList = createQuery.getResultList();
+			//
+			// boolean hasNext = pageable.isPaged() && resultList.size() > pageSize;
+			//
+			// return new SliceImpl<>(hasNext ? resultList.subList(0, pageSize) :
+			// resultList, pageable, hasNext);
+			return null;
 		}
 
 	}

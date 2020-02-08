@@ -34,7 +34,7 @@ public class MybatisParametersParameterAccessor extends ParametersParameterAcces
 	 * @param parameters must not be {@literal null}.
 	 * @param values must not be {@literal null}.
 	 */
-	MybatisParametersParameterAccessor(Parameters<?, ?> parameters, Object[] values) {
+	public MybatisParametersParameterAccessor(Parameters<?, ?> parameters, Object[] values) {
 		super(parameters, values);
 	}
 
