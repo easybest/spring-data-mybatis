@@ -29,6 +29,9 @@ import javax.persistence.TupleElement;
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
@@ -52,8 +55,6 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 	private final Lazy<MybatisQueryExecution> execution;
 
 	private final MybatisExecutableQuery executableQuery;
-
-	final Lazy<ParameterBinder> parameterBinder = new Lazy<>(this::createBinder);
 
 	public AbstractMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
 
@@ -102,6 +103,33 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 							.collect(Collectors.toMap(
 									p -> p.isNamedParameter() ? p.getName().get() : "__p" + (p.getIndex() + 1),
 									p -> accessor.getValue(p)));
+
+					Sort sort = null;
+					if (parameters.hasSortParameter()) {
+						sort = accessor.getSort();
+					}
+
+					if (this instanceof PartTreeMybatisQuery) {
+						Sort treeSort = ((PartTreeMybatisQuery) this).getTree().getSort();
+						if (null != treeSort && treeSort.isSorted()) {
+							if (null != sort) {
+								sort.and(treeSort);
+							}
+							else {
+								sort = treeSort;
+							}
+						}
+					}
+
+					if (null != sort && sort.isSorted()) {
+						params.put(ResidentStatementName.SORT, sort);
+					}
+
+					if (parameters.hasPageableParameter()) {
+						Pageable pageable = accessor.getPageable();
+						params.put(ResidentStatementName.PAGE_SIZE, pageable.getPageSize());
+						params.put(ResidentStatementName.OFFSET, pageable.getOffset());
+					}
 					return params;
 				});
 		return query;
@@ -146,10 +174,6 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 		else {
 			return new MybatisQueryExecution.SingleEntityExecution();
 		}
-	}
-
-	protected ParameterBinder createBinder() {
-		return ParameterBinderFactory.createBinder(this.getQueryMethod().getParameters());
 	}
 
 	public SqlSessionTemplate getSqlSessionTemplate() {

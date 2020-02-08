@@ -39,7 +39,9 @@ import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.model.Column;
+import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.data.repository.query.parser.Part;
 import org.springframework.util.StringUtils;
 
 /**
@@ -193,6 +195,120 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		}
 
 		return SqlCommandType.UNKNOWN;
+	}
+
+	protected boolean canUpperCase(MybatisPersistentProperty property) {
+		return String.class.equals(property.getType());
+	}
+
+	protected String buildQueryByConditionOperator(Part.Type type) {
+		switch (type) {
+		case BETWEEN:
+			return " between ";
+		case SIMPLE_PROPERTY:
+			return "=";
+		case NEGATING_SIMPLE_PROPERTY:
+			return "<![CDATA[<>]]>";
+		case LESS_THAN:
+		case BEFORE:
+			return "<![CDATA[<]]>";
+		case LESS_THAN_EQUAL:
+			return "<![CDATA[<=]]>";
+		case GREATER_THAN:
+		case AFTER:
+			return "<![CDATA[>]]>";
+		case GREATER_THAN_EQUAL:
+			return ">=";
+		case NOT_LIKE:
+		case NOT_CONTAINING:
+			return " not like ";
+		case LIKE:
+		case STARTING_WITH:
+		case ENDING_WITH:
+		case CONTAINING:
+			return " like ";
+		case IN:
+			return " in ";
+		case NOT_IN:
+			return " not in ";
+		}
+
+		return "";
+	}
+
+	protected String buildQueryByConditionLeftSegment(String column, Part.IgnoreCaseType ignoreCaseType,
+			MybatisPersistentProperty property) {
+		switch (ignoreCaseType) {
+
+		case ALWAYS:
+			return this.dialect.getLowercaseFunction() + "(" + column + ")";
+		case WHEN_POSSIBLE:
+			if ((null != property) && this.canUpperCase(property)) {
+				return this.dialect.getLowercaseFunction() + "(" + column + ")";
+			}
+			return column;
+		case NEVER:
+		default:
+			return column;
+		}
+	}
+
+	protected String buildQueryByConditionRightSegment(Part.Type type, Part.IgnoreCaseType ignoreCaseType,
+			String[] properties) {
+		switch (type) {
+		case BETWEEN:
+			return String.format("#{%s} and #{%s}", properties[0], properties[1]);
+		case IS_NOT_NULL:
+			return " is not null";
+		case IS_NULL:
+			return " is null";
+		case STARTING_WITH:
+			return this.buildLikeRightSegment(properties[0], false, true, ignoreCaseType);
+		case ENDING_WITH:
+			return this.buildLikeRightSegment(properties[0], true, false, ignoreCaseType);
+		case NOT_CONTAINING:
+		case CONTAINING:
+			return this.buildLikeRightSegment(properties[0], true, true, ignoreCaseType);
+		case NOT_IN:
+		case IN:
+			return String.format(
+					"<foreach item=\"__item\" index=\"__index\" collection=\"%s\" open=\"(\" separator=\",\" close=\")\">#{__item}</foreach>",
+					properties[0]);
+		case TRUE:
+			return " = true";
+		case FALSE:
+			return " = false";
+		default:
+			if (ignoreCaseType == Part.IgnoreCaseType.ALWAYS || ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE) {
+				return String.format("%s(#{%s})", this.dialect.getLowercaseFunction(), properties[0]);
+			}
+			return String.format("#{%s}", properties[0]);
+
+		}
+	}
+
+	protected String buildLikeRightSegment(String property, boolean left, boolean right,
+			Part.IgnoreCaseType ignoreCaseType) {
+		return String.format("<bind name=\"__bind_%s\" value=\"%s%s%s\" />%s", property, (left ? "'%' + " : ""),
+				property, (right ? " + '%'" : ""),
+				(((ignoreCaseType == Part.IgnoreCaseType.ALWAYS)
+						|| (ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE))
+								? String.format("%s(#{__bind_%s})", this.dialect.getLowercaseFunction(), property)
+								: String.format("#{__bind_%s}", property)));
+	}
+
+	protected String buildStandardOrderBySegment() {
+		String mapping = this.mappingPropertyToColumn().entrySet().stream()
+				.map(entry -> String.format("&apos;%s&apos;:&apos;%s&apos;", entry.getKey(),
+						entry.getValue().getName().render(this.dialect)))
+				.collect(Collectors.joining(","));
+		String bind = String.format("<bind name=\"__columnsMap\" value='#{%s}'/>", mapping);
+		String sql = String.format("order by "
+				+ " <foreach collection=\"%s\" item=\"item\" index=\"idx\" open=\"\" close=\"\" separator=\",\">"
+				+ "<if test=\"item.ignoreCase\">%s(</if>" + "${__columnsMap[item.property]}"
+				+ "<if test=\"item.ignoreCase\">)</if> " + "${item.direction.name().toLowerCase()}" + "</foreach>",
+				ResidentStatementName.SORT, this.dialect.getLowercaseFunction());
+		return String.format("<if test=\"%s != null\">%s %s</if>", ResidentStatementName.SORT, bind, sql);
 	}
 
 }

@@ -406,9 +406,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 				Part.IgnoreCaseType ignoreCaseType = Part.IgnoreCaseType.valueOf(c.ignoreCaseType().name());
 				String columnName = StringUtils.hasText(c.column()) ? c.column()
 						: pp.getColumn().getName().render(this.dialect);
-				String left = (ignoreCaseType == Part.IgnoreCaseType.ALWAYS
-						|| ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE)
-								? (this.dialect.getLowercaseFunction() + '(' + columnName + ')') : columnName;
+				String left = this.buildQueryByConditionLeftSegment(columnName, ignoreCaseType, pp);
 				String operator = this.buildQueryByConditionOperator(type);
 				String right = this.buildQueryByConditionRightSegment(type, ignoreCaseType, properties);
 				return String.format("<if test=\"%s\"> and %s %s %s</if>", cond, left, operator, right);
@@ -416,20 +414,6 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		});
 		String sql = "";
 		return String.format("<if test=\"__condition != null\"><trim prefixOverrides=\"and |or \">%s</trim></if>", sql);
-	}
-
-	private String buildStandardOrderBySegment() {
-		String mapping = this.mappingPropertyToColumn().entrySet().stream()
-				.map(entry -> String.format("&apos;%s&apos;:&apos;%s&apos;", entry.getKey(),
-						entry.getValue().getName().render(this.dialect)))
-				.collect(Collectors.joining(","));
-		String bind = String.format("<bind name=\"__columnsMap\" value='#{%s}'/>", mapping);
-		String sql = String.format("order by "
-				+ " <foreach collection=\"__sort\" item=\"item\" index=\"idx\" open=\"\" close=\"\" separator=\",\">"
-				+ "<if test=\"item.ignoreCase\">%s(</if>" + "${__columnsMap[item.property]}"
-				+ "<if test=\"item.ignoreCase\">)</if> " + "${item.direction.name().toLowerCase()}" + "</foreach>",
-				this.dialect.getLowercaseFunction());
-		return String.format("<if test=\"__sort != null\">%s %s</if>", bind, sql);
 	}
 
 	private String buildByIdsQueryCondition() {
@@ -455,85 +439,6 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 					idProperty.getColumn().getName().render(this.dialect));
 		}
 		return String.format("<if test=\"__ids != null\"><trim prefixOverrides=\"and |or \"> and %s</trim></if>", sql);
-	}
-
-	private String buildQueryByConditionOperator(Part.Type type) {
-		switch (type) {
-		case BETWEEN:
-			return " between ";
-		case SIMPLE_PROPERTY:
-			return "=";
-		case NEGATING_SIMPLE_PROPERTY:
-			return "<![CDATA[<>]]>";
-		case LESS_THAN:
-		case BEFORE:
-			return "<![CDATA[<]]>";
-		case LESS_THAN_EQUAL:
-			return "<![CDATA[<=]]>";
-		case GREATER_THAN:
-		case AFTER:
-			return "<![CDATA[>]]>";
-		case GREATER_THAN_EQUAL:
-			return ">=";
-		case NOT_LIKE:
-		case NOT_CONTAINING:
-			return " not like ";
-		case LIKE:
-		case STARTING_WITH:
-		case ENDING_WITH:
-		case CONTAINING:
-			return " like ";
-		case IN:
-			return " in ";
-		case NOT_IN:
-			return " not in ";
-		}
-
-		return "";
-	}
-
-	private String buildQueryByConditionRightSegment(Part.Type type, Part.IgnoreCaseType ignoreCaseType,
-			String[] properties) {
-		switch (type) {
-		case BETWEEN:
-			return String.format("#{%s} and #{%s}", properties[0], properties[1]);
-		case IS_NOT_NULL:
-			return " is not null";
-		case IS_NULL:
-			return " is null";
-		case STARTING_WITH:
-			return this.buildLikeRightSegment(properties[0], false, true, ignoreCaseType);
-		case ENDING_WITH:
-			return this.buildLikeRightSegment(properties[0], true, false, ignoreCaseType);
-		case NOT_CONTAINING:
-		case CONTAINING:
-			return this.buildLikeRightSegment(properties[0], true, true, ignoreCaseType);
-		case NOT_IN:
-		case IN:
-			return String.format(
-					"<foreach item=\"__item\" index=\"__index\" collection=\"%s\" open=\"(\" separator=\",\" close=\")\">#{__item}</foreach>",
-					properties[0]);
-		case TRUE:
-			return " = true";
-		case FALSE:
-			return " = false";
-		default:
-			if (ignoreCaseType == Part.IgnoreCaseType.ALWAYS || ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE) {
-				return String.format("%s(#{%s})", this.dialect.getLowercaseFunction(), properties[0]);
-			}
-			return String.format("#{%s}", properties[0]);
-
-		}
-	}
-
-	private String buildLikeRightSegment(String property, boolean left, boolean right,
-			Part.IgnoreCaseType ignoreCaseType) {
-		return String.format("<bind name=\"__bind_%s\" value=\"%s%s%s\" />%s", property, (left ? "'%' + " : ""),
-				property, (right ? " + '%'" : ""),
-				(((ignoreCaseType == Part.IgnoreCaseType.ALWAYS)
-						|| (ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE))
-								? String.format("%s(#{__bind_%s})", this.dialect.getLowercaseFunction(), property)
-								: String.format("#{__bind_%s}", property)));
 	}
 
 	private String addCountAllStatement() {

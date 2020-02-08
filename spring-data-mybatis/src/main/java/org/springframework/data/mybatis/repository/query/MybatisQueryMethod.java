@@ -30,6 +30,7 @@ import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.mybatis.repository.Procedure;
 import org.springframework.data.mybatis.repository.Query;
 import org.springframework.data.mybatis.repository.ResultMap;
+import org.springframework.data.mybatis.repository.ResultType;
 import org.springframework.data.mybatis.repository.SelectColumns;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -167,6 +168,14 @@ public class MybatisQueryMethod extends QueryMethod {
 	public String getResultMap() {
 		ResultMap resultMap = AnnotationUtils.findAnnotation(this.method, ResultMap.class);
 		return (null != resultMap && StringUtils.hasText(resultMap.value())) ? resultMap.value() : null;
+	}
+
+	public Class<?> getResultType() {
+		ResultType resultMap = AnnotationUtils.findAnnotation(this.method, ResultType.class);
+		if (null == resultMap) {
+			return null;
+		}
+		return resultMap.value();
 	}
 
 	public String getSelectColumns() {

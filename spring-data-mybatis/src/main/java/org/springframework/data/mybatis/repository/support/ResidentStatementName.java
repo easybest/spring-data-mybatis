@@ -121,6 +121,21 @@ public final class ResidentStatementName {
 	 */
 	public static final String UPDATE_SELECTIVE_BY_ID = UPDATE_SELECTIVE + "_by_id";
 
+	/**
+	 * For <code>__sort</code>.
+	 */
+	public static final String SORT = "__sort";
+
+	/**
+	 * For <code>__offset</code>.
+	 */
+	public static final String OFFSET = "__offset";
+
+	/**
+	 * For <code>__pageSize</code>.
+	 */
+	public static final String PAGE_SIZE = "__pageSize";
+
 	public static String statementName(String namespace, String statement) {
 		return namespace + '.' + statement;
 	}
