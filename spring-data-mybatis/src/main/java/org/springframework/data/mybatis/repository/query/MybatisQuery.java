@@ -16,11 +16,14 @@
 package org.springframework.data.mybatis.repository.query;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.FlushModeType;
 import javax.persistence.LockModeType;
@@ -31,6 +34,8 @@ import javax.persistence.TemporalType;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
 
+import org.springframework.util.CollectionUtils;
+
 /**
  * .
  *
@@ -39,45 +44,74 @@ import org.mybatis.spring.support.SqlSessionDaoSupport;
  */
 public class MybatisQuery extends SqlSessionDaoSupport implements Query {
 
-	protected final String statementId;
+	private final String statementId;
 
-	protected Map<String, Object> params;
+	private Map<Param<?>, Object> params;
+
+	private Map<String, Param<?>> nameToParam;
+
+	private Map<Integer, Param<?>> positionToParam;
 
 	public MybatisQuery(SqlSessionTemplate sqlSessionTemplate, String statementId) {
 		this.setSqlSessionTemplate(sqlSessionTemplate);
 		this.statementId = statementId;
 	}
 
-	public MybatisQuery(SqlSessionTemplate sqlSessionTemplate, String statementId, Map<String, Object> params) {
-		this.setSqlSessionTemplate(sqlSessionTemplate);
-		this.statementId = statementId;
-		this.params = params;
-	}
-
-	public void addParam(String key, String value) {
+	public void addParam(Param<?> key, Object value) {
 		if (null == this.params) {
 			this.params = new HashMap<>();
 		}
 		this.params.put(key, value);
+		if (null != key.getName()) {
+			if (null == this.nameToParam) {
+				this.nameToParam = new HashMap<>();
+			}
+			this.nameToParam.put(key.getName(), key);
+		}
+		if (null != key.getPosition()) {
+			if (null == this.positionToParam) {
+				this.positionToParam = new HashMap<>();
+			}
+			this.positionToParam.put(key.getPosition(), key);
+		}
+	}
+
+	private Map<String, Object> getParamsMap() {
+		return this.params.entrySet().stream().collect(Collectors.toMap(entry -> {
+			Param<?> param = entry.getKey();
+			if (null != param.getName()) {
+				return param.getName();
+			}
+			return "__p" + param.getPosition();
+		}, entry -> entry.getValue()));
 	}
 
 	@Override
 	public List getResultList() {
-		return this.getSqlSession().selectList(this.statementId, this.getParams());
+		if (CollectionUtils.isEmpty(this.params)) {
+			return this.getSqlSession().selectList(this.statementId);
+		}
+		return this.getSqlSession().selectList(this.statementId, this.getParamsMap());
 	}
 
 	@Override
 	public Object getSingleResult() {
-		return this.getSqlSession().selectOne(this.statementId, this.getParams());
+		if (CollectionUtils.isEmpty(this.params)) {
+			return this.getSqlSession().selectOne(this.statementId);
+		}
+		return this.getSqlSession().selectOne(this.statementId, this.getParamsMap());
 	}
 
 	@Override
 	public int executeUpdate() {
-		return this.getSqlSession().update(this.statementId, this.getParams());
+		if (CollectionUtils.isEmpty(this.params)) {
+			return this.getSqlSession().update(this.statementId);
+		}
+		return this.getSqlSession().update(this.statementId, this.getParamsMap());
 	}
 
 	@Override
-	public Query setMaxResults(int i) {
+	public Query setMaxResults(int maxResult) {
 		return this;
 	}
 
@@ -87,7 +121,7 @@ public class MybatisQuery extends SqlSessionDaoSupport implements Query {
 	}
 
 	@Override
-	public Query setFirstResult(int i) {
+	public Query setFirstResult(int startPosition) {
 		return this;
 	}
 
@@ -97,8 +131,8 @@ public class MybatisQuery extends SqlSessionDaoSupport implements Query {
 	}
 
 	@Override
-	public Query setHint(String s, Object o) {
-		return null;
+	public Query setHint(String hintName, Object value) {
+		return this;
 	}
 
 	@Override
@@ -107,99 +141,134 @@ public class MybatisQuery extends SqlSessionDaoSupport implements Query {
 	}
 
 	@Override
-	public <T> Query setParameter(Parameter<T> parameter, T t) {
-
+	public <T> Query setParameter(Parameter<T> param, T value) {
+		this.addParam(new Param<>(param), value);
 		return this;
 	}
 
 	@Override
-	public Query setParameter(Parameter<Calendar> parameter, Calendar calendar, TemporalType temporalType) {
+	public Query setParameter(Parameter<Calendar> param, Calendar value, TemporalType temporalType) {
+		this.addParam(new Param<>(param), value);
 		return this;
 	}
 
 	@Override
-	public Query setParameter(Parameter<Date> parameter, Date date, TemporalType temporalType) {
+	public Query setParameter(Parameter<Date> param, Date value, TemporalType temporalType) {
+		this.addParam(new Param<>(param), value);
 		return this;
 	}
 
 	@Override
-	public Query setParameter(String s, Object o) {
+	public Query setParameter(String name, Object value) {
+		this.addParam(new Param<>(name, null, null), value);
 		return this;
 	}
 
 	@Override
-	public Query setParameter(String s, Calendar calendar, TemporalType temporalType) {
+	public Query setParameter(String name, Calendar value, TemporalType temporalType) {
+		this.addParam(new Param<>(name, null, null), value);
 		return this;
 	}
 
 	@Override
-	public Query setParameter(String s, Date date, TemporalType temporalType) {
+	public Query setParameter(String name, Date value, TemporalType temporalType) {
+		this.addParam(new Param<>(name, null, null), value);
 		return this;
 	}
 
 	@Override
-	public Query setParameter(int i, Object o) {
+	public Query setParameter(int position, Object value) {
+		this.addParam(new Param<>(null, position, null), value);
 		return this;
 	}
 
 	@Override
-	public Query setParameter(int i, Calendar calendar, TemporalType temporalType) {
+	public Query setParameter(int position, Calendar value, TemporalType temporalType) {
+		this.addParam(new Param<>(null, position, null), value);
 		return this;
 	}
 
 	@Override
-	public Query setParameter(int i, Date date, TemporalType temporalType) {
+	public Query setParameter(int position, Date value, TemporalType temporalType) {
+		this.addParam(new Param<>(null, position, null), value);
 		return this;
 	}
 
 	@Override
 	public Set<Parameter<?>> getParameters() {
+		if (null == this.params) {
+			return Collections.emptySet();
+		}
+		return (Set) this.params.keySet();
+	}
+
+	@Override
+	public Parameter<?> getParameter(String name) {
+		if (null == this.nameToParam) {
+			return null;
+		}
+		Param<?> param = this.nameToParam.get(name);
+		return param;
+	}
+
+	@Override
+	public <T> Parameter<T> getParameter(String name, Class<T> type) {
+		Parameter<?> parameter = this.getParameter(name);
+		if (parameter.getParameterType() == type) {
+			return (Parameter<T>) parameter;
+		}
 		return null;
 	}
 
 	@Override
-	public Parameter<?> getParameter(String s) {
+	public Parameter<?> getParameter(int position) {
+		if (null == this.positionToParam) {
+			return null;
+		}
+		Param<?> param = this.positionToParam.get(position);
+		return param;
+	}
+
+	@Override
+	public <T> Parameter<T> getParameter(int position, Class<T> type) {
+		Parameter<?> parameter = this.getParameter(position);
+		if (parameter.getParameterType() == type) {
+			return (Parameter<T>) parameter;
+		}
 		return null;
 	}
 
 	@Override
-	public <T> Parameter<T> getParameter(String s, Class<T> aClass) {
-		return null;
-	}
-
-	@Override
-	public Parameter<?> getParameter(int i) {
-		return null;
-	}
-
-	@Override
-	public <T> Parameter<T> getParameter(int i, Class<T> aClass) {
-		return null;
-	}
-
-	@Override
-	public boolean isBound(Parameter<?> parameter) {
+	public boolean isBound(Parameter<?> param) {
 		return false;
 	}
 
 	@Override
-	public <T> T getParameterValue(Parameter<T> parameter) {
-		return null;
+	public <T> T getParameterValue(Parameter<T> param) {
+		return (T) this.params.get(param);
 	}
 
 	@Override
-	public Object getParameterValue(String s) {
-		return null;
+	public Object getParameterValue(String name) {
+		if (null == this.nameToParam) {
+			return null;
+		}
+		Param<?> param = this.nameToParam.get(name);
+		return this.getParameterValue(param);
 	}
 
 	@Override
-	public Object getParameterValue(int i) {
-		return null;
+	public Object getParameterValue(int position) {
+		if (null == this.positionToParam) {
+			return null;
+		}
+		Param<?> param = this.positionToParam.get(position);
+		return this.getParameterValue(param);
 	}
 
 	@Override
-	public Query setFlushMode(FlushModeType flushModeType) {
-		return null;
+	public Query setFlushMode(FlushModeType flushMode) {
+		return this;
 	}
 
 	@Override
@@ -208,8 +277,8 @@ public class MybatisQuery extends SqlSessionDaoSupport implements Query {
 	}
 
 	@Override
-	public Query setLockMode(LockModeType lockModeType) {
-		return null;
+	public Query setLockMode(LockModeType lockMode) {
+		return this;
 	}
 
 	@Override
@@ -218,16 +287,67 @@ public class MybatisQuery extends SqlSessionDaoSupport implements Query {
 	}
 
 	@Override
-	public <T> T unwrap(Class<T> aClass) {
+	public <T> T unwrap(Class<T> cls) {
 		return null;
 	}
 
-	public Map<String, Object> getParams() {
-		return this.params;
-	}
+	public static class Param<T> implements Parameter<T> {
 
-	public void setParams(Map<String, Object> params) {
-		this.params = params;
+		private String name;
+
+		private Integer position;
+
+		private Class<T> parameterType;
+
+		public Param(Parameter<T> parameter) {
+			this(parameter.getName(), parameter.getPosition(), parameter.getParameterType());
+		}
+
+		public Param(String name, Integer position, Class<T> parameterType) {
+			this.name = name;
+			this.position = position;
+			this.parameterType = parameterType;
+		}
+
+		@Override
+		public String getName() {
+			return this.name;
+		}
+
+		@Override
+		public Integer getPosition() {
+			return this.position;
+		}
+
+		@Override
+		public Class<T> getParameterType() {
+			return this.parameterType;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) {
+				return true;
+			}
+			if (o == null || this.getClass() != o.getClass()) {
+				return false;
+			}
+			Param<?> param = (Param<?>) o;
+			return Objects.equals(this.name, param.name) && Objects.equals(this.position, param.position)
+					&& Objects.equals(this.parameterType, param.parameterType);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.name, this.position, this.parameterType);
+		}
+
+		@Override
+		public String toString() {
+			return "Param{" + "name='" + this.name + '\'' + ", position=" + this.position + ", parameterType="
+					+ this.parameterType + '}';
+		}
+
 	}
 
 }

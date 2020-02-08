@@ -62,25 +62,12 @@ class StringQuery implements DeclaredQuery {
 		this.containsPageableInSpel = query.contains("#pageable");
 
 		Metadata queryMeta = new Metadata();
-		this.query = this.bindMybatisExpression(ParameterBindingParser.INSTANCE
-				.parseParameterBindingsOfQueryIntoBindingsAndReturnCleanedQuery(query, this.bindings, queryMeta));
+		this.query = ParameterBindingParser.INSTANCE
+				.parseParameterBindingsOfQueryIntoBindingsAndReturnCleanedQuery(query, this.bindings, queryMeta);
 
 		this.usesJdbcStyleParameters = queryMeta.usesJdbcStyleParameters;
 		this.alias = QueryUtils.detectAlias(query);
 		this.hasConstructorExpression = QueryUtils.hasConstructorExpression(query);
-	}
-
-	private String bindMybatisExpression(String query) {
-
-		return query;
-	}
-
-	public static void main(String[] args) {
-		StringQuery sq = new StringQuery("select u from #{#entityName} u where u.lastname = ?1");
-		System.out.println(sq.getParameterBindings());
-		System.out.println(sq.getAlias());
-		System.out.println(sq.getProjection());
-		System.out.println(sq.getQueryString());
 	}
 
 	boolean hasParameterBindings() {

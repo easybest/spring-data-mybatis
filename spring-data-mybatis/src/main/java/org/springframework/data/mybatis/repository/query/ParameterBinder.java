@@ -52,7 +52,7 @@ public class ParameterBinder {
 
 	public <T extends Query> T bind(T mybatisQuery, QueryParameterSetter.QueryMetadata metadata,
 			MybatisParametersParameterAccessor accessor) {
-		this.bind(metadata.withQuery(mybatisQuery), accessor, QueryParameterSetter.ErrorHandling.STRICT);
+		this.bind(metadata.withQuery(mybatisQuery), accessor, QueryParameterSetter.ErrorHandling.LENIENT);
 		return mybatisQuery;
 	}
 
