@@ -1,0 +1,12 @@
+[[preface]]
+= Preface
+
+The primary goal of the Spring Data project is to make it easier to build Spring-powered applications that use data access technologies. This module deals with enhanced support for MyBatis based data access layers.
+
+[[project]]
+== Project Metadata
+
+* Version control - https://github.com/easybest/spring-data-mybatis
+* Issues tracking - https://github.com/easybest/spring-data-mybatis/issues
+* Snapshot repository - https://oss.sonatype.org/content/repositories/snapshots
+* Examples - https://github.com/easybest/spring-data-mybatis-examples

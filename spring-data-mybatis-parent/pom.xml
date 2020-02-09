@@ -56,7 +56,6 @@
         <mybatis.spring>2.0.3</mybatis.spring>
         <mybatis-spring-boot>2.1.1</mybatis-spring-boot>
     </properties>
-
     <dependencyManagement>
         <dependencies>
             <dependency>

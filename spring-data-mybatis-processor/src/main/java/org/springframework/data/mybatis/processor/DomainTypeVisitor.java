@@ -64,6 +64,11 @@ public class DomainTypeVisitor implements TypeVisitor<DomainTypeVisitor, ColumnM
 	}
 
 	@Override
+	public DomainTypeVisitor visit(TypeMirror t) {
+		return this;
+	}
+
+	@Override
 	public DomainTypeVisitor visitPrimitive(PrimitiveType t, ColumnMeta columnMeta) {
 		String packType = PACKING.get(t.toString());
 		columnMeta.setType((null != packType) ? packType : t.toString());
