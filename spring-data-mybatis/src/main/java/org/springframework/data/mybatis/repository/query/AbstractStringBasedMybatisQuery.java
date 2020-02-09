@@ -54,4 +54,12 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 		return this.query;
 	}
 
+	public QueryMethodEvaluationContextProvider getEvaluationContextProvider() {
+		return this.evaluationContextProvider;
+	}
+
+	public SpelExpressionParser getParser() {
+		return this.parser;
+	}
+
 }

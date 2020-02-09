@@ -15,6 +15,13 @@
  */
 package org.springframework.data.mybatis.mapping;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.persistence.NamedNativeQueries;
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.NamedQueries;
+
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.FieldNamingStrategy;
@@ -33,10 +40,34 @@ public class MybatisMappingContext
 
 	private FieldNamingStrategy fieldNamingStrategy;
 
+	private Map<String, String> namedQueries = new HashMap<>();
+
 	@Override
 	protected <T> MybatisPersistentEntityImpl<?> createPersistentEntity(TypeInformation<T> typeInformation) {
 
 		MybatisPersistentEntityImpl<T> entity = new MybatisPersistentEntityImpl(typeInformation);
+
+		javax.persistence.NamedQuery namedQuery = entity.findAnnotation(javax.persistence.NamedQuery.class);
+		if ((null != namedQuery)) {
+			this.namedQueries.put(namedQuery.name(), namedQuery.query());
+		}
+		NamedQueries namedQueries = entity.findAnnotation(NamedQueries.class);
+		if (null != namedQueries) {
+			for (javax.persistence.NamedQuery nq : namedQueries.value()) {
+				this.namedQueries.put(nq.name(), nq.query());
+
+			}
+		}
+		NamedNativeQuery namedNativeQuery = entity.findAnnotation(NamedNativeQuery.class);
+		if (null != namedNativeQuery) {
+			this.namedQueries.put(namedNativeQuery.name(), namedNativeQuery.query());
+		}
+		NamedNativeQueries namedNativeQueries = entity.findAnnotation(NamedNativeQueries.class);
+		if (null != namedNativeQueries) {
+			for (NamedNativeQuery nq : namedNativeQueries.value()) {
+				this.namedQueries.put(nq.name(), nq.query());
+			}
+		}
 
 		return entity;
 	}
@@ -49,6 +80,10 @@ public class MybatisMappingContext
 
 	public void setFieldNamingStrategy(FieldNamingStrategy fieldNamingStrategy) {
 		this.fieldNamingStrategy = fieldNamingStrategy;
+	}
+
+	public String getNamedQuery(String name) {
+		return this.namedQueries.get(name);
 	}
 
 }

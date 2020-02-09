@@ -132,9 +132,10 @@ public final class MybatisQueryLookupStrategy {
 						namedQueries.getQuery(name), this.evaluationContextProvider);
 			}
 
-			query = NamedQuery.lookupFrom(sqlSessionTemplate, method, this.mappingContext);
-			if (null != query) {
-				return query;
+			String namedQuery = this.mappingContext.getNamedQuery(name);
+			if (null != namedQuery) {
+				return MybatisQueryFactory.INSTANCE.fromMethodWithQueryString(sqlSessionTemplate, method, namedQuery,
+						this.evaluationContextProvider);
 			}
 
 			throw new IllegalStateException(

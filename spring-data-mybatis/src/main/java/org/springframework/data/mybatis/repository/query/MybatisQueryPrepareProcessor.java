@@ -51,9 +51,7 @@ public class MybatisQueryPrepareProcessor implements QueryCreationListener<Repos
 					.precompile();
 			return;
 		}
-		if (query instanceof NamedQuery) {
-			return;
-		}
+
 		if (query instanceof StoredProcedureMybatisQuery) {
 			return;
 		}

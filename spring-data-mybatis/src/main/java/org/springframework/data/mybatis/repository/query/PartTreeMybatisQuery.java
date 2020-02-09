@@ -59,6 +59,14 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	@Override
 	protected MybatisQueryExecution getExecution() {
+
+		if (this.tree.isDelete()) {
+			return new MybatisQueryExecution.DeleteExecution();
+		}
+		else if (this.tree.isExistsProjection()) {
+			return new MybatisQueryExecution.ExistsExecution();
+		}
+
 		return super.getExecution();
 	}
 

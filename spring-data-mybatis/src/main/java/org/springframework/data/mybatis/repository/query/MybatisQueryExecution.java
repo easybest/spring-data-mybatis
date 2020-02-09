@@ -16,6 +16,7 @@
 package org.springframework.data.mybatis.repository.query;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.NoResultException;
@@ -24,7 +25,10 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.core.support.SurroundingTransactionDetectorMethodInterceptor;
+import org.springframework.data.repository.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -109,7 +113,35 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
-			return query.getExecutableQuery().getSingleResult(accessor);
+			return query.getExecutor().getSingleResult(query.getQueryMethod().getStatementId(), accessor);
+		}
+
+	}
+
+	static class DeleteExecution extends MybatisQueryExecution {
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			List result = null;
+			if (query.getQueryMethod().isCollectionQuery()) {
+				result = query.getExecutor().getResultList(query.getQueryMethod().getNamespace() + '.'
+						+ ResidentStatementName.QUERY_PREFIX + query.getQueryMethod().getStatementName(), accessor);
+			}
+			int rows = query.getExecutor().executeDelete(query.getQueryMethod().getStatementId(), accessor);
+			if (query.getQueryMethod().isCollectionQuery()) {
+				return result;
+			}
+			return rows;
+		}
+
+	}
+
+	static class ExistsExecution extends MybatisQueryExecution {
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			Long count = (Long) query.getExecutor().getSingleResult(query.getQueryMethod().getStatementId(), accessor);
+			return count > 0;
 		}
 
 	}
@@ -129,7 +161,7 @@ public abstract class MybatisQueryExecution {
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
 
-			return query.getExecutableQuery().executeUpdate(accessor);
+			return query.getExecutor().executeUpdate(query.getQueryMethod().getStatementId(), accessor);
 
 		}
 
@@ -164,7 +196,7 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
-			return query.getExecutableQuery().getResultList(accessor);
+			return query.getExecutor().getResultList(query.getQueryMethod().getStatementId(), accessor);
 		}
 
 	}
@@ -198,7 +230,27 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
-			return null;
+			List content;
+			Pageable pageable = accessor.getPageable();
+			if (null == pageable || pageable.isUnpaged()) {
+				content = query.getExecutor()
+						.getResultList(query.getQueryMethod().getNamespace() + '.'
+								+ ResidentStatementName.UNPAGED_PREFIX + query.getQueryMethod().getStatementName(),
+								accessor);
+			}
+			else {
+				content = query.getExecutor().getResultList(query.getQueryMethod().getStatementId(), accessor);
+			}
+			return PageableExecutionUtils.getPage(content, pageable, () -> count(query, accessor));
+		}
+
+		private long count(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+
+			Long total = (Long) query.getExecutor().getSingleResult(//
+					query.getQueryMethod().getNamespace() + '.' + ResidentStatementName.COUNT_PREFIX
+							+ query.getQueryMethod().getStatementName(),
+					accessor);
+			return total;
 		}
 
 	}

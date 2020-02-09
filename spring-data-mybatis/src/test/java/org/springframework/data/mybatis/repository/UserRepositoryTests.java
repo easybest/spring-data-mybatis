@@ -474,8 +474,10 @@ public class UserRepositoryTests {
 	public void returnsAllAsPageIfNoPageableIsGiven() {
 
 		this.flushTestUsers();
-		Assertions.assertThat(this.repository.findAll(Pageable.unpaged()))
-				.isEqualTo(new PageImpl<>(this.repository.findAll()));
+
+		Page<User> unpaged = this.repository.findAll(Pageable.unpaged());
+		List<User> all = this.repository.findAll();
+		Assertions.assertThat(unpaged).isEqualTo(new PageImpl<>(all));
 	}
 
 	@Test

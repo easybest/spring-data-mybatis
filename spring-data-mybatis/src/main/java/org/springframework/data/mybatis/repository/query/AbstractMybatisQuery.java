@@ -32,6 +32,7 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
+import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
@@ -54,7 +55,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 	private final Lazy<MybatisQueryExecution> execution;
 
-	private final MybatisExecutableQuery executableQuery;
+	private final Lazy<MybatisExecutor> executor;
 
 	public AbstractMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
 
@@ -64,79 +65,81 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 		this.sqlSessionTemplate = sqlSessionTemplate;
 		this.method = method;
 
-		this.executableQuery = this.createExecutableQuery();
+		this.executor = Lazy.of(this::createExecutor);
 
-		this.execution = Lazy.of(() -> {
-			if (method.isStreamQuery()) {
-				return new MybatisQueryExecution.StreamExecution();
+		this.execution = Lazy.of(this::createQueryExecution);
+
+	}
+
+	protected MybatisExecutor createExecutor() {
+		MybatisExecutor executor = MybatisExecutor.create(this.sqlSessionTemplate, (statementId, accessor) -> {
+			Map<String, Object> params = new HashMap<>();
+			Parameters<?, ?> parameters = accessor.getParameters();
+			for (Parameter p : parameters.getBindableParameters()) {
+				params.put(
+						p.isNamedParameter() ? p.getName().get()
+								: ResidentStatementName.PARAMETER_POSITION_PREFIX + (p.getIndex() + 1),
+						accessor.getValue(p));
 			}
-			if (method.isProcedureQuery()) {
-				return new MybatisQueryExecution.ProcedureExecution();
+
+			Sort sort = null;
+			if (parameters.hasSortParameter()) {
+				sort = accessor.getSort();
 			}
-			if (method.isCollectionQuery()) {
-				return new MybatisQueryExecution.CollectionExecution();
+
+			if (this instanceof PartTreeMybatisQuery) {
+				Sort treeSort = ((PartTreeMybatisQuery) this).getTree().getSort();
+				if (null != treeSort && treeSort.isSorted()) {
+					if (null != sort) {
+						sort.and(treeSort);
+					}
+					else {
+						sort = treeSort;
+					}
+				}
 			}
-			if (method.isSliceQuery()) {
-				return new MybatisQueryExecution.SlicedExecution();
+
+			if (null != sort && sort.isSorted()) {
+				params.put(ResidentStatementName.SORT, sort);
 			}
-			if (method.isPageQuery()) {
-				return new MybatisQueryExecution.PagedExecution();
+
+			if (parameters.hasPageableParameter()) {
+				Pageable pageable = accessor.getPageable();
+				if (pageable.isPaged()) {
+					params.put(ResidentStatementName.PAGE_SIZE, pageable.getPageSize());
+					params.put(ResidentStatementName.OFFSET, pageable.getOffset());
+				}
 			}
-			if (method.isModifyingQuery()) {
-				return null;
-			}
-			return new MybatisQueryExecution.SingleEntityExecution();
+
+			return params;
 		});
+		return executor;
 	}
 
-	private MybatisExecutableQuery createExecutableQuery() {
-		return this.doCreateExecutableQuery();
+	private MybatisQueryExecution createQueryExecution() {
+		if (this.method.isStreamQuery()) {
+			return new MybatisQueryExecution.StreamExecution();
+		}
+		if (this.method.isProcedureQuery()) {
+			return new MybatisQueryExecution.ProcedureExecution();
+		}
+		if (this.method.isCollectionQuery()) {
+			return new MybatisQueryExecution.CollectionExecution();
+		}
+		if (this.method.isSliceQuery()) {
+			return new MybatisQueryExecution.SlicedExecution();
+		}
+		if (this.method.isPageQuery()) {
+			return new MybatisQueryExecution.PagedExecution();
+		}
+		if (this.method.isModifyingQuery()) {
+			return null;
+		}
+		return new MybatisQueryExecution.SingleEntityExecution();
 	}
 
-	protected MybatisExecutableQuery doCreateExecutableQuery() {
-		MybatisExecutableQuery query = new MybatisExecutableQuery(this.getSqlSessionTemplate(),
-				this.getQueryMethod().getStatementId(), accessor -> {
-
-					Parameters<?, ?> parameters = accessor.getParameters();
-					Parameters<?, ?> bindableParameters = parameters.getBindableParameters();
-					Map<String, Object> params = bindableParameters.stream()
-							.collect(Collectors.toMap(
-									p -> p.isNamedParameter() ? p.getName().get() : "__p" + (p.getIndex() + 1),
-									p -> accessor.getValue(p)));
-
-					Sort sort = null;
-					if (parameters.hasSortParameter()) {
-						sort = accessor.getSort();
-					}
-
-					if (this instanceof PartTreeMybatisQuery) {
-						Sort treeSort = ((PartTreeMybatisQuery) this).getTree().getSort();
-						if (null != treeSort && treeSort.isSorted()) {
-							if (null != sort) {
-								sort.and(treeSort);
-							}
-							else {
-								sort = treeSort;
-							}
-						}
-					}
-
-					if (null != sort && sort.isSorted()) {
-						params.put(ResidentStatementName.SORT, sort);
-					}
-
-					if (parameters.hasPageableParameter()) {
-						Pageable pageable = accessor.getPageable();
-						params.put(ResidentStatementName.PAGE_SIZE, pageable.getPageSize());
-						params.put(ResidentStatementName.OFFSET, pageable.getOffset());
-					}
-					return params;
-				});
-		return query;
-	}
-
-	public MybatisExecutableQuery getExecutableQuery() {
-		return this.executableQuery;
+	public MybatisExecutor getExecutor() {
+		return this.executor.get();
 	}
 
 	@Override

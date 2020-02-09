@@ -360,7 +360,7 @@ public interface UserRepository extends MybatisExampleRepository<User, Integer, 
 	@Query("select firstname as firstname, lastname as lastname from User u where u.firstname = 'Oliver'")
 	Map<String, Object> findMapWithNullValues();
 
-	@Query("select * from SD_User u where u.emailAddress = ?")
+	@Query("select * from user u where u.emailAddress = ?1")
 	User findByEmailNativeAddressJdbcStyleParameter(String emailAddress);
 
 	List<NameOnlyDto> findByNamedQueryWithConstructorExpression();

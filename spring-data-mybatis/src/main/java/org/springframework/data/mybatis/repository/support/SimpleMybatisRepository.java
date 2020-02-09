@@ -29,6 +29,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.repository.MybatisRepository;
@@ -269,7 +270,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	public <X extends T> Page<T> findAll(Pageable pageable, X condition) {
 		if (null == pageable || pageable.isUnpaged()) {
 			// FIXME use a default pageable?
-			return Page.empty(pageable);
+			List<T> content = findAll(condition);
+			return new PageImpl<>(content, pageable, content.size());
 		}
 		return this.findByPager(pageable, ResidentStatementName.FIND_BY_PAGER, ResidentStatementName.COUNT, condition);
 	}

@@ -80,7 +80,7 @@ import org.springframework.data.mybatis.annotation.Example;
 								attributeNodes = { @NamedAttributeNode("roles") }) }) })
 @NamedQueries({ //
 		@NamedQuery(name = "User.findByEmailAddress", //
-				query = "SELECT u FROM User u WHERE u.emailAddress = ?1"), //
+				query = "SELECT u.* FROM User u WHERE u.emailAddress = ?1"), //
 		@NamedQuery(name = "User.findByNamedQueryWithAliasInInvertedOrder", //
 				query = "SELECT u.lastname AS lastname, u.firstname AS firstname FROM User u ORDER BY u.lastname ASC"),
 		@NamedQuery(name = "User.findByNamedQueryWithConstructorExpression",

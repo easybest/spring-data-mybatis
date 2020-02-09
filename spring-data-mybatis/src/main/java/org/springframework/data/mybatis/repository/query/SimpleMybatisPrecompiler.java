@@ -474,12 +474,18 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String addBaseColumnListSQL() {
+		if (this.configuration.getSqlFragments().containsKey(this.namespace + ".__base_column_list")) {
+			return "";
+		}
 		String sql = this.mappingPropertyToColumn().values().stream().map(c -> c.getName().render(this.dialect))
 				.collect(Collectors.joining(","));
 		return String.format("<sql id=\"__base_column_list\">%s</sql>", sql);
 	}
 
 	private String addExampleWhereClauseSQL() {
+		if (this.configuration.getSqlFragments().containsKey(this.namespace + ".__example_where_clause")) {
+			return "";
+		}
 		return "<sql id=\"__example_where_clause\">" + "<where>"
 				+ "<foreach collection=\"oredCriteria\" item=\"criteria\" separator=\"or\">"
 				+ "<if test=\"criteria.valid\">" + "<trim prefix=\"(\" prefixOverrides=\"and\" suffix=\")\">"

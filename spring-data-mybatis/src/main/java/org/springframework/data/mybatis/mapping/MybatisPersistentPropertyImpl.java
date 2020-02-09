@@ -169,7 +169,7 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 
 		this.column = Lazy.of(() -> {
 			String columnName = PropertyNameFieldNamingStrategy.INSTANCE.getFieldName(this);
-			Class<?> actualType = this.getActualType();
+			Class<?> actualType = this.getType();
 
 			javax.persistence.Column column = this.findAnnotation(javax.persistence.Column.class);
 			if (null != column && StringUtils.hasText(column.name())) {

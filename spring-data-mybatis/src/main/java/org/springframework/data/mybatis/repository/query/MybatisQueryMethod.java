@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import lombok.Getter;
 import org.apache.ibatis.mapping.SqlCommandType;
@@ -105,7 +106,8 @@ public class MybatisQueryMethod extends QueryMethod {
 		String namespace = this.getAnnotationValue("namespace", String.class);
 		String statementName = this.getAnnotationValue("statement", String.class);
 		this.namespace = StringUtils.hasText(namespace) ? namespace : metadata.getRepositoryInterface().getName();
-		this.statementName = StringUtils.hasLength(statementName) ? statementName : (method.getName());
+		this.statementName = StringUtils.hasLength(statementName) ? statementName
+				: (method.getName() + UUID.randomUUID().toString().replace("-", ""));
 	}
 
 	private void assertParameterNamesInAnnotatedQuery() {
@@ -134,6 +136,19 @@ public class MybatisQueryMethod extends QueryMethod {
 
 	Class<?> getReturnType() {
 		return this.method.getReturnType();
+	}
+
+	String getActualResultType() {
+		Class<?> type = this.getReturnType();
+		if (this.isCollectionQuery()) {
+			type = this.getReturnedObjectType();
+		}
+
+		if (type.isInterface()) {
+			type = this.getDomainClass();
+		}
+
+		return type.getName();
 	}
 
 	@Override
@@ -184,7 +199,7 @@ public class MybatisQueryMethod extends QueryMethod {
 	}
 
 	public String getStatementId() {
-		return this.getNamespace() + '.' + getStatementName();
+		return this.getNamespace() + '.' + this.getStatementName();
 	}
 
 	public SqlCommandType getModifyingType() {
@@ -217,8 +232,8 @@ public class MybatisQueryMethod extends QueryMethod {
 
 	String getNamedCountQueryName() {
 
-		String annotatedName = getAnnotationValue("countName", String.class);
-		return StringUtils.hasText(annotatedName) ? annotatedName : getNamedQueryName() + ".count";
+		String annotatedName = this.getAnnotationValue("countName", String.class);
+		return StringUtils.hasText(annotatedName) ? annotatedName : this.getNamedQueryName() + ".count";
 	}
 
 	@Nullable

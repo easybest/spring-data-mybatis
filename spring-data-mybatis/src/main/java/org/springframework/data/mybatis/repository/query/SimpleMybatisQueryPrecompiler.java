@@ -81,15 +81,39 @@ class SimpleMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 			return "";
 		}
 
-		return String.format("<select id=\"%s\" %s=\"%s\">%s</select>", method.getStatementName(),
+		String unpaged = "";
+		if (method.isPageQuery()) {
+			unpaged = String.format("<select id=\"%s\" %s=\"%s\">%s</select>",
+					ResidentStatementName.UNPAGED_PREFIX + method.getStatementName(),
+					((null != method.getResultMap() || SELECT_ALL_FROM.matcher(sql).matches()) ? "resultMap"
+							: "resultType"),
+					((null != method.getResultMap()) ? //
+							method.getResultMap() : //
+							(SELECT_ALL_FROM.matcher(sql).matches() ? //
+									ResidentStatementName.RESULT_MAP : //
+									method.getReturnedObjectType().getName())),
+					sql);
+		}
+		if (method.isPageQuery() || method.isSliceQuery()) {
+			sql = this.dialect.getLimitHandler().processSql(sql, null);
+		}
+
+		String select = String.format("<select id=\"%s\" %s=\"%s\">%s</select>", method.getStatementName(),
 				((null != method.getResultMap() || SELECT_ALL_FROM.matcher(sql).matches()) ? "resultMap"
 						: "resultType"),
 				((null != method.getResultMap()) ? //
 						method.getResultMap() : //
 						(SELECT_ALL_FROM.matcher(sql).matches() ? //
 								ResidentStatementName.RESULT_MAP : //
-								method.getReturnedObjectType().getName())),
+								method.getActualResultType())),
 				sql);
+		if (method.isPageQuery()) {
+			DeclaredQuery countQuery = this.query.getQuery().deriveCountQuery(null, null);
+			String count = String.format("<select id=\"%s\" resultType=\"long\">%s</select>",
+					ResidentStatementName.COUNT_PREFIX + method.getStatementName(), countQuery.getQueryString());
+			return select + count + unpaged;
+		}
+		return select + unpaged;
 	}
 
 	private String parseMybatisSQL(String sql, List<StringQuery.ParameterBinding> parameterBindings,

@@ -136,6 +136,26 @@ public final class ResidentStatementName {
 	 */
 	public static final String PAGE_SIZE = "__pageSize";
 
+	/**
+	 * For <code>__count_</code>.
+	 */
+	public static final String COUNT_PREFIX = "__count_";
+
+	/**
+	 * For <code>__p</code>.
+	 */
+	public static final String PARAMETER_POSITION_PREFIX = "__p";
+
+	/**
+	 * For <code>__unpaged_</code>.
+	 */
+	public static final String UNPAGED_PREFIX = "__unpaged_";
+
+	/**
+	 * For <code>__query_</code>.
+	 */
+	public static final String QUERY_PREFIX = "__query_";
+
 	public static String statementName(String namespace, String statement) {
 		return namespace + '.' + statement;
 	}
