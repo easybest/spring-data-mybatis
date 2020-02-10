@@ -48,6 +48,12 @@ public @interface Modifying {
 	 * select, insert, update, delete.
 	 * @return modify type
 	 */
-	String value() default "select";
+	TYPE value() default TYPE.SELECT;
+
+	enum TYPE {
+
+		SELECT, INSERT, UPDATE, DELETE;
+
+	}
 
 }

@@ -16,11 +16,15 @@
 package org.springframework.data.mybatis.repository.query;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.session.Configuration;
 import org.mybatis.spring.SqlSessionTemplate;
 
+import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
 
 /**
  * Factory to create the appropriate
@@ -37,34 +41,45 @@ enum MybatisQueryFactory {
 	private static final SpelExpressionParser PARSER = new SpelExpressionParser();
 
 	@Nullable
-	AbstractMybatisQuery fromQueryAnnotation(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
+	AbstractMybatisQuery createQuery(MybatisMappingContext mappingContext, SqlSessionTemplate sqlSessionTemplate,
+			MybatisQueryMethod method, QueryMethodEvaluationContextProvider evaluationContextProvider,
+			NamedQueries namedQueries) {
 
-		log.debug("Looking up query for method {}", method.getName());
-		return fromMethodWithQueryString(sqlSessionTemplate, method, method.getAnnotatedQuery(),
-				evaluationContextProvider);
-	}
-
-	@Nullable
-	AbstractMybatisQuery fromMethodWithQueryString(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
-			@Nullable String queryString, QueryMethodEvaluationContextProvider evaluationContextProvider) {
-
-		if (queryString == null) {
-			return null;
+		// Annotated Query
+		if (StringUtils.hasText(method.getAnnotatedQuery())) {
+			return new SimpleMybatisQuery(sqlSessionTemplate, method, method.getRequiredAnnotatedQuery(),
+					method.getAnnotatedCountQuery(), evaluationContextProvider, PARSER);
 		}
 
-		return new SimpleMybatisQuery(sqlSessionTemplate, method, queryString, evaluationContextProvider, PARSER);
-	}
-
-	@Nullable
-	public StoredProcedureMybatisQuery fromProcedureAnnotation(SqlSessionTemplate sqlSessionTemplate,
-			MybatisQueryMethod method) {
-
-		if (!method.isProcedureQuery()) {
-			return null;
+		// Procedure query
+		if (method.isProcedureQuery()) {
+			return new StoredProcedureMybatisQuery(sqlSessionTemplate, method);
 		}
 
-		return new StoredProcedureMybatisQuery(sqlSessionTemplate, method);
+		// Named query from properties
+		String name = method.getNamedQueryName();
+		String countName = method.getNamedCountQueryName();
+		if (namedQueries.hasQuery(name)) {
+			return new SimpleMybatisQuery(sqlSessionTemplate, method, namedQueries.getQuery(name),
+					(namedQueries.hasQuery(countName) ? namedQueries.getQuery(countName) : null),
+					evaluationContextProvider, PARSER);
+		}
+
+		// Named query from JPA annotations
+		String namedQuery = mappingContext.getNamedQuery(name);
+		String namedCountQuery = mappingContext.getNamedQuery(countName);
+		if (null != namedQuery) {
+			return new SimpleMybatisQuery(sqlSessionTemplate, method, namedQuery, namedCountQuery,
+					evaluationContextProvider, PARSER);
+		}
+
+		// MyBatis statement query
+		Configuration configuration = sqlSessionTemplate.getConfiguration();
+		if (configuration.hasStatement(method.getStatementId(), false)) {
+			return new MybatisStatementQuery(sqlSessionTemplate, method);
+		}
+
+		return null;
 	}
 
 }

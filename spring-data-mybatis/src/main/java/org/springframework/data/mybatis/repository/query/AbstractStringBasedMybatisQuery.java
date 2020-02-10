@@ -15,11 +15,17 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import java.util.stream.Stream;
+
+import org.apache.ibatis.mapping.SqlCommandType;
 import org.mybatis.spring.SqlSessionTemplate;
 
+import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.util.Lazy;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Base class for {@link String} based MyBatis queries.
@@ -30,12 +36,16 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 
 	private final DeclaredQuery query;
 
+	private final DeclaredQuery countQuery;
+
 	private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
 	private final SpelExpressionParser parser;
 
+	private final Lazy<SqlCommandType> sqlCommandType;
+
 	AbstractStringBasedMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
-			String queryString, QueryMethodEvaluationContextProvider evaluationContextProvider,
+			String queryString, String countQueryString, QueryMethodEvaluationContextProvider evaluationContextProvider,
 			SpelExpressionParser parser) {
 		super(sqlSessionTemplate, method);
 
@@ -47,11 +57,36 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 		this.parser = parser;
 
 		this.query = new ExpressionBasedStringQuery(queryString, method.getEntityInformation(), parser);
+		if (StringUtils.hasText(countQueryString)) {
+			this.countQuery = new ExpressionBasedStringQuery(countQueryString, method.getEntityInformation(), parser);
+		}
+		else {
+			this.countQuery = this.query.deriveCountQuery(null, null);
+		}
 
+		this.sqlCommandType = Lazy.of(() -> {
+			if (method.isModifyingQuery() && method.getModifyingType() != Modifying.TYPE.SELECT) {
+				return SqlCommandType.valueOf(method.getModifyingType().name());
+			}
+
+			return Stream.of(Modifying.TYPE.values())
+					.filter(type -> queryString.toUpperCase().startsWith(type.name() + " "))
+					.map(type -> SqlCommandType.valueOf(type.name())).findFirst().orElse(SqlCommandType.UNKNOWN);
+
+		});
+	}
+
+	@Override
+	public SqlCommandType getSqlCommandType() {
+		return this.sqlCommandType.get();
 	}
 
 	public DeclaredQuery getQuery() {
 		return this.query;
+	}
+
+	public DeclaredQuery getCountQuery() {
+		return this.countQuery;
 	}
 
 	public QueryMethodEvaluationContextProvider getEvaluationContextProvider() {

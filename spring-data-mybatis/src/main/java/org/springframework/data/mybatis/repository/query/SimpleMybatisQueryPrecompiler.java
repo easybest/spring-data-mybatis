@@ -16,12 +16,9 @@
 package org.springframework.data.mybatis.repository.query;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
-import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.session.Configuration;
 
-import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.util.CollectionUtils;
@@ -32,114 +29,51 @@ import org.springframework.util.StringUtils;
  *
  * @author JARVIS SONG
  */
-class SimpleMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
-
-	private static final Pattern SELECT_ALL_FROM = Pattern.compile("^\\s*select\\s+\\*\\s+from\\s+.*",
-			Pattern.CASE_INSENSITIVE);
+class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 	private final SimpleMybatisQuery query;
 
 	SimpleMybatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			SimpleMybatisQuery query) {
 
-		super(mappingContext, configuration, query.getQueryMethod().getNamespace(),
-				query.getQueryMethod().getEntityInformation().getJavaType());
+		super(mappingContext, configuration, query);
 
 		this.query = query;
 	}
 
 	@Override
-	protected String doPrecompile() {
-
-		MybatisQueryMethod method = this.query.getQueryMethod();
-		if (this.configuration.hasStatement(method.getStatementId(), false)) {
-			return "";
-		}
-		String sql = this.query.getQuery().getQueryString();
-		List<StringQuery.ParameterBinding> parameterBindings = this.query.getQuery().getParameterBindings();
-		if (!CollectionUtils.isEmpty(parameterBindings)) {
-			sql = this.parseMybatisSQL(sql, parameterBindings, method);
-		}
-
-		if (method.isModifyingQuery()) {
-			SqlCommandType type = method.getModifyingType();
-			if (null == type) {
-				type = this.extractSqlCommandType(sql);
-			}
-			if (null == type || type == SqlCommandType.UNKNOWN) {
-				throw new MappingException("@Modifying SQL type is UNKNOWN for " + method.getName());
-			}
-			switch (type) {
-
-			case INSERT:
-				return String.format("<insert id=\"%s\">%s</insert>", method.getStatementName(), sql);
-			case UPDATE:
-				return String.format("<update id=\"%s\">%s</update>", method.getStatementName(), sql);
-			case DELETE:
-				return String.format("<delete id=\"%s\">%s</delete>", method.getStatementName(), sql);
-			}
-			return "";
-		}
-
-		String unpaged = "";
-		if (method.isPageQuery()) {
-			unpaged = String.format("<select id=\"%s\" %s=\"%s\">%s</select>",
-					ResidentStatementName.UNPAGED_PREFIX + method.getStatementName(),
-					((null != method.getResultMap() || SELECT_ALL_FROM.matcher(sql).matches()) ? "resultMap"
-							: "resultType"),
-					((null != method.getResultMap()) ? //
-							method.getResultMap() : //
-							(SELECT_ALL_FROM.matcher(sql).matches() ? //
-									ResidentStatementName.RESULT_MAP : //
-									method.getReturnedObjectType().getName())),
-					sql);
-		}
-		if (method.isPageQuery() || method.isSliceQuery()) {
-			sql = this.dialect.getLimitHandler().processSql(sql, null);
-		}
-
-		String select = String.format("<select id=\"%s\" %s=\"%s\">%s</select>", method.getStatementName(),
-				((null != method.getResultMap() || SELECT_ALL_FROM.matcher(sql).matches()) ? "resultMap"
-						: "resultType"),
-				((null != method.getResultMap()) ? //
-						method.getResultMap() : //
-						(SELECT_ALL_FROM.matcher(sql).matches() ? //
-								ResidentStatementName.RESULT_MAP : //
-								method.getActualResultType())),
-				sql);
-		if (method.isPageQuery()) {
-			DeclaredQuery countQuery = this.query.getQuery().deriveCountQuery(null, null);
-			String count = String.format("<select id=\"%s\" resultType=\"long\">%s</select>",
-					ResidentStatementName.COUNT_PREFIX + method.getStatementName(), countQuery.getQueryString());
-			return select + count + unpaged;
-		}
-		return select + unpaged;
+	protected String mainQueryString() {
+		return this.queryString(this.query.getQuery());
 	}
 
-	private String parseMybatisSQL(String sql, List<StringQuery.ParameterBinding> parameterBindings,
-			MybatisQueryMethod method) {
+	private String queryString(DeclaredQuery query) {
 
+		String sql = query.getQueryString();
+		List<StringQuery.ParameterBinding> parameterBindings = query.getParameterBindings();
+		if (CollectionUtils.isEmpty(parameterBindings)) {
+			return sql;
+		}
 		for (StringQuery.ParameterBinding parameterBinding : parameterBindings) {
 			String replace = null;
 			String bindName = null;
 			String typeHandler = "";
 
 			if (StringUtils.hasText(parameterBinding.getName())) {
-				replace = ":" + parameterBinding.getName();
+				replace = ":" + parameterBinding.getRequiredName();
 				bindName = parameterBinding.getName();
 			}
 			else {
 				replace = "?" + parameterBinding.getPosition();
-
 				if (parameterBinding.isExpression()) {
-					bindName = "__p" + parameterBinding.getPosition();
+					bindName = ResidentStatementName.PARAMETER_POSITION_PREFIX + parameterBinding.getPosition();
 				}
 				else {
-					MybatisParameters.MybatisParameter mp = method.getParameters()
+					MybatisParameters.MybatisParameter mp = this.query.getQueryMethod().getParameters()
 							.getBindableParameter(parameterBinding.getRequiredPosition() - 1);
-					// bindName = mp.getName().orElse("__p" + mp.getIndex());
-					bindName = mp.getName().orElse("__p" + parameterBinding.getPosition());
+					bindName = mp.getName()
+							.orElse(ResidentStatementName.PARAMETER_POSITION_PREFIX + parameterBinding.getPosition());
 				}
+
 			}
 
 			if (StringUtils.hasText(typeHandler)) {
@@ -195,8 +129,40 @@ class SimpleMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	@Override
+	protected String select() {
+
+		MybatisQueryMethod method = this.query.getQueryMethod();
+		String sql = this.mainQueryString();
+		String unpaged = "";
+		String sort = "";
+		String count = "";
+		MybatisParameters parameters = method.getParameters();
+		if (parameters.hasSortParameter()) {
+			sort = this.buildStandardOrderBySegment();
+		}
+
+		if (method.isPageQuery()) {
+			count = String.format("<select id=\"%s\" resultType=\"long\">%s</select>",
+					this.query.getCountStatementName(), this.queryString(this.query.getCountQuery()));
+		}
+
+		if (method.isPageQuery() || parameters.hasPageableParameter() || method.isSliceQuery()) {
+			unpaged = String.format("<select id=\"%s\" %s>%s</select>",
+					ResidentStatementName.UNPAGED_PREFIX + this.query.getStatementName(), this.resultMapOrType(sql),
+					sql + sort);
+			sql = this.dialect.getLimitHandler().processSql(sql + sort, null);
+		}
+
+		String select = String.format("<select id=\"%s\" %s>%s</select>", this.query.getStatementName(),
+				this.resultMapOrType(sql), sql);
+
+		return select + unpaged + count;
+
+	}
+
+	@Override
 	protected String getResourceSuffix() {
-		return "_" + this.query.getQueryMethod().getStatementName() + super.getResourceSuffix();
+		return "_simple_" + this.query.getQueryMethod().getStatementName() + super.getResourceSuffix();
 	}
 
 }

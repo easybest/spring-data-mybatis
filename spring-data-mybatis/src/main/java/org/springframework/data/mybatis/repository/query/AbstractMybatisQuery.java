@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
 
+import org.apache.ibatis.mapping.SqlCommandType;
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.core.convert.converter.Converter;
@@ -51,7 +52,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 	private final SqlSessionTemplate sqlSessionTemplate;
 
-	private final MybatisQueryMethod method;
+	protected final MybatisQueryMethod method;
 
 	private final Lazy<MybatisQueryExecution> execution;
 
@@ -69,6 +70,28 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 		this.execution = Lazy.of(this::createQueryExecution);
 
+	}
+
+	public abstract SqlCommandType getSqlCommandType();
+
+	public String getNamespace() {
+		return this.method.getNamespace();
+	}
+
+	public String getStatementName() {
+		return this.method.getStatementName();
+	}
+
+	public String getCountStatementName() {
+		return this.method.getCountStatementName();
+	}
+
+	public String getStatementId() {
+		return this.getNamespace() + '.' + this.getStatementName();
+	}
+
+	public String getCountStatementId() {
+		return this.getNamespace() + '.' + this.getCountStatementName();
 	}
 
 	protected MybatisExecutor createExecutor() {
@@ -99,18 +122,26 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 				}
 			}
 
-			if (null != sort && sort.isSorted()) {
-				params.put(ResidentStatementName.SORT, sort);
-			}
-
 			if (parameters.hasPageableParameter()) {
 				Pageable pageable = accessor.getPageable();
 				if (pageable.isPaged()) {
 					params.put(ResidentStatementName.PAGE_SIZE, pageable.getPageSize());
 					params.put(ResidentStatementName.OFFSET, pageable.getOffset());
 				}
+				Sort pageableSort = pageable.getSort();
+				if (null != pageableSort && pageableSort.isSorted()) {
+					if (null != sort) {
+						sort.and(pageableSort);
+					}
+					else {
+						sort = pageableSort;
+					}
+				}
 			}
 
+			if (null != sort && sort.isSorted()) {
+				params.put(ResidentStatementName.SORT, sort);
+			}
 			return params;
 		});
 		return executor;

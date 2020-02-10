@@ -35,23 +35,53 @@ import org.springframework.data.annotation.QueryAnnotation;
 @Documented
 public @interface Query {
 
+	/**
+	 * Query string.
+	 * @return query sql
+	 */
 	String value() default "";
 
-	String name() default "";
-
-	String namespace() default "";
-
-	String statement() default "";
-
-	String countName() default "";
-
-	String countNamespace() default "";
-
-	String countStatement() default "";
-
-	// Extra
+	/**
+	 * In page query, define the count query string.
+	 * @return count query string
+	 */
 	String countQuery() default "";
 
+	/**
+	 * Count projection.
+	 * @return count projection
+	 */
 	String countProjection() default "";
+
+	/**
+	 * Named query's key.
+	 * @return named query
+	 */
+	String name() default "";
+
+	/**
+	 * Named count query's name.
+	 * @return named query for count
+	 */
+	String countName() default "";
+
+	/**
+	 * Statement's name. If statement has value, will not pre create any statement and use
+	 * the original statement in the user defined mapper files.
+	 * @return statement name
+	 */
+	String statement() default "";
+
+	/**
+	 * Count statement's name.
+	 * @return count statement
+	 */
+	String countStatement() default "";
+
+	/**
+	 * Mapper namespace.
+	 * @return namespace
+	 */
+	String namespace() default "";
 
 }

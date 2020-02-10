@@ -34,7 +34,7 @@ import org.springframework.util.StringUtils;
  *
  * @author JARVIS SONG
  */
-class PartTreeMyBatisQueryPrecompiler extends AbstractMybatisPrecompiler {
+class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 	private final PartTreeMybatisQuery query;
 
@@ -42,10 +42,14 @@ class PartTreeMyBatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 	PartTreeMyBatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			PartTreeMybatisQuery query) {
-		super(mappingContext, configuration, query.getQueryMethod().getNamespace(),
-				query.getQueryMethod().getEntityInformation().getJavaType());
+		super(mappingContext, configuration, query);
 
 		this.query = query;
+	}
+
+	@Override
+	protected String mainQueryString() {
+		return null;
 	}
 
 	@Override
@@ -73,35 +77,34 @@ class PartTreeMyBatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 		}
 
 		if (method.isQueryForEntity()) {
-			return this.buildSelectStatement(this.query.getQueryMethod().getStatementName(), false);
+			return this.buildSelectStatement(this.query.getStatementName(), false);
 		}
 
 		return null;
 	}
 
 	private String addPageStatement(boolean includeCount) {
-		String sql = this.buildSelectStatement(this.query.getQueryMethod().getStatementName(), true);
-		sql += this.buildSelectStatement(
-				ResidentStatementName.UNPAGED_PREFIX + this.query.getQueryMethod().getStatementName(), false);
+		String sql = this.buildSelectStatement(this.query.getStatementName(), true);
+		sql += this.buildSelectStatement(ResidentStatementName.UNPAGED_PREFIX + this.query.getStatementName(), false);
 		if (includeCount) {
-			String count = this.buildCountStatement(
-					ResidentStatementName.COUNT_PREFIX + this.query.getQueryMethod().getStatementName());
+			String count = this.buildCountStatement(this.query.getCountStatementName());
 			return sql + count;
 		}
 		return sql;
 	}
 
 	private String addExistsStatement() {
-		return this.buildCountStatement(this.query.getQueryMethod().getStatementName());
+		return this.buildCountStatement(this.query.getStatementName());
 	}
 
 	private String addDeleteStatement(PartTree tree, MybatisQueryMethod method) {
 
-		String where = this.buildTreeOrConditionSegment(tree, method);
+		String where = this.buildTreeOrConditionSegment(tree);
 		String sql = String.format("<delete id=\"%s\">delete from %s %s</delete>", //
-				method.getStatementName(), this.getTableName(), StringUtils.hasText(where) ? (" where " + where) : "");
+				this.query.getStatementName(), this.getTableName(),
+				StringUtils.hasText(where) ? (" where " + where) : "");
 		if (method.isCollectionQuery()) {
-			String query = this.buildSelectStatement(ResidentStatementName.QUERY_PREFIX + method.getStatementName(),
+			String query = this.buildSelectStatement(ResidentStatementName.QUERY_PREFIX + this.query.getStatementName(),
 					false);
 			return query + sql;
 		}
@@ -109,12 +112,12 @@ class PartTreeMyBatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String addCountStatement() {
-		return this.buildCountStatement(this.query.getQueryMethod().getStatementName());
+		return this.buildCountStatement(this.query.getStatementName());
 	}
 
 	private String addCollectionStatement() {
 
-		return this.buildSelectStatement(this.query.getQueryMethod().getStatementName(), false);
+		return this.buildSelectStatement(this.query.getStatementName(), false);
 	}
 
 	private String buildCountStatement(String statementName) {
@@ -122,7 +125,7 @@ class PartTreeMyBatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 		PartTree tree = this.query.getTree();
 		MybatisQueryMethod method = this.query.getQueryMethod();
 
-		String where = this.buildTreeOrConditionSegment(tree, method);
+		String where = this.buildTreeOrConditionSegment(tree);
 		String sql = String.format("select %s from %s %s", tree.isLimiting() ? "1" : "count(*)", this.getTableName(),
 				StringUtils.hasText(where) ? (" where " + where) : "");
 
@@ -150,7 +153,7 @@ class PartTreeMyBatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 					.collect(Collectors.joining(","));
 		}
 
-		String where = this.buildTreeOrConditionSegment(tree, method);
+		String where = this.buildTreeOrConditionSegment(tree);
 		String sort = "";
 		if (null != tree.getSort() || method.getParameters().hasSortParameter()) {
 			sort = this.buildStandardOrderBySegment();
@@ -187,7 +190,7 @@ class PartTreeMyBatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 		return String.format("<select id=\"%s\" %s>%s</select>", statementName, result, sql);
 	}
 
-	private String buildTreeOrConditionSegment(PartTree tree, MybatisQueryMethod method) {
+	private String buildTreeOrConditionSegment(PartTree tree) {
 		return tree.stream().map(node -> String.format("(%s)", this.buildTreeAndConditionSegment(node)))
 				.collect(Collectors.joining(" or "));
 	}
@@ -229,7 +232,7 @@ class PartTreeMyBatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 	@Override
 	protected String getResourceSuffix() {
-		return "_tree_" + this.query.getQueryMethod().getStatementName() + super.getResourceSuffix();
+		return "_tree_" + this.query.getStatementName() + super.getResourceSuffix();
 	}
 
 }

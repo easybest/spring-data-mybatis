@@ -34,13 +34,9 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 final class SimpleMybatisQuery extends AbstractStringBasedMybatisQuery {
 
 	SimpleMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, String queryString,
-			QueryMethodEvaluationContextProvider evaluationContextProvider, SpelExpressionParser parser) {
-		super(sqlSessionTemplate, method, queryString, evaluationContextProvider, parser);
-	}
-
-	SimpleMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method,
-			QueryMethodEvaluationContextProvider evaluationContextProvider, SpelExpressionParser parser) {
-		super(sqlSessionTemplate, method, method.getRequiredAnnotatedQuery(), evaluationContextProvider, parser);
+			String countQueryString, QueryMethodEvaluationContextProvider evaluationContextProvider,
+			SpelExpressionParser parser) {
+		super(sqlSessionTemplate, method, queryString, countQueryString, evaluationContextProvider, parser);
 	}
 
 }

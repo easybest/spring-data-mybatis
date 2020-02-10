@@ -115,27 +115,10 @@ public final class MybatisQueryLookupStrategy {
 		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, SqlSessionTemplate sqlSessionTemplate,
 				NamedQueries namedQueries) {
 
-			RepositoryQuery query = MybatisQueryFactory.INSTANCE.fromQueryAnnotation(sqlSessionTemplate, method,
-					this.evaluationContextProvider);
+			RepositoryQuery query = MybatisQueryFactory.INSTANCE.createQuery(this.mappingContext, sqlSessionTemplate,
+					method, this.evaluationContextProvider, namedQueries);
 			if (null != query) {
 				return query;
-			}
-
-			query = MybatisQueryFactory.INSTANCE.fromProcedureAnnotation(sqlSessionTemplate, method);
-			if (null != query) {
-				return query;
-			}
-
-			String name = method.getNamedQueryName();
-			if (namedQueries.hasQuery(name)) {
-				return MybatisQueryFactory.INSTANCE.fromMethodWithQueryString(sqlSessionTemplate, method,
-						namedQueries.getQuery(name), this.evaluationContextProvider);
-			}
-
-			String namedQuery = this.mappingContext.getNamedQuery(name);
-			if (null != namedQuery) {
-				return MybatisQueryFactory.INSTANCE.fromMethodWithQueryString(sqlSessionTemplate, method, namedQuery,
-						this.evaluationContextProvider);
 			}
 
 			throw new IllegalStateException(

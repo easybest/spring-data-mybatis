@@ -15,6 +15,7 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import org.apache.ibatis.mapping.SqlCommandType;
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.data.repository.query.parser.Part;
@@ -39,14 +40,22 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 		this(sqlSessionTemplate, method, EscapeCharacter.DEFAULT);
 	}
 
+	@Override
+	public SqlCommandType getSqlCommandType() {
+		if (this.tree.isDelete()) {
+			return SqlCommandType.DELETE;
+		}
+		return SqlCommandType.SELECT;
+	}
+
 	PartTreeMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, EscapeCharacter escape) {
 		super(sqlSessionTemplate, method);
 		this.escape = escape;
 		Class<?> domainClass = method.getEntityInformation().getJavaType();
 		this.parameters = method.getParameters();
 
-		boolean recreationRequired = this.parameters.hasDynamicProjection()
-				|| this.parameters.potentiallySortsDynamically();
+		// boolean recreationRequired = this.parameters.hasDynamicProjection()
+		// || this.parameters.potentiallySortsDynamically();
 		try {
 			this.tree = new PartTree(method.getName(), domainClass);
 			validate(this.tree, this.parameters, method.toString());

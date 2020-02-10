@@ -113,7 +113,7 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
-			return query.getExecutor().getSingleResult(query.getQueryMethod().getStatementId(), accessor);
+			return query.getExecutor().getSingleResult(query.getStatementId(), accessor);
 		}
 
 	}
@@ -124,10 +124,11 @@ public abstract class MybatisQueryExecution {
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
 			List result = null;
 			if (query.getQueryMethod().isCollectionQuery()) {
-				result = query.getExecutor().getResultList(query.getQueryMethod().getNamespace() + '.'
-						+ ResidentStatementName.QUERY_PREFIX + query.getQueryMethod().getStatementName(), accessor);
+				result = query.getExecutor().getResultList(
+						query.getNamespace() + '.' + ResidentStatementName.QUERY_PREFIX + query.getStatementName(),
+						accessor);
 			}
-			int rows = query.getExecutor().executeDelete(query.getQueryMethod().getStatementId(), accessor);
+			int rows = query.getExecutor().executeDelete(query.getStatementId(), accessor);
 			if (query.getQueryMethod().isCollectionQuery()) {
 				return result;
 			}
@@ -140,7 +141,7 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
-			Long count = (Long) query.getExecutor().getSingleResult(query.getQueryMethod().getStatementId(), accessor);
+			Long count = (Long) query.getExecutor().getSingleResult(query.getStatementId(), accessor);
 			return count > 0;
 		}
 
@@ -161,7 +162,7 @@ public abstract class MybatisQueryExecution {
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
 
-			return query.getExecutor().executeUpdate(query.getQueryMethod().getStatementId(), accessor);
+			return query.getExecutor().executeUpdate(query.getStatementId(), accessor);
 
 		}
 
@@ -178,7 +179,9 @@ public abstract class MybatisQueryExecution {
 				throw new InvalidDataAccessApiUsageException(NO_SURROUNDING_TRANSACTION);
 			}
 
-			return null;
+			List list = query.getExecutor().getResultList(query.getStatementId(), accessor);
+			return list.stream();
+
 		}
 
 	}
@@ -196,7 +199,7 @@ public abstract class MybatisQueryExecution {
 
 		@Override
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
-			return query.getExecutor().getResultList(query.getQueryMethod().getStatementId(), accessor);
+			return query.getExecutor().getResultList(query.getStatementId(), accessor);
 		}
 
 	}
@@ -233,13 +236,12 @@ public abstract class MybatisQueryExecution {
 			List content;
 			Pageable pageable = accessor.getPageable();
 			if (null == pageable || pageable.isUnpaged()) {
-				content = query.getExecutor()
-						.getResultList(query.getQueryMethod().getNamespace() + '.'
-								+ ResidentStatementName.UNPAGED_PREFIX + query.getQueryMethod().getStatementName(),
-								accessor);
+				content = query.getExecutor().getResultList(
+						query.getNamespace() + '.' + ResidentStatementName.UNPAGED_PREFIX + query.getStatementName(),
+						accessor);
 			}
 			else {
-				content = query.getExecutor().getResultList(query.getQueryMethod().getStatementId(), accessor);
+				content = query.getExecutor().getResultList(query.getStatementId(), accessor);
 			}
 			return PageableExecutionUtils.getPage(content, pageable, () -> count(query, accessor));
 		}
@@ -247,8 +249,7 @@ public abstract class MybatisQueryExecution {
 		private long count(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
 
 			Long total = (Long) query.getExecutor().getSingleResult(//
-					query.getQueryMethod().getNamespace() + '.' + ResidentStatementName.COUNT_PREFIX
-							+ query.getQueryMethod().getStatementName(),
+					query.getNamespace() + '.' + ResidentStatementName.COUNT_PREFIX + query.getStatementName(),
 					accessor);
 			return total;
 		}

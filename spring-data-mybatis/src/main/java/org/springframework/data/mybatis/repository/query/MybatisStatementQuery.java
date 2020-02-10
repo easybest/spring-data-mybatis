@@ -18,27 +18,18 @@ package org.springframework.data.mybatis.repository.query;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.mybatis.spring.SqlSessionTemplate;
 
-import org.springframework.data.mybatis.repository.Procedure;
-import org.springframework.data.repository.query.Parameter;
-import org.springframework.data.repository.query.QueryMethod;
+import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 
 /**
- * {@link AbstractMybatisQuery} implementation that inspects a {@link MybatisQueryMethod}
- * for the existence of an {@link Procedure} annotation.
+ * MyBatis statement query.
  *
  * @author JARVIS SONG
+ * @since 2.0.0
  */
-class StoredProcedureMybatisQuery extends AbstractMybatisQuery {
+public class MybatisStatementQuery extends AbstractMybatisQuery {
 
-	private final StoredProcedureAttributes procedureAttributes;
-
-	private final boolean useNamedParameters;
-
-	StoredProcedureMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
+	public MybatisStatementQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
 		super(sqlSessionTemplate, method);
-
-		this.procedureAttributes = method.getProcedureAttributes();
-		this.useNamedParameters = useNamedParameters(method);
 	}
 
 	@Override
@@ -46,13 +37,15 @@ class StoredProcedureMybatisQuery extends AbstractMybatisQuery {
 		return null;
 	}
 
-	private static boolean useNamedParameters(QueryMethod method) {
-		for (Parameter parameter : method.getParameters()) {
-			if (parameter.isNamedParameter()) {
-				return true;
-			}
-		}
-		return false;
+	@Override
+	public String getStatementName() {
+		return this.method.getAnnotationValue("statement", this.method.getName());
+	}
+
+	@Override
+	public String getCountStatementName() {
+		return this.method.getAnnotationValue("countStatement",
+				ResidentStatementName.COUNT_PREFIX + this.getStatementName());
 	}
 
 }
