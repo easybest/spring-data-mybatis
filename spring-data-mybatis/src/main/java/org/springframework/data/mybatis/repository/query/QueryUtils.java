@@ -32,6 +32,7 @@ import javax.persistence.metamodel.Attribute;
 
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.util.Streamable;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -170,7 +171,7 @@ public abstract class QueryUtils {
 
 		builder = new StringBuilder();
 		builder.append("\\s+"); // at least one space
-		builder.append("[^\\s\\(\\)]+"); // No white char no bracket
+		builder.append("([^\\s\\(\\)]+)"); // No white char no bracket
 		builder.append("\\s+[as|AS]+\\s+(([\\w\\.]+))"); // the potential alias
 
 		FIELD_ALIAS_PATTERN = Pattern.compile(builder.toString());
@@ -280,13 +281,32 @@ public abstract class QueryUtils {
 		Matcher matcher = FIELD_ALIAS_PATTERN.matcher(query);
 
 		while (matcher.find()) {
-			String alias = matcher.group(1);
+			String alias = matcher.group(2);
 
 			if (StringUtils.hasText(alias)) {
 				result.add(alias);
 			}
 		}
 		return result;
+	}
+
+	public static String quoteFieldAliases(String query, Dialect dialect) {
+		Matcher matcher = FIELD_ALIAS_PATTERN.matcher(query);
+
+		while (matcher.find()) {
+
+			String column = matcher.group(1);
+			String alias = matcher.group(2);
+			if (StringUtils.hasText(alias)) {
+
+				query = query.replace(matcher.group(),
+						String.format(" %s as %s ", column, dialect.quoteCertainly(alias)));
+
+			}
+
+		}
+
+		return query;
 	}
 
 	static Set<String> getFunctionAliases(String query) {
@@ -390,6 +410,19 @@ public abstract class QueryUtils {
 		Assert.hasText(query, "Query must not be null or empty!");
 
 		return CONSTRUCTOR_EXPRESSION.matcher(query).find();
+	}
+
+	public static String getConstructorExpression(String query) {
+		Matcher matcher = CONSTRUCTOR_EXPRESSION.matcher(query);
+		if (matcher.find()) {
+			String exp = matcher.group().trim();
+
+			int idx = exp.toLowerCase().indexOf(" new ");
+
+			return exp.substring(idx).trim();
+
+		}
+		return null;
 	}
 
 	public static String getProjection(String query) {

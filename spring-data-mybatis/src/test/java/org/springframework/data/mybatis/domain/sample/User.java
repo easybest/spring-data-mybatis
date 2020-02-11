@@ -100,9 +100,9 @@ import org.springframework.data.mybatis.annotation.Example;
 		@SqlResultSetMapping(name = "SqlResultSetMapping.count", columns = @ColumnResult(name = "cnt")) })
 @NamedNativeQueries({
 		@NamedNativeQuery(name = "User.findByNativeNamedQueryWithPageable", resultClass = User.class,
-				query = "SELECT * FROM SD_USER ORDER BY UCASE(firstname)"),
+				query = "SELECT * FROM USER ORDER BY UCASE(firstname)"),
 		@NamedNativeQuery(name = "User.findByNativeNamedQueryWithPageable.count",
-				resultSetMapping = "SqlResultSetMapping.count", query = "SELECT count(*) AS cnt FROM SD_USER") })
+				resultSetMapping = "SqlResultSetMapping.count", query = "SELECT count(*) AS cnt FROM USER") })
 @Table(name = "user")
 public class User {
 

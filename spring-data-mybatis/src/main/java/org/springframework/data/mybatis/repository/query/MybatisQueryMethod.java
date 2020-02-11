@@ -19,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -232,7 +233,10 @@ public class MybatisQueryMethod extends QueryMethod {
 
 	String getActualResultType() {
 		Class<?> type = this.getReturnType();
-		if (this.isCollectionQuery()) {
+		if (type == Map.class) {
+			return "map";
+		}
+		if (this.isCollectionQuery() || this.isSliceQuery() || this.isPageQuery() || this.isStreamQuery()) {
 			type = this.getReturnedObjectType();
 		}
 

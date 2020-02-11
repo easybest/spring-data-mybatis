@@ -37,6 +37,11 @@ public final class ResidentStatementName {
 	public static final String RESULT_MAP = PREFIX + "result_map";
 
 	/**
+	 * For <code>__result_map_</code>.
+	 */
+	public static final String RESULT_MAP_PREFIX = PREFIX + "__result_map_";
+
+	/**
 	 * For <code>__get_by_id</code>.
 	 */
 	public static final String GET_BY_ID = PREFIX + "get_by_id";

@@ -237,7 +237,8 @@ public class UserRepositoryFinderTests {
 
 	@Test
 	public void parametersForContainsGetProperlyEscaped() {
-		Assert.assertThat(this.userRepository.findByFirstnameContaining("liv%"), iterableWithSize(0));
+		List<User> users = this.userRepository.findByFirstnameContaining("liv\\%");
+		Assert.assertThat(users, iterableWithSize(0));
 	}
 
 	@Test

@@ -72,7 +72,7 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 		if (method.isSliceQuery()) {
 			return this.addPageStatement(false);
 		}
-		if (method.isCollectionQuery()) {
+		if (method.isCollectionQuery() || method.isStreamQuery()) {
 			return this.addCollectionStatement();
 		}
 

@@ -76,6 +76,17 @@ public abstract class Dialect {
 		}
 	}
 
+	public final String quoteCertainly(String name) {
+		if (null == name) {
+			return null;
+		}
+		if (name.charAt(0) == '`') {
+			return this.openQuote() + name.substring(1, name.length() - 1) + this.closeQuote();
+		}
+		return this.openQuote() + name + this.closeQuote();
+
+	}
+
 	public IdentityColumnSupport getIdentityColumnSupport() {
 		return new IdentityColumnSupportImpl();
 	}

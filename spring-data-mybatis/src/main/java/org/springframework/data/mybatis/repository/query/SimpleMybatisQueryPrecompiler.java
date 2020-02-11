@@ -15,12 +15,18 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Parameter;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.ibatis.session.Configuration;
 
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -49,6 +55,9 @@ class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 	private String queryString(DeclaredQuery query) {
 
 		String sql = query.getQueryString();
+
+		sql = QueryUtils.quoteFieldAliases(sql, this.dialect);
+
 		List<StringQuery.ParameterBinding> parameterBindings = query.getParameterBindings();
 		if (CollectionUtils.isEmpty(parameterBindings)) {
 			return sql;
@@ -136,6 +145,52 @@ class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 		String unpaged = "";
 		String sort = "";
 		String count = "";
+		String resultMap = null;
+		String result = "";
+
+		if (QueryUtils.hasConstructorExpression(sql)) {
+			String constructorExpression = QueryUtils.getConstructorExpression(sql);
+
+			String className = constructorExpression.substring(3, constructorExpression.lastIndexOf("(")).trim();
+			Class<?> clz;
+			try {
+				clz = ClassUtils.forName(className, this.getClass().getClassLoader());
+
+			}
+			catch (ClassNotFoundException ex) {
+				throw new MappingException(
+						"Could not find class: " + className + " from constructor expression: " + sql);
+			}
+			String columns = constructorExpression.substring(constructorExpression.lastIndexOf("(") + 1,
+					constructorExpression.length() - 1);
+			String[] columnList = columns.split(",");
+
+			sql = sql.replace(constructorExpression,
+					Stream.of(columnList)
+							.map(c -> String.format("%s as %s", c.trim(), dialect.quoteCertainly(c.trim())))
+							.collect(Collectors.joining(",")));
+			sql = QueryUtils.quoteFieldAliases(sql, this.dialect);
+			StringBuilder results = new StringBuilder();
+			results.append("<constructor>");
+			Constructor<?> constructor = Stream.of(clz.getDeclaredConstructors())
+					.filter(c -> c.getParameterCount() == columnList.length).findFirst().orElseThrow(
+							() -> new MappingException("Could not find constructor for: " + constructorExpression));
+
+			for (int i = 0; i < constructor.getParameterCount(); i++) {
+				Parameter parameter = constructor.getParameters()[i];
+				results.append(String.format("<arg column=\"%s\" javaType=\"%s\"/>", columnList[i].trim(),
+						parameter.getType().getName()));
+			}
+
+			results.append("</constructor>");
+			resultMap = ResidentStatementName.RESULT_MAP_PREFIX + this.query.getStatementName();
+
+			result = String.format("<resultMap id=\"%s\" type=\"%s\">%s</resultMap>", resultMap, className,
+					results.toString());
+
+			resultMap = String.format(" resultMap=\"%s\"", resultMap);
+		}
+
 		MybatisParameters parameters = method.getParameters();
 		if (parameters.hasSortParameter()) {
 			sort = this.buildStandardOrderBySegment();
@@ -148,15 +203,15 @@ class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 		if (method.isPageQuery() || parameters.hasPageableParameter() || method.isSliceQuery()) {
 			unpaged = String.format("<select id=\"%s\" %s>%s</select>",
-					ResidentStatementName.UNPAGED_PREFIX + this.query.getStatementName(), this.resultMapOrType(sql),
-					sql + sort);
+					ResidentStatementName.UNPAGED_PREFIX + this.query.getStatementName(),
+					(null != resultMap) ? resultMap : this.resultMapOrType(sql), sql + sort);
 			sql = this.dialect.getLimitHandler().processSql(sql + sort, null);
 		}
 
 		String select = String.format("<select id=\"%s\" %s>%s</select>", this.query.getStatementName(),
-				this.resultMapOrType(sql), sql);
+				(null != resultMap) ? resultMap : this.resultMapOrType(sql), sql);
 
-		return select + unpaged + count;
+		return result + select + unpaged + count;
 
 	}
 
