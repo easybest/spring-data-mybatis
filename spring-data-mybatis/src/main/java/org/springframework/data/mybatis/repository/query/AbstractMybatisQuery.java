@@ -38,6 +38,7 @@ import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -109,9 +110,10 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 			if (parameters.hasSortParameter()) {
 				sort = accessor.getSort();
 			}
-
+			Integer maxResultsFromTree = null;
 			if (this instanceof PartTreeMybatisQuery) {
-				Sort treeSort = ((PartTreeMybatisQuery) this).getTree().getSort();
+				PartTree tree = ((PartTreeMybatisQuery) this).getTree();
+				Sort treeSort = tree.getSort();
 				if (null != treeSort && treeSort.isSorted()) {
 					if (null != sort) {
 						sort.and(treeSort);
@@ -120,13 +122,36 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 						sort = treeSort;
 					}
 				}
+
+				if (tree.isLimiting()) {
+					maxResultsFromTree = tree.getMaxResults();
+				}
 			}
 
 			if (parameters.hasPageableParameter()) {
 				Pageable pageable = accessor.getPageable();
 				if (pageable.isPaged()) {
-					params.put(ResidentStatementName.PAGE_SIZE, pageable.getPageSize());
-					params.put(ResidentStatementName.OFFSET, pageable.getOffset());
+
+					if (null != maxResultsFromTree) {
+						if (pageable.getPageSize() > maxResultsFromTree && pageable.getOffset() > 0) {
+							params.put(ResidentStatementName.OFFSET,
+									pageable.getOffset() - (pageable.getPageSize() - maxResultsFromTree));
+						}
+						else {
+							params.put(ResidentStatementName.OFFSET, pageable.getOffset());
+						}
+						params.put(ResidentStatementName.PAGE_SIZE, maxResultsFromTree);
+					}
+					else {
+						params.put(ResidentStatementName.PAGE_SIZE, pageable.getPageSize());
+						params.put(ResidentStatementName.OFFSET, pageable.getOffset());
+					}
+
+					if (this.method.isSliceQuery()) {
+						params.put(ResidentStatementName.PAGE_SIZE,
+								(Integer) params.get(ResidentStatementName.PAGE_SIZE) + 1);
+					}
+
 				}
 				Sort pageableSort = pageable.getSort();
 				if (null != pageableSort && pageableSort.isSorted()) {
@@ -137,6 +162,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 						sort = pageableSort;
 					}
 				}
+
 			}
 
 			if (null != sort && sort.isSorted()) {

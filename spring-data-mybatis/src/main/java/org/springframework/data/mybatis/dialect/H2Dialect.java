@@ -24,6 +24,7 @@ import org.springframework.data.mybatis.dialect.pagination.AbstractLimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHelper;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
+import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -38,14 +39,17 @@ public class H2Dialect extends Dialect {
 	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 		@Override
 		public String processSql(String sql, RowSelection selection) {
-			if (null != selection && selection.getMaxRows() > 0) {
-				return sql + " limit "
-						+ (LimitHelper.hasFirstRow(selection) ? (LimitHelper.getFirstRow(selection) + ",") : "")
-						+ selection.getMaxRows();
+
+			if (null != selection) {
+				final boolean hasOffset = LimitHelper.hasFirstRow(selection);
+				return sql + (hasOffset
+						? String.format(" limit %d offset %d", selection.getMaxRows(),
+								LimitHelper.getFirstRow(selection))
+						: String.format(" limit %s", selection.getMaxRows()));
 			}
-			// final boolean hasOffset = LimitHelper.hasFirstRow(selection);
-			// return sql + (hasOffset ? " limit ? offset ?" : " limit ?");
-			return sql + " limit #{__offset}, #{__pageSize}";
+
+			return sql + String.format(" limit #{%s} offset #{%s}", ResidentStatementName.PAGE_SIZE,
+					ResidentStatementName.OFFSET);
 		}
 
 		@Override
