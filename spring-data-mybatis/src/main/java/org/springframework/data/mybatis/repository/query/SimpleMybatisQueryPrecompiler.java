@@ -25,6 +25,7 @@ import org.apache.ibatis.session.Configuration;
 
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -74,13 +75,13 @@ class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 			else {
 				replace = "?" + parameterBinding.getPosition();
 				if (parameterBinding.isExpression()) {
-					bindName = ResidentStatementName.PARAMETER_POSITION_PREFIX + parameterBinding.getPosition();
+					bindName = ResidentParameterName.POSITION_PREFIX + parameterBinding.getPosition();
 				}
 				else {
 					MybatisParameters.MybatisParameter mp = this.query.getQueryMethod().getParameters()
 							.getBindableParameter(parameterBinding.getRequiredPosition() - 1);
 					bindName = mp.getName()
-							.orElse(ResidentStatementName.PARAMETER_POSITION_PREFIX + parameterBinding.getPosition());
+							.orElse(ResidentParameterName.POSITION_PREFIX + parameterBinding.getPosition());
 				}
 
 			}

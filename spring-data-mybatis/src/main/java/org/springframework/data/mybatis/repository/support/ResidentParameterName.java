@@ -56,4 +56,24 @@ public final class ResidentParameterName {
 	 */
 	public static final String ID = PREFIX + "id";
 
+	/**
+	 * For <code>__p</code>.
+	 */
+	public static final String POSITION_PREFIX = PREFIX + "p";
+
+	/**
+	 * For <code>__example</code>.
+	 */
+	public static final String EXAMPLE = PREFIX + "example";
+
+	/**
+	 * For <code>__matcher</code>.
+	 */
+	public static final String MATCHER = PREFIX + "matcher";
+
+	/**
+	 * For <code>__accessor</code>.
+	 */
+	public static final String ACCESSOR = PREFIX + "accessor";
+
 }

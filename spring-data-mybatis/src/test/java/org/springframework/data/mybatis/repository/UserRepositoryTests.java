@@ -1557,6 +1557,20 @@ public class UserRepositoryTests {
 	}
 
 	@Test
+	public void findAllByExampleWithSpecifyMatcher() {
+		this.flushTestUsers();
+
+		User prototype = new User();
+		prototype.setFirstname("Ol");
+
+		Example<User> example = Example.of(prototype, ExampleMatcher.matching().withIgnorePaths("age", "createdAt")
+				.withMatcher("firstname", matcher -> matcher.startsWith().ignoreCase()));
+		List<User> users = this.repository.findAll(example);
+
+		Assertions.assertThat(users).containsOnly(this.firstUser);
+	}
+
+	@Test
 	public void findAllByExampleWithStartingStringMatcher() {
 
 		this.flushTestUsers();

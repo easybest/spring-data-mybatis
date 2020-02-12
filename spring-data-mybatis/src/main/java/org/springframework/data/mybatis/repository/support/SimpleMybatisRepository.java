@@ -19,15 +19,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
 import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.data.support.ExampleMatcherAccessor;
+import org.springframework.data.util.Streamable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -148,10 +151,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Transactional
 	public void deleteAll(Iterable<? extends T> entities) {
 		Assert.notNull(entities, "Entities must not be null.");
-		for (T entity : entities) {
-			this.delete(entity);
-		}
-
+		entities.forEach(this::delete);
 	}
 
 	@Override
@@ -168,11 +168,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 			return;
 		}
 
-		Set<ID> ids = new HashSet<>();
-		for (T entity : entities) {
-			ID id = this.entityInformation.getRequiredId(entity);
-			ids.add(id);
-		}
+		Set<ID> ids = Streamable.of(entities).stream().map(this.entityInformation::getRequiredId)
+				.collect(Collectors.toSet());
 
 		this.deleteInBatchById(ids);
 	}
@@ -205,11 +202,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Transactional
 	public <S extends T> List<S> saveAll(Iterable<S> entities) {
 		Assert.notNull(entities, "Entities must not be null.");
-		List<S> result = new ArrayList<>();
-		for (S entity : entities) {
-			result.add(this.save(entity));
-		}
-		return result;
+
+		return Streamable.of(entities).stream().map(this::save).collect(Collectors.toList());
 	}
 
 	@Override
@@ -346,16 +340,39 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	@Override
 	public <S extends T> List<S> findAll(Example<S> example) {
-		return null;
+
+		return this.findAll(example, (Sort) null);
 	}
 
 	@Override
 	public <S extends T> List<S> findAll(Example<S> example, Sort sort) {
-		return null;
+		ExampleMatcher matcher = example.getMatcher();
+		ExampleMatcherAccessor accessor = new ExampleMatcherAccessor(matcher);
+		S entity = example.getProbe();
+		Map<String, Object> params = new HashMap<>();
+		params.put(ResidentParameterName.MATCHER, matcher);
+		params.put(ResidentParameterName.ACCESSOR, accessor);
+		params.put(ResidentParameterName.ENTITY, entity);
+		if (null != sort) {
+			params.put(ResidentParameterName.SORT, sort);
+		}
+		return this.selectList(ResidentStatementName.QUERY_BY_EXAMPLE, params);
 	}
 
 	@Override
 	public <S extends T> Page<S> findAll(Example<S> example, Pageable pageable) {
+		if (null == pageable || pageable.isUnpaged()) {
+			// FIXME use a default pageable?
+			List<S> content;
+			if (null != pageable && null != pageable.getSort() && pageable.getSort().isSorted()) {
+				content = findAll(example, pageable.getSort());
+			}
+			else {
+				content = findAll(example);
+			}
+			return new PageImpl<>(content, pageable, content.size());
+		}
+
 		return null;
 	}
 

@@ -32,6 +32,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
@@ -100,10 +101,8 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 			Map<String, Object> params = new HashMap<>();
 			Parameters<?, ?> parameters = accessor.getParameters();
 			for (Parameter p : parameters.getBindableParameters()) {
-				params.put(
-						p.isNamedParameter() ? p.getName().get()
-								: ResidentStatementName.PARAMETER_POSITION_PREFIX + (p.getIndex() + 1),
-						accessor.getValue(p));
+				params.put(p.isNamedParameter() ? p.getName().get()
+						: ResidentParameterName.POSITION_PREFIX + (p.getIndex() + 1), accessor.getValue(p));
 			}
 
 			Sort sort = null;

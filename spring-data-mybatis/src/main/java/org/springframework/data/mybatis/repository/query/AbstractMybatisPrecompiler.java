@@ -165,6 +165,21 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		return String.format("<if test=\"%s\">%s</if>", test, content);
 	}
 
+	protected String testNullSegment(String propertyName, String additionalClause, String content) {
+		String[] parts = propertyName.split("\\.");
+		String[] conditions = new String[parts.length];
+		String prev = null;
+		for (int i = 0; i < parts.length; i++) {
+			conditions[i] = ((null != prev) ? (prev + ".") : "") + parts[i];
+			prev = conditions[i];
+		}
+		String test = Stream.of(conditions).map(c -> c + " == null").collect(Collectors.joining(" or "));
+		if (StringUtils.hasText(additionalClause)) {
+			test = "(" + test + ") and " + additionalClause;
+		}
+		return String.format("<if test=\"%s\">%s</if>", test, content);
+	}
+
 	protected List<MybatisPersistentProperty> findProperties(MybatisPersistentEntity<?> entity) {
 		List<MybatisPersistentProperty> properties = new ArrayList<>();
 		entity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) properties::add);

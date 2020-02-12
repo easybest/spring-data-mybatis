@@ -42,6 +42,7 @@ import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.model.Column;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
+import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.query.parser.Part;
@@ -83,6 +84,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		builder.append(this.addFindStatement(false));
 		builder.append(this.addCountAllStatement());
 		builder.append(this.addCountStatement());
+		builder.append(this.addQueryByExample());
 
 		if (null != this.repositoryInterface
 				&& MybatisExampleRepository.class.isAssignableFrom(this.repositoryInterface)) {
@@ -136,7 +138,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 
 	private String addInsertStatement(boolean selective) {
 		if (this.configuration.hasStatement(this.namespace + '.'
-				+ (selective ? ResidentStatementName.INSERT_SELECTIVE : ResidentStatementName.INSERT))) {
+				+ (selective ? ResidentStatementName.INSERT_SELECTIVE : ResidentStatementName.INSERT), false)) {
 			return "";
 		}
 		StringBuilder builder = new StringBuilder();
@@ -166,7 +168,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		String statement = (selective
 				? (byId ? ResidentStatementName.UPDATE_SELECTIVE_BY_ID : ResidentStatementName.UPDATE_SELECTIVE)
 				: (byId ? ResidentStatementName.UPDATE_BY_ID : ResidentStatementName.UPDATE));
-		if (this.configuration.hasStatement(this.namespace + '.' + statement)) {
+		if (this.configuration.hasStatement(this.namespace + '.' + statement, false)) {
 			return "";
 		}
 
@@ -498,6 +500,57 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 				+ "<foreach close=\")\" collection=\"criterion.value\" item=\"listItem\" open=\"(\" separator=\",\">"
 				+ "#{listItem}" + "</foreach>" + "</when>" + "</choose>" + "</foreach>" + "</trim>" + "</if>"
 				+ "</foreach>" + "</where>" + "</sql>";
+	}
+
+	private String addQueryByExample() {
+
+		String where = this.mappingPropertyToColumn().entrySet().stream().map(entry -> {
+			String property = entry.getKey();
+
+			String content = "<if test=\"__matcher.isAnyMatching()\"> or </if><if test=\"__matcher.isAllMatching()\"> and </if>";
+			if (entry.getValue().getJavaType() == String.class) {
+
+				StringBuilder sql = new StringBuilder();
+				sql.append("<choose><when test=\"__accessor.isIgnoreCaseForPath('" + property + "')\">lower(" + property
+						+ ")</when><otherwise>" + property + "</otherwise></choose>");
+				sql.append("<bind name=\"__string_" + property + "\" value=\"__accessor.getStringMatcherForPath('"
+						+ property + "').name()\"/><choose><when test=\"__string_" + property
+						+ ".equals('DEFAULT') or __string_" + property
+						+ ".equals('EXACT')\">=<choose><when test=\"__accessor.isIgnoreCaseForPath('" + property
+						+ "')\">lower(#{__entity." + property + "})</when><otherwise>#{__entity." + property
+						+ "}</otherwise></choose></when><when test=\"__string_" + property
+						+ ".equals('STARTING')\"> like <bind name=\"__starting_" + property + "\" value=\"__entity."
+						+ property + " + '%'\"/><choose><when test=\"__accessor.isIgnoreCaseForPath('" + property
+						+ "')\">lower(#{__starting_" + property + "})</when><otherwise>#{__starting_" + property
+						+ "}</otherwise></choose></when><when test=\"__string_" + property
+						+ ".equals('ENDING')\"> like <bind name=\"__ending_" + property + "\" value=\"'%' + __entity."
+						+ property + "\"/><choose><when test=\"__accessor.isIgnoreCaseForPath('" + property
+						+ "')\">lower(#{__ending_" + property + "})</when><otherwise>#{__ending_" + property
+						+ "}</otherwise></choose></when><when test=\"__string_" + property
+						+ ".equals('CONTAINING')\"> like <bind name=\"__containg_" + property
+						+ "\" value=\"'%' + __entity." + property
+						+ " + '%'\"/><choose><when test=\"__accessor.isIgnoreCaseForPath('" + property
+						+ "')\">lower(#{__containg_" + property + "})</when><otherwise>#{__containg_" + property
+						+ "}</otherwise></choose></when></choose>");
+
+				content += sql.toString();
+
+			}
+			else {
+				content += String.format("%s = #{__entity.%s}", entry.getValue().getName().render(this.dialect),
+						entry.getKey());
+			}
+			String includeNull = this.testNullSegment(ResidentParameterName.ENTITY + '.' + entry.getKey(),
+					"__accessor.nullHandler.name().equals('INCLUDE')",
+					"<if test=\"__matcher.isAnyMatching()\"> or </if><if test=\"__matcher.isAllMatching()\"> and </if>("
+							+ entry.getValue().getName() + " is null)");
+
+			return String.format("<if test=\"!__accessor.isIgnoredPath('%s')\">%s%s</if>", entry.getKey(),
+					this.testNotNullSegment(ResidentParameterName.ENTITY + '.' + entry.getKey(), content), includeNull);
+		}).collect(Collectors.joining());
+
+		return String.format("<select id=\"%s\" resultMap=\"%s\">select * from %s <where>%s</where></select>",
+				ResidentStatementName.QUERY_BY_EXAMPLE, ResidentStatementName.RESULT_MAP, this.getTableName(), where);
 	}
 
 }

@@ -147,11 +147,6 @@ public final class ResidentStatementName {
 	public static final String COUNT_PREFIX = "__count_";
 
 	/**
-	 * For <code>__p</code>.
-	 */
-	public static final String PARAMETER_POSITION_PREFIX = "__p";
-
-	/**
 	 * For <code>__unpaged_</code>.
 	 */
 	public static final String UNPAGED_PREFIX = "__unpaged_";
@@ -160,6 +155,11 @@ public final class ResidentStatementName {
 	 * For <code>__query_</code>.
 	 */
 	public static final String QUERY_PREFIX = "__query_";
+
+	/**
+	 * For <code>__query_by_example</code>.
+	 */
+	public static final String QUERY_BY_EXAMPLE = "__query_by_example";
 
 	public static String statementName(String namespace, String statement) {
 		return namespace + '.' + statement;
