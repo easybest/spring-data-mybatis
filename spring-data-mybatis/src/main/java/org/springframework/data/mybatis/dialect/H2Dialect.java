@@ -24,7 +24,7 @@ import org.springframework.data.mybatis.dialect.pagination.AbstractLimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHelper;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
-import org.springframework.data.mybatis.repository.support.ResidentStatementName;
+import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -48,8 +48,8 @@ public class H2Dialect extends Dialect {
 						: String.format(" limit %s", selection.getMaxRows()));
 			}
 
-			return sql + String.format(" limit #{%s} offset #{%s}", ResidentStatementName.PAGE_SIZE,
-					ResidentStatementName.OFFSET);
+			return sql + String.format(" limit #{%s} offset #{%s}", ResidentParameterName.PAGE_SIZE,
+					ResidentParameterName.OFFSET);
 		}
 
 		@Override

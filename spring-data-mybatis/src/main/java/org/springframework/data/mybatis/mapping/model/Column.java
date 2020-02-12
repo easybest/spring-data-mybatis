@@ -49,4 +49,8 @@ public class Column {
 		this.jdbcType = jdbcType;
 	}
 
+	public boolean isString() {
+		return this.javaType == String.class;
+	}
+
 }

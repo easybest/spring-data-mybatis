@@ -127,21 +127,6 @@ public final class ResidentStatementName {
 	public static final String UPDATE_SELECTIVE_BY_ID = UPDATE_SELECTIVE + "_by_id";
 
 	/**
-	 * For <code>__sort</code>.
-	 */
-	public static final String SORT = "__sort";
-
-	/**
-	 * For <code>__offset</code>.
-	 */
-	public static final String OFFSET = "__offset";
-
-	/**
-	 * For <code>__pageSize</code>.
-	 */
-	public static final String PAGE_SIZE = "__pageSize";
-
-	/**
 	 * For <code>__count_</code>.
 	 */
 	public static final String COUNT_PREFIX = "__count_";
@@ -160,6 +145,26 @@ public final class ResidentStatementName {
 	 * For <code>__query_by_example</code>.
 	 */
 	public static final String QUERY_BY_EXAMPLE = "__query_by_example";
+
+	/**
+	 * For <code>__count_query_by_example</code>.
+	 */
+	public static final String COUNT_QUERY_BY_EXAMPLE = "__count_query_by_example";
+
+	/**
+	 * For <code>__query_by_example_where_clause</code>.
+	 */
+	public static final String QUERY_BY_EXAMPLE_WHERE_CLAUSE = QUERY_BY_EXAMPLE + "_where_clause";
+
+	/**
+	 * For <code>__query_by_example_for_page</code>.
+	 */
+	public static final String QUERY_BY_EXAMPLE_FOR_PAGE = QUERY_BY_EXAMPLE + "_for_page";
+
+	/**
+	 * For <code>__standard_sort</code>.
+	 */
+	public static final String STANDARD_SORT = PREFIX + "standard_sort";
 
 	public static String statementName(String namespace, String statement) {
 		return namespace + '.' + statement;

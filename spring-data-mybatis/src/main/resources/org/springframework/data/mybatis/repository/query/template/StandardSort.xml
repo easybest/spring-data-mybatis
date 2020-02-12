@@ -1,0 +1,12 @@
+<sql id="{{statementName}}">
+    <if test="__sort != null">
+        <bind name="__columnsMap" value='#{ {{columnsMap}} }'/>
+        order by
+        <foreach collection="__sort" item="item" index="idx" open="" close="" separator=",">
+            <if test="item.ignoreCase">{{lowercaseFunction}}(</if>
+            ${__columnsMap[item.property]}
+            <if test="item.ignoreCase">)</if>
+            ${item.direction.name().toLowerCase()}
+        </foreach>
+    </if>
+</sql>

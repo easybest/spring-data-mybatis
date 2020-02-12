@@ -16,7 +16,10 @@
 package org.springframework.data.mybatis.repository.query;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,11 +29,13 @@ import java.util.stream.Stream;
 
 import javax.persistence.EmbeddedId;
 
+import com.samskivert.mustache.Mustache;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.session.Configuration;
 
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.internal.DatabaseMetaDataDialectResolutionInfoAdapter;
@@ -39,7 +44,7 @@ import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.model.Column;
-import org.springframework.data.mybatis.repository.support.ResidentStatementName;
+import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.util.StringUtils;
@@ -83,6 +88,20 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		this.persistentEntity = mappingContext.getRequiredPersistentEntity(domainType);
 		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(
 				new DatabaseMetaDataDialectResolutionInfoAdapter(configuration.getEnvironment().getDataSource()));
+
+	}
+
+	protected String render(String name, Object context) {
+
+		String path = "org/springframework/data/mybatis/repository/query/template/" + name + ".xml";
+		InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(path);
+		try (InputStreamReader source = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+			return Mustache.compiler().escapeHTML(false).compile(source).execute(context);
+		}
+		catch (IOException ex) {
+			throw new MappingException("Could not render the statement: " + name, ex);
+		}
+
 	}
 
 	@Override
@@ -153,7 +172,7 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 						: "");
 	}
 
-	protected String testNotNullSegment(String propertyName, String content) {
+	protected String testClause(String propertyName, boolean and, boolean not) {
 		String[] parts = propertyName.split("\\.");
 		String[] conditions = new String[parts.length];
 		String prev = null;
@@ -161,22 +180,14 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 			conditions[i] = ((null != prev) ? (prev + ".") : "") + parts[i];
 			prev = conditions[i];
 		}
-		String test = Stream.of(conditions).map(c -> c + " != null").collect(Collectors.joining(" and "));
-		return String.format("<if test=\"%s\">%s</if>", test, content);
+		String test = Stream.of(conditions).map(c -> c + (not ? " !" : " =") + "= null")
+				.collect(Collectors.joining(and ? " and " : " or "));
+		return test;
 	}
 
-	protected String testNullSegment(String propertyName, String additionalClause, String content) {
-		String[] parts = propertyName.split("\\.");
-		String[] conditions = new String[parts.length];
-		String prev = null;
-		for (int i = 0; i < parts.length; i++) {
-			conditions[i] = ((null != prev) ? (prev + ".") : "") + parts[i];
-			prev = conditions[i];
-		}
-		String test = Stream.of(conditions).map(c -> c + " == null").collect(Collectors.joining(" or "));
-		if (StringUtils.hasText(additionalClause)) {
-			test = "(" + test + ") and " + additionalClause;
-		}
+	protected String testNotNullSegment(String propertyName, String content) {
+
+		String test = this.testClause(propertyName, true, true);
 		return String.format("<if test=\"%s\">%s</if>", test, content);
 	}
 
@@ -322,8 +333,8 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 				+ " <foreach collection=\"%s\" item=\"item\" index=\"idx\" open=\"\" close=\"\" separator=\",\">"
 				+ "<if test=\"item.ignoreCase\">%s(</if>" + "${__columnsMap[item.property]}"
 				+ "<if test=\"item.ignoreCase\">)</if> " + "${item.direction.name().toLowerCase()}" + "</foreach>",
-				ResidentStatementName.SORT, this.dialect.getLowercaseFunction());
-		return String.format("<if test=\"%s != null\">%s %s</if>", ResidentStatementName.SORT, bind, sql);
+				ResidentParameterName.SORT, this.dialect.getLowercaseFunction());
+		return String.format("<if test=\"%s != null\">%s %s</if>", ResidentParameterName.SORT, bind, sql);
 	}
 
 }

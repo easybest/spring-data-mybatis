@@ -58,6 +58,10 @@
             <artifactId>mybatis-spring</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.samskivert</groupId>
+            <artifactId>jmustache</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
         </dependency>
@@ -74,17 +78,17 @@
             <artifactId>spring-instrument</artifactId>
             <scope>provided</scope>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.aspectj</groupId>-->
-<!--            <artifactId>aspectjrt</artifactId>-->
-<!--            <version>${aspectj}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>org.aspectj</groupId>-->
-<!--            <artifactId>aspectjweaver</artifactId>-->
-<!--            <version>${aspectj}</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.aspectj</groupId>-->
+        <!--            <artifactId>aspectjrt</artifactId>-->
+        <!--            <version>${aspectj}</version>-->
+        <!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.aspectj</groupId>-->
+        <!--            <artifactId>aspectjweaver</artifactId>-->
+        <!--            <version>${aspectj}</version>-->
+        <!--            <scope>test</scope>-->
+        <!--        </dependency>-->
 
         <dependency>
             <groupId>org.springframework</groupId>
@@ -111,47 +115,47 @@
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
             </plugin>
-<!--            <plugin>-->
-<!--                <groupId>org.codehaus.mojo</groupId>-->
-<!--                <artifactId>aspectj-maven-plugin</artifactId>-->
-<!--                <version>1.8</version>-->
-<!--                <dependencies>-->
-<!--                    <dependency>-->
-<!--                        <groupId>org.aspectj</groupId>-->
-<!--                        <artifactId>aspectjrt</artifactId>-->
-<!--                        <version>${aspectj}</version>-->
-<!--                    </dependency>-->
-<!--                    <dependency>-->
-<!--                        <groupId>org.aspectj</groupId>-->
-<!--                        <artifactId>aspectjtools</artifactId>-->
-<!--                        <version>${aspectj}</version>-->
-<!--                    </dependency>-->
-<!--                </dependencies>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <goals>-->
-<!--                            <goal>compile</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--                <configuration>-->
-<!--                    <verbose>true</verbose>-->
-<!--                    <forceAjcCompile>true</forceAjcCompile>-->
-<!--                    <aspectLibraries>-->
-<!--                        <aspectLibrary>-->
-<!--                            <groupId>org.springframework</groupId>-->
-<!--                            <artifactId>spring-aspects</artifactId>-->
-<!--                        </aspectLibrary>-->
-<!--                    </aspectLibraries>-->
-<!--                    <includes>-->
-<!--                        <include>**/domain/support/AuditingEntityListener.java</include>-->
-<!--                    </includes>-->
-<!--                    <complianceLevel>${source.level}</complianceLevel>-->
-<!--                    <source>${source.level}</source>-->
-<!--                    <target>${source.level}</target>-->
-<!--                    <xmlConfigured>aop.xml</xmlConfigured>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
+            <!--            <plugin>-->
+            <!--                <groupId>org.codehaus.mojo</groupId>-->
+            <!--                <artifactId>aspectj-maven-plugin</artifactId>-->
+            <!--                <version>1.8</version>-->
+            <!--                <dependencies>-->
+            <!--                    <dependency>-->
+            <!--                        <groupId>org.aspectj</groupId>-->
+            <!--                        <artifactId>aspectjrt</artifactId>-->
+            <!--                        <version>${aspectj}</version>-->
+            <!--                    </dependency>-->
+            <!--                    <dependency>-->
+            <!--                        <groupId>org.aspectj</groupId>-->
+            <!--                        <artifactId>aspectjtools</artifactId>-->
+            <!--                        <version>${aspectj}</version>-->
+            <!--                    </dependency>-->
+            <!--                </dependencies>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        <goals>-->
+            <!--                            <goal>compile</goal>-->
+            <!--                        </goals>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--                <configuration>-->
+            <!--                    <verbose>true</verbose>-->
+            <!--                    <forceAjcCompile>true</forceAjcCompile>-->
+            <!--                    <aspectLibraries>-->
+            <!--                        <aspectLibrary>-->
+            <!--                            <groupId>org.springframework</groupId>-->
+            <!--                            <artifactId>spring-aspects</artifactId>-->
+            <!--                        </aspectLibrary>-->
+            <!--                    </aspectLibraries>-->
+            <!--                    <includes>-->
+            <!--                        <include>**/domain/support/AuditingEntityListener.java</include>-->
+            <!--                    </includes>-->
+            <!--                    <complianceLevel>${source.level}</complianceLevel>-->
+            <!--                    <source>${source.level}</source>-->
+            <!--                    <target>${source.level}</target>-->
+            <!--                    <xmlConfigured>aop.xml</xmlConfigured>-->
+            <!--                </configuration>-->
+            <!--            </plugin>-->
         </plugins>
     </build>
 </project>

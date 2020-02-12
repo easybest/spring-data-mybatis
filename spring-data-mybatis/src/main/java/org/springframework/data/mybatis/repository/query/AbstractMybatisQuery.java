@@ -33,7 +33,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.repository.support.ResidentParameterName;
-import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.RepositoryQuery;
@@ -133,22 +132,22 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 					if (null != maxResultsFromTree) {
 						if (pageable.getPageSize() > maxResultsFromTree && pageable.getOffset() > 0) {
-							params.put(ResidentStatementName.OFFSET,
+							params.put(ResidentParameterName.OFFSET,
 									pageable.getOffset() - (pageable.getPageSize() - maxResultsFromTree));
 						}
 						else {
-							params.put(ResidentStatementName.OFFSET, pageable.getOffset());
+							params.put(ResidentParameterName.OFFSET, pageable.getOffset());
 						}
-						params.put(ResidentStatementName.PAGE_SIZE, maxResultsFromTree);
+						params.put(ResidentParameterName.PAGE_SIZE, maxResultsFromTree);
 					}
 					else {
-						params.put(ResidentStatementName.PAGE_SIZE, pageable.getPageSize());
-						params.put(ResidentStatementName.OFFSET, pageable.getOffset());
+						params.put(ResidentParameterName.PAGE_SIZE, pageable.getPageSize());
+						params.put(ResidentParameterName.OFFSET, pageable.getOffset());
 					}
 
 					if (this.method.isSliceQuery()) {
-						params.put(ResidentStatementName.PAGE_SIZE,
-								(Integer) params.get(ResidentStatementName.PAGE_SIZE) + 1);
+						params.put(ResidentParameterName.PAGE_SIZE,
+								(Integer) params.get(ResidentParameterName.PAGE_SIZE) + 1);
 					}
 
 				}
@@ -165,7 +164,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 			}
 
 			if (null != sort && sort.isSorted()) {
-				params.put(ResidentStatementName.SORT, sort);
+				params.put(ResidentParameterName.SORT, sort);
 			}
 			return params;
 		});

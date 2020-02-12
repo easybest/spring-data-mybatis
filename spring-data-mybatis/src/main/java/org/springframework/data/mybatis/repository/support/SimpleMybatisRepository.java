@@ -36,6 +36,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
 import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.data.repository.support.PageableExecutionUtils;
 import org.springframework.data.support.ExampleMatcherAccessor;
 import org.springframework.data.util.Streamable;
 import org.springframework.stereotype.Repository;
@@ -264,7 +265,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	public <X extends T> Page<T> findAll(Pageable pageable, X condition) {
 		if (null == pageable || pageable.isUnpaged()) {
 			// FIXME use a default pageable?
-			List<T> content = findAll(condition);
+			List<T> content = this.findAll(condition);
 			return new PageImpl<>(content, pageable, content.size());
 		}
 		return this.findByPager(pageable, ResidentStatementName.FIND_BY_PAGER, ResidentStatementName.COUNT, condition);
@@ -335,7 +336,18 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	@Override
 	public <S extends T> Optional<S> findOne(Example<S> example) {
-		return Optional.empty();
+
+		ExampleMatcher matcher = example.getMatcher();
+		ExampleMatcherAccessor accessor = new ExampleMatcherAccessor(matcher);
+		S entity = example.getProbe();
+		Map<String, Object> params = new HashMap<>();
+		params.put(ResidentParameterName.MATCHER, matcher);
+		params.put(ResidentParameterName.ACCESSOR, accessor);
+		params.put(ResidentParameterName.ENTITY, entity);
+
+		S result = this.selectOne(ResidentStatementName.QUERY_BY_EXAMPLE, params);
+
+		return Optional.ofNullable(result);
 	}
 
 	@Override
@@ -353,7 +365,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 		params.put(ResidentParameterName.MATCHER, matcher);
 		params.put(ResidentParameterName.ACCESSOR, accessor);
 		params.put(ResidentParameterName.ENTITY, entity);
-		if (null != sort) {
+		if (null != sort && sort.isSorted()) {
 			params.put(ResidentParameterName.SORT, sort);
 		}
 		return this.selectList(ResidentStatementName.QUERY_BY_EXAMPLE, params);
@@ -361,29 +373,43 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	@Override
 	public <S extends T> Page<S> findAll(Example<S> example, Pageable pageable) {
+
 		if (null == pageable || pageable.isUnpaged()) {
-			// FIXME use a default pageable?
-			List<S> content;
-			if (null != pageable && null != pageable.getSort() && pageable.getSort().isSorted()) {
-				content = findAll(example, pageable.getSort());
-			}
-			else {
-				content = findAll(example);
-			}
-			return new PageImpl<>(content, pageable, content.size());
+			return new PageImpl<>(this.findAll(example, (null != pageable) ? pageable.getSort() : null));
 		}
 
-		return null;
+		ExampleMatcher matcher = example.getMatcher();
+		ExampleMatcherAccessor accessor = new ExampleMatcherAccessor(matcher);
+		S entity = example.getProbe();
+		Map<String, Object> params = new HashMap<>();
+		params.put(ResidentParameterName.MATCHER, matcher);
+		params.put(ResidentParameterName.ACCESSOR, accessor);
+		params.put(ResidentParameterName.ENTITY, entity);
+		if (null != pageable.getSort() && pageable.getSort().isSorted()) {
+			params.put(ResidentParameterName.SORT, pageable.getSort());
+		}
+		List<S> content = this.selectList(ResidentStatementName.QUERY_BY_EXAMPLE_FOR_PAGE, params);
+		return PageableExecutionUtils.getPage(content, pageable,
+				() -> this.selectOne(ResidentStatementName.COUNT_QUERY_BY_EXAMPLE, params));
+
 	}
 
 	@Override
 	public <S extends T> long count(Example<S> example) {
-		return 0;
+		ExampleMatcher matcher = example.getMatcher();
+		ExampleMatcherAccessor accessor = new ExampleMatcherAccessor(matcher);
+		S entity = example.getProbe();
+		Map<String, Object> params = new HashMap<>();
+		params.put(ResidentParameterName.MATCHER, matcher);
+		params.put(ResidentParameterName.ACCESSOR, accessor);
+		params.put(ResidentParameterName.ENTITY, entity);
+
+		return this.selectOne(ResidentStatementName.COUNT_QUERY_BY_EXAMPLE, params);
 	}
 
 	@Override
 	public <S extends T> boolean exists(Example<S> example) {
-		return false;
+		return this.count(example) > 0;
 	}
 
 	@Override

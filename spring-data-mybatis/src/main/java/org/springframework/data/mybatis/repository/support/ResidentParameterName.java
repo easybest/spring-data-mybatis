@@ -37,6 +37,16 @@ public final class ResidentParameterName {
 	public static final String SORT = PREFIX + "sort";
 
 	/**
+	 * For <code>__offset</code>.
+	 */
+	public static final String OFFSET = PREFIX + "offset";
+
+	/**
+	 * For <code>__pageSize</code>.
+	 */
+	public static final String PAGE_SIZE = PREFIX + "pageSize";
+
+	/**
 	 * For <code>__ids</code>.
 	 */
 	public static final String IDS = PREFIX + "ids";

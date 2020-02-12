@@ -103,6 +103,16 @@
                 <artifactId>javax.persistence-api</artifactId>
                 <version>2.2</version>
             </dependency>
+            <dependency>
+                <groupId>com.github.spullara.mustache.java</groupId>
+                <artifactId>compiler</artifactId>
+                <version>0.9.6</version>
+            </dependency>
+            <dependency>
+                <groupId>com.samskivert</groupId>
+                <artifactId>jmustache</artifactId>
+                <version>1.15</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>
