@@ -40,9 +40,6 @@
             scm:git:ssh://git@github.com/easybest/spring-data-mybatis.git
         </developerConnection>
     </scm>
-    <properties>
-        <spring.boot>2.2.4.RELEASE</spring.boot>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>

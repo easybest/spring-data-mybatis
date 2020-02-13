@@ -1494,7 +1494,7 @@ public class UserRepositoryTests {
 		Assertions.assertThat(users).hasSize(4);
 	}
 
-	@Test(expected = InvalidDataAccessApiUsageException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void findAllByNullExample() {
 		this.repository.findAll((Example<User>) null);
 	}

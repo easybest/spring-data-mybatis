@@ -336,7 +336,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	@Override
 	public <S extends T> Optional<S> findOne(Example<S> example) {
-
+		Assert.notNull(example, "Example must not be null.");
 		ExampleMatcher matcher = example.getMatcher();
 		ExampleMatcherAccessor accessor = new ExampleMatcherAccessor(matcher);
 		S entity = example.getProbe();
@@ -358,6 +358,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	@Override
 	public <S extends T> List<S> findAll(Example<S> example, Sort sort) {
+		Assert.notNull(example, "Example must not be null.");
 		ExampleMatcher matcher = example.getMatcher();
 		ExampleMatcherAccessor accessor = new ExampleMatcherAccessor(matcher);
 		S entity = example.getProbe();
@@ -373,6 +374,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	@Override
 	public <S extends T> Page<S> findAll(Example<S> example, Pageable pageable) {
+		Assert.notNull(example, "Example must not be null.");
 
 		if (null == pageable || pageable.isUnpaged()) {
 			return new PageImpl<>(this.findAll(example, (null != pageable) ? pageable.getSort() : null));
@@ -396,6 +398,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	@Override
 	public <S extends T> long count(Example<S> example) {
+		Assert.notNull(example, "Example must not be null.");
 		ExampleMatcher matcher = example.getMatcher();
 		ExampleMatcherAccessor accessor = new ExampleMatcherAccessor(matcher);
 		S entity = example.getProbe();
