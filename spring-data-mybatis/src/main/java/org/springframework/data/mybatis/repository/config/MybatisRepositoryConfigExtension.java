@@ -20,8 +20,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.persistence.Embeddable;
@@ -137,7 +137,7 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		}
 	}
 
-	private Set<? extends Class<?>> scanDomains(RepositoryConfigurationSource source) {
+	private Map<? extends Class<?>, ? extends Class<?>> scanDomains(RepositoryConfigurationSource source) {
 		StopWatch watch = new StopWatch();
 
 		if (log.isDebugEnabled()) {
@@ -150,26 +150,35 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 				source, this.resourceLoader, false);
 
 		if (CollectionUtils.isEmpty(repositoryConfigurations)) {
-			return Collections.emptySet();
+			return Collections.emptyMap();
 		}
 
-		Set<? extends Class<?>> domains = repositoryConfigurations.stream().map((configuration) -> {
-			try {
-				return AbstractRepositoryMetadata.getMetadata(Class.forName(configuration.getRepositoryInterface()))
-						.getDomainType();
-			}
-			catch (ClassNotFoundException ex) {
-				throw new MappingException(ex.getMessage(), ex);
-			}
-		}).collect(Collectors.toSet());
+		Map<? extends Class<?>, ? extends Class<?>> mapping = repositoryConfigurations.stream()
+				.collect(Collectors.toMap(configuration -> {
+					try {
+						return Class.forName(configuration.getRepositoryInterface());
+					}
+					catch (ClassNotFoundException ex) {
+						throw new MappingException(ex.getMessage(), ex);
+					}
+				}, configuration -> {
+					try {
+						Class<?> repositoryClass = Class.forName(configuration.getRepositoryInterface());
+						return AbstractRepositoryMetadata.getMetadata(repositoryClass).getDomainType();
+					}
+					catch (ClassNotFoundException ex) {
+						throw new MappingException(ex.getMessage(), ex);
+					}
+				}));
+
 		watch.stop();
 
 		if (log.isInfoEnabled()) {
 			log.info("Finished Domains scanning in {}ms. Found {} domains.", //
-					watch.getLastTaskTimeMillis(), domains.size());
+					watch.getLastTaskTimeMillis(), mapping.size());
 		}
 
-		return domains;
+		return mapping;
 	}
 
 	private static Optional<Character> getEscapeCharacter(RepositoryConfigurationSource source) {

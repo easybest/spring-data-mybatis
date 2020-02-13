@@ -28,6 +28,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.persistence.EmbeddedId;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 
 import com.samskivert.mustache.Mustache;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +39,7 @@ import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.session.Configuration;
 
+import org.springframework.data.mapping.AssociationHandler;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.dialect.Dialect;
@@ -99,7 +104,7 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		String path = "org/springframework/data/mybatis/repository/query/template/" + name + ".xml";
 		InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(path);
 		try (InputStreamReader source = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-			return mustache.compile(source).execute(context);
+			return this.mustache.compile(source).execute(context);
 		}
 		catch (IOException ex) {
 			throw new MappingException("Could not render the statement: " + name, ex);
@@ -154,6 +159,45 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 				return;
 			}
 			map.put(pp.getName(), pp.getColumn());
+		});
+
+		this.persistentEntity.doWithAssociations((AssociationHandler<MybatisPersistentProperty>) ass -> {
+			MybatisPersistentProperty inverse = ass.getInverse();
+
+			if (inverse.isAnnotationPresent(ManyToOne.class) || inverse.isAnnotationPresent(OneToOne.class)) {
+
+				if (inverse.isAnnotationPresent(JoinTable.class)) {
+					return;
+				}
+
+				MybatisPersistentEntity<?> targetEntity = this.mappingContext
+						.getRequiredPersistentEntity(inverse.getActualType());
+
+				String columnName = null;
+				String referencedColumnName = null;
+				JoinColumn joinColumn = inverse.findAnnotation(JoinColumn.class);
+				if (null != joinColumn) {
+					if (StringUtils.hasText(joinColumn.name())) {
+						columnName = joinColumn.name();
+					}
+					if (StringUtils.hasText(joinColumn.referencedColumnName())) {
+						referencedColumnName = joinColumn.referencedColumnName();
+					}
+
+				}
+				if (StringUtils.isEmpty(columnName)) {
+					columnName = inverse.getName() + "_"
+							+ targetEntity.getRequiredIdProperty().getColumn().getName().render(this.dialect);
+				}
+				if (StringUtils.isEmpty(referencedColumnName)) {
+					referencedColumnName = targetEntity.getRequiredIdProperty().getColumn().getName()
+							.render(this.dialect);
+				}
+				map.put(String.format("%s.%s", inverse.getName(), targetEntity.getRequiredIdProperty().getName()),
+						new Column(columnName));
+
+			}
+
 		});
 
 		return map;

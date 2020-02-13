@@ -22,5 +22,8 @@
         </association>
     {{/embeddedAssociations}}
 
+    {{#associations}}
+    <association property="{{property}}" javaType="{{javaType}}" fetchType="{{fetch}}" select="{{select}}" column="{{column}}"/>
+    {{/associations}}
 </resultMap>
 

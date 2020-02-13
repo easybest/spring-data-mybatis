@@ -284,6 +284,23 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 		return this.isAnnotationPresent(Embedded.class) || this.hasActualTypeAnnotation(Embeddable.class);
 	}
 
+	// @Override
+	// public Class<?> getAssociationTargetType() {
+	//
+	// return
+	// ASSOCIATION_ANNOTATIONS.stream().filter(this::isAnnotationPresent).findFirst().map(ann
+	// -> {
+	// Class<?> t = (Class<?>) ((ann != ElementCollection.class)
+	// ? AnnotationUtils.getValue(findAnnotation(ann), "targetEntity")
+	// : AnnotationUtils.getValue(findAnnotation(ann), "targetClass"));
+	// if (null != t && t != void.class && t != Void.class) {
+	// return t;
+	// }
+	// return null;
+	// }).orElseGet(() -> (Class) this.getActualType());
+	//
+	// }
+
 	/**
 	 * Looks up both Spring Data's and JPA's access type definition annotations on the
 	 * property or type level to determine the access type to be used. Will consider
@@ -331,7 +348,8 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 			if (null == annotation) {
 				continue;
 			}
-			Object entityValue = AnnotationUtils.getValue(annotation, "targetEntity");
+			Object entityValue = AnnotationUtils.getValue(annotation,
+					(annotationType != ElementCollection.class) ? "targetEntity" : "targetClass");
 			if (null == entityValue || entityValue.equals(void.class)) {
 				continue;
 			}

@@ -16,6 +16,7 @@
 package org.springframework.data.mybatis.mapping;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.persistence.NamedNativeQueries;
@@ -27,7 +28,11 @@ import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.FieldNamingStrategy;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.util.TypeInformation;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 /**
  * {@link MappingContext} implementation based on JPA annotations.
@@ -41,6 +46,8 @@ public class MybatisMappingContext
 	private FieldNamingStrategy fieldNamingStrategy;
 
 	private Map<String, String> namedQueries = new HashMap<>();
+
+	private MultiValueMap<Class<?>, Class<?>> entityRepositoryMapping = new LinkedMultiValueMap<>();
 
 	@Override
 	protected <T> MybatisPersistentEntityImpl<?> createPersistentEntity(TypeInformation<T> typeInformation) {
@@ -84,6 +91,25 @@ public class MybatisMappingContext
 
 	public String getNamedQuery(String name) {
 		return this.namedQueries.get(name);
+	}
+
+	public void setEntityRepositoryMapping(MultiValueMap<Class<?>, Class<?>> entityRepositoryMapping) {
+		this.entityRepositoryMapping = entityRepositoryMapping;
+	}
+
+	public Class<?> getRepositoryInterface(Class<?> entityClass) {
+		List<Class<?>> repositories = this.entityRepositoryMapping.get(entityClass);
+		if (CollectionUtils.isEmpty(repositories)) {
+			return null;
+		}
+
+		if (repositories.size() == 1) {
+			return repositories.get(0);
+		}
+
+		return repositories.stream().filter(r -> MybatisRepository.class.isAssignableFrom(r)).findFirst()
+				.orElse(repositories.get(0));
+
 	}
 
 }

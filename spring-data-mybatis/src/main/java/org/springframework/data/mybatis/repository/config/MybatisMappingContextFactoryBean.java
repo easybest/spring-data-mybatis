@@ -16,6 +16,7 @@
 package org.springframework.data.mybatis.repository.config;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.lang.Nullable;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 /**
  * {@link FactoryBean} to setup {@link MybatisMappingContext} instances from Spring
@@ -39,15 +42,13 @@ import org.springframework.lang.Nullable;
 class MybatisMappingContextFactoryBean extends AbstractFactoryBean<MybatisMappingContext>
 		implements ApplicationContextAware {
 
+	private final Map<Class<?>, Class<?>> mapping;
+
 	private @Nullable ListableBeanFactory beanFactory;
 
-	private final Set<? extends Class<?>> initialEntitySet;
+	MybatisMappingContextFactoryBean(Map<Class<?>, Class<?>> mapping) {
+		this.mapping = mapping;
 
-	MybatisMappingContextFactoryBean(Set<? extends Class<?>> initialEntitySet) {
-		if (null == initialEntitySet) {
-			initialEntitySet = new HashSet<>();
-		}
-		this.initialEntitySet = initialEntitySet;
 	}
 
 	@Override
@@ -60,8 +61,24 @@ class MybatisMappingContextFactoryBean extends AbstractFactoryBean<MybatisMappin
 		if (log.isDebugEnabled()) {
 			log.debug("Initializing MybatisMappingContext...");
 		}
+		Set<? extends Class<?>> initialEntitySet;
+		if (null == this.mapping) {
+			initialEntitySet = new HashSet<>();
+		}
+		else {
+			initialEntitySet = new HashSet<>(this.mapping.values());
+		}
+
+		MultiValueMap<Class<?>, Class<?>> entityRepositoryMapping = new LinkedMultiValueMap<>();
+		for (Map.Entry<Class<?>, Class<?>> entry : this.mapping.entrySet()) {
+			Class<?> repository = entry.getKey();
+			Class<?> entity = entry.getValue();
+			entityRepositoryMapping.add(entity, repository);
+		}
+
 		MybatisMappingContext context = new MybatisMappingContext();
-		context.setInitialEntitySet(this.initialEntitySet);
+		context.setInitialEntitySet(initialEntitySet);
+		context.setEntityRepositoryMapping(entityRepositoryMapping);
 		context.initialize();
 		if (log.isDebugEnabled()) {
 			log.debug("Finished initializing MybatisMappingContext!");

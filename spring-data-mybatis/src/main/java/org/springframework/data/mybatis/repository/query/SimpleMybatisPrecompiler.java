@@ -28,12 +28,16 @@ import java.util.stream.Stream;
 import javax.persistence.EmbeddedId;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.SequenceGenerators;
 
 import com.samskivert.mustache.Mustache;
 import org.apache.ibatis.session.Configuration;
 
+import org.springframework.data.mapping.AssociationHandler;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PropertyHandler;
@@ -43,6 +47,7 @@ import org.springframework.data.mybatis.annotation.Example;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+import org.springframework.data.mybatis.mapping.model.Association;
 import org.springframework.data.mybatis.mapping.model.Column;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
@@ -146,10 +151,60 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			results.add(pp);
 		});
 
+		List<Association> associations = new ArrayList<>();
+
+		this.persistentEntity.doWithAssociations((AssociationHandler<MybatisPersistentProperty>) ass -> {
+			MybatisPersistentProperty inverse = ass.getInverse();
+
+			if (inverse.isAnnotationPresent(ManyToOne.class) || inverse.isAnnotationPresent(OneToOne.class)) {
+				MybatisPersistentEntity<?> targetEntity = this.mappingContext
+						.getRequiredPersistentEntity(inverse.getActualType());
+
+				Association association = new Association();
+				association.setProperty(inverse.getName());
+				association.setJavaType(inverse.getActualType().getName());
+
+				String fetch = null;
+				ManyToOne manyToOne = inverse.findAnnotation(ManyToOne.class);
+				if (null != manyToOne) {
+					fetch = manyToOne.fetch().name().toLowerCase();
+				}
+				else {
+					OneToOne oneToOne = inverse.findAnnotation(OneToOne.class);
+					if (null != oneToOne) {
+						fetch = oneToOne.fetch().name().toLowerCase();
+					}
+				}
+
+				association.setFetch(fetch);
+				String column;
+				JoinColumn joinColumn = inverse.findAnnotation(JoinColumn.class);
+				if (null != joinColumn && StringUtils.hasText(joinColumn.name())) {
+					column = joinColumn.name();
+				}
+				else {
+					column = inverse.getName() + "_" + targetEntity.getRequiredIdProperty().getName();
+				}
+				association.setColumn(column);
+
+				Class<?> repositoryInterface = this.mappingContext.getRepositoryInterface(targetEntity.getType());
+				if (null == repositoryInterface) {
+					throw new MappingException(
+							"Could not find namespace for entity: " + targetEntity.getType().getName());
+				}
+				String select = repositoryInterface.getName() + "." + ResidentStatementName.GET_BY_ID;
+				association.setSelect(select);
+
+				associations.add(association);
+			}
+
+		});
+
 		params.put("statementName", ResidentStatementName.RESULT_MAP);
 		params.put("entityType", this.persistentEntity.getType().getName());
 		params.put("results", results.stream().map(this::mapResultMapMap).collect(Collectors.toList()));
 		params.put("embeddedAssociations", embeddedAssociations.entrySet());
+		params.put("associations", associations);
 		return render("ResultMap", params);
 
 	}
