@@ -18,10 +18,11 @@ package io.easybest.mybatis.sample.controller;
 import io.easybest.mybatis.sample.domain.User;
 import io.easybest.mybatis.sample.repository.UserRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,12 +35,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/user")
 public class UserController {
 
-	@Autowired
-	private UserRepository userRepository;
+	private final UserRepository userRepository;
+
+	public UserController(UserRepository userRepository) {
+		this.userRepository = userRepository;
+	}
 
 	@GetMapping
 	Page<User> page(Pageable pageable) {
 		return this.userRepository.findAll(pageable);
+	}
+
+	@PostMapping
+	void create(@RequestBody User user) {
+		this.userRepository.saveSelective(user);
 	}
 
 }

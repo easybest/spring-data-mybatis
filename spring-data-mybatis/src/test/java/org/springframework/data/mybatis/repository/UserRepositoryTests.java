@@ -35,7 +35,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Example;
@@ -328,57 +327,6 @@ public class UserRepositoryTests {
 		Assertions.assertThat(this.repository.count()).isZero();
 	}
 
-	/**
-	 * Tests cascading persistence.
-	 */
-	@Test
-	public void testCascadesPersisting() {
-
-		// Create link prior to persisting
-		this.firstUser.addColleague(this.secondUser);
-
-		// Persist
-		this.flushTestUsers();
-
-		// Fetches first user from database
-		User firstReferenceUser = this.repository.findById(this.firstUser.getId()).get();
-		Assertions.assertThat(firstReferenceUser).isEqualTo(this.firstUser);
-
-		// Fetch colleagues and assert link
-		Set<User> colleagues = firstReferenceUser.getColleagues();
-		Assertions.assertThat(colleagues).containsOnly(this.secondUser);
-	}
-
-	/**
-	 * Tests, that persisting a relationsship without cascade attributes throws a
-	 * {@code DataAccessException}.
-	 */
-	@Test(expected = DataAccessException.class)
-	public void testPreventsCascadingRolePersisting() {
-
-		this.firstUser.addRole(new Role("USER"));
-
-		this.flushTestUsers();
-	}
-
-	/**
-	 * Tests cascading on {@literal merge} operation.
-	 */
-	@Test
-	public void testMergingCascadesCollegueas() {
-
-		this.firstUser.addColleague(this.secondUser);
-		this.flushTestUsers();
-
-		this.firstUser.addColleague(new User("Florian", "Hopf", "hopf@synyx.de"));
-		this.firstUser = this.repository.save(this.firstUser);
-
-		User reference = this.repository.findById(this.firstUser.getId()).get();
-		Set<User> colleagues = reference.getColleagues();
-
-		Assertions.assertThat(colleagues).hasSize(2);
-	}
-
 	@Test
 	public void testCountsCorrectly() {
 
@@ -481,35 +429,6 @@ public class UserRepositoryTests {
 	}
 
 	@Test
-	public void executesQueryMethodWithDeepTraversalCorrectly() {
-
-		this.flushTestUsers();
-
-		this.firstUser.setManager(this.secondUser);
-		this.thirdUser.setManager(this.firstUser);
-		this.repository.saveAll(Arrays.asList(this.firstUser, this.thirdUser));
-
-		Assertions.assertThat(this.repository.findByManagerLastname("Arrasz")).containsOnly(this.firstUser);
-		Assertions.assertThat(this.repository.findByManagerLastname("Gierke")).containsOnly(this.thirdUser);
-	}
-
-	@Test
-	public void executesFindByColleaguesLastnameCorrectly() {
-
-		this.flushTestUsers();
-
-		this.firstUser.addColleague(this.secondUser);
-		this.thirdUser.addColleague(this.firstUser);
-		this.repository.saveAll(Arrays.asList(this.firstUser, this.thirdUser));
-
-		Assertions.assertThat(this.repository.findByColleaguesLastname(this.secondUser.getLastname()))
-				.containsOnly(this.firstUser);
-
-		Assertions.assertThat(this.repository.findByColleaguesLastname("Gierke")).containsOnly(this.thirdUser,
-				this.secondUser);
-	}
-
-	@Test
 	public void executesFindByNotNullLastnameCorrectly() {
 
 		this.flushTestUsers();
@@ -598,20 +517,6 @@ public class UserRepositoryTests {
 		this.repository.save(this.firstUser);
 
 		Assertions.assertThat(this.repository.findByActiveFalse()).containsOnly(this.firstUser);
-	}
-
-	/**
-	 * Ignored until the query declaration is supported by OpenJPA.
-	 */
-	@Test
-	public void executesAnnotatedCollectionMethodCorrectly() {
-
-		this.flushTestUsers();
-		this.firstUser.addColleague(this.thirdUser);
-		this.repository.save(this.firstUser);
-
-		List<User> result = this.repository.findColleaguesFor(this.firstUser);
-		Assertions.assertThat(result).containsOnly(this.thirdUser);
 	}
 
 	@Test
@@ -753,36 +658,6 @@ public class UserRepositoryTests {
 	}
 
 	@Test
-	public void bindsSortingToOuterJoinCorrectly() {
-
-		this.flushTestUsers();
-
-		// Managers not set, make sure adding the sort does not rule out those Users
-		Page<User> result = this.repository.findAllPaged(PageRequest.of(0, 10, Sort.by("manager.lastname")));
-		Assertions.assertThat(result.getContent()).hasSize((int) this.repository.count());
-	}
-
-	@Test
-	public void shouldGenerateLeftOuterJoinInfindAllWithPaginationAndSortOnNestedPropertyPath() {
-
-		this.firstUser.setManager(null);
-		this.secondUser.setManager(null);
-		this.thirdUser.setManager(this.firstUser); // manager Oliver
-		this.fourthUser.setManager(this.secondUser); // manager Joachim
-
-		this.flushTestUsers();
-
-		Page<User> pages = this.repository
-				.findAll(PageRequest.of(0, 4, Sort.by(Sort.Direction.ASC, "manager.firstname")));
-		Assertions.assertThat(pages.getSize()).isEqualTo(4);
-		Assertions.assertThat(pages.getContent().get(0).getManager()).isNull();
-		Assertions.assertThat(pages.getContent().get(1).getManager()).isNull();
-		Assertions.assertThat(pages.getContent().get(2).getManager().getFirstname()).isEqualTo("Joachim");
-		Assertions.assertThat(pages.getContent().get(3).getManager().getFirstname()).isEqualTo("Oliver");
-		Assertions.assertThat(pages.getTotalElements()).isEqualTo(4L);
-	}
-
-	@Test
 	public void executesManualQueryWithPositionLikeExpressionCorrectly() {
 
 		this.flushTestUsers();
@@ -884,30 +759,6 @@ public class UserRepositoryTests {
 	}
 
 	@Test
-	public void sortByAssociationPropertyShouldUseLeftOuterJoin() {
-
-		this.secondUser.getColleagues().add(this.firstUser);
-		this.fourthUser.getColleagues().add(this.thirdUser);
-		this.flushTestUsers();
-
-		List<User> result = this.repository.findAll(Sort.by(Sort.Direction.ASC, "colleagues.id"));
-
-		Assertions.assertThat(result).hasSize(4);
-	}
-
-	@Test
-	public void sortByAssociationPropertyInPageableShouldUseLeftOuterJoin() {
-
-		this.secondUser.getColleagues().add(this.firstUser);
-		this.fourthUser.getColleagues().add(this.thirdUser);
-		this.flushTestUsers();
-
-		Page<User> page = this.repository.findAll(PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "colleagues.id")));
-
-		Assertions.assertThat(page.getContent()).hasSize(4);
-	}
-
-	@Test
 	public void sortByEmbeddedProperty() {
 
 		this.thirdUser.setAddress(new Address("Germany", "Saarbrücken", "HaveItYourWay", "123"));
@@ -951,50 +802,6 @@ public class UserRepositoryTests {
 
 		Collection<User> result = this.repository.findByIdsCustomWithNamedVarArgs(this.firstUser.getId(),
 				this.secondUser.getId());
-
-		Assertions.assertThat(result).containsOnly(this.firstUser, this.secondUser);
-	}
-
-	@Test
-	public void sortByNestedAssociationPropertyWithSortInPageable() {
-
-		this.firstUser.setManager(this.thirdUser);
-		this.thirdUser.setManager(this.fourthUser);
-
-		this.flushTestUsers();
-
-		Page<User> page = this.repository.findAll(PageRequest.of(0, 10, //
-				Sort.by(Sort.Direction.ASC, "manager.manager.firstname")));
-
-		Assertions.assertThat(page.getContent()).hasSize(4);
-		Assertions.assertThat(page.getContent().get(3)).isEqualTo(this.firstUser);
-	}
-
-	@Test
-	public void sortByNestedAssociationPropertyWithSortOrderIgnoreCaseInPageable() {
-
-		this.firstUser.setManager(this.thirdUser);
-		this.thirdUser.setManager(this.fourthUser);
-
-		this.flushTestUsers();
-
-		Page<User> page = this.repository.findAll(PageRequest.of(0, 10, //
-				Sort.by(new Sort.Order(Direction.ASC, "manager.manager.firstname").ignoreCase())));
-
-		Assertions.assertThat(page.getContent()).hasSize(4);
-		Assertions.assertThat(page.getContent().get(3)).isEqualTo(this.firstUser);
-	}
-
-	@Test
-	public void findByElementCollectionAttribute() {
-
-		this.firstUser.getAttributes().add("cool");
-		this.secondUser.getAttributes().add("hip");
-		this.thirdUser.getAttributes().add("rockstar");
-
-		this.flushTestUsers();
-
-		List<User> result = this.repository.findByAttributesIn(new HashSet<>(Arrays.asList("cool", "hip")));
 
 		Assertions.assertThat(result).containsOnly(this.firstUser, this.secondUser);
 	}
@@ -1511,31 +1318,6 @@ public class UserRepositoryTests {
 		List<User> users = this.repository.findAll(example);
 
 		Assertions.assertThat(users).containsOnly(this.firstUser);
-	}
-
-	@Test
-	public void findAllByExampleWithAssociation() {
-
-		this.flushTestUsers();
-
-		this.firstUser.setManager(this.secondUser);
-		this.thirdUser.setManager(this.firstUser);
-		this.repository.saveAll(Arrays.asList(this.firstUser, this.thirdUser));
-
-		User manager = new User();
-		manager.setLastname("Arrasz");
-		manager.setAge(this.secondUser.getAge());
-		manager.setCreatedAt(null);
-
-		User prototype = new User();
-		prototype.setCreatedAt(null);
-		prototype.setManager(manager);
-
-		Example<User> example = Example.of(prototype, ExampleMatcher.matching().withIgnorePaths("age"));
-		List<User> users = this.repository.findAll(example);
-
-		Assertions.assertThat(users).hasSize(1);
-		Assertions.assertThat(users.get(0)).isEqualTo(this.firstUser);
 	}
 
 	@Test

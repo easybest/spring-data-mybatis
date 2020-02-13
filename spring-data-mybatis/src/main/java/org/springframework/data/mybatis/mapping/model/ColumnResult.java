@@ -16,8 +16,6 @@
 package org.springframework.data.mybatis.mapping.model;
 
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.List;
 
 import lombok.Data;
 
@@ -28,22 +26,18 @@ import lombok.Data;
  * @since 2.0.0
  */
 @Data
-public class Association implements Serializable {
+public class ColumnResult implements Serializable {
+
+	private boolean primaryKey;
 
 	private String property;
 
-	private String javaType;
-
 	private String column;
 
-	private String select;
+	private String javaType;
 
-	private String fetch;
+	private String jdbcType;
 
-	private List<ColumnResult> results = new LinkedList<>();
-
-	public void addResult(ColumnResult cr) {
-		this.results.add(cr);
-	}
+	private String typeHandler;
 
 }

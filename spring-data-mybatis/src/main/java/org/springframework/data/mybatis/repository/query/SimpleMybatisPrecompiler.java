@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +50,7 @@ import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.model.Association;
 import org.springframework.data.mybatis.mapping.model.Column;
+import org.springframework.data.mybatis.mapping.model.ColumnResult;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.core.RepositoryInformation;
@@ -133,23 +135,32 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		}
 
 		Map<String, Object> params = new HashMap<>();
-		List<MybatisPersistentProperty> results = new ArrayList<>();
-		Map<String, List<Map<String, Object>>> embeddedAssociations = new HashMap<>();
+		List<ColumnResult> results = new LinkedList<>();
+		List<Association> embeddedAssociations = new ArrayList<>();
 
 		this.persistentEntity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) pp -> {
 			if (pp.isAnnotationPresent(EmbeddedId.class) || pp.isEmbeddable()) {
-				List<Map<String, Object>> association = new ArrayList<>();
 				MybatisPersistentEntity<?> embeddedEntity = this.mappingContext
 						.getRequiredPersistentEntity(pp.getActualType());
+
+				Association ass = new Association();
+				ass.setProperty(pp.getName());
+				ass.setJavaType(pp.getType().getName());
+
 				embeddedEntity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) epp -> {
-					Map<String, Object> map = this.mapResultMapMap(epp);
-					association.add(map);
+					ass.addResult(this.columnResult(epp));
 				});
-				embeddedAssociations.put(pp.getName(), association);
+
+				ass.getResults().sort((o1, o2) -> o1.isPrimaryKey() ? -1 : 1);
+
+				embeddedAssociations.add(ass);
 				return;
 			}
-			results.add(pp);
+
+			results.add(this.columnResult(pp));
 		});
+
+		results.sort((o1, o2) -> o1.isPrimaryKey() ? -1 : 1);
 
 		List<Association> associations = new ArrayList<>();
 
@@ -202,20 +213,23 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 
 		params.put("statementName", ResidentStatementName.RESULT_MAP);
 		params.put("entityType", this.persistentEntity.getType().getName());
-		params.put("results", results.stream().map(this::mapResultMapMap).collect(Collectors.toList()));
-		params.put("embeddedAssociations", embeddedAssociations.entrySet());
+		params.put("results", results);
+		params.put("embeddedAssociations", embeddedAssociations);
 		params.put("associations", associations);
 		return render("ResultMap", params);
 
 	}
 
-	private Map<String, Object> mapResultMapMap(MybatisPersistentProperty p) {
-		Map<String, Object> map = new HashMap<>();
+	private ColumnResult columnResult(MybatisPersistentProperty p) {
 		Column column = p.getColumn();
-		map.put("name", p.getName());
-		map.put("columnName", column.getName().render(this.dialect));
-		map.put("column", column);
-		return map;
+		ColumnResult cr = new ColumnResult();
+		cr.setPrimaryKey(p.isIdProperty());
+		cr.setColumn(column.getName().render(this.dialect));
+		cr.setProperty(p.getName());
+		cr.setJavaType(column.getJavaTypeString());
+		cr.setJdbcType(column.getJdbcTypeString());
+		cr.setTypeHandler(column.getTypeHandlerString());
+		return cr;
 	}
 
 	private String addInsertStatement(boolean selective) {

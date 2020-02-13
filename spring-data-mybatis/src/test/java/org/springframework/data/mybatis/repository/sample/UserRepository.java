@@ -33,7 +33,6 @@ import org.springframework.data.mybatis.domain.sample.User;
 import org.springframework.data.mybatis.domain.sample.UserExample;
 import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
-import org.springframework.data.mybatis.repository.Procedure;
 import org.springframework.data.mybatis.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,14 +53,14 @@ public interface UserRepository extends MybatisExampleRepository<User, Integer, 
 
 	User findByEmailAddress(String emailAddress);
 
-	@Query("select * from User u left outer join u.manager as manager")
+	@Query("select * from user u left outer join u.manager as manager")
 	Page<User> findAllPaged(Pageable pageable);
 
 	User findByEmailAddressAndLastname(String emailAddress, String lastname);
 
 	List<User> findByEmailAddressAndLastnameOrFirstname(String emailAddress, String lastname, String username);
 
-	@Query("select * from User u where u.emailAddress = ?1")
+	@Query("select * from user u where u.emailAddress = ?1")
 	@Transactional(readOnly = true)
 	User findByAnnotatedQuery(String emailAddress);
 
@@ -76,7 +75,7 @@ public interface UserRepository extends MybatisExampleRepository<User, Integer, 
 	@Query("select * from user u where u.firstname like ?1%")
 	List<User> findByFirstnameLike(String firstname);
 
-	@Query("select * from User u where u.firstname like :firstname%")
+	@Query("select * from user u where u.firstname like :firstname%")
 	List<User> findByFirstnameLikeNamed(@Param("firstname") String firstname);
 
 	@Modifying
@@ -99,10 +98,6 @@ public interface UserRepository extends MybatisExampleRepository<User, Integer, 
 	List<User> findByLastnameNotLike(String lastname);
 
 	List<User> findByLastnameNot(String lastname);
-
-	List<User> findByManagerLastname(String name);
-
-	List<User> findByColleaguesLastname(String lastname);
 
 	List<User> findByLastnameNotNull();
 
@@ -135,9 +130,6 @@ public interface UserRepository extends MybatisExampleRepository<User, Integer, 
 	List<User> findByActiveTrue();
 
 	List<User> findByActiveFalse();
-
-	@Query("select u.colleagues from User u where u = ?1")
-	List<User> findColleaguesFor(User user);
 
 	List<User> findByCreatedAtBefore(Date date);
 
@@ -184,21 +176,6 @@ public interface UserRepository extends MybatisExampleRepository<User, Integer, 
 	Long removeByLastname(String lastname);
 
 	List<User> deleteByLastname(String lastname);
-
-	// @Query(value = "select u.binaryData from User u where u.id = :id")
-	// byte[] findBinaryDataByIdJpaQl(@Param("id") Integer id);
-
-	@Procedure("plus1inout")
-	Integer explicitlyNamedPlus1inout(Integer arg);
-
-	@Procedure(procedureName = "plus1inout")
-	Integer plus1inout(Integer arg);
-
-	@Procedure(name = "User.plus1IO")
-	Integer entityAnnotatedCustomNamedProcedurePlus1IO(@Param("arg") Integer arg);
-
-	@Procedure
-	Integer plus1(@Param("arg") Integer arg);
 
 	@Query(value = "select * from user u where u.firstname like ?1%", countProjection = "u.firstname")
 	Page<User> findAllByFirstnameLike(String firstname, Pageable page);
@@ -303,12 +280,12 @@ public interface UserRepository extends MybatisExampleRepository<User, Integer, 
 
 	List<User> queryByAgeInOrFirstname(Integer[] ages, String firstname);
 
-	@Query("select * from User u")
+	@Query("select * from user u")
 	Stream<User> findAllByCustomQueryAndStream();
 
 	Stream<User> readAllByFirstnameNotNull();
 
-	@Query("select * from User u")
+	@Query("select * from user u")
 	Stream<User> streamAllPaged(Pageable pageable);
 
 	List<User> findByLastnameNotContaining(String part);

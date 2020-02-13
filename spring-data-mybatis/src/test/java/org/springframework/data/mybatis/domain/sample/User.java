@@ -22,7 +22,6 @@ import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.ColumnResult;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -34,20 +33,10 @@ import javax.persistence.JoinTable;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
-import javax.persistence.NamedAttributeNode;
-import javax.persistence.NamedEntityGraph;
-import javax.persistence.NamedEntityGraphs;
 import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.NamedStoredProcedureQueries;
-import javax.persistence.NamedStoredProcedureQuery;
-import javax.persistence.NamedSubgraph;
-import javax.persistence.ParameterMode;
-import javax.persistence.SqlResultSetMapping;
-import javax.persistence.SqlResultSetMappings;
-import javax.persistence.StoredProcedureParameter;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -56,48 +45,14 @@ import org.springframework.data.mybatis.annotation.Example;
 
 @Example
 @Entity
-@NamedEntityGraphs({ @NamedEntityGraph(name = "User.overview", attributeNodes = { @NamedAttributeNode("roles") }),
-		@NamedEntityGraph(name = "User.detail",
-				attributeNodes = { @NamedAttributeNode("roles"), @NamedAttributeNode("manager"),
-						@NamedAttributeNode("colleagues") }),
-		@NamedEntityGraph(name = "User.getOneWithDefinedEntityGraphById",
-				attributeNodes = { @NamedAttributeNode("roles"), @NamedAttributeNode("manager"),
-						@NamedAttributeNode("colleagues") }),
-		@NamedEntityGraph(name = "User.withSubGraph",
-				attributeNodes = { @NamedAttributeNode("roles"),
-						@NamedAttributeNode(value = "colleagues", subgraph = "User.colleagues") },
-				subgraphs = { @NamedSubgraph(name = "User.colleagues",
-						attributeNodes = { @NamedAttributeNode("colleagues"), @NamedAttributeNode("roles") }) }),
-		@NamedEntityGraph(name = "User.deepGraph",
-				attributeNodes = { @NamedAttributeNode("roles"),
-						@NamedAttributeNode(value = "colleagues", subgraph = "User.colleagues") },
-				subgraphs = {
-						@NamedSubgraph(name = "User.colleagues",
-								attributeNodes = { @NamedAttributeNode("roles"),
-										@NamedAttributeNode(value = "colleagues",
-												subgraph = "User.colleaguesOfColleagues") }),
-						@NamedSubgraph(name = "User.colleaguesOfColleagues",
-								attributeNodes = { @NamedAttributeNode("roles") }) }) })
 @NamedQueries({ //
 		@NamedQuery(name = "User.findByEmailAddress", //
-				query = "SELECT u.* FROM User u WHERE u.emailAddress = ?1"), //
+				query = "SELECT u.* FROM user u WHERE u.emailAddress = ?1"), //
 		@NamedQuery(name = "User.findByNamedQueryWithAliasInInvertedOrder", //
-				query = "SELECT u.lastname AS lastname, u.firstname AS firstname FROM User u ORDER BY u.lastname ASC"),
+				query = "SELECT u.lastname AS lastname, u.firstname AS firstname FROM user u ORDER BY u.lastname ASC"),
 		@NamedQuery(name = "User.findByNamedQueryWithConstructorExpression",
-				query = "SELECT new org.springframework.data.mybatis.repository.sample.NameOnlyDto(u.firstname, u.lastname) from User u") })
+				query = "SELECT new org.springframework.data.mybatis.repository.sample.NameOnlyDto(u.firstname, u.lastname) from user u") })
 
-@NamedStoredProcedureQueries({ //
-		@NamedStoredProcedureQuery(name = "User.plus1", procedureName = "plus1inout",
-				parameters = { @StoredProcedureParameter(mode = ParameterMode.IN, name = "arg", type = Integer.class),
-						@StoredProcedureParameter(mode = ParameterMode.OUT, name = "res", type = Integer.class) }) //
-})
-@NamedStoredProcedureQuery(name = "User.plus1IO", procedureName = "plus1inout",
-		parameters = { @StoredProcedureParameter(mode = ParameterMode.IN, name = "arg", type = Integer.class),
-				@StoredProcedureParameter(mode = ParameterMode.OUT, name = "res", type = Integer.class) })
-
-// Annotations for native Query with pageable
-@SqlResultSetMappings({
-		@SqlResultSetMapping(name = "SqlResultSetMapping.count", columns = @ColumnResult(name = "cnt")) })
 @NamedNativeQueries({
 		@NamedNativeQuery(name = "User.findByNativeNamedQueryWithPageable", resultClass = User.class,
 				query = "SELECT * FROM USER ORDER BY UCASE(firstname)"),

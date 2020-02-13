@@ -13,37 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.mapping.model;
+package io.easybest.mybatis.sample.controller;
 
-import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.List;
-
-import lombok.Data;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
  */
-@Data
-public class Association implements Serializable {
+@Controller
+@RequestMapping("/")
+public class IndexController {
 
-	private String property;
-
-	private String javaType;
-
-	private String column;
-
-	private String select;
-
-	private String fetch;
-
-	private List<ColumnResult> results = new LinkedList<>();
-
-	public void addResult(ColumnResult cr) {
-		this.results.add(cr);
+	@GetMapping
+	String index() {
+		return "redirect:/index.html";
 	}
 
 }

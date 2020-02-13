@@ -15,7 +15,6 @@
  */
 package org.springframework.data.mybatis.processor;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
@@ -49,9 +48,8 @@ import javax.persistence.OrderColumn;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
+import com.samskivert.mustache.Mustache;
+import com.samskivert.mustache.Template;
 
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mybatis.annotation.Example;
@@ -119,17 +117,7 @@ public class MybatisDomainProcessor extends AbstractProcessor {
 		if (null == elements || elements.isEmpty()) {
 			return true;
 		}
-		MustacheFactory mustacheFactory = new DefaultMustacheFactory() {
-			@Override
-			public void encode(String value, Writer writer) {
-				try {
-					writer.write(value);
-				}
-				catch (IOException ex) {
-					throw new RuntimeException(ex.getMessage(), ex);
-				}
-			}
-		};
+		Mustache.Compiler mustache = Mustache.compiler().escapeHTML(false);
 		ClassLoader classLoader = MybatisDomainProcessor.class.getClassLoader();
 		Filer filer = this.processingEnv.getFiler();
 		for (Element element : elements) {
@@ -143,8 +131,8 @@ public class MybatisDomainProcessor extends AbstractProcessor {
 				InputStream exampleInputStream = classLoader.getResourceAsStream("template/Example.java.tpl");
 				try (InputStreamReader in = new InputStreamReader(exampleInputStream, StandardCharsets.UTF_8);
 						Writer writer = javaFileObject.openWriter()) {
-					Mustache mustache = mustacheFactory.compile(in, tableMeta.getExampleClassName());
-					mustache.execute(writer, scopes);
+					Template template = mustache.compile(in);
+					template.execute(scopes, writer);
 				}
 			}
 			catch (Exception ex) {

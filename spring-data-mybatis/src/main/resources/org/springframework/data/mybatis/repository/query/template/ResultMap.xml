@@ -1,27 +1,22 @@
 <resultMap id="{{statementName}}" type="{{entityType}}">
     {{#results}}
-        <{{#column}}{{#primaryKey}}id{{/primaryKey}}{{^primaryKey}}result{{/primaryKey}}{{/column}} property="{{name}}" column="{{columnName}}"
-            {{#column}}
-                {{#javaTypeString}}javaType="{{javaTypeString}}"{{/javaTypeString}}
-                {{#jdbcTypeString}}jdbcType="{{jdbcTypeString}}"{{/jdbcTypeString}}
-                {{#typeHandlerString}} typeHandler="{{typeHandlerString}}"{{/typeHandlerString}}
-            {{/column}}
+        <{{#primaryKey}}id{{/primaryKey}}{{^primaryKey}}result{{/primaryKey}} property="{{property}}" column="{{column}}"
+                {{#javaType}}javaType="{{javaType}}"{{/javaType}}
+                {{#jdbcType}}jdbcType="{{jdbcType}}"{{/jdbcType}}
+                {{#typeHandler}} typeHandler="{{typeHandler}}"{{/typeHandler}}
         />
     {{/results}}
     {{#embeddedAssociations}}
-        <association property="{{key}}">
-            {{#value}}
-                <{{#column}}{{#primaryKey}}id{{/primaryKey}}{{^primaryKey}}result{{/primaryKey}}{{/column}} property="{{name}}" column="{{columnName}}"
-                    {{#column}}
-                        {{#javaTypeString}}javaType="{{javaTypeString}}"{{/javaTypeString}}
-                        {{#jdbcTypeString}}jdbcType="{{jdbcTypeString}}"{{/jdbcTypeString}}
-                        {{#typeHandlerString}} typeHandler="{{typeHandlerString}}"{{/typeHandlerString}}
-                    {{/column}}
+        <association property="{{property}}"{{#javaType}} javaType="{{javaType}}"{{/javaType}}>
+            {{#results}}
+                <{{#primaryKey}}id{{/primaryKey}}{{^primaryKey}}result{{/primaryKey}} property="{{property}}" column="{{column}}"
+                {{#javaType}}javaType="{{javaType}}"{{/javaType}}
+                {{#jdbcType}}jdbcType="{{jdbcType}}"{{/jdbcType}}
+                {{#typeHandler}} typeHandler="{{typeHandler}}"{{/typeHandler}}
                 />
-            {{/value}}
+            {{/results}}
         </association>
     {{/embeddedAssociations}}
-
     {{#associations}}
     <association property="{{property}}" javaType="{{javaType}}" fetchType="{{fetch}}" select="{{select}}" column="{{column}}"/>
     {{/associations}}
