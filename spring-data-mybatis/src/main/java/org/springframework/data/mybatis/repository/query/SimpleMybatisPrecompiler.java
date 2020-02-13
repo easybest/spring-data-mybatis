@@ -15,9 +15,11 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -66,14 +68,16 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	@Override
 	protected String doPrecompile() {
 		StringBuilder builder = new StringBuilder();
-		builder.append(this.addResultMap());
 
 		// SQL Fragments
+		builder.append(this.addBaseColumnListSQL());
 		builder.append(this.addQueryByExampleWhereClauseSQL());
 		builder.append(this.addStandardSortSQL());
 
-		builder.append(this.addBaseColumnListSQL());
+		// ResultMap
+		builder.append(this.addResultMap());
 
+		// Statements
 		builder.append(this.addInsertStatement(true));
 		builder.append(this.addInsertStatement(false));
 		builder.append(this.addUpdateStatement(true, true));
@@ -122,25 +126,41 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		if (this.configuration.hasResultMap(this.namespace + '.' + ResidentStatementName.RESULT_MAP)) {
 			return "";
 		}
-		StringBuilder builder = new StringBuilder();
-		StringBuilder associationBuilder = new StringBuilder();
+
+		Map<String, Object> params = new HashMap<>();
+		List<MybatisPersistentProperty> results = new ArrayList<>();
+		Map<String, List<Map<String, Object>>> embeddedAssociations = new HashMap<>();
+
 		this.persistentEntity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) pp -> {
 			if (pp.isAnnotationPresent(EmbeddedId.class) || pp.isEmbeddable()) {
-				associationBuilder.append(String.format("<association property=\"%s\">", pp.getName()));
+				List<Map<String, Object>> association = new ArrayList<>();
 				MybatisPersistentEntity<?> embeddedEntity = this.mappingContext
 						.getRequiredPersistentEntity(pp.getActualType());
-				embeddedEntity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) epp -> associationBuilder
-						.append(this.resultMapSegment(epp.isIdProperty(), epp.getName(), epp.getColumn())));
-				associationBuilder.append("</association>");
+				embeddedEntity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) epp -> {
+					Map<String, Object> map = this.mapResultMapMap(epp);
+					association.add(map);
+				});
+				embeddedAssociations.put(pp.getName(), association);
 				return;
 			}
-			builder.append(this.resultMapSegment(pp.isIdProperty(), pp.getName(), pp.getColumn()));
+			results.add(pp);
 		});
 
-		builder.append(associationBuilder);
-		return String.format("<resultMap id=\"%s\" type=\"%s\">%s</resultMap>", ResidentStatementName.RESULT_MAP,
-				this.persistentEntity.getType().getName(), builder.toString());
+		params.put("statementName", ResidentStatementName.RESULT_MAP);
+		params.put("entityType", this.persistentEntity.getType().getName());
+		params.put("results", results.stream().map(this::mapResultMapMap).collect(Collectors.toList()));
+		params.put("embeddedAssociations", embeddedAssociations.entrySet());
+		return render("ResultMap", params);
 
+	}
+
+	private Map<String, Object> mapResultMapMap(MybatisPersistentProperty p) {
+		Map<String, Object> map = new HashMap<>();
+		Column column = p.getColumn();
+		map.put("name", p.getName());
+		map.put("columnName", column.getName().render(this.dialect));
+		map.put("column", column);
+		return map;
 	}
 
 	private String addInsertStatement(boolean selective) {
@@ -474,21 +494,26 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			return "";
 		}
 
-		return String.format("<select id=\"%s\" parameterType=\"%sExample\" resultMap=\"%s\">" + "select "
-				+ "<if test=\"distinct\">distinct</if>" + "<include refid=\"__base_column_list\"/> " + "from %s "
-				+ "<if test=\"_parameter != null\">" + "<include refid=\"__example_where_clause\"/>" + "</if>"
-				+ "<if test=\"orderByClause != null\"> " + "order by ${orderByClause} " + "</if>" + "</select>",
-				ResidentStatementName.FIND_BY_EXAMPLE, this.persistentEntity.getType().getName(),
-				ResidentStatementName.RESULT_MAP, this.getTableName());
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put("statementName", ResidentStatementName.FIND_BY_EXAMPLE);
+		scopes.put("tableName", this.getTableName());
+		scopes.put("entityType", this.persistentEntity.getType().getName());
+		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
+
+		return render("FindByExample", scopes);
 	}
 
 	private String addBaseColumnListSQL() {
-		if (this.configuration.getSqlFragments().containsKey(this.namespace + ".__base_column_list")) {
+		if (this.configuration.getSqlFragments()
+				.containsKey(this.namespace + "." + ResidentStatementName.BASE_COLUMN_LIST)) {
 			return "";
 		}
 		String sql = this.mappingPropertyToColumn().values().stream().map(c -> c.getName().render(this.dialect))
 				.collect(Collectors.joining(","));
-		return String.format("<sql id=\"__base_column_list\">%s</sql>", sql);
+		Map<String, Object> params = new HashMap<>();
+		params.put("statementName", ResidentStatementName.BASE_COLUMN_LIST);
+		params.put("columns", sql);
+		return render("SQLFragment", params);
 	}
 
 	private String addFindByExampleWhereClauseSQL() {

@@ -53,4 +53,28 @@ public class Column {
 		return this.javaType == String.class;
 	}
 
+	public String getJdbcTypeString() {
+		if (null == this.jdbcType) {
+			return null;
+		}
+		return this.jdbcType.name();
+	}
+
+	public String getJavaTypeString() {
+		if (null == this.javaType) {
+			return null;
+		}
+		if (this.javaType == byte[].class) {
+			return "_byte[]";
+		}
+		return this.javaType.getName();
+	}
+
+	public String getTypeHandlerString() {
+		if (null == this.typeHandler) {
+			return null;
+		}
+		return this.typeHandler.getName();
+	}
+
 }

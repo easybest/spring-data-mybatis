@@ -166,6 +166,11 @@ public final class ResidentStatementName {
 	 */
 	public static final String STANDARD_SORT = PREFIX + "standard_sort";
 
+	/**
+	 * For <code>__base_column_list</code>.
+	 */
+	public static final String BASE_COLUMN_LIST = PREFIX + "base_column_list";
+
 	public static String statementName(String namespace, String statement) {
 		return namespace + '.' + statement;
 	}

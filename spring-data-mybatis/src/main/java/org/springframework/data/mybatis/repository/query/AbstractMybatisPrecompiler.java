@@ -71,6 +71,8 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	protected EscapeCharacter escape;
 
+	private Mustache.Compiler mustache;
+
 	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			RepositoryInformation repositoryInformation) {
 
@@ -89,19 +91,19 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(
 				new DatabaseMetaDataDialectResolutionInfoAdapter(configuration.getEnvironment().getDataSource()));
 
+		this.mustache = Mustache.compiler().escapeHTML(false);
 	}
 
 	protected String render(String name, Object context) {
-
+		// Mustache.Compiler mustache = Mustache.compiler().escapeHTML(false);
 		String path = "org/springframework/data/mybatis/repository/query/template/" + name + ".xml";
 		InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(path);
 		try (InputStreamReader source = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-			return Mustache.compiler().escapeHTML(false).compile(source).execute(context);
+			return mustache.compile(source).execute(context);
 		}
 		catch (IOException ex) {
 			throw new MappingException("Could not render the statement: " + name, ex);
 		}
-
 	}
 
 	@Override
