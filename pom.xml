@@ -173,32 +173,30 @@
 
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
-                <artifactId>flatten-maven-plugin</artifactId>
-                <inherited>false</inherited>
+                <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <!-- Create an effective POM (with versions expanded) for the CLI and
-                            documentation -->
-                        <id>flatten-effective-pom</id>
-                        <phase>process-resources</phase>
+                        <id>regex-property</id>
                         <goals>
-                            <goal>flatten</goal>
+                            <goal>regex-property</goal>
                         </goals>
                         <configuration>
-                            <updatePomFile>false</updatePomFile>
-                            <outputDirectory>${project.build.directory}/effective-pom</outputDirectory>
-                            <flattenedPomFilename>spring-data-mybatis-dependencies.xml</flattenedPomFilename>
-                            <flattenMode>oss</flattenMode>
-                            <pomElements>
-                                <dependencyManagement>expand</dependencyManagement>
-                                <pluginManagement>expand</pluginManagement>
-                                <properties>remove</properties>
-                                <repositories>remove</repositories>
-                            </pomElements>
+                            <name>modulename</name>
+                            <value>${project.artifactId}</value>
+                            <regex>-</regex>
+                            <replacement>.</replacement>
+                            <failIfNoMatch>true</failIfNoMatch>
                         </configuration>
                     </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <inherited>true</inherited>
+                <executions>
                     <execution>
-                        <!-- Flatten and simplify our own POM for install/deploy -->
+                        <!-- Tidy up all POMs before they are published -->
                         <id>flatten</id>
                         <phase>process-resources</phase>
                         <goals>
@@ -206,98 +204,12 @@
                         </goals>
                         <configuration>
                             <updatePomFile>true</updatePomFile>
-                            <flattenMode>bom</flattenMode>
+                            <flattenMode>oss</flattenMode>
                             <pomElements>
-                                <pluginManagement>keep</pluginManagement>
-                                <properties>keep</properties>
+                                <parent>expand</parent>
+                                <distributionManagement>remove</distributionManagement>
                                 <repositories>remove</repositories>
                             </pomElements>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>flatten-clean</id>
-                        <phase>clean</phase>
-                        <goals>
-                            <goal>clean</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>xml-maven-plugin</artifactId>
-                <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <!-- Cleanup the effective POM -->
-                        <id>post-process-effective-pom</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>transform</goal>
-                        </goals>
-                        <configuration>
-                            <transformationSets>
-                                <transformationSet>
-                                    <dir>${project.build.directory}/effective-pom</dir>
-                                    <outputDir>${project.build.directory}/effective-pom</outputDir>
-                                    <stylesheet>src/main/xslt/post-process-flattened-pom.xsl</stylesheet>
-                                    <outputProperties>
-                                        <outputProperty>
-                                            <name>indent</name>
-                                            <value>yes</value>
-                                        </outputProperty>
-                                    </outputProperties>
-                                </transformationSet>
-                            </transformationSets>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <!-- Cleanup the flattened project POM -->
-                        <id>post-process-flattened-pom</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>transform</goal>
-                        </goals>
-                        <configuration>
-                            <transformationSets>
-                                <transformationSet>
-                                    <dir>${project.basedir}</dir>
-                                    <outputDir>${project.basedir}</outputDir>
-                                    <includes>.flattened-pom.xml</includes>
-                                    <stylesheet>src/main/xslt/post-process-flattened-pom.xsl</stylesheet>
-                                    <outputProperties>
-                                        <outputProperty>
-                                            <name>indent</name>
-                                            <value>yes</value>
-                                        </outputProperty>
-                                    </outputProperties>
-                                </transformationSet>
-                            </transformationSets>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <!-- Attach effective POM -->
-                        <id>attach-artifacts</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>attach-artifact</goal>
-                        </goals>
-                        <configuration>
-                            <artifacts>
-                                <artifact>
-                                    <file>
-                                        ${project.build.directory}/effective-pom/spring-data-mybatis-dependencies.xml
-                                    </file>
-                                    <type>effective-pom</type>
-                                </artifact>
-                            </artifacts>
                         </configuration>
                     </execution>
                 </executions>

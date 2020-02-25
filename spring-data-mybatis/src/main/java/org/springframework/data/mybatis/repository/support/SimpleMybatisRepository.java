@@ -268,7 +268,16 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 			List<T> content = this.findAll(condition);
 			return new PageImpl<>(content, pageable, content.size());
 		}
-		return this.findByPager(pageable, ResidentStatementName.FIND_BY_PAGER, ResidentStatementName.COUNT, condition);
+		Map<String, Object> params = new HashMap<>();
+		params.put(ResidentParameterName.OFFSET, pageable.getOffset());
+		params.put(ResidentParameterName.PAGE_SIZE, pageable.getPageSize());
+		params.put(ResidentParameterName.OFFSET_END, pageable.getOffset() + pageable.getPageSize());
+		if (null != pageable.getSort() && pageable.getSort().isSorted()) {
+			params.put(ResidentParameterName.SORT, pageable.getSort());
+		}
+		List<T> content = this.selectList(ResidentStatementName.FIND_BY_PAGER, params);
+		return PageableExecutionUtils.getPage(content, pageable,
+				() -> this.selectOne(ResidentStatementName.COUNT, params));
 	}
 
 	@Override
@@ -387,6 +396,9 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 		params.put(ResidentParameterName.MATCHER, matcher);
 		params.put(ResidentParameterName.ACCESSOR, accessor);
 		params.put(ResidentParameterName.ENTITY, entity);
+		params.put(ResidentParameterName.OFFSET, pageable.getOffset());
+		params.put(ResidentParameterName.PAGE_SIZE, pageable.getPageSize());
+		params.put(ResidentParameterName.OFFSET_END, pageable.getOffset() + pageable.getPageSize());
 		if (null != pageable.getSort() && pageable.getSort().isSorted()) {
 			params.put(ResidentParameterName.SORT, pageable.getSort());
 		}

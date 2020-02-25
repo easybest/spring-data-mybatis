@@ -15,18 +15,10 @@
  */
 package org.springframework.data.mybatis.repository.support;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.support.SqlSessionDaoSupport;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.util.CollectionUtils;
 
 /**
  * MyBatis session support.
@@ -96,60 +88,6 @@ public abstract class SqlSessionRepositorySupport extends SqlSessionDaoSupport {
 
 	protected int delete(String statement, Object parameter) {
 		return this.getSqlSession().delete(this.getStatement(statement), parameter);
-	}
-
-	/**
-	 * Calculate total mount.
-	 * @param pager pager
-	 * @param result result
-	 * @param <X> entity type
-	 * @return if return -1 means can not judge ,need count from database.
-	 */
-	protected <X> long calculateTotal(Pageable pager, List<X> result) {
-		if (pager.hasPrevious()) {
-			if (CollectionUtils.isEmpty(result)) {
-				return -1;
-			}
-			if (result.size() == pager.getPageSize()) {
-				return -1;
-			}
-			return (pager.getPageNumber() - 1) * pager.getPageSize() + result.size();
-		}
-		if (result.size() < pager.getPageSize()) {
-			return result.size();
-		}
-		return -1;
-	}
-
-	protected <X, Y> Page<X> findByPager(Pageable pager, String selectStatement, String countStatement, Y condition,
-			Map<String, Object> otherParams) {
-		Map<String, Object> params = new HashMap<>();
-		params.put("__offset", pager.getOffset());
-		params.put("__pageSize", pager.getPageSize());
-		params.put("__offsetEnd", pager.getOffset() + pager.getPageSize());
-		if (condition instanceof Sort && ((Sort) condition).isSorted()) {
-			params.put("__sort", condition);
-		}
-		else if (null != pager && null != pager.getSort() && pager.getSort().isSorted()) {
-			params.put("__sort", pager.getSort());
-		}
-		params.put("__condition", condition);
-
-		if (!CollectionUtils.isEmpty(otherParams)) {
-			params.putAll(otherParams);
-		}
-		List<X> result = selectList(selectStatement, params);
-
-		long total = calculateTotal(pager, result);
-		if (total < 0) {
-			total = selectOne(countStatement, params);
-		}
-
-		return new PageImpl<>(result, pager, total);
-	}
-
-	protected <X, Y> Page<X> findByPager(Pageable pager, String selectStatement, String countStatement, Y condition) {
-		return findByPager(pager, selectStatement, countStatement, condition, null);
 	}
 
 }

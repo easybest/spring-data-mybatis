@@ -42,6 +42,11 @@ public final class ResidentParameterName {
 	public static final String OFFSET = PREFIX + "offset";
 
 	/**
+	 * For <code>__offsetEnd</code>.
+	 */
+	public static final String OFFSET_END = OFFSET + "End";
+
+	/**
 	 * For <code>__pageSize</code>.
 	 */
 	public static final String PAGE_SIZE = PREFIX + "pageSize";

@@ -33,6 +33,7 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
+import com.samskivert.mustache.DefaultCollector;
 import com.samskivert.mustache.Mustache;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
@@ -96,7 +97,7 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(
 				new DatabaseMetaDataDialectResolutionInfoAdapter(configuration.getEnvironment().getDataSource()));
 
-		this.mustache = Mustache.compiler().escapeHTML(false);
+		this.mustache = Mustache.compiler().escapeHTML(false).withCollector(new DefaultCollector());
 	}
 
 	protected String render(String name, Object context) {

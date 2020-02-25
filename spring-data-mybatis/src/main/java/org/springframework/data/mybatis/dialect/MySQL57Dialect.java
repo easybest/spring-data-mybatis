@@ -21,7 +21,7 @@ package org.springframework.data.mybatis.dialect;
  * @author JARVIS SONG
  * @since 2.0.0
  */
-public class MySQL57Dialect extends Dialect {
+public class MySQL57Dialect extends MySQL55Dialect {
 
 	public MySQL57Dialect() {
 		super();

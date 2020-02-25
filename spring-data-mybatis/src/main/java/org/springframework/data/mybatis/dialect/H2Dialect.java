@@ -45,7 +45,7 @@ public class H2Dialect extends Dialect {
 				return sql + (hasOffset
 						? String.format(" limit %d offset %d", selection.getMaxRows(),
 								LimitHelper.getFirstRow(selection))
-						: String.format(" limit %s", selection.getMaxRows()));
+						: String.format(" limit %d", selection.getMaxRows()));
 			}
 
 			return sql + String.format(" limit #{%s} offset #{%s}", ResidentParameterName.PAGE_SIZE,

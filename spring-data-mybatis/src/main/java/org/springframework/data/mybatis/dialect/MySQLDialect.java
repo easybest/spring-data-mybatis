@@ -17,6 +17,11 @@ package org.springframework.data.mybatis.dialect;
 
 import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.identity.MySQLIdentityColumnSupport;
+import org.springframework.data.mybatis.dialect.pagination.AbstractLimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.LimitHelper;
+import org.springframework.data.mybatis.dialect.pagination.RowSelection;
+import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 
 /**
  * MySQLDialect.
@@ -25,6 +30,27 @@ import org.springframework.data.mybatis.dialect.identity.MySQLIdentityColumnSupp
  * @since 1.0.0
  */
 public class MySQLDialect extends Dialect {
+
+	private static final LimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
+		@Override
+		public String processSql(String sql, RowSelection selection) {
+
+			if (null != selection) {
+				final boolean hasOffset = LimitHelper.hasFirstRow(selection);
+				return sql + (hasOffset
+						? String.format(" limit %d, %d", LimitHelper.getFirstRow(selection), selection.getMaxRows())
+						: String.format(" limit %d", selection.getMaxRows()));
+			}
+
+			return sql + String.format(" limit #{%s},#{%s}", ResidentParameterName.OFFSET,
+					ResidentParameterName.PAGE_SIZE);
+		}
+
+		@Override
+		public boolean supportsLimit() {
+			return true;
+		}
+	};
 
 	public MySQLDialect() {
 		super();
@@ -43,6 +69,11 @@ public class MySQLDialect extends Dialect {
 	@Override
 	public IdentityColumnSupport getIdentityColumnSupport() {
 		return new MySQLIdentityColumnSupport();
+	}
+
+	@Override
+	public LimitHandler getLimitHandler() {
+		return LIMIT_HANDLER;
 	}
 
 }
