@@ -33,7 +33,6 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
-import com.samskivert.mustache.DefaultCollector;
 import com.samskivert.mustache.Mustache;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
