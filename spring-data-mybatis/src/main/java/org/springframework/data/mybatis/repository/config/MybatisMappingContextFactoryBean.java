@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.session.Configuration;
+import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
@@ -27,6 +29,7 @@ import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.LinkedMultiValueMap;
@@ -46,9 +49,11 @@ class MybatisMappingContextFactoryBean extends AbstractFactoryBean<MybatisMappin
 
 	private @Nullable ListableBeanFactory beanFactory;
 
-	MybatisMappingContextFactoryBean(Map<Class<?>, Class<?>> mapping) {
-		this.mapping = mapping;
+	private Configuration configuration;
 
+	MybatisMappingContextFactoryBean(Map<Class<?>, Class<?>> mapping, SqlSessionTemplate sqlSessionTemplate) {
+		this.mapping = mapping;
+		this.configuration = sqlSessionTemplate.getConfiguration();
 	}
 
 	@Override
@@ -77,6 +82,10 @@ class MybatisMappingContextFactoryBean extends AbstractFactoryBean<MybatisMappin
 		}
 
 		MybatisMappingContext context = new MybatisMappingContext();
+		if (this.configuration.isMapUnderscoreToCamelCase()) {
+			context.setFieldNamingStrategy(new SnakeCaseFieldNamingStrategy());
+		}
+
 		context.setInitialEntitySet(initialEntitySet);
 		context.setEntityRepositoryMapping(entityRepositoryMapping);
 		context.initialize();

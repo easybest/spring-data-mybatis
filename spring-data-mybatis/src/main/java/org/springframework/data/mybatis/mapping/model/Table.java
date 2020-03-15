@@ -29,14 +29,14 @@ public class Table {
 	private Identifier schema;
 
 	@Getter
-	private Identifier catelog;
+	private Identifier catalog;
 
 	@Getter
 	private Identifier name;
 
-	public Table(String schema, String catelog, String name) {
+	public Table(String schema, String catalog, String name) {
 		this.schema = Identifier.toIdentifier(schema);
-		this.catelog = Identifier.toIdentifier(catelog);
+		this.catalog = Identifier.toIdentifier(catalog);
 		this.name = Identifier.toIdentifier(name);
 	}
 
@@ -46,7 +46,7 @@ public class Table {
 
 	public String getFullName() {
 		return ((null != this.schema) ? (this.schema.getCanonicalName() + '.') : "") + //
-				((null != this.catelog) ? (this.catelog.getCanonicalName() + '.') : "") + //
+				((null != this.catalog) ? (this.catalog.getCanonicalName() + '.') : "") + //
 				this.name.getCanonicalName();
 	}
 

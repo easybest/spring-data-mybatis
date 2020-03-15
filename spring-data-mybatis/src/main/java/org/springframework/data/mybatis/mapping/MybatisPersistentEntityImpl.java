@@ -48,12 +48,12 @@ class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPer
 		this.table = Lazy.of(() -> {
 
 			String schema = null;
-			String catelog = null;
+			String catalog = null;
 			String name = null;
 			if (this.isAnnotationPresent(javax.persistence.Table.class)) {
 				javax.persistence.Table t = this.getRequiredAnnotation(javax.persistence.Table.class);
 				schema = t.schema();
-				catelog = t.catalog();
+				catalog = t.catalog();
 				name = t.name();
 			}
 			if (StringUtils.isEmpty(name)) {
@@ -61,7 +61,7 @@ class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPer
 				name = ((null != entity) && StringUtils.hasText(entity.name())) ? entity.name()
 						: this.getType().getSimpleName();
 			}
-			Table table = new Table(schema, catelog, name);
+			Table table = new Table(schema, catalog, name);
 			return table;
 		});
 	}

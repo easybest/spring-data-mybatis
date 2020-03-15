@@ -102,10 +102,13 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		super.registerBeansForRoot(registry, config);
 
 		Object source = config.getSource();
-
+		Optional<String> sqlSessionTemplateRef = config.getAttribute("sqlSessionTemplateRef");
 		registerIfNotAlreadyRegistered(
 				() -> BeanDefinitionBuilder.rootBeanDefinition(MybatisMappingContextFactoryBean.class)
-						.addConstructorArgValue(this.scanDomains(config)).getBeanDefinition(),
+						.addConstructorArgValue(this.scanDomains(config))
+						.addConstructorArgReference(
+								sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME))
+						.getBeanDefinition(),
 				registry, BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME, source);
 	}
 
