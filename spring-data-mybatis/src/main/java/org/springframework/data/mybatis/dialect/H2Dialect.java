@@ -104,4 +104,9 @@ public class H2Dialect extends Dialect {
 		return LIMIT_HANDLER;
 	}
 
+	@Override
+	public String getRegexLikeFunction(String column, String parameter) {
+		return "REGEXP_LIKE(" + column + ", '" + parameter + "', 'i')";
+	}
+
 }

@@ -26,6 +26,27 @@ import java.lang.reflect.InvocationTargetException;
 public enum Database {
 
 	/**
+	 * HSQLDB.
+	 */
+	HSQL {
+		@Override
+		public Class<? extends Dialect> latestDialect() {
+			return HSQLDialect.class;
+		}
+
+		@Override
+		public Dialect resolveDialect(DialectResolutionInfo info) {
+			final String databaseName = info.getDatabaseName();
+
+			if ("HSQL Database Engine".equals(databaseName)) {
+				return latestDialectInstance(this);
+			}
+
+			return null;
+		}
+	},
+
+	/**
 	 * H2.
 	 */
 	H2 {
