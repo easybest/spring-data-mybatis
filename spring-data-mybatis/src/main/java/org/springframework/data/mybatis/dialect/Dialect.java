@@ -17,6 +17,7 @@ package org.springframework.data.mybatis.dialect;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupportImpl;
@@ -110,6 +111,10 @@ public abstract class Dialect {
 
 	public String getLowercaseFunction() {
 		return "lower";
+	}
+
+	public String getRegexLikeFunction(String column, String parameter) {
+		throw new InvalidDataAccessApiUsageException("Unsupported regex like query.");
 	}
 
 	@Override

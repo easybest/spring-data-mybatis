@@ -47,9 +47,6 @@ public interface MybatisRepository<T, ID> extends PagingAndSortingRepository<T, 
 	List<T> findAllById(Iterable<ID> ids);
 
 	@Override
-	<S extends T> List<S> saveAll(Iterable<S> entities);
-
-	@Override
 	<S extends T> List<S> findAll(Example<S> example);
 
 	@Override
@@ -57,17 +54,10 @@ public interface MybatisRepository<T, ID> extends PagingAndSortingRepository<T, 
 
 	T getById(ID id);
 
-	<X extends T> T getOne(X condition);
+	@Override
+	<S extends T> List<S> saveAll(Iterable<S> entities);
 
-	<X extends T> Optional<T> findOne(X condition);
-
-	<X extends T> List<T> findAll(X condition);
-
-	<X extends T> List<T> findAll(Sort sort, X condition);
-
-	<X extends T> Page<T> findAll(Pageable pageable, X condition);
-
-	<X extends T> long countAll(X condition);
+	<S extends T> List<S> saveSelectiveAll(Iterable<S> entities);
 
 	<S extends T> S saveSelective(S entity);
 
@@ -83,10 +73,36 @@ public interface MybatisRepository<T, ID> extends PagingAndSortingRepository<T, 
 
 	<S extends T> S updateSelective(ID id, S entity);
 
-	void deleteAllInBatch();
+	int deleteAllInBatch();
 
-	void deleteInBatchById(Iterable<ID> ids);
+	int deleteInBatchById(Iterable<ID> ids);
 
-	void deleteInBatch(Iterable<T> entities);
+	int deleteInBatch(Iterable<T> entities);
+
+	int removeById(ID id);
+
+	int remove(T entity);
+
+	int removeAll(Iterable<? extends T> entities);
+
+	int removeAll();
+
+	@Deprecated
+	<X extends T> T getOne(X condition);
+
+	@Deprecated
+	<X extends T> Optional<T> findOne(X condition);
+
+	@Deprecated
+	<X extends T> List<T> findAll(X condition);
+
+	@Deprecated
+	<X extends T> List<T> findAll(Sort sort, X condition);
+
+	@Deprecated
+	<X extends T> Page<T> findAll(Pageable pageable, X condition);
+
+	@Deprecated
+	<X extends T> long countAll(X condition);
 
 }

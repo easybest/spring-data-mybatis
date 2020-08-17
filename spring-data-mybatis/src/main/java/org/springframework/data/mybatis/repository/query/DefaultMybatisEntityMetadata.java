@@ -16,6 +16,7 @@
 package org.springframework.data.mybatis.repository.query;
 
 import javax.persistence.Entity;
+import javax.persistence.Table;
 
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.Assert;
@@ -42,6 +43,15 @@ public class DefaultMybatisEntityMetadata<T> implements MybatisEntityMetadata<T>
 		Entity entity = AnnotatedElementUtils.findMergedAnnotation(this.domainType, Entity.class);
 		return ((null != entity) && StringUtils.hasText(entity.name())) ? entity.name()
 				: this.domainType.getSimpleName();
+	}
+
+	@Override
+	public String getTableName() {
+		Table table = AnnotatedElementUtils.findMergedAnnotation(this.domainType, Table.class);
+		if (null != table && StringUtils.hasText(table.name())) {
+			return table.name();
+		}
+		return this.getEntityName();
 	}
 
 	@Override

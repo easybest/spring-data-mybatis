@@ -15,12 +15,15 @@
  */
 package org.springframework.data.mybatis.domain.sample;
 
+import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
-import lombok.Getter;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 @Embeddable
-@Getter
+@Data
+@Accessors(chain = true)
 public class Address {
 
 	private String country;
@@ -29,6 +32,7 @@ public class Address {
 
 	private String streetName;
 
+	@Column(name = "street_number")
 	private String streetNo;
 
 	public Address() {

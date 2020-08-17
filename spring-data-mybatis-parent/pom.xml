@@ -49,13 +49,13 @@
         <source.level>1.8</source.level>
         <dist.id>${project.artifactId}</dist.id>
 
-        <springdata.commons>2.2.5.RELEASE</springdata.commons>
-        <spring.boot>2.2.5.RELEASE</spring.boot>
+        <springdata.commons>2.3.3.RELEASE</springdata.commons>
+        <spring.boot>2.3.3.RELEASE</spring.boot>
 
         <!-- MyBatis version -->
-        <mybatis>3.5.4</mybatis>
-        <mybatis.spring>2.0.3</mybatis.spring>
-        <mybatis-spring-boot>2.1.1</mybatis-spring-boot>
+        <mybatis>3.5.5</mybatis>
+        <mybatis.spring>2.0.5</mybatis.spring>
+        <mybatis-spring-boot>2.1.3</mybatis-spring-boot>
 
     </properties>
     <dependencyManagement>

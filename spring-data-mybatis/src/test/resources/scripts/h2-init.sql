@@ -217,20 +217,20 @@ create table SampleWithTimestampVersion
 );
 create table user
 (
-    id           integer      not null auto_increment,
-    active       boolean      not null,
-    city         varchar(255),
-    country      varchar(255),
-    streetName   varchar(255),
-    streetNo     varchar(255),
-    age          integer      not null,
-    binaryData   blob,
-    createdAt    timestamp,
-    dateOfBirth  date,
-    emailAddress varchar(255) not null,
-    firstname    varchar(255),
-    lastname     varchar(255),
-    manager_id   integer,
+    id            integer      not null auto_increment,
+    active        boolean      not null,
+    city          varchar(255),
+    country       varchar(255),
+    streetName    varchar(255),
+    street_number varchar(255),
+    age           integer      not null,
+    binaryData    blob,
+    createdAt     timestamp,
+    dateOfBirth   date,
+    emailAddress  varchar(255) not null,
+    firstname     varchar(255),
+    lastname      varchar(255),
+    manager_id    integer,
     primary key (id)
 );
 create table ROLE

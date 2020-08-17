@@ -105,7 +105,7 @@ public abstract class MybatisQueryExecution {
 				conversionService.removeConvertible(Object.class, optionalType);
 
 			}
-			catch (ClassNotFoundException | LinkageError o_O) {
+			catch (ClassNotFoundException | LinkageError ex) {
 			}
 		}
 	}

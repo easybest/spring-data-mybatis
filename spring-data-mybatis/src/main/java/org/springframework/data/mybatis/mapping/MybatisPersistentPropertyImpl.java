@@ -18,6 +18,7 @@ package org.springframework.data.mybatis.mapping;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -46,6 +47,7 @@ import org.apache.ibatis.type.JdbcType;
 
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mapping.Association;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.FieldNamingStrategy;
@@ -53,11 +55,15 @@ import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.PropertyNameFieldNamingStrategy;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.mybatis.annotation.Snowflake;
+import org.springframework.data.mybatis.annotation.TypeHandler;
+import org.springframework.data.mybatis.mapping.handler.DateUnixTimestampTypeHandler;
+import org.springframework.data.mybatis.mapping.handler.UnixTimestampDateTypeHandler;
 import org.springframework.data.mybatis.mapping.model.Column;
 import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -205,6 +211,9 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 					break;
 				}
 			}
+			else if (actualType.isEnum()) {
+				jdbcType = JdbcType.VARCHAR;
+			}
 			else {
 				if (this.isAnnotationPresent(Lob.class)) {
 					jdbcType = (actualType != String.class) ? JdbcType.BLOB : JdbcType.CLOB;
@@ -219,6 +228,26 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 			Column col = new Column(columnName, jdbcType);
 			col.setJavaType(actualType);
 			col.setPrimaryKey(this.isIdProperty.get());
+			TypeHandler typeHandler = this.findAnnotation(TypeHandler.class);
+			if (null != typeHandler && StringUtils.hasText(typeHandler.value())) {
+				try {
+					col.setTypeHandler((Class<? extends org.apache.ibatis.type.TypeHandler<?>>) ClassUtils
+							.forName(typeHandler.value(), this.getClass().getClassLoader()));
+				}
+				catch (Exception ex) {
+					throw new MappingException(ex.getMessage(), ex);
+				}
+			}
+			else {
+
+				if (actualType == Long.class && jdbcType == JdbcType.TIMESTAMP) {
+					col.setTypeHandler(UnixTimestampDateTypeHandler.class);
+				}
+				if (actualType == Date.class && jdbcType == JdbcType.BIGINT) {
+					col.setTypeHandler(DateUnixTimestampTypeHandler.class);
+				}
+
+			}
 			return col;
 		});
 	}

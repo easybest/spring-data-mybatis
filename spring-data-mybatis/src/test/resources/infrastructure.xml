@@ -1,29 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
-       xsi:schemaLocation="http://www.springframework.org/schema/jdbc https://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	   xsi:schemaLocation="http://www.springframework.org/schema/jdbc https://www.springframework.org/schema/jdbc/spring-jdbc.xsd
 		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-        <property name="dataSource" ref="dataSource"/>
-        <property name="mapperLocations" value="classpath*:/mapper/**.xml"/>
-        <property name="configuration">
-            <bean class="org.apache.ibatis.session.Configuration">
-                <property name="returnInstanceForEmptyRow" value="true"/>
-                <property name="callSettersOnNulls" value="true"/>
-            </bean>
-        </property>
-    </bean>
-    <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
-        <constructor-arg ref="sqlSessionFactory"/>
-    </bean>
-    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-        <property name="dataSource" ref="dataSource"/>
-    </bean>
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="mapperLocations" value="classpath*:/mapper/**.xml"/>
+		<property name="configuration">
+			<bean class="org.apache.ibatis.session.Configuration">
+				<property name="returnInstanceForEmptyRow" value="true"/>
+				<property name="callSettersOnNulls" value="true"/>
+				<property name="mapUnderscoreToCamelCase" value="true"/>
+			</bean>
+		</property>
+	</bean>
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactory"/>
+	</bean>
+	<bean id="transactionManager"
+		  class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
 
-    <jdbc:embedded-database id="dataSource" type="H2" generate-name="true">
-        <jdbc:script execution="INIT" separator=";" location="classpath:scripts/h2-init.sql"/>
-    </jdbc:embedded-database>
+	<jdbc:initialize-database data-source="dataSource">
+		<jdbc:script execution="INIT" separator=";"
+					 location="classpath:scripts/mysql-init.sql"/>
+	</jdbc:initialize-database>
+
+	<bean id="dataSource" class="com.mysql.cj.jdbc.MysqlDataSource">
+		<property name="url"
+				  value="jdbc:mysql://localhost:3306/testcase?useUnicode=true&amp;characterEncoding=utf-8&amp;useSSL=false"/>
+		<property name="user" value="root"/>
+		<property name="password" value="root"/>
+	</bean>
+
+	<!--    <jdbc:embedded-database id="dataSource" type="H2" generate-name="true">-->
+	<!--        <jdbc:script execution="INIT" separator=";" location="classpath:scripts/h2-init.sql"/>-->
+	<!--    </jdbc:embedded-database>-->
 
 </beans>

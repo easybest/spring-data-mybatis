@@ -41,6 +41,8 @@ class ExpressionBasedStringQuery extends StringQuery {
 
 	private static final String ENTITY_NAME = "entityName";
 
+	private static final String TABLE_NAME = "tableName";
+
 	private static final String ENTITY_NAME_VARIABLE = "#" + ENTITY_NAME;
 
 	private static final String ENTITY_NAME_VARIABLE_EXPRESSION = "#{" + ENTITY_NAME_VARIABLE + "}";
@@ -66,7 +68,9 @@ class ExpressionBasedStringQuery extends StringQuery {
 		}
 
 		StandardEvaluationContext evalContext = new StandardEvaluationContext();
-		evalContext.setVariable(ENTITY_NAME, metadata.getEntityName());
+		// evalContext.setVariable(ENTITY_NAME, metadata.getEntityName());
+		evalContext.setVariable(ENTITY_NAME, metadata.getTableName());
+		evalContext.setVariable(TABLE_NAME, metadata.getTableName());
 
 		query = potentiallyQuoteExpressionsParameter(query);
 

@@ -1,0 +1,17 @@
+<sql id="{{statementName}}">
+    <if test="__sort != null">
+        <bind name="__columnsMap" value='#{ {{columnsMap}} }'/>
+        ORDER BY
+        <foreach collection="__sort" item="item" index="idx" open="" close=""
+                 separator=",">
+            <if test="item.ignoreCase">{{lowercaseFunction}}(</if>
+            ${__columnsMap[item.property]}
+            <!--            <if test="__columnsMap[item.property] != null">-->
+            <!--                ${__columnsMap[item.property]}-->
+            <!--            </if>-->
+            <!--            <if test="__columnsMap[item.property] == null">{{!SQL inject problem}}${item.property}</if>-->
+            <if test="item.ignoreCase">)</if>
+            ${item.direction.name()}
+        </foreach>
+    </if>
+</sql>

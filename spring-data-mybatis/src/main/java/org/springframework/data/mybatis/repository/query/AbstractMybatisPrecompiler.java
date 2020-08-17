@@ -25,7 +25,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.JoinColumn;
@@ -76,7 +75,7 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	protected EscapeCharacter escape;
 
-	private Mustache.Compiler mustache;
+	private final Mustache.Compiler mustache;
 
 	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			RepositoryInformation repositoryInformation) {
@@ -101,10 +100,14 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	protected String render(String name, Object context) {
 		// Mustache.Compiler mustache = Mustache.compiler().escapeHTML(false);
-		String path = "org/springframework/data/mybatis/repository/query/template/" + name + ".xml";
-		InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(path);
-		try (InputStreamReader source = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-			return this.mustache.compile(source).execute(context);
+		String path = "org/springframework/data/mybatis/repository/query/template/" + name + ".mustache";
+		try (InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(path)) {
+			try (InputStreamReader source = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+				return this.mustache.compile(source).execute(context);
+			}
+			catch (IOException ex) {
+				throw new MappingException("Could not render the statement: " + name, ex);
+			}
 		}
 		catch (IOException ex) {
 			throw new MappingException("Could not render the statement: " + name, ex);
@@ -113,27 +116,27 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	@Override
 	public void precompile() {
-		try {
-			String xml = this.doPrecompile();
+		String xml = this.doPrecompile();
 
-			if (StringUtils.hasText(xml)) {
+		if (StringUtils.hasText(xml)) {
 
-				xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"https://mybatis.org/dtd/mybatis-3-mapper.dtd\"> <mapper namespace=\""
-						+ this.namespace + "\">" + xml + "</mapper>";
-				if (log.isDebugEnabled()) {
-					log.debug(xml);
-				}
-				InputStream inputStream = new ByteArrayInputStream(xml.getBytes());
+			xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+					+ "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"https://mybatis.org/dtd/mybatis-3-mapper.dtd\">\n"
+					+ "<mapper namespace=\"" + this.namespace + "\">\n" + xml + "\n</mapper>";
+			if (log.isDebugEnabled()) {
+				log.debug(xml);
+			}
+			try (InputStream inputStream = new ByteArrayInputStream(xml.getBytes())) {
 				XMLMapperBuilder mapperBuilder = new XMLMapperBuilder(inputStream, this.configuration,
 						this.namespace.replace('.', '/') + this.getResourceSuffix(),
 						this.configuration.getSqlFragments());
 				mapperBuilder.parse();
-
+			}
+			catch (IOException ex) {
+				throw new MappingException(ex.getMessage(), ex);
 			}
 		}
-		finally {
-			// clean up
-		}
+
 	}
 
 	protected abstract String doPrecompile();
@@ -199,42 +202,8 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 			}
 
 		});
-
+		map.forEach((s, column) -> column.getName().setDialect(this.dialect));
 		return map;
-	}
-
-	protected String variableSegment(String propertyName, Column column) {
-		return String.format("#{%s%s%s}", propertyName, //
-				(null != column.getJdbcType()) ? (",jdbcType=" + column.getJdbcType().name()) : "", //
-				(null != column.getTypeHandler()) ? (",typeHandler=" + column.getTypeHandler().getName()) : "");
-	}
-
-	protected String resultMapSegment(boolean isId, String propertyName, Column column) {
-		return String.format("<%s property=\"%s\" column=\"%s\" %s%s%s />", isId ? "id" : "result", propertyName, //
-				column.getName().render(this.dialect), //
-				(null != column.getJavaType()) ? (" javaType=\"" + column.getJavaType().getName() + "\"") : "", //
-				(null != column.getJdbcType()) ? (" jdbcType=\"" + column.getJdbcType().name() + "\"") : "", //
-				(null != column.getTypeHandler()) ? (" typeHandler=\"" + column.getTypeHandler().getName() + "\"")
-						: "");
-	}
-
-	protected String testClause(String propertyName, boolean and, boolean not) {
-		String[] parts = propertyName.split("\\.");
-		String[] conditions = new String[parts.length];
-		String prev = null;
-		for (int i = 0; i < parts.length; i++) {
-			conditions[i] = ((null != prev) ? (prev + ".") : "") + parts[i];
-			prev = conditions[i];
-		}
-		String test = Stream.of(conditions).map(c -> c + (not ? " !" : " =") + "= null")
-				.collect(Collectors.joining(and ? " and " : " or "));
-		return test;
-	}
-
-	protected String testNotNullSegment(String propertyName, String content) {
-
-		String test = this.testClause(propertyName, true, true);
-		return String.format("<if test=\"%s\">%s</if>", test, content);
 	}
 
 	protected List<MybatisPersistentProperty> findProperties(MybatisPersistentEntity<?> entity) {
@@ -276,7 +245,7 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 	protected String buildQueryByConditionOperator(Part.Type type) {
 		switch (type) {
 		case BETWEEN:
-			return " between ";
+			return " BETWEEN ";
 		case SIMPLE_PROPERTY:
 			return "=";
 		case NEGATING_SIMPLE_PROPERTY:
@@ -293,16 +262,16 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 			return ">=";
 		case NOT_LIKE:
 		case NOT_CONTAINING:
-			return " not like ";
+			return " NOT LIKE ";
 		case LIKE:
 		case STARTING_WITH:
 		case ENDING_WITH:
 		case CONTAINING:
-			return " like ";
+			return " LIKE ";
 		case IN:
-			return " in ";
+			return " IN ";
 		case NOT_IN:
-			return " not in ";
+			return " NOT IN ";
 		}
 
 		return "";
@@ -331,15 +300,16 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		case BETWEEN:
 			return String.format("#{%s} and #{%s}", properties[0], properties[1]);
 		case IS_NOT_NULL:
-			return " is not null";
+			return " IS NOT NULL";
 		case IS_NULL:
-			return " is null";
+			return " IS NULL";
 		case STARTING_WITH:
 			return this.buildLikeRightSegment(properties[0], false, true, ignoreCaseType);
 		case ENDING_WITH:
 			return this.buildLikeRightSegment(properties[0], true, false, ignoreCaseType);
 		case NOT_CONTAINING:
 		case CONTAINING:
+		case LIKE:
 			return this.buildLikeRightSegment(properties[0], true, true, ignoreCaseType);
 		case NOT_IN:
 		case IN:
@@ -347,9 +317,9 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 					"<foreach item=\"__item\" index=\"__index\" collection=\"%s\" open=\"(\" separator=\",\" close=\")\">#{__item}</foreach>",
 					properties[0]);
 		case TRUE:
-			return " = true";
+			return " = TRUE";
 		case FALSE:
-			return " = false";
+			return " = FALSE";
 		default:
 			if (ignoreCaseType == Part.IgnoreCaseType.ALWAYS || ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE) {
 				return String.format("%s(#{%s})", this.dialect.getLowercaseFunction(), properties[0]);

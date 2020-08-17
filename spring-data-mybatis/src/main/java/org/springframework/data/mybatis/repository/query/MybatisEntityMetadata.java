@@ -32,4 +32,6 @@ public interface MybatisEntityMetadata<T> extends EntityMetadata<T> {
 	 */
 	String getEntityName();
 
+	String getTableName();
+
 }

@@ -1,0 +1,7 @@
+<select id="{{statementName}}" resultMap="{{resultMap}}">
+    {{#limitHandler}}
+        select * from {{table}}
+        <include refid="__query_by_example_where_clause"/>
+        <include refid="__standard_sort"/>
+    {{/limitHandler}}
+</select>

@@ -167,6 +167,26 @@ public final class ResidentStatementName {
 	public static final String STANDARD_SORT = PREFIX + "standard_sort";
 
 	/**
+	 * For <code>__where_clause_by_id</code>.
+	 */
+	public static final String WHERE_BY_ID_CLAUSE = PREFIX + "where_clause_by_id";
+
+	/**
+	 * For <code>__where_clause_by_ids</code>.
+	 */
+	public static final String WHERE_BY_IDS_CLAUSE = PREFIX + "where_clause_by_ids";
+
+	/**
+	 * For <code>__where_clause_by_fixed_id</code>.
+	 */
+	public static final String WHERE_BY_FIXED_ID_CLAUSE = PREFIX + "where_clause_by_fixed_id";
+
+	/**
+	 * For <code>__where_clause_by_entity</code>.
+	 */
+	public static final String WHERE_BY_ENTITY_CLAUSE = PREFIX + "where_clause_by_entity";
+
+	/**
 	 * For <code>__base_column_list</code>.
 	 */
 	public static final String BASE_COLUMN_LIST = PREFIX + "base_column_list";

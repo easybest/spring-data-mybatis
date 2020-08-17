@@ -1,0 +1,108 @@
+<sql id="{{ statementName }}">
+    <where>
+        {{#properties}}
+            <if test="!__accessor.isIgnoredPath('{{key}}')">
+                {{! not ignored path}}
+                <if test="{{#testNotNull}}__entity.{{key}}{{/testNotNull}}">
+                    <if test="__matcher.isAnyMatching()">or</if>
+                    <if test="__matcher.isAllMatching()">and</if>
+                    <choose>
+                        <when test="__accessor.getStringMatcherForPath('{{key}}').name() != 'REGEX'">
+                            <choose>
+                                <when test="__accessor.isIgnoreCaseForPath('{{key}}')">
+                                    {{dialect.lowercaseFunction}}({{value.name}})
+                                </when>
+                                <otherwise>{{value.name}}</otherwise>
+                            </choose>
+                        </when>
+                    </choose>
+                    {{^value.string}}
+                    {{!not string}}
+                        =
+                        <choose>
+                            <when test="__accessor.isIgnoreCaseForPath('{{key}}')">
+                                {{dialect.lowercaseFunction}}(#{ __entity.{{key}} })
+                            </when>
+                            <otherwise>#{ __entity.{{key}} }</otherwise>
+                        </choose>
+                    {{/value.string}}
+                    {{#value.string}}
+                    {{!string property}}
+                        <bind name="__string_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}"
+                              value="__accessor.getStringMatcherForPath('{{key}}').name()"/>
+                        <choose>
+                            <when test="__string_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}.equals('DEFAULT') or __string_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}.equals('EXACT')">
+                                =
+                                <choose>
+                                    <when test="__accessor.isIgnoreCaseForPath('{{key}}')">
+                                        {{dialect.lowercaseFunction}}(#{ __entity.{{key}}
+                                        })
+                                    </when>
+                                    <otherwise>#{ __entity.{{key}} }</otherwise>
+                                </choose>
+                            </when>
+                            <when test="__string_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}.equals('STARTING')">
+                                LIKE
+                                <bind name="__starting_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}"
+                                      value="__entity.{{key}} + '%'"/>
+                                <choose>
+                                    <when test="__accessor.isIgnoreCaseForPath('{{key}}')">
+                                        {{dialect.lowercaseFunction}}(#{
+                                        __starting_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}
+                                        })
+                                    </when>
+                                    <otherwise>#{
+                                        __starting_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}
+                                        }
+                                    </otherwise>
+                                </choose>
+                            </when>
+                            <when test="__string_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}.equals('ENDING')">
+                                LIKE
+                                <bind name="__ending_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}"
+                                      value="'%' + __entity.{{key}}"/>
+                                <choose>
+                                    <when test="__accessor.isIgnoreCaseForPath('{{key}}')">
+                                        {{dialect.lowercaseFunction}}(#{
+                                        __ending_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}
+                                        })
+                                    </when>
+                                    <otherwise>#{
+                                        __ending_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}
+                                        }
+                                    </otherwise>
+                                </choose>
+                            </when>
+                            <when test="__string_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}.equals('CONTAINING')">
+                                LIKE
+                                <bind name="__containing_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}"
+                                      value="'%' + __entity.{{key}} + '%'"/>
+                                <choose>
+                                    <when test="__accessor.isIgnoreCaseForPath('{{key}}')">
+                                        {{dialect.lowercaseFunction}}(#{
+                                        __containing_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}
+                                        })
+                                    </when>
+                                    <otherwise>#{
+                                        __containing_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}
+                                        }
+                                    </otherwise>
+                                </choose>
+                            </when>
+                            <when test="__string_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}.equals('REGEX')">
+                                {{#regexLike}}
+                                    {{value.name}};;;#{ __entity.{{key}} }
+                                {{/regexLike}}
+                            </when>
+                        </choose>
+                    {{/value.string}}
+                </if>
+                <if test="({{^testNotNull}}__entity.{{key}}{{/testNotNull}}) and __accessor.nullHandler.name().equals('INCLUDE')">
+                    <if test="__matcher.isAnyMatching()">or</if>
+                    <if test="__matcher.isAllMatching()">and</if>
+                    {{value.name}} IS NULL
+                </if>
+            </if>
+        {{/properties}}
+    </where>
+</sql>

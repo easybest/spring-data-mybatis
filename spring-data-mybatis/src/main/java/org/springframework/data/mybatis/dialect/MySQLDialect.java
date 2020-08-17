@@ -38,11 +38,11 @@ public class MySQLDialect extends Dialect {
 			if (null != selection) {
 				final boolean hasOffset = LimitHelper.hasFirstRow(selection);
 				return sql + (hasOffset
-						? String.format(" limit %d, %d", LimitHelper.getFirstRow(selection), selection.getMaxRows())
-						: String.format(" limit %d", selection.getMaxRows()));
+						? String.format(" LIMIT %d, %d", LimitHelper.getFirstRow(selection), selection.getMaxRows())
+						: String.format(" LIMIT %d", selection.getMaxRows()));
 			}
 
-			return sql + String.format(" limit #{%s},#{%s}", ResidentParameterName.OFFSET,
+			return sql + String.format(" LIMIT #{%s},#{%s}", ResidentParameterName.OFFSET,
 					ResidentParameterName.PAGE_SIZE);
 		}
 
@@ -74,6 +74,11 @@ public class MySQLDialect extends Dialect {
 	@Override
 	public LimitHandler getLimitHandler() {
 		return LIMIT_HANDLER;
+	}
+
+	@Override
+	public String getRegexLikeFunction(String column, String parameter) {
+		return column + " regexp " + parameter;
 	}
 
 }

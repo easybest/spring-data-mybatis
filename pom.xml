@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.data.build</groupId>
         <artifactId>spring-data-parent</artifactId>
-        <version>2.2.5.RELEASE</version>
+        <version>2.3.3.RELEASE</version>
     </parent>
 
     <groupId>io.easybest</groupId>
@@ -46,11 +46,11 @@
         <maven>3.5</maven>
     </prerequisites>
     <properties>
-        <revision>2.2.5.BUILD-SNAPSHOT</revision>
+        <revision>2.3.2.BUILD-SNAPSHOT</revision>
         <disable.checks>false</disable.checks>
         <main.basedir>${basedir}</main.basedir>
-        <spring-javaformat.version>0.0.20</spring-javaformat.version>
-        <nohttp-checkstyle.version>0.0.4.RELEASE</nohttp-checkstyle.version>
+        <spring-javaformat.version>0.0.24</spring-javaformat.version>
+        <nohttp-checkstyle.version>0.0.5.RELEASE</nohttp-checkstyle.version>
 
         <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
         <xml-maven-plugin.version>1.0.2</xml-maven-plugin.version>
@@ -62,7 +62,6 @@
         <module>spring-data-mybatis</module>
         <module>spring-data-mybatis-boot-starter</module>
         <module>spring-data-mybatis-processor</module>
-        <module>spring-data-mybatis-sample</module>
     </modules>
     <build>
         <pluginManagement>
@@ -88,12 +87,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.1.1</version>
                 <dependencies>
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>8.29</version>
+                        <version>8.34</version>
                     </dependency>
                     <dependency>
                         <groupId>io.spring.javaformat</groupId>

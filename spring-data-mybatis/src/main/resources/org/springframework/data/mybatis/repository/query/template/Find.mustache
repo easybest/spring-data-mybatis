@@ -1,0 +1,20 @@
+<select id="{{statementName}}" resultMap="{{resultMap}}">
+    {{#pageable}}
+        {{#limitHandler}}
+            SELECT * FROM {{table}}
+            <where>
+                <include refid="__where_clause_by_ids"/>
+                {{conditionQuery}}
+            </where>
+            <include refid="__standard_sort"/>
+        {{/limitHandler}}
+    {{/pageable}}
+    {{^pageable}}
+        SELECT * FROM {{table}}
+        <where>
+            <include refid="__where_clause_by_ids"/>
+            {{conditionQuery}}
+        </where>
+        <include refid="__standard_sort"/>
+    {{/pageable}}
+</select>

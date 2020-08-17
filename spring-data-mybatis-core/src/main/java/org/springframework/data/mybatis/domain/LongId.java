@@ -15,11 +15,6 @@
  */
 package org.springframework.data.mybatis.domain;
 
-import java.io.Serializable;
-
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 
 import lombok.Data;
@@ -34,14 +29,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @MappedSuperclass
-public abstract class LongId implements Serializable {
-
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Id
-	protected Long id;
+public abstract class LongId extends Id<Long> {
 
 	public LongId(Long id) {
-		this.id = id;
+		super(id);
 	}
 
 }

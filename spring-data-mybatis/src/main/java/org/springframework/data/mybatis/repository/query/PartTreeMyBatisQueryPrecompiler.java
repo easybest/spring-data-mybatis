@@ -18,11 +18,14 @@ package org.springframework.data.mybatis.repository.query;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.persistence.EmbeddedId;
+
 import org.apache.ibatis.session.Configuration;
 
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.query.parser.Part;
@@ -102,7 +105,7 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 		String where = this.buildTreeOrConditionSegment(tree);
 		String sql = String.format("<delete id=\"%s\">delete from %s %s</delete>", //
 				this.query.getStatementName(), this.getTableName(),
-				StringUtils.hasText(where) ? (" where " + where) : "");
+				StringUtils.hasText(where) ? (" WHERE " + where) : "");
 		if (method.isCollectionQuery()) {
 			String query = this.buildSelectStatement(ResidentStatementName.QUERY_PREFIX + this.query.getStatementName(),
 					false);
@@ -126,14 +129,14 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 		MybatisQueryMethod method = this.query.getQueryMethod();
 
 		String where = this.buildTreeOrConditionSegment(tree);
-		String sql = String.format("select %s from %s %s", tree.isLimiting() ? "1" : "count(*)", this.getTableName(),
-				StringUtils.hasText(where) ? (" where " + where) : "");
+		String sql = String.format("SELECT %s FROM %s %s", tree.isLimiting() ? "1" : "COUNT(*)", this.getTableName(),
+				StringUtils.hasText(where) ? (" WHERE " + where) : "");
 
 		if (tree.isLimiting()) {
 			RowSelection rowSelection = new RowSelection();
 			rowSelection.setMaxRows(tree.getMaxResults());
 
-			sql = String.format("select count(*) from (%s) __a",
+			sql = String.format("SELECT COUNT(*) FROM (%s) __a",
 					this.dialect.getLimitHandler().processSql(sql, rowSelection));
 		}
 
@@ -158,8 +161,8 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 		if (null != tree.getSort() || method.getParameters().hasSortParameter()) {
 			sort = this.buildStandardOrderBySegment();
 		}
-		String sql = String.format("select %s %s from %s %s %s", tree.isDistinct() ? "distinct" : "", columns,
-				this.getTableName(), StringUtils.hasText(where) ? (" where " + where) : "", sort);
+		String sql = String.format("SELECT %s %s FROM %s %s %s", tree.isDistinct() ? "DISTINCT" : "", columns,
+				this.getTableName(), StringUtils.hasText(where) ? (" WHERE " + where) : "", sort);
 
 		RowSelection rowSelection = null;
 		if (tree.isLimiting()) {
@@ -192,15 +195,14 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 	private String buildTreeOrConditionSegment(PartTree tree) {
 		return tree.stream().map(node -> String.format("(%s)", this.buildTreeAndConditionSegment(node)))
-				.collect(Collectors.joining(" or "));
+				.collect(Collectors.joining(" OR "));
 	}
 
 	private String buildTreeAndConditionSegment(PartTree.OrPart parts) {
-		return parts.stream().map(part -> this.buildTreePredicateSegment(part)).collect(Collectors.joining(" and "));
+		return parts.stream().map(part -> this.buildTreePredicateSegment(part)).collect(Collectors.joining(" AND "));
 	}
 
 	private String buildTreePredicateSegment(Part part) {
-
 		StringBuilder builder = new StringBuilder();
 
 		PropertyPath property = part.getProperty();
@@ -208,6 +210,12 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 		MybatisPersistentProperty persistentProperty = this.persistentEntity
 				.getRequiredPersistentProperty(property.getSegment());
+
+		if (persistentProperty.isAnnotationPresent(EmbeddedId.class) || persistentProperty.isEmbeddable()) {
+			MybatisPersistentEntity<?> leafEntity = this.mappingContext
+					.getRequiredPersistentEntity(property.getLeafProperty().getOwningType());
+			persistentProperty = leafEntity.getPersistentProperty(part.getProperty().getLeafProperty().getSegment());
+		}
 
 		builder.append(
 				this.buildQueryByConditionLeftSegment(persistentProperty.getColumn().getName().render(this.dialect),

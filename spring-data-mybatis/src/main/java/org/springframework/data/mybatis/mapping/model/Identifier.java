@@ -18,6 +18,7 @@ package org.springframework.data.mybatis.mapping.model;
 import java.util.Locale;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.util.StringUtils;
@@ -35,6 +36,10 @@ public class Identifier implements Comparable<Identifier> {
 
 	@Getter
 	private final boolean quoted;
+
+	@Getter
+	@Setter
+	private Dialect dialect;
 
 	public static Identifier toIdentifier(String text) {
 		return toIdentifier(text, false);
@@ -90,6 +95,9 @@ public class Identifier implements Comparable<Identifier> {
 	}
 
 	public String render() {
+		if (null != this.dialect) {
+			return this.render(this.dialect);
+		}
 		return this.isQuoted() ? ('`' + this.getText() + '`') : this.getText();
 	}
 

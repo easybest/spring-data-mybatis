@@ -17,6 +17,7 @@ package org.springframework.data.mybatis.mapping.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
@@ -28,6 +29,7 @@ import org.apache.ibatis.type.TypeHandler;
  */
 @Getter
 @Setter
+@ToString
 public class Column {
 
 	private Identifier name;
@@ -49,8 +51,14 @@ public class Column {
 		this.jdbcType = jdbcType;
 	}
 
+	public Column(Identifier name, JdbcType jdbcType) {
+		this.name = name;
+		this.jdbcType = jdbcType;
+	}
+
 	public boolean isString() {
-		return this.javaType == String.class;
+		return this.javaType == String.class
+				|| (null != this.javaType && CharSequence.class.isAssignableFrom(this.javaType));
 	}
 
 	public String getJdbcTypeString() {

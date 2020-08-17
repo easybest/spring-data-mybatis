@@ -20,14 +20,16 @@ import java.util.LinkedList;
 import java.util.List;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 /**
- * .
+ * Association.
  *
  * @author JARVIS SONG
  * @since 2.0.0
  */
 @Data
+@Accessors(chain = true)
 public class Association implements Serializable {
 
 	private String property;

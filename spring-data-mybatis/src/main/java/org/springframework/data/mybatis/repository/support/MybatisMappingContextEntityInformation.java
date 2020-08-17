@@ -52,6 +52,11 @@ public class MybatisMappingContextEntityInformation<T, ID> extends MybatisEntity
 	}
 
 	@Override
+	public String getTableName() {
+		return this.entity.getTable().getFullName();
+	}
+
+	@Override
 	public ID getId(T entity) {
 		return (ID) this.entity.getIdentifierAccessor(entity).getIdentifier();
 	}

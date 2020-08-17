@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.mybatis.spring.SqlSessionTemplate;
@@ -67,7 +68,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	private final String namespace;
 
 	private static <T> Collection<T> toCollection(Iterable<T> ts) {
-
 		if (ts instanceof Collection) {
 			return (Collection<T>) ts;
 		}
@@ -133,19 +133,13 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Override
 	@Transactional
 	public void deleteById(ID id) {
-		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
-		this.delete(ResidentStatementName.DELETE_BY_ID, id);
+		this.removeById(id);
 	}
 
 	@Override
 	@Transactional
 	public void delete(T entity) {
-		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
-		if (this.entityInformation.isNew(entity)) {
-			return;
-		}
-
-		this.deleteById(this.entityInformation.getId(entity));
+		this.remove(entity);
 	}
 
 	@Override
@@ -163,39 +157,84 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	@Override
 	@Transactional
-	public void deleteInBatch(Iterable<T> entities) {
+	public int removeById(ID id) {
+		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
+		return this.delete(ResidentStatementName.DELETE_BY_ID, id);
+	}
+
+	@Override
+	@Transactional
+	public int remove(T entity) {
+		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
+		if (this.entityInformation.isNew(entity)) {
+			return 0;
+		}
+		return this.removeById(this.entityInformation.getId(entity));
+	}
+
+	@Override
+	@Transactional
+	public int removeAll(Iterable<? extends T> entities) {
+		Assert.notNull(entities, "Entities must not be null.");
+		AtomicInteger count = new AtomicInteger();
+		entities.forEach(entity -> {
+			this.remove(entity);
+			count.getAndIncrement();
+		});
+		return count.get();
+	}
+
+	@Override
+	@Transactional
+	public int removeAll() {
+		List<T> all = this.findAll();
+		this.removeAll(all);
+		return all.size();
+	}
+
+	@Override
+	@Transactional
+	public int deleteInBatch(Iterable<T> entities) {
 		Assert.notNull(entities, "Entities must not be null.");
 		if (!entities.iterator().hasNext()) {
-			return;
+			return 0;
 		}
 
 		Set<ID> ids = Streamable.of(entities).stream().map(this.entityInformation::getRequiredId)
 				.collect(Collectors.toSet());
 
-		this.deleteInBatchById(ids);
+		return this.deleteInBatchById(ids);
 	}
 
 	@Override
 	@Transactional
-	public void deleteInBatchById(Iterable<ID> ids) {
+	public int deleteInBatchById(Iterable<ID> ids) {
 		Assert.notNull(ids, "The given iterable of ids must not be null.");
 		if (!ids.iterator().hasNext()) {
-			return;
+			return 0;
 		}
 
-		this.delete(ResidentStatementName.DELETE_BY_IDS,
+		return this.delete(ResidentStatementName.DELETE_BY_IDS,
 				Collections.singletonMap(ResidentParameterName.IDS, toCollection(ids)));
 	}
 
 	@Override
 	@Transactional
-	public void deleteAllInBatch() {
-		this.delete(ResidentStatementName.DELETE_ALL);
+	public int deleteAllInBatch() {
+		return this.delete(ResidentStatementName.DELETE_ALL);
 	}
 
 	@Override
 	@Transactional
 	public <S extends T> S save(S entity) {
+		if (this.entityInformation.hasCompositeId()) {
+			T target = this.getById(this.entityInformation.getId(entity));
+			if (null == target) {
+				return this.insert(entity);
+			}
+			return this.update(entity);
+
+		}
 		return this.entityInformation.isNew(entity) ? this.insert(entity) : this.update(entity);
 	}
 
@@ -205,6 +244,14 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 		Assert.notNull(entities, "Entities must not be null.");
 
 		return Streamable.of(entities).stream().map(this::save).collect(Collectors.toList());
+	}
+
+	@Override
+	@Transactional
+	public <S extends T> List<S> saveSelectiveAll(Iterable<S> entities) {
+		Assert.notNull(entities, "Entities must not be null.");
+
+		return Streamable.of(entities).stream().map(this::saveSelective).collect(Collectors.toList());
 	}
 
 	@Override
@@ -283,6 +330,14 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Override
 	@Transactional
 	public <S extends T> S saveSelective(S entity) {
+		if (this.entityInformation.hasCompositeId()) {
+			T target = this.getById(this.entityInformation.getId(entity));
+			if (null == target) {
+				return this.insertSelective(entity);
+			}
+			return this.updateSelective(entity);
+
+		}
 		return this.entityInformation.isNew(entity) ? this.insertSelective(entity) : this.updateSelective(entity);
 	}
 
