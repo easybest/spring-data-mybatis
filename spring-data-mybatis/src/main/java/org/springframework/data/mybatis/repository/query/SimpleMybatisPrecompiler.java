@@ -48,6 +48,9 @@ import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.annotation.Condition;
 import org.springframework.data.mybatis.annotation.Conditions;
 import org.springframework.data.mybatis.annotation.Example;
+import org.springframework.data.mybatis.dialect.pagination.RowSelection;
+import org.springframework.data.mybatis.dialect.pagination.SQLServer2005LimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.SQLServer2012LimitHandler;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
@@ -363,12 +366,14 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		String keyProperty = "";
 		String keyColumn = "";
 		boolean useGeneratedKeys = false;
+		boolean excludeId = false;
 
 		if (!this.persistentEntity.hasCompositeId() && null != idProperty) {
 			keyProperty = idProperty.getName();
 			keyColumn = idProperty.getColumn().getName().getText();
 			if (idProperty.isAnnotationPresent(GeneratedValue.class)) {
 				useGeneratedKeys = true;
+				excludeId = true;
 			}
 		}
 
@@ -382,6 +387,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put("keyColumn", keyColumn);
 		scopes.put("useGeneratedKeys", useGeneratedKeys);
 		scopes.put("testNotNull", this.lambdaTestNotNull());
+		scopes.put("excludeId", excludeId);
 
 		if (useGeneratedKeys) {
 			scopes.putAll(this.buildKeyGenerator(idProperty));
@@ -530,6 +536,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put("pageable", pageable);
 		if (pageable) {
 			scopes.put("limitHandler", this.limitHandler());
+			scopes.put("SQLServer2005", this.dialect.getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
+			scopes.put("SQLServer2012", this.dialect.getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
 		}
 		scopes.put("conditionQuery", this.buildByConditionQueryCondition());
 		return this.render("Find", scopes);
@@ -578,6 +586,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put("table", this.getTableName());
 		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
 		scopes.put("limitHandler", this.limitHandler());
+		scopes.put("SQLServer2005", this.dialect.getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
+		scopes.put("SQLServer2012", this.dialect.getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
 		return this.render("QueryByExampleForPage", scopes);
 	}
 
@@ -613,7 +623,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	Mustache.Lambda limitHandler() {
-		return (frag, out) -> out.write(this.dialect.getLimitHandler().processSql(frag.execute(), null));
+		return (frag, out) -> out
+				.write(this.dialect.getLimitHandler().processSql(frag.execute(), new RowSelection(true)));
 	}
 
 	Mustache.Lambda lambdaRegexLike() {

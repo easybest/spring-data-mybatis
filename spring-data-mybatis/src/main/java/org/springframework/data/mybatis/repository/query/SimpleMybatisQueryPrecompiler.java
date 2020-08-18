@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 import org.apache.ibatis.session.Configuration;
 
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
@@ -206,7 +207,7 @@ class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 			unpaged = String.format("<select id=\"%s\" %s>%s</select>",
 					ResidentStatementName.UNPAGED_PREFIX + this.query.getStatementName(),
 					(null != resultMap) ? resultMap : this.resultMapOrType(sql), sql + sort);
-			sql = this.dialect.getLimitHandler().processSql(sql + sort, null);
+			sql = this.dialect.getLimitHandler().processSql(sql + sort, new RowSelection(true));
 		}
 
 		String select = String.format("<select id=\"%s\" %s>%s</select>", this.query.getStatementName(),

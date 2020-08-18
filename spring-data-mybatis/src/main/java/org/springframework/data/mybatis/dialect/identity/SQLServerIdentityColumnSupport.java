@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.dialect;
+package org.springframework.data.mybatis.dialect.identity;
+
+import org.springframework.data.mapping.MappingException;
 
 /**
- * MySQL57Dialect.
+ * .
  *
  * @author JARVIS SONG
  * @since 2.0.0
  */
-public class MySQL57Dialect extends MySQL55Dialect {
+public class SQLServerIdentityColumnSupport extends IdentityColumnSupportImpl {
 
-	public MySQL57Dialect() {
-		super();
+	@Override
+	public boolean supportsIdentityColumns() {
+		return true;
+	}
+
+	@Override
+	public String getIdentitySelectString(String table, String column, int type) throws MappingException {
+		return "select @@identity";
 	}
 
 }

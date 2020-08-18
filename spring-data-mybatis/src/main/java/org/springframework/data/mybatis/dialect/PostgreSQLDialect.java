@@ -15,29 +15,27 @@
  */
 package org.springframework.data.mybatis.dialect;
 
-import org.springframework.data.mybatis.dialect.identity.HSQLIdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.identity.IdentityColumnSupport;
+import org.springframework.data.mybatis.dialect.identity.PostgreSQLIdentityColumnSupport;
 import org.springframework.data.mybatis.dialect.pagination.AbstractLimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHelper;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 
 /**
- * HSQLDialect.
+ * .
  *
  * @author JARVIS SONG
  * @since 2.0.0
  */
-public class HSQLDialect extends Dialect {
+public class PostgreSQLDialect extends Dialect {
 
-	private static final LimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
-
+	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 		@Override
 		public String processSql(String sql, RowSelection selection) {
-
 			final boolean hasOffset = LimitHelper.hasFirstRow(selection);
 			if (hasOffset) {
-				return sql + " OFFSET " + LimitHelper.getFirstRow(selection) + " LIMIT " + selection.getMaxRows();
+				return sql + " LIMIT " + selection.getMaxRows() + " OFFSET " + LimitHelper.getFirstRow(selection);
 			}
 			return sql + " LIMIT " + selection.getMaxRows();
 		}
@@ -46,7 +44,6 @@ public class HSQLDialect extends Dialect {
 		public boolean supportsLimit() {
 			return true;
 		}
-
 	};
 
 	@Override
@@ -55,18 +52,8 @@ public class HSQLDialect extends Dialect {
 	}
 
 	@Override
-	public String getSequenceNextValString(String sequenceName) {
-		return "call next value for " + sequenceName;
-	}
-
-	@Override
 	public IdentityColumnSupport getIdentityColumnSupport() {
-		return new HSQLIdentityColumnSupport();
-	}
-
-	@Override
-	public String getRegexLikeFunction(String column, String parameter) {
-		return "REGEXP_MATCHES(" + column + ",'" + parameter + "')";
+		return new PostgreSQLIdentityColumnSupport();
 	}
 
 }

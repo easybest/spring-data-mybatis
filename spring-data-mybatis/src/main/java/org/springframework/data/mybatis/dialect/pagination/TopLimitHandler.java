@@ -15,25 +15,35 @@
  */
 package org.springframework.data.mybatis.dialect.pagination;
 
+import java.util.Locale;
+
 /**
  * .
  *
  * @author JARVIS SONG
- * @since 1.0.0
+ * @since 2.0.0
  */
-public abstract class AbstractLimitHandler implements LimitHandler {
+public class TopLimitHandler extends AbstractLimitHandler {
 
-	protected AbstractLimitHandler() {
+	@Override
+	public boolean supportsLimit() {
+		return true;
 	}
 
 	@Override
 	public String processSql(String sql, RowSelection selection) {
-		throw new UnsupportedOperationException("Paged queries not supported by " + this.getClass().getName());
-	}
+		if (LimitHelper.hasFirstRow(selection)) {
+			throw new UnsupportedOperationException("query result offset is not supported");
+		}
+		final int selectIndex = sql.toLowerCase(Locale.ROOT).indexOf("select");
+		final int selectDistinctIndex = sql.toLowerCase(Locale.ROOT).indexOf("select distinct");
+		final int insertionPoint = selectIndex + ((selectDistinctIndex != selectIndex) ? 6 : 15);
 
-	@Override
-	public boolean supportsLimit() {
-		return false;
+		StringBuilder sb = new StringBuilder(sql.length() + 8).append(sql);
+
+		sb.insert(insertionPoint, " TOP " + selection.getMaxRows());
+
+		return sb.toString();
 	}
 
 }

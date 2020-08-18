@@ -15,16 +15,29 @@
  */
 package org.springframework.data.mybatis.dialect;
 
+import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.SQLServer2012LimitHandler;
+
 /**
  * .
  *
  * @author JARVIS SONG
- * @since 1.0.0
+ * @since 2.0.0
  */
-public class MySQL55Dialect extends MySQL5Dialect {
+public class SQLServer2012Dialect extends SQLServer2005Dialect {
 
-	public MySQL55Dialect() {
-		super();
+	@Override
+	public LimitHandler getLimitHandler() {
+		return new SQLServer2012LimitHandler();
+	}
+
+	public String getSelectSequenceNextValString(String sequenceName) {
+		return "next value for " + sequenceName;
+	}
+
+	@Override
+	public String getSequenceNextValString(String sequenceName) {
+		return "select " + this.getSelectSequenceNextValString(sequenceName);
 	}
 
 }

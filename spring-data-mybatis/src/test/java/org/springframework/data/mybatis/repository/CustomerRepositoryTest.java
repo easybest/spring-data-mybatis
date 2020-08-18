@@ -19,11 +19,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.ExampleMatcher.StringMatcher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
@@ -33,8 +40,6 @@ import org.springframework.data.mybatis.repository.sample.CustomerRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * .
@@ -62,10 +67,10 @@ public class CustomerRepositoryTest {
 	@Before
 	public void setUp() {
 
-		this.first = new Customer("Oliver", "Gierke").setAge(25);
-		this.second = new Customer("Joachim", "Arrasz").setAge(32);
-		this.third = new Customer("Dave", "Matthews").setAge(25);
-		this.fourth = new Customer("kevin", "raymond").setAge(30);
+		this.first = new Customer("Oliver", "Gierke").setAge(28);
+		this.second = new Customer("Joachim", "Arrasz").setAge(35);
+		this.third = new Customer("Dave", "Matthews").setAge(43);
+		this.fourth = new Customer("kevin", "raymond").setAge(31);
 
 	}
 
@@ -78,15 +83,15 @@ public class CustomerRepositoryTest {
 
 		this.name = this.first.getName();
 
-		assertThat(this.name).isNotNull();
-		assertThat(this.second.getName()).isNotNull();
-		assertThat(this.third.getName()).isNotNull();
-		assertThat(this.fourth.getName()).isNotNull();
+		Assertions.assertThat(this.name).isNotNull();
+		Assertions.assertThat(this.second.getName()).isNotNull();
+		Assertions.assertThat(this.third.getName()).isNotNull();
+		Assertions.assertThat(this.fourth.getName()).isNotNull();
 
-		assertThat(this.repository.existsById(this.name)).isTrue();
-		assertThat(this.repository.existsById(this.second.getName())).isTrue();
-		assertThat(this.repository.existsById(this.third.getName())).isTrue();
-		assertThat(this.repository.existsById(this.fourth.getName())).isTrue();
+		Assertions.assertThat(this.repository.existsById(this.name)).isTrue();
+		Assertions.assertThat(this.repository.existsById(this.second.getName())).isTrue();
+		Assertions.assertThat(this.repository.existsById(this.third.getName())).isTrue();
+		Assertions.assertThat(this.repository.existsById(this.fourth.getName())).isTrue();
 	}
 
 	@Test
@@ -96,7 +101,7 @@ public class CustomerRepositoryTest {
 
 		this.flushTestCustomers();
 
-		assertThat(this.repository.count()).isEqualTo(before + 4L);
+		Assertions.assertThat(this.repository.count()).isEqualTo(before + 4L);
 	}
 
 	@Test
@@ -104,7 +109,8 @@ public class CustomerRepositoryTest {
 
 		this.flushTestCustomers();
 
-		assertThat(this.repository.findById(this.name)).map(Customer::getName).contains(this.first.getName());
+		Assertions.assertThat(this.repository.findById(this.name)).map(Customer::getName)
+				.contains(this.first.getName());
 	}
 
 	@Test
@@ -112,13 +118,13 @@ public class CustomerRepositoryTest {
 
 		this.flushTestCustomers();
 
-		assertThat(this.repository.findAllById(Arrays.asList(this.first.getName(), this.second.getName())))
+		Assertions.assertThat(this.repository.findAllById(Arrays.asList(this.first.getName(), this.second.getName())))
 				.contains(this.first, this.second);
 	}
 
 	@Test
 	public void savingEmptyCollectionIsNoOp() {
-		assertThat(this.repository.saveAll(new ArrayList<>())).isEmpty();
+		Assertions.assertThat(this.repository.saveAll(new ArrayList<>())).isEmpty();
 	}
 
 	@Test
@@ -128,8 +134,8 @@ public class CustomerRepositoryTest {
 
 		this.repository.deleteById(this.first.getName());
 
-		assertThat(this.repository.existsById(this.name)).isFalse();
-		assertThat(this.repository.findById(this.name)).isNotPresent();
+		Assertions.assertThat(this.repository.existsById(this.name)).isFalse();
+		Assertions.assertThat(this.repository.findById(this.name)).isNotPresent();
 	}
 
 	@Test
@@ -137,7 +143,7 @@ public class CustomerRepositoryTest {
 
 		this.flushTestCustomers();
 		List<Customer> all = this.repository.findAll(Sort.by(Direction.ASC, "name.lastname"));
-		assertThat(all).hasSize(4).containsExactly(this.second, this.first, this.third, this.fourth);
+		Assertions.assertThat(all).hasSize(4).containsExactly(this.second, this.first, this.third, this.fourth);
 	}
 
 	@Test
@@ -147,7 +153,7 @@ public class CustomerRepositoryTest {
 
 		Order order = new Order(Direction.ASC, "name.firstname").ignoreCase();
 
-		assertThat(this.repository.findAll(Sort.by(order))) //
+		Assertions.assertThat(this.repository.findAll(Sort.by(order))) //
 				.hasSize(4)//
 				.containsExactly(this.third, this.second, this.fourth, this.first);
 	}
@@ -161,9 +167,9 @@ public class CustomerRepositoryTest {
 
 		this.repository.deleteAll(Arrays.asList(this.first, this.second));
 
-		assertThat(this.repository.existsById(this.first.getName())).isFalse();
-		assertThat(this.repository.existsById(this.second.getName())).isFalse();
-		assertThat(this.repository.count()).isEqualTo(before - 2);
+		Assertions.assertThat(this.repository.existsById(this.first.getName())).isFalse();
+		Assertions.assertThat(this.repository.existsById(this.second.getName())).isFalse();
+		Assertions.assertThat(this.repository.count()).isEqualTo(before - 2);
 	}
 
 	@Test
@@ -175,9 +181,9 @@ public class CustomerRepositoryTest {
 
 		this.repository.deleteInBatch(Arrays.asList(this.first, this.second));
 
-		assertThat(this.repository.existsById(this.first.getName())).isFalse();
-		assertThat(this.repository.existsById(this.second.getName())).isFalse();
-		assertThat(this.repository.count()).isEqualTo(before - 2);
+		Assertions.assertThat(this.repository.existsById(this.first.getName())).isFalse();
+		Assertions.assertThat(this.repository.existsById(this.second.getName())).isFalse();
+		Assertions.assertThat(this.repository.count()).isEqualTo(before - 2);
 	}
 
 	@Test
@@ -192,7 +198,7 @@ public class CustomerRepositoryTest {
 		long count = this.repository.count();
 
 		this.repository.deleteAll(collection);
-		assertThat(this.repository.count()).isEqualTo(count);
+		Assertions.assertThat(this.repository.count()).isEqualTo(count);
 	}
 
 	@Test
@@ -202,7 +208,7 @@ public class CustomerRepositoryTest {
 
 		List<Customer> result = this.repository.findByNameFirstnameLike("Da");
 
-		assertThat(result).containsOnly(this.third);
+		Assertions.assertThat(result).containsOnly(this.third);
 	}
 
 	@Test
@@ -212,7 +218,7 @@ public class CustomerRepositoryTest {
 
 		List<Customer> result = this.repository.findByNameFirstnameLikeNamed("Da");
 
-		assertThat(result).containsOnly(this.third);
+		Assertions.assertThat(result).containsOnly(this.third);
 	}
 
 	@Test
@@ -220,7 +226,7 @@ public class CustomerRepositoryTest {
 
 		this.flushTestCustomers();
 
-		assertThat(this.repository.countByNameLastname("Matthews")).isEqualTo(1L);
+		Assertions.assertThat(this.repository.countByNameLastname("Matthews")).isEqualTo(1L);
 	}
 
 	@Test
@@ -228,7 +234,7 @@ public class CustomerRepositoryTest {
 
 		this.flushTestCustomers();
 
-		assertThat(this.repository.countCustomersByNameFirstname("Dave")).isEqualTo(1);
+		Assertions.assertThat(this.repository.countCustomersByNameFirstname("Dave")).isEqualTo(1);
 	}
 
 	@Test
@@ -236,8 +242,8 @@ public class CustomerRepositoryTest {
 
 		this.flushTestCustomers();
 
-		assertThat(this.repository.existsByNameLastname("Matthews")).isEqualTo(true);
-		assertThat(this.repository.existsByNameLastname("Hans Peter")).isEqualTo(false);
+		Assertions.assertThat(this.repository.existsByNameLastname("Matthews")).isEqualTo(true);
+		Assertions.assertThat(this.repository.existsByNameLastname("Hans Peter")).isEqualTo(false);
 	}
 
 	@Test
@@ -246,7 +252,7 @@ public class CustomerRepositoryTest {
 		this.flushTestCustomers();
 		List<String> lastname = this.repository.findFirstnamesByLastname("Matthews");
 
-		assertThat(lastname).containsOnly("Dave");
+		Assertions.assertThat(lastname).containsOnly("Dave");
 	}
 
 	@Test
@@ -254,8 +260,116 @@ public class CustomerRepositoryTest {
 
 		this.flushTestCustomers();
 
-		assertThat(this.repository.findAllByOrderByNameLastnameAsc()).containsOnly(this.second, this.first, this.third,
-				this.fourth);
+		Assertions.assertThat(this.repository.findAllByOrderByNameLastnameAsc()).containsOnly(this.second, this.first,
+				this.third, this.fourth);
+	}
+
+	@Test
+	public void findOldestUser() {
+
+		this.flushTestCustomers();
+
+		Customer oldest = this.third;
+
+		Assertions.assertThat(this.repository.findFirstByOrderByAgeDesc()).isEqualTo(oldest);
+		Assertions.assertThat(this.repository.findFirst1ByOrderByAgeDesc()).isEqualTo(oldest);
+	}
+
+	@Test
+	public void find2OldestUsers() {
+
+		this.flushTestCustomers();
+
+		Customer oldest1 = this.third;
+		Customer oldest2 = this.second;
+
+		Assertions.assertThat(this.repository.findFirst2ByOrderByAgeDesc()).contains(oldest1, oldest2);
+		Assertions.assertThat(this.repository.findTop2ByOrderByAgeDesc()).contains(oldest1, oldest2);
+	}
+
+	@Test
+	public void find3YoungestUsersPageableWithPageSize2Sliced() {
+
+		this.flushTestCustomers();
+
+		Customer youngest1 = this.first;
+		Customer youngest2 = this.fourth;
+		Customer youngest3 = this.second;
+
+		Slice<Customer> firstPage = this.repository.findTop3CustomersBy(PageRequest.of(0, 2, Direction.ASC, "age"));
+		Assertions.assertThat(firstPage.getContent()).contains(youngest1, youngest2);
+
+		Slice<Customer> secondPage = this.repository.findTop3CustomersBy(PageRequest.of(1, 2, Direction.ASC, "age"));
+		Assertions.assertThat(secondPage.getContent()).contains(youngest3);
+	}
+
+	@Test
+	public void find2YoungestUsersPageableWithPageSize3Sliced() {
+
+		this.flushTestCustomers();
+
+		Customer youngest1 = this.first;
+		Customer youngest2 = this.fourth;
+		Customer youngest3 = this.second;
+
+		Slice<Customer> firstPage = this.repository.findTop2CustomersBy(PageRequest.of(0, 3, Direction.ASC, "age"));
+		Assertions.assertThat(firstPage.getContent()).contains(youngest1, youngest2);
+
+		Slice<Customer> secondPage = this.repository.findTop2CustomersBy(PageRequest.of(1, 3, Direction.ASC, "age"));
+		Assertions.assertThat(secondPage.getContent()).contains(youngest3);
+	}
+
+	@Test
+	public void pageableQueryReportsTotalFromResult() {
+
+		this.flushTestCustomers();
+
+		Page<Customer> firstPage = this.repository.findAll(PageRequest.of(0, 10));
+		Assertions.assertThat(firstPage.getContent()).hasSize(4);
+		Assertions.assertThat(firstPage.getTotalElements()).isEqualTo(4L);
+
+		Page<Customer> secondPage = this.repository.findAll(PageRequest.of(1, 3));
+		Assertions.assertThat(secondPage.getContent()).hasSize(1);
+		Assertions.assertThat(secondPage.getTotalElements()).isEqualTo(4L);
+	}
+
+	@Test
+	public void pageableQueryReportsTotalFromCount() {
+
+		this.flushTestCustomers();
+
+		Page<Customer> firstPage = this.repository.findAll(PageRequest.of(0, 4));
+		Assertions.assertThat(firstPage.getContent()).hasSize(4);
+		Assertions.assertThat(firstPage.getTotalElements()).isEqualTo(4L);
+
+		Page<Customer> secondPage = this.repository.findAll(PageRequest.of(10, 10));
+		Assertions.assertThat(secondPage.getContent()).hasSize(0);
+		Assertions.assertThat(secondPage.getTotalElements()).isEqualTo(4L);
+	}
+
+	@Test
+	public void findAllByExampleWithPageable() {
+
+		this.flushTestCustomers();
+
+		for (int i = 0; i < 99; i++) {
+			Customer customer1 = new Customer("Oliver-" + i, "Srping");
+			customer1.setAge(30 + i);
+
+			this.repository.save(customer1);
+		}
+
+		Customer prototype = new Customer();
+		prototype.setName(new Name("oLi", null));
+
+		Example<Customer> example = Example.of(prototype, ExampleMatcher.matching().withIgnoreCase()
+				.withIgnorePaths("age").withStringMatcher(StringMatcher.STARTING).withIgnoreCase());
+
+		Page<Customer> users = this.repository.findAll(example, PageRequest.of(0, 10, Sort.by(Direction.DESC, "age")));
+
+		Assertions.assertThat(users.getSize()).isEqualTo(10);
+		Assertions.assertThat(users.hasNext()).isEqualTo(true);
+		Assertions.assertThat(users.getTotalElements()).isEqualTo(100L);
 	}
 
 }

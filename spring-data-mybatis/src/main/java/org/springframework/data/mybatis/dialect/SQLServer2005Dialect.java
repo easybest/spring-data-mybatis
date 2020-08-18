@@ -15,16 +15,20 @@
  */
 package org.springframework.data.mybatis.dialect;
 
+import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.SQLServer2005LimitHandler;
+
 /**
- * MySQL 5 dialect.
+ * .
  *
  * @author JARVIS SONG
- * @since 1.0.0
+ * @since 2.0.0
  */
-public class MySQL5Dialect extends MySQLDialect {
+public class SQLServer2005Dialect extends SQLServerDialect {
 
-	public MySQL5Dialect() {
-		super();
+	@Override
+	public LimitHandler getLimitHandler() {
+		return new SQLServer2005LimitHandler();
 	}
 
 }

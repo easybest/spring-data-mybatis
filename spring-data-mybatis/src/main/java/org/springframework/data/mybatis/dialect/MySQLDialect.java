@@ -21,7 +21,6 @@ import org.springframework.data.mybatis.dialect.pagination.AbstractLimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.LimitHelper;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
-import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 
 /**
  * MySQLDialect.
@@ -34,16 +33,11 @@ public class MySQLDialect extends Dialect {
 	private static final LimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 		@Override
 		public String processSql(String sql, RowSelection selection) {
-
-			if (null != selection) {
-				final boolean hasOffset = LimitHelper.hasFirstRow(selection);
-				return sql + (hasOffset
-						? String.format(" LIMIT %d, %d", LimitHelper.getFirstRow(selection), selection.getMaxRows())
-						: String.format(" LIMIT %d", selection.getMaxRows()));
+			final boolean hasOffset = LimitHelper.hasFirstRow(selection);
+			if (hasOffset) {
+				return sql + " LIMIT " + LimitHelper.getFirstRow(selection) + "," + selection.getMaxRows();
 			}
-
-			return sql + String.format(" LIMIT #{%s},#{%s}", ResidentParameterName.OFFSET,
-					ResidentParameterName.PAGE_SIZE);
+			return sql + " LIMIT " + selection.getMaxRows();
 		}
 
 		@Override

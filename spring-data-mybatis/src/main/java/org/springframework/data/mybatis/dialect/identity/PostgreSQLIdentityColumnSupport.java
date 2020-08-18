@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.dialect.pagination;
+package org.springframework.data.mybatis.dialect.identity;
 
 /**
- * .
+ * HSQLIdentityColumnSupport.
  *
  * @author JARVIS SONG
- * @since 1.0.0
+ * @since 2.0.0
  */
-public abstract class AbstractLimitHandler implements LimitHandler {
+public class PostgreSQLIdentityColumnSupport extends IdentityColumnSupportImpl {
 
-	protected AbstractLimitHandler() {
+	@Override
+	public boolean supportsIdentityColumns() {
+		return true;
 	}
 
 	@Override
-	public String processSql(String sql, RowSelection selection) {
-		throw new UnsupportedOperationException("Paged queries not supported by " + this.getClass().getName());
-	}
-
-	@Override
-	public boolean supportsLimit() {
-		return false;
+	public String getIdentitySelectString(String table, String column, int type) {
+		return "select currval('" + table + '_' + column + "_seq')";
 	}
 
 }

@@ -34,7 +34,7 @@ public interface ShopRepository extends MybatisRepository<Shop, Long>, ShopRepos
 	List<Shop> findByNameLike(String name);
 
 	@Modifying
-	@Query("update #{#entityName} u set u.active = :activeState where u.id in :ids")
+	@Query("update #{#entityName} set active = :activeState where id in :ids")
 	void updateActiveState(@Param("activeState") boolean activeState, @Param("ids") Long... ids);
 
 	List<Shop> findByActiveTrue();

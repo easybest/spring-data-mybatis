@@ -17,6 +17,8 @@ package org.springframework.data.mybatis.repository.sample;
 
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.mybatis.domain.sample.Customer;
 import org.springframework.data.mybatis.domain.sample.Name;
 import org.springframework.data.mybatis.repository.MybatisRepository;
@@ -45,5 +47,17 @@ public interface CustomerRepository extends MybatisRepository<Customer, Name> {
 	List<String> findFirstnamesByLastname(String lastname);
 
 	List<Customer> findAllByOrderByNameLastnameAsc();
+
+	Customer findFirstByOrderByAgeDesc();
+
+	Customer findFirst1ByOrderByAgeDesc();
+
+	List<Customer> findFirst2ByOrderByAgeDesc();
+
+	List<Customer> findTop2ByOrderByAgeDesc();
+
+	Slice<Customer> findTop3CustomersBy(Pageable pageable);
+
+	Slice<Customer> findTop2CustomersBy(Pageable pageable);
 
 }

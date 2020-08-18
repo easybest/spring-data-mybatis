@@ -175,6 +175,9 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 		}
 
 		if (pageable) {
+			if (null == rowSelection) {
+				rowSelection = new RowSelection(true);
+			}
 			sql = this.dialect.getLimitHandler().processSql(sql, rowSelection);
 		}
 		String result = String.format("resultMap=\"%s\"", ResidentStatementName.RESULT_MAP);

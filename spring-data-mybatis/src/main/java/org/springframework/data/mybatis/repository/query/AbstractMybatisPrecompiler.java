@@ -317,9 +317,9 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 					"<foreach item=\"__item\" index=\"__index\" collection=\"%s\" open=\"(\" separator=\",\" close=\")\">#{__item}</foreach>",
 					properties[0]);
 		case TRUE:
-			return " = TRUE";
+			return " = 1";
 		case FALSE:
-			return " = FALSE";
+			return " = 0";
 		default:
 			if (ignoreCaseType == Part.IgnoreCaseType.ALWAYS || ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE) {
 				return String.format("%s(#{%s})", this.dialect.getLowercaseFunction(), properties[0]);

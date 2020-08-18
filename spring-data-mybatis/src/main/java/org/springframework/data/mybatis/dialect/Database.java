@@ -26,6 +26,63 @@ import java.lang.reflect.InvocationTargetException;
 public enum Database {
 
 	/**
+	 * Microsoft SQL Server.
+	 */
+	SQLSERVER {
+		@Override
+		public Class<? extends Dialect> latestDialect() {
+			return SQLServer2012Dialect.class;
+		}
+
+		@Override
+		public Dialect resolveDialect(DialectResolutionInfo info) {
+			final String databaseName = info.getDatabaseName();
+
+			if (databaseName.startsWith("Microsoft SQL Server")) {
+				final int majorVersion = info.getDatabaseMajorVersion();
+
+				switch (majorVersion) {
+				case 8:
+					return new SQLServerDialect();
+				case 9:
+				case 10:
+					return new SQLServer2005Dialect();
+				case 11:
+				case 12:
+				case 13:
+					return new SQLServer2012Dialect();
+				default:
+					if (majorVersion < 8) {
+						return new SQLServerDialect();
+					}
+					else {
+						return latestDialectInstance(this);
+					}
+				}
+			}
+			return null;
+		}
+	},
+	/**
+	 * PostgreSQL.
+	 */
+	POSTGRESQL {
+		@Override
+		public Class<? extends Dialect> latestDialect() {
+			return PostgreSQLDialect.class;
+		}
+
+		@Override
+		public Dialect resolveDialect(DialectResolutionInfo info) {
+			final String databaseName = info.getDatabaseName();
+
+			if ("PostgreSQL".equals(databaseName)) {
+				return latestDialectInstance(this);
+			}
+			return null;
+		}
+	},
+	/**
 	 * HSQLDB.
 	 */
 	HSQL {
@@ -72,7 +129,7 @@ public enum Database {
 	MYSQL {
 		@Override
 		public Class<? extends Dialect> latestDialect() {
-			return MySQL57Dialect.class;
+			return MySQLDialect.class;
 		}
 
 		@Override
@@ -80,24 +137,6 @@ public enum Database {
 			final String databaseName = info.getDatabaseName();
 
 			if ("MySQL".equals(databaseName)) {
-				final int majorVersion = info.getDatabaseMajorVersion();
-				final int minorVersion = info.getDatabaseMinorVersion();
-
-				if (majorVersion < 5) {
-					return new MySQLDialect();
-				}
-				else if (majorVersion == 5) {
-					if (minorVersion < 5) {
-						return new MySQL5Dialect();
-					}
-					else if (minorVersion < 7) {
-						return new MySQL55Dialect();
-					}
-					else {
-						return new MySQL57Dialect();
-					}
-				}
-
 				return latestDialectInstance(this);
 			}
 

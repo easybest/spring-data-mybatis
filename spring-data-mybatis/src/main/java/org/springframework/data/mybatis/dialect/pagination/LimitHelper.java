@@ -27,7 +27,7 @@ public final class LimitHelper {
 	}
 
 	public static boolean hasMaxRows(RowSelection selection) {
-		return selection != null && selection.getMaxRows() != null && selection.getMaxRows() > 0;
+		return selection != null && selection.getMaxRows() != null && !"0".equals(selection.getMaxRows());
 	}
 
 	public static boolean useLimit(LimitHandler limitHandler, RowSelection selection) {
@@ -35,11 +35,15 @@ public final class LimitHelper {
 	}
 
 	public static boolean hasFirstRow(RowSelection selection) {
-		return getFirstRow(selection) > 0;
+		String firstRow = getFirstRow(selection);
+		if (null == firstRow || "0".equals(firstRow)) {
+			return false;
+		}
+		return true;
 	}
 
-	public static int getFirstRow(RowSelection selection) {
-		return (selection == null || selection.getFirstRow() == null) ? 0 : selection.getFirstRow();
+	public static String getFirstRow(RowSelection selection) {
+		return (selection == null || selection.getFirstRow() == null) ? String.valueOf(0) : selection.getFirstRow();
 	}
 
 }
