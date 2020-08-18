@@ -1,6 +1,6 @@
 # Spring Data MyBatis 
-[![Build Status](https://travis-ci.org/hatunet/spring-data-mybatis.svg?branch=master)](https://travis-ci.org/hatunet/spring-data-mybatis)   [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/spring-data-mybatis)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.ifrabbit/spring-data-mybatis/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.ifrabbit/spring-data-mybatis)
+[![Build Status](https://travis-ci.org/easybest/spring-data-mybatis.svg?branch=master)](https://travis-ci.org/easybest/spring-data-mybatis)   [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/spring-data-mybatis)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.easybest/spring-data-mybatis/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.ifrabbit/spring-data-mybatis)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-brightgreen.svg)](https://github.com/hatunet/spring-data-mybatis/blob/master/LICENSE)                                                                                                                                                                 
 
 
@@ -25,7 +25,7 @@ This module deals with enhanced support for MyBatis based data access layers.
 
 ## Getting Help ##
 
-If you have any question, please record a [issue](https://github.com/hatunet/spring-data-mybatis/issues) to me.
+If you have any question, please record a [issue](https://github.com/easybest/spring-data-mybatis/issues) to me.
 
 
 ## Quick Start ##
@@ -34,9 +34,9 @@ Download the jar through Maven:
 
 ```xml
 <dependency>
-  <groupId>com.ifrabbit</groupId>
+  <groupId>io.easybest</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>2.0.0.RELEASE</version>
+  <version>2.1.0.RELEASE</version>
 </dependency>
 ```
 
@@ -143,9 +143,9 @@ add the jar through Maven:
    
    ```xml
    <dependency>
-       <groupId>com.ifrabbit</groupId>
+       <groupId>io.easybest</groupId>
        <artifactId>spring-data-mybatis-boot-starter</artifactId>
-       <version>2.0.0.RELEASE</version>
+       <version>2.1.0.RELEASE</version>
    </dependency>
    ```
 
@@ -207,7 +207,7 @@ class Reservation extends LongId {
 }
 ```
 
-The full example you can find in [https://github.com/hatunet/spring-data-mybatis-samples](https://github.com/hatunet/spring-data-mybatis-samples)
+The full example you can find in [https://github.com/easybest/spring-data-mybatis-samples](https://github.com/easybest/spring-data-mybatis-samples)
 
 
 ## Contributing to Spring Data MyBatis ##
