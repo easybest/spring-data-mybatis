@@ -1,3 +1,18 @@
+/*
+ * Copyright 2012-2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.mybatis.repository.config;
 
 import java.lang.annotation.Documented;
@@ -8,21 +23,21 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.context.annotation.ComponentScan.Filter;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.BootstrapMode;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.data.repository.query.QueryLookupStrategy.Key;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * Annotation to enable Mybatis repositories. Will scan the package of the annotated
- * configuration class for Spring Data * repositories by default.
+ * Annotation to enable MyBatis repositories. Will scan the packge of the annotated
+ * configuration class for Spring Data repositories by default.
  *
  * @author JARVIS SONG
+ * @since 1.0.0
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -35,6 +50,7 @@ public @interface EnableMybatisRepositories {
 	 * Alias for the {@link #basePackages()} attribute. Allows for more concise annotation
 	 * declarations e.g.: {@code @EnableMybatisRepositories("org.my.pkg")} instead of
 	 * {@code @EnableMybatisRepositories(basePackages="org.my.pkg")}.
+	 * @return packages
 	 */
 	String[] value() default {};
 
@@ -42,6 +58,7 @@ public @interface EnableMybatisRepositories {
 	 * Base packages to scan for annotated components. {@link #value()} is an alias for
 	 * (and mutually exclusive with) this attribute. Use {@link #basePackageClasses()} for
 	 * a type-safe alternative to String-based package names.
+	 * @return base packages
 	 */
 	String[] basePackages() default {};
 
@@ -50,6 +67,7 @@ public @interface EnableMybatisRepositories {
 	 * scan for annotated components. The package of each class specified will be scanned.
 	 * Consider creating a special no-op marker class or interface in each package that
 	 * serves no purpose other than being referenced by this attribute.
+	 * @return base package classes
 	 */
 	Class<?>[] basePackageClasses() default {};
 
@@ -57,49 +75,50 @@ public @interface EnableMybatisRepositories {
 	 * Specifies which types are eligible for component scanning. Further narrows the set
 	 * of candidate components from everything in {@link #basePackages()} to everything in
 	 * the base packages that matches the given filter or filters.
+	 * @return include filters
 	 */
-	Filter[] includeFilters() default {};
+	ComponentScan.Filter[] includeFilters() default {};
 
 	/**
 	 * Specifies which types are not eligible for component scanning.
+	 * @return exclude filters
 	 */
-	Filter[] excludeFilters() default {};
+	ComponentScan.Filter[] excludeFilters() default {};
 
 	/**
 	 * Returns the postfix to be used when looking up custom repository implementations.
 	 * Defaults to {@literal Impl}. So for a repository named {@code PersonRepository} the
 	 * corresponding implementation class will be looked up scanning for
 	 * {@code PersonRepositoryImpl}.
-	 * @return
+	 * @return repository implementation postfix
 	 */
 	String repositoryImplementationPostfix() default "Impl";
 
 	/**
 	 * Configures the location of where to find the Spring Data named queries properties
 	 * file. Will default to {@code META-INF/mybatis-named-queries.properties}.
-	 * @return
+	 * @return named queries location
 	 */
 	String namedQueriesLocation() default "";
 
 	/**
 	 * Returns the key of the {@link QueryLookupStrategy} to be used for lookup queries
-	 * for query methods. Defaults to {@link Key#CREATE_IF_NOT_FOUND}.
-	 * @return
+	 * for query methods. Defaults to {@link QueryLookupStrategy.Key#CREATE_IF_NOT_FOUND}.
+	 * @return query lookup strategy
 	 */
-	Key queryLookupStrategy() default Key.CREATE_IF_NOT_FOUND;
+	QueryLookupStrategy.Key queryLookupStrategy() default QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND;
 
 	/**
 	 * Returns the {@link FactoryBean} class to be used for each repository instance.
 	 * Defaults to {@link MybatisRepositoryFactoryBean}.
-	 * @return
+	 * @return repository factory bean class
 	 */
 	Class<?> repositoryFactoryBeanClass() default MybatisRepositoryFactoryBean.class;
 
 	/**
 	 * Configure the repository base class to be used to create repository proxies for
 	 * this particular configuration.
-	 * @return
-	 * @since 1.9
+	 * @return repository base class
 	 */
 	Class<?> repositoryBaseClass() default DefaultRepositoryBaseClass.class;
 
@@ -109,7 +128,7 @@ public @interface EnableMybatisRepositories {
 	 * Configures the name of the {@link org.mybatis.spring.SqlSessionTemplate} bean
 	 * definition to be used to create repositories discovered through this annotation.
 	 * Defaults to {@code sqlSessionTemplate}.
-	 * @return
+	 * @return reference of sqlSessionTemplate
 	 */
 	String sqlSessionTemplateRef() default "sqlSessionTemplate";
 
@@ -117,21 +136,23 @@ public @interface EnableMybatisRepositories {
 	 * Configures the name of the {@link PlatformTransactionManager} bean definition to be
 	 * used to create repositories discovered through this annotation. Defaults to
 	 * {@code transactionManager}.
-	 * @return
+	 * @return reference oof transaction manager
 	 */
 	String transactionManagerRef() default "transactionManager";
 
 	/**
 	 * Configures whether nested repository-interfaces (e.g. defined as inner classes)
 	 * should be discovered by the repositories infrastructure.
+	 * @return consider nested repositories
 	 */
 	boolean considerNestedRepositories() default false;
 
 	/**
-	 * Configures whether to enable default transactions for Spring Data JPA repositories.
-	 * Defaults to {@literal true}. If disabled, repositories must be used behind a facade
-	 * that's configuring transactions (e.g. using Spring's annotation driven transaction
-	 * facilities) or repository methods have to be used to demarcate transactions.
+	 * Configures whether to enable default transactions for Spring Data MyBatis
+	 * repositories. Defaults to {@literal true}. If disabled, repositories must be used
+	 * behind a facade that's configuring transactions (e.g. using Spring's annotation
+	 * driven transaction facilities) or repository methods have to be used to demarcate
+	 * transactions.
 	 * @return whether to enable default transactions, defaults to {@literal true}.
 	 */
 	boolean enableDefaultTransactions() default true;
@@ -147,11 +168,16 @@ public @interface EnableMybatisRepositories {
 	 * its bootstrap. {@link BootstrapMode#DEFERRED} is fundamentally the same as
 	 * {@link BootstrapMode#LAZY}, but triggers repository initialization when the
 	 * application context finishes its bootstrap.
-	 * @return
-	 * @since 2.1
+	 * @return bootstrap mode
 	 */
 	BootstrapMode bootstrapMode() default BootstrapMode.DEFAULT;
 
-	boolean supportMultipleDatasources() default false;
+	/**
+	 * Configures what character is used to escape the wildcards {@literal _} and
+	 * {@literal %} in derived queries with {@literal contains}, {@literal startsWith} or
+	 * {@literal endsWith} clauses.
+	 * @return a single character used for escaping
+	 */
+	char escapeCharacter() default '\\';
 
 }

@@ -1,28 +1,45 @@
+/*
+ * Copyright 2012-2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.mybatis.repository.query;
 
-import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
+
 import javax.persistence.NoResultException;
-import javax.persistence.Query;
+
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.SliceImpl;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.core.support.SurroundingTransactionDetectorMethodInterceptor;
-import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.ReflectionUtils;
 
+/**
+ * Set of classes to contain query execution strategies.
+ *
+ * @author JARVIS SONG
+ * @since 1.0.0
+ */
 public abstract class MybatisQueryExecution {
 
 	private static final ConversionService CONVERSION_SERVICE;
@@ -31,8 +48,7 @@ public abstract class MybatisQueryExecution {
 
 		ConfigurableConversionService conversionService = new DefaultConversionService();
 
-		conversionService
-				.addConverter(MybatisResultConverters.BlobToByteArrayConverter.INSTANCE);
+		conversionService.addConverter(MybatisResultConverters.BlobToByteArrayConverter.INSTANCE);
 		conversionService.removeConvertible(Collection.class, Object.class);
 		potentiallyRemoveOptionalConverter(conversionService);
 
@@ -40,17 +56,16 @@ public abstract class MybatisQueryExecution {
 	}
 
 	@Nullable
-	public Object execute(AbstractMybatisQuery query, Object[] values) {
+	public Object execute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
 
 		Assert.notNull(query, "AbstractMybatisQuery must not be null!");
-		Assert.notNull(values, "Values must not be null!");
-
+		Assert.notNull(accessor, "MybatisParametersParameterAccessor must not be null!");
 		Object result;
 
 		try {
-			result = doExecute(query, values);
+			result = doExecute(query, accessor);
 		}
-		catch (NoResultException e) {
+		catch (NoResultException ex) {
 			return null;
 		}
 
@@ -61,8 +76,7 @@ public abstract class MybatisQueryExecution {
 		MybatisQueryMethod queryMethod = query.getQueryMethod();
 		Class<?> requiredType = queryMethod.getReturnType();
 
-		if (void.class.equals(requiredType)
-				|| requiredType.isAssignableFrom(result.getClass())) {
+		if (void.class.equals(requiredType) || requiredType.isAssignableFrom(result.getClass())) {
 			return result;
 		}
 
@@ -72,212 +86,35 @@ public abstract class MybatisQueryExecution {
 	}
 
 	@Nullable
-	protected abstract Object doExecute(AbstractMybatisQuery query, Object[] values);
+	protected abstract Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor);
 
-	static class CollectionExecution extends MybatisQueryExecution {
+	/**
+	 * Removes the converter being able to convert any object into an {@link Optional}
+	 * from the given {@link ConversionService} in case we're running on Java 8.
+	 * @param conversionService must not be {@literal null}.
+	 */
+	static void potentiallyRemoveOptionalConverter(ConfigurableConversionService conversionService) {
 
-		@Override
-		protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
-			if (null == values || values.length == 0) {
-				return query.getSqlSessionTemplate()
-						.selectList(query.getQueryMethod().getStatementId());
+		ClassLoader classLoader = MybatisQueryExecution.class.getClassLoader();
+
+		if (ClassUtils.isPresent("java.util.Optional", classLoader)) {
+
+			try {
+
+				Class<?> optionalType = ClassUtils.forName("java.util.Optional", classLoader);
+				conversionService.removeConvertible(Object.class, optionalType);
+
 			}
-
-			final int[] c = { 0 };
-
-			MybatisParameters parameters = query.getQueryMethod().getParameters();
-
-			Map<String, Object> params = parameters.getBindableParameters().stream()
-					.filter(param -> null != values[param.getIndex()])
-					.collect(Collectors.toMap(
-							param -> param.getName().orElse("__p" + c[0]++),
-							param -> values[param.getIndex()]));
-
-			if (parameters.hasSortParameter()) {
-				params.put("__sort", values[parameters.getSortIndex()]);
+			catch (ClassNotFoundException | LinkageError ex) {
 			}
-
-			return query.getSqlSessionTemplate()
-					.selectList(query.getQueryMethod().getStatementId(), params);
 		}
-
-	}
-
-	static class SlicedExecution extends MybatisQueryExecution {
-
-		private final Parameters<?, ?> parameters;
-
-		SlicedExecution(Parameters<?, ?> parameters) {
-			this.parameters = parameters;
-		}
-
-		@Override
-		protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
-			final int[] c = { 0 };
-
-			MybatisParameters parameters = query.getQueryMethod().getParameters();
-			Map<String, Object> params = parameters.getBindableParameters().stream()
-					.filter(param -> null != values[param.getIndex()])
-					.collect(Collectors.toMap(
-							param -> param.getName().orElse("__p" + c[0]++),
-							param -> values[param.getIndex()]));
-
-			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
-			if (parameters.hasSortParameter()) {
-				Sort sort = (Sort) values[parameters.getSortIndex()];
-				params.put("__sort", null != sort && sort.isSorted() ? sort : null);
-			}
-			else if (null != pageable) {
-				params.put("__sort",
-						null != pageable.getSort() && pageable.getSort().isSorted()
-								? pageable.getSort() : null);
-			}
-
-			if (null == pageable || pageable == Pageable.unpaged()) {
-				List<Object> result = query.getSqlSessionTemplate()
-						.selectList(
-								query.getQueryMethod().getNamespace() + ".unpaged_"
-										+ query.getQueryMethod().getStatementName(),
-								params);
-				return new SliceImpl(result);
-			}
-
-			int pageSize = pageable.getPageSize();
-			long offset = pageable.getOffset();
-			long total = query.getSqlSessionTemplate()
-					.selectOne(query.getQueryMethod().getCountStatementId(), params);
-			Integer limit = query.getQueryMethod().getLimitSize();
-			if (null != limit) {
-				total = Math.min(total, limit);
-				if (limit < offset || offset > total) {
-					return new PageImpl(Collections.emptyList(), pageable, total);
-				}
-				else if (limit >= offset && limit < (offset + pageSize)) {
-					pageSize = (int) (limit - offset);
-				}
-			}
-
-			params.put("__offset", offset);
-			params.put("__pageSize", pageSize);
-			params.put("__offsetEnd", offset + pageSize);
-
-			List<Object> result = query.getSqlSessionTemplate()
-					.selectList(query.getQueryMethod().getStatementId(), params);
-			return new SliceImpl(result, pageable, total > offset);
-		}
-
-	}
-
-	static class PagedExecution extends MybatisQueryExecution {
-
-		private final Parameters<?, ?> parameters;
-
-		PagedExecution(Parameters<?, ?> parameters) {
-			this.parameters = parameters;
-		}
-
-		@Override
-		protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
-			final int[] c = { 0 };
-
-			MybatisParameters parameters = query.getQueryMethod().getParameters();
-			Map<String, Object> params = parameters.getBindableParameters().stream()
-					.filter(param -> null != values[param.getIndex()])
-					.collect(Collectors.toMap(
-							param -> param.getName().orElse("__p" + c[0]++),
-							param -> values[param.getIndex()]));
-
-			Pageable pageable = (Pageable) values[parameters.getPageableIndex()];
-			if (parameters.hasSortParameter()) {
-				Sort sort = (Sort) values[parameters.getSortIndex()];
-				params.put("__sort", null != sort && sort.isSorted() ? sort : null);
-			}
-			else if (null != pageable) {
-				params.put("__sort",
-						null != pageable.getSort() && pageable.getSort().isSorted()
-								? pageable.getSort() : null);
-			}
-
-			if (null == pageable || pageable == Pageable.unpaged()) {
-				List<Object> result = query.getSqlSessionTemplate()
-						.selectList(
-								query.getQueryMethod().getNamespace() + ".unpaged_"
-										+ query.getQueryMethod().getStatementName(),
-								params);
-				return new PageImpl(result, pageable, null == result ? 0 : result.size());
-			}
-
-			int pageSize = pageable.getPageSize();
-			long offset = pageable.getOffset();
-			long total = query.getSqlSessionTemplate()
-					.selectOne(query.getQueryMethod().getCountStatementId(), params);
-			Integer limit = query.getQueryMethod().getLimitSize();
-			if (null != limit) {
-				total = Math.min(total, limit);
-				if (limit < offset || offset > total) {
-					return new PageImpl(Collections.emptyList(), pageable, total);
-				}
-				else if (limit >= offset && limit < (offset + pageSize)) {
-					pageSize = (int) (limit - offset);
-				}
-			}
-
-			params.put("__offset", offset);
-			params.put("__pageSize", pageSize);
-			params.put("__offsetEnd", offset + pageSize);
-
-			List<Object> result = query.getSqlSessionTemplate()
-					.selectList(query.getQueryMethod().getStatementId(), params);
-			return new PageImpl(result, pageable, total);
-		}
-
 	}
 
 	static class SingleEntityExecution extends MybatisQueryExecution {
 
 		@Override
-		protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
-			if (null == values || values.length == 0) {
-				return query.getSqlSessionTemplate()
-						.selectOne(query.getQueryMethod().getStatementId());
-			}
-
-			final int[] c = { 0 };
-
-			MybatisParameters parameters = query.getQueryMethod().getParameters();
-
-			Map<String, Object> params = parameters.getBindableParameters().stream()
-					.filter(param -> null != values[param.getIndex()])
-					.collect(Collectors.toMap(
-							param -> param.getName().orElse("__p" + c[0]++),
-							param -> values[param.getIndex()]));
-
-			if (parameters.hasSortParameter()) {
-				params.put("__sort", values[parameters.getSortIndex()]);
-			}
-
-			return query.getSqlSessionTemplate()
-					.selectOne(query.getQueryMethod().getStatementId(), params);
-		}
-
-	}
-
-	static class ModifyingExecution extends MybatisQueryExecution {
-
-		@Override
-		protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
-			final int[] c = { 0 };
-			MybatisParameters parameters = query.getQueryMethod().getParameters();
-			Map<String, Object> params = parameters.getBindableParameters().stream()
-					.filter(param -> null != values[param.getIndex()])
-					.collect(Collectors.toMap(
-							param -> param.getName().orElse("__p" + c[0]++),
-							param -> values[param.getIndex()]));
-
-			int rows = query.getSqlSessionTemplate()
-					.update(query.getQueryMethod().getStatementId(), params);
-
-			return rows;
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			return query.getExecutor().getSingleResult(query.getStatementId(), accessor);
 		}
 
 	}
@@ -285,33 +122,18 @@ public abstract class MybatisQueryExecution {
 	static class DeleteExecution extends MybatisQueryExecution {
 
 		@Override
-		protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
-
-			final int[] c = { 0 };
-			MybatisParameters parameters = query.getQueryMethod().getParameters();
-			Map<String, Object> params = parameters.getBindableParameters().stream()
-					.filter(param -> null != values[param.getIndex()])
-					.collect(Collectors.toMap(
-							param -> param.getName().orElse("__p" + c[0]++),
-							param -> values[param.getIndex()]));
-
-			boolean collectionQuery = query.getQueryMethod().isCollectionQuery();
-
-			Object result = null;
-			if (collectionQuery) {
-				result = query.getSqlSessionTemplate()
-						.selectList(
-								query.getQueryMethod().getNamespace() + ".query_"
-										+ query.getQueryMethod().getStatementName(),
-								params);
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			List result = null;
+			if (query.getQueryMethod().isCollectionQuery()) {
+				result = query.getExecutor().getResultList(
+						query.getNamespace() + '.' + ResidentStatementName.QUERY_PREFIX + query.getStatementName(),
+						accessor);
 			}
-
-			int rows = query.getSqlSessionTemplate()
-					.delete(query.getQueryMethod().getStatementId(), params);
-			if (!collectionQuery) {
-				return rows;
+			int rows = query.getExecutor().executeDelete(query.getStatementId(), accessor);
+			if (query.getQueryMethod().isCollectionQuery()) {
+				return result;
 			}
-			return result;
+			return rows;
 		}
 
 	}
@@ -319,24 +141,30 @@ public abstract class MybatisQueryExecution {
 	static class ExistsExecution extends MybatisQueryExecution {
 
 		@Override
-		protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
-			if (null == values || values.length == 0) {
-				return ((long) query.getSqlSessionTemplate()
-						.selectOne(query.getQueryMethod().getStatementId())) > 0;
-			}
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			Long count = (Long) query.getExecutor().getSingleResult(query.getStatementId(), accessor);
+			return count > 0;
+		}
 
-			final int[] c = { 0 };
+	}
 
-			MybatisParameters parameters = query.getQueryMethod().getParameters();
+	static class ModifyingExecution extends MybatisQueryExecution {
 
-			Map<String, Object> params = parameters.getBindableParameters().stream()
-					.filter(param -> null != values[param.getIndex()])
-					.collect(Collectors.toMap(
-							param -> param.getName().orElse("__p" + c[0]++),
-							param -> values[param.getIndex()]));
+		ModifyingExecution(MybatisQueryMethod method) {
+			Class<?> returnType = method.getReturnType();
 
-			return ((long) query.getSqlSessionTemplate()
-					.selectOne(query.getQueryMethod().getStatementId(), params)) > 0;
+			boolean isVoid = void.class.equals(returnType) || Void.class.equals(returnType);
+			boolean isInt = int.class.equals(returnType) || Integer.class.equals(returnType);
+
+			Assert.isTrue(isInt || isVoid, "Modifying queries can only use void or int/Integer as return type!");
+
+		}
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+
+			return query.getExecutor().executeUpdate(query.getStatementId(), accessor);
+
 		}
 
 	}
@@ -345,39 +173,82 @@ public abstract class MybatisQueryExecution {
 
 		private static final String NO_SURROUNDING_TRANSACTION = "You're trying to execute a streaming query method without a surrounding transaction that keeps the connection open so that the Stream can actually be consumed. Make sure the code consuming the stream uses @Transactional or any other way of declaring a (read-only) transaction.";
 
-		private static Method streamMethod = ReflectionUtils.findMethod(Query.class,
-				"getResultStream");
-
 		@Override
-		protected Object doExecute(AbstractMybatisQuery query, Object[] values) {
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
 
-			if (!SurroundingTransactionDetectorMethodInterceptor.INSTANCE
-					.isSurroundingTransactionActive()) {
+			if (!SurroundingTransactionDetectorMethodInterceptor.INSTANCE.isSurroundingTransactionActive()) {
 				throw new InvalidDataAccessApiUsageException(NO_SURROUNDING_TRANSACTION);
 			}
 
+			List list = query.getExecutor().getResultList(query.getStatementId(), accessor);
+			return list.stream();
+
+		}
+
+	}
+
+	static class ProcedureExecution extends MybatisQueryExecution {
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
 			return null;
 		}
 
 	}
 
-	public static void potentiallyRemoveOptionalConverter(
-			ConfigurableConversionService conversionService) {
+	static class CollectionExecution extends MybatisQueryExecution {
 
-		ClassLoader classLoader = MybatisQueryExecution.class.getClassLoader();
-
-		if (ClassUtils.isPresent("java.util.Optional", classLoader)) {
-
-			try {
-
-				Class<?> optionalType = ClassUtils.forName("java.util.Optional",
-						classLoader);
-				conversionService.removeConvertible(Object.class, optionalType);
-
-			}
-			catch (ClassNotFoundException | LinkageError o_O) {
-			}
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			return query.getExecutor().getResultList(query.getStatementId(), accessor);
 		}
+
+	}
+
+	static class SlicedExecution extends MybatisQueryExecution {
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+
+			Pageable pageable = accessor.getPageable();
+			int pageSize = 0;
+			if (pageable.isPaged()) {
+				pageSize = pageable.getPageSize();
+			}
+
+			List resultList = query.getExecutor().getResultList(query.getStatementId(), accessor);
+			boolean hasNext = pageable.isPaged() && resultList.size() > pageSize;
+
+			return new SliceImpl<>(hasNext ? resultList.subList(0, pageSize) : resultList, pageable, hasNext);
+		}
+
+	}
+
+	static class PagedExecution extends MybatisQueryExecution {
+
+		@Override
+		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+			List content;
+			Pageable pageable = accessor.getPageable();
+			if (null == pageable || pageable.isUnpaged()) {
+				content = query.getExecutor().getResultList(
+						query.getNamespace() + '.' + ResidentStatementName.UNPAGED_PREFIX + query.getStatementName(),
+						accessor);
+			}
+			else {
+				content = query.getExecutor().getResultList(query.getStatementId(), accessor);
+			}
+			return PageableExecutionUtils.getPage(content, pageable, () -> count(query, accessor));
+		}
+
+		private long count(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
+
+			Long total = (Long) query.getExecutor().getSingleResult(//
+					query.getNamespace() + '.' + ResidentStatementName.COUNT_PREFIX + query.getStatementName(),
+					accessor);
+			return total;
+		}
+
 	}
 
 }

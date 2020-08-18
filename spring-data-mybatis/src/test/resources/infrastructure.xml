@@ -1,31 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:jdbc="http://www.springframework.org/schema/jdbc"
-  xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
-		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	   xsi:schemaLocation="http://www.springframework.org/schema/jdbc https://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
 
-  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-    <property name="driverClassName" value="org.h2.Driver"/>
-    <property name="url" value="jdbc:h2:mem:testdb;MODE=MYSQL;DB_CLOSE_DELAY=-1"/>
-    <!--<property name="url" value="jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"/>-->
-    <property name="username" value="root"/>
-    <property name="password" value=""/>
-  </bean>
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="mapperLocations" value="classpath*:/mapper/**.xml"/>
+		<property name="configuration">
+			<bean class="org.apache.ibatis.session.Configuration">
+				<property name="returnInstanceForEmptyRow" value="true"/>
+				<property name="callSettersOnNulls" value="true"/>
+				<property name="mapUnderscoreToCamelCase" value="true"/>
+			</bean>
+		</property>
+	</bean>
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactory"/>
+	</bean>
+	<bean id="transactionManager"
+		  class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
 
-  <jdbc:initialize-database data-source="dataSource">
-    <jdbc:script execution="INIT" separator=";" location="classpath:scripts/mysql-init.sql" encoding="utf-8"/>
-  </jdbc:initialize-database>
+	<!-- MySQL -->
+	<!--	<jdbc:initialize-database>-->
+	<!--		<jdbc:script execution="INIT" separator=";"-->
+	<!--					 location="classpath:scripts/mysql-init.sql"/>-->
+	<!--	</jdbc:initialize-database>-->
+	<!--	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">-->
+	<!--		<property name="jdbcUrl"-->
+	<!--				  value="jdbc:mysql://localhost:3306/testcase?useUnicode=true&amp;characterEncoding=utf-8&amp;useSSL=false"/>-->
+	<!--		<property name="username" value="root"/>-->
+	<!--		<property name="password" value="root"/>-->
+	<!--	</bean>-->
 
+	<!-- H2 Database -->
+	<jdbc:embedded-database id="dataSource" type="H2" generate-name="true">
+		<jdbc:script execution="INIT" separator=";"
+					 location="classpath:scripts/h2-init.sql"/>
+	</jdbc:embedded-database>
 
-  <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-    <property name="dataSource" ref="dataSource"/>
-    <property name="mapperLocations" value="classpath*:/mapper/user.xml"/>
-  </bean>
-  <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
-    <constructor-arg ref="sqlSessionFactory"/>
-  </bean>
-  <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-    <property name="dataSource" ref="dataSource"/>
-  </bean>
+	<!-- HSQLDB -->
+	<!--		<jdbc:embedded-database id="dataSource" type="HSQL" generate-name="true">-->
+	<!--			<jdbc:script execution="INIT" separator=";"-->
+	<!--						 location="classpath:scripts/hsqldb-init.sql"/>-->
+	<!--		</jdbc:embedded-database>-->
+
+	<!-- PostgreSQL 12/11/10-->
+	<!--	<jdbc:initialize-database>-->
+	<!--		<jdbc:script execution="INIT" separator=";"-->
+	<!--					 location="classpath:scripts/postgre-init.sql"/>-->
+	<!--	</jdbc:initialize-database>-->
+	<!--	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">-->
+	<!--		<property name="jdbcUrl" value="jdbc:postgresql://10.55.2.11:1921/testcase"/>-->
+	<!--		<property name="username" value="testcase"/>-->
+	<!--		<property name="password" value="testcase"/>-->
+	<!--	</bean>-->
+
+	<!-- SqlServer -->
+	<!--	<jdbc:initialize-database>-->
+	<!--		<jdbc:script execution="INIT" separator=";"-->
+	<!--					 location="classpath:scripts/sqlserver-init.sql"/>-->
+	<!--	</jdbc:initialize-database>-->
+	<!--	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">-->
+	<!--		<property name="jdbcUrl"-->
+	<!--				  value="jdbc:sqlserver://10.55.2.17:1433;databaseName=testcase"/>-->
+	<!--		<property name="username" value="testcase"/>-->
+	<!--		<property name="password" value="testcase"/>-->
+	<!--	</bean>-->
+
+	<!-- EnterpriseDB -->
+	<!--	<jdbc:initialize-database ignore-failures="DROPS">-->
+	<!--		<jdbc:script execution="INIT" separator=";"-->
+	<!--					 location="classpath:scripts/oracle-init.sql"/>-->
+	<!--	</jdbc:initialize-database>-->
+	<!--	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">-->
+	<!--		<property name="driverClassName" value="com.edb.Driver"/>-->
+	<!--		<property name="jdbcUrl"-->
+	<!--				  value="jdbc:edb://10.55.2.19:3433/testcase"/>-->
+	<!--		<property name="username" value="testcase"/>-->
+	<!--		<property name="password" value="testcase"/>-->
+	<!--	</bean>-->
+
 </beans>

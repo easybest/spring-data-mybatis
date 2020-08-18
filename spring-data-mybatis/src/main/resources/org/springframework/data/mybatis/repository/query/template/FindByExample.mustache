@@ -1,0 +1,11 @@
+<select id="{{statementName}}" parameterType="{{entityType}}Example"
+        resultMap="{{resultMap}}">
+    SELECT
+    <if test="distinct">distinct</if>
+    <include refid="__base_column_list"/>
+    FROM {{tableName}}
+    <if test="_parameter != null">
+        <include refid="__example_where_clause"/>
+    </if>
+    <if test="orderByClause != null">order by ${orderByClause}</if>
+</select>

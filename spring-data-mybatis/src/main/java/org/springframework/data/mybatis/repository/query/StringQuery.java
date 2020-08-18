@@ -1,8 +1,19 @@
+/*
+ * Copyright 2012-2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.mybatis.repository.query;
-
-import static java.util.regex.Pattern.CASE_INSENSITIVE;
-import static org.springframework.util.ObjectUtils.nullSafeEquals;
-import static org.springframework.util.ObjectUtils.nullSafeHashCode;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -14,31 +25,36 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.springframework.data.repository.query.SpelQueryContext;
-import org.springframework.data.repository.query.SpelQueryContext.SpelExtractor;
-import org.springframework.data.repository.query.parser.Part.Type;
+import org.springframework.data.repository.query.parser.Part;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import lombok.ToString;
-
-@ToString
-public class StringQuery {
+/**
+ * Encapsulation of a query String. Offers access to parameters as bindings. The internal
+ * query String is cleaned from decorated parameters like {@literal %:lastname%} and the
+ * matching bindings take care of applying the decorations in the
+ * {@link ParameterBinding#prepare(Object)} method. Note that this class also handles
+ * replacing SpEL expressions with synthetic bind parameters.
+ *
+ * @author JARVIS SONG
+ */
+class StringQuery implements DeclaredQuery {
 
 	private final String query;
 
 	private final List<ParameterBinding> bindings;
 
+	private final @Nullable String alias;
+
+	private final boolean hasConstructorExpression;
+
 	private final boolean containsPageableInSpel;
 
 	private final boolean usesJdbcStyleParameters;
 
-	/**
-	 * Creates a new {@link StringQuery} from the given JPQL query.
-	 * @param query must not be {@literal null} or empty.
-	 */
-	public StringQuery(String query) {
+	StringQuery(String query) {
 
 		Assert.hasText(query, "Query must not be null or empty!");
 
@@ -47,45 +63,70 @@ public class StringQuery {
 
 		Metadata queryMeta = new Metadata();
 		this.query = ParameterBindingParser.INSTANCE
-				.parseParameterBindingsOfQueryIntoBindingsAndReturnCleanedQuery(query,
-						this.bindings, queryMeta);
+				.parseParameterBindingsOfQueryIntoBindingsAndReturnCleanedQuery(query, this.bindings, queryMeta);
 
 		this.usesJdbcStyleParameters = queryMeta.usesJdbcStyleParameters;
-
+		this.alias = QueryUtils.detectAlias(query);
+		this.hasConstructorExpression = QueryUtils.hasConstructorExpression(query);
 	}
 
-	/**
-	 * Returns whether we have found some like bindings.
-	 */
 	boolean hasParameterBindings() {
-		return !bindings.isEmpty();
+		return !this.bindings.isEmpty();
 	}
 
+	String getProjection() {
+		return QueryUtils.getProjection(this.query);
+	}
+
+	@Override
 	public List<ParameterBinding> getParameterBindings() {
-		return bindings;
+		return this.bindings;
 	}
 
+	@Override
+	@SuppressWarnings("deprecation")
+	public DeclaredQuery deriveCountQuery(@Nullable String countQuery, @Nullable String countQueryProjection) {
+
+		return DeclaredQuery.of(
+				(countQuery != null) ? countQuery : QueryUtils.createCountQueryFor(this.query, countQueryProjection));
+	}
+
+	@Override
 	public boolean usesJdbcStyleParameters() {
-		return usesJdbcStyleParameters;
+		return this.usesJdbcStyleParameters;
 	}
 
+	@Override
 	public String getQueryString() {
-		return query;
+		return this.query;
 	}
 
+	@Override
+	@Nullable
+	public String getAlias() {
+		return this.alias;
+	}
+
+	@Override
+	public boolean hasConstructorExpression() {
+		return this.hasConstructorExpression;
+	}
+
+	@Override
+	public boolean isDefaultProjection() {
+		return this.getProjection().equalsIgnoreCase(this.alias);
+	}
+
+	@Override
 	public boolean hasNamedParameter() {
-		return bindings.stream().anyMatch(b -> b.getName() != null);
+		return this.bindings.stream().anyMatch(b -> b.getName() != null);
 	}
 
+	@Override
 	public boolean usesPaging() {
-		return containsPageableInSpel;
+		return this.containsPageableInSpel;
 	}
 
-	/**
-	 * A parser that extracts the parameter bindings from a given query string.
-	 *
-	 * @author Thomas Darimont
-	 */
 	enum ParameterBindingParser {
 
 		INSTANCE;
@@ -100,8 +141,7 @@ public class StringQuery {
 		// digits.
 		// .............................................................^ start with a
 		// question mark.
-		private static final Pattern PARAMETER_BINDING_BY_INDEX = Pattern
-				.compile(POSITIONAL_OR_INDEXED_PARAMETER);
+		private static final Pattern PARAMETER_BINDING_BY_INDEX = Pattern.compile(POSITIONAL_OR_INDEXED_PARAMETER);
 
 		private static final Pattern PARAMETER_BINDING_PATTERN;
 
@@ -139,22 +179,16 @@ public class StringQuery {
 			builder.append("|"); // or
 
 			// named parameter and the parameter name
-			builder.append("%?(" + QueryUtils.COLON_NO_DOUBLE_COLON
-					+ QueryUtils.IDENTIFIER_GROUP + ")%?");
+			builder.append("%?(" + QueryUtils.COLON_NO_DOUBLE_COLON + QueryUtils.IDENTIFIER_GROUP + ")%?");
 
 			builder.append(")");
 			builder.append("\\)?"); // optional braces around parameters
 
-			PARAMETER_BINDING_PATTERN = Pattern.compile(builder.toString(),
-					CASE_INSENSITIVE);
+			PARAMETER_BINDING_PATTERN = Pattern.compile(builder.toString(), Pattern.CASE_INSENSITIVE);
 		}
 
-		/**
-		 * Parses {@link ParameterBinding} instances from the given query and adds them to
-		 * the registered bindings. Returns the cleaned up query.
-		 */
-		private String parseParameterBindingsOfQueryIntoBindingsAndReturnCleanedQuery(
-				String query, List<ParameterBinding> bindings, Metadata queryMeta) {
+		private String parseParameterBindingsOfQueryIntoBindingsAndReturnCleanedQuery(String query,
+				List<ParameterBinding> bindings, Metadata queryMeta) {
 
 			int greatestParameterIndex = tryFindGreatestParameterIndexIn(query);
 			boolean parametersShouldBeAccessedByIndex = greatestParameterIndex != -1;
@@ -168,14 +202,13 @@ public class StringQuery {
 				greatestParameterIndex = 0;
 			}
 
-			SpelExtractor spelExtractor = createSpelExtractor(query,
-					parametersShouldBeAccessedByIndex, greatestParameterIndex);
+			SpelQueryContext.SpelExtractor spelExtractor = createSpelExtractor(query, parametersShouldBeAccessedByIndex,
+					greatestParameterIndex);
 
 			String resultingQuery = spelExtractor.getQueryString();
 			Matcher matcher = PARAMETER_BINDING_PATTERN.matcher(resultingQuery);
 
-			int expressionParameterIndex = parametersShouldBeAccessedByIndex
-					? greatestParameterIndex : 0;
+			int expressionParameterIndex = parametersShouldBeAccessedByIndex ? greatestParameterIndex : 0;
 
 			boolean usesJpaStyleParameters = false;
 			while (matcher.find()) {
@@ -185,19 +218,16 @@ public class StringQuery {
 				}
 
 				String parameterIndexString = matcher.group(INDEXED_PARAMETER_GROUP);
-				String parameterName = parameterIndexString != null ? null
-						: matcher.group(NAMED_PARAMETER_GROUP);
+				String parameterName = (parameterIndexString != null) ? null : matcher.group(NAMED_PARAMETER_GROUP);
 				Integer parameterIndex = getParameterIndex(parameterIndexString);
 
 				String typeSource = matcher.group(COMPARISION_TYPE_GROUP);
-				String expression = spelExtractor.getParameter(
-						parameterName == null ? parameterIndexString : parameterName);
+				String expression = spelExtractor
+						.getParameter((parameterName != null) ? parameterName : parameterIndexString);
 				String replacement = null;
 
 				Assert.isTrue(parameterIndexString != null || parameterName != null,
-						() -> String.format(
-								"We need either a name or an index! Offending query string: %s",
-								query));
+						() -> String.format("We need either a name or an index! Offending query string: %s", query));
 
 				expressionParameterIndex++;
 				if ("".equals(parameterIndexString)) {
@@ -218,20 +248,16 @@ public class StringQuery {
 
 				case LIKE:
 
-					Type likeType = LikeParameterBinding
-							.getLikeTypeFrom(matcher.group(2));
+					Part.Type likeType = LikeParameterBinding.getLikeTypeFrom(matcher.group(2));
 					replacement = matcher.group(3);
 
 					if (parameterIndex != null) {
-						checkAndRegister(new LikeParameterBinding(parameterIndex,
-								likeType, expression), bindings);
+						checkAndRegister(new LikeParameterBinding(parameterIndex, likeType, expression), bindings);
 					}
 					else {
-						checkAndRegister(new LikeParameterBinding(parameterName, likeType,
-								expression), bindings);
+						checkAndRegister(new LikeParameterBinding(parameterName, likeType, expression), bindings);
 
-						replacement = expression != null ? ":" + parameterName
-								: matcher.group(5);
+						replacement = (expression != null) ? (":" + parameterName) : matcher.group(5);
 					}
 
 					break;
@@ -239,14 +265,10 @@ public class StringQuery {
 				case IN:
 
 					if (parameterIndex != null) {
-						checkAndRegister(
-								new InParameterBinding(parameterIndex, expression),
-								bindings);
+						checkAndRegister(new InParameterBinding(parameterIndex, expression), bindings);
 					}
 					else {
-						checkAndRegister(
-								new InParameterBinding(parameterName, expression),
-								bindings);
+						checkAndRegister(new InParameterBinding(parameterName, expression), bindings);
 					}
 
 					break;
@@ -255,14 +277,12 @@ public class StringQuery {
 							// the given parameter.
 				default:
 
-					bindings.add(parameterIndex != null
-							? new ParameterBinding(null, parameterIndex, expression)
+					bindings.add((parameterIndex != null) ? new ParameterBinding(null, parameterIndex, expression)
 							: new ParameterBinding(parameterName, null, expression));
 				}
 
 				if (replacement != null) {
-					resultingQuery = replaceFirst(resultingQuery, matcher.group(2),
-							replacement);
+					resultingQuery = replaceFirst(resultingQuery, matcher.group(2), replacement);
 				}
 
 			}
@@ -270,7 +290,7 @@ public class StringQuery {
 			return resultingQuery;
 		}
 
-		private static SpelExtractor createSpelExtractor(String queryWithSpel,
+		private static SpelQueryContext.SpelExtractor createSpelExtractor(String queryWithSpel,
 				boolean parametersShouldBeAccessedByIndex, int greatestParameterIndex) {
 
 			/*
@@ -278,33 +298,27 @@ public class StringQuery {
 			 * parameters starting from position of the greatest discovered index
 			 * parameter in order to not mix-up with the actual parameter indices.
 			 */
-			int expressionParameterIndex = parametersShouldBeAccessedByIndex
-					? greatestParameterIndex : 0;
+			int expressionParameterIndex = parametersShouldBeAccessedByIndex ? greatestParameterIndex : 0;
 
 			BiFunction<Integer, String, String> indexToParameterName = parametersShouldBeAccessedByIndex
-					? (index, expression) -> String
-							.valueOf(index + expressionParameterIndex + 1)
+					? (index, expression) -> String.valueOf(index + expressionParameterIndex + 1)
 					: (index, expression) -> EXPRESSION_PARAMETER_PREFIX + (index + 1);
 
 			String fixedPrefix = parametersShouldBeAccessedByIndex ? "?" : ":";
 
-			BiFunction<String, String, String> parameterNameToReplacement = (prefix,
-					name) -> fixedPrefix + name;
+			BiFunction<String, String, String> parameterNameToReplacement = (prefix, name) -> fixedPrefix + name;
 
-			return SpelQueryContext.of(indexToParameterName, parameterNameToReplacement)
-					.parse(queryWithSpel);
+			return SpelQueryContext.of(indexToParameterName, parameterNameToReplacement).parse(queryWithSpel);
 		}
 
-		private static String replaceFirst(String text, String substring,
-				String replacement) {
+		private static String replaceFirst(String text, String substring, String replacement) {
 
 			int index = text.indexOf(substring);
 			if (index < 0) {
 				return text;
 			}
 
-			return text.substring(0, index) + replacement
-					+ text.substring(index + substring.length());
+			return text.substring(0, index) + replacement + text.substring(index + substring.length());
 		}
 
 		@Nullable
@@ -326,34 +340,24 @@ public class StringQuery {
 				String parameterIndexString = parameterIndexMatcher.group(1);
 				Integer parameterIndex = getParameterIndex(parameterIndexString);
 				if (parameterIndex != null) {
-					greatestParameterIndex = Math.max(greatestParameterIndex,
-							parameterIndex);
+					greatestParameterIndex = Math.max(greatestParameterIndex, parameterIndex);
 				}
 			}
 
 			return greatestParameterIndex;
 		}
 
-		private static void checkAndRegister(ParameterBinding binding,
-				List<ParameterBinding> bindings) {
+		private static void checkAndRegister(ParameterBinding binding, List<ParameterBinding> bindings) {
 
 			bindings.stream() //
-					.filter(it -> it.hasName(binding.getName())
-							|| it.hasPosition(binding.getPosition())) //
-					.forEach(it -> Assert.isTrue(it.equals(binding),
-							String.format(MESSAGE, it, binding)));
+					.filter(it -> it.hasName(binding.getName()) || it.hasPosition(binding.getPosition())) //
+					.forEach(it -> Assert.isTrue(it.equals(binding), String.format(MESSAGE, it, binding)));
 
 			if (!bindings.contains(binding)) {
 				bindings.add(binding);
 			}
 		}
 
-		/**
-		 * An enum for the different types of bindings.
-		 *
-		 * @author Thomas Darimont
-		 * @author Oliver Gierke
-		 */
 		private enum ParameterBindingType {
 
 			// Trailing whitespace is intentional to reflect that the keywords must be
@@ -367,21 +371,11 @@ public class StringQuery {
 				this.keyword = keyword;
 			}
 
-			/**
-			 * Returns the keyword that will tirgger the binding type or {@literal null}
-			 * if the type is not triggered by a keyword.
-			 * @return the keyword
-			 */
 			@Nullable
 			public String getKeyword() {
-				return keyword;
+				return this.keyword;
 			}
 
-			/**
-			 * Return the appropriate {@link ParameterBindingType} for the given
-			 * {@link String}. Returns {@literal #AS_IS} in case no other
-			 * {@link ParameterBindingType} could be found.
-			 */
 			static ParameterBindingType of(String typeSource) {
 
 				if (!StringUtils.hasText(typeSource)) {
@@ -394,16 +388,14 @@ public class StringQuery {
 					}
 				}
 
-				throw new IllegalArgumentException(String
-						.format("Unsupported parameter binding type %s!", typeSource));
+				throw new IllegalArgumentException(String.format("Unsupported parameter binding type %s!", typeSource));
 			}
 
 		}
 
 	}
 
-	@ToString
-	public static class ParameterBinding {
+	static class ParameterBinding {
 
 		private final @Nullable String name;
 
@@ -411,25 +403,11 @@ public class StringQuery {
 
 		private final @Nullable Integer position;
 
-		/**
-		 * Creates a new {@link ParameterBinding} for the parameter with the given
-		 * position.
-		 * @param position must not be {@literal null}.
-		 */
 		ParameterBinding(Integer position) {
 			this(null, position, null);
 		}
 
-		/**
-		 * Creates a new {@link ParameterBinding} for the parameter with the given name,
-		 * position and expression information. Either {@literal name} or
-		 * {@literal position} must be not {@literal null}.
-		 * @param name of the parameter may be {@literal null}.
-		 * @param position of the parameter may be {@literal null}.
-		 * @param expression the expression to apply to any value for this parameter.
-		 */
-		ParameterBinding(@Nullable String name, @Nullable Integer position,
-				@Nullable String expression) {
+		ParameterBinding(@Nullable String name, @Nullable Integer position, @Nullable String expression) {
 
 			if (name == null) {
 				Assert.notNull(position, "Position must not be null!");
@@ -444,104 +422,60 @@ public class StringQuery {
 			this.expression = expression;
 		}
 
-		/**
-		 * Returns whether the binding has the given name. Will always be {@literal false}
-		 * in case the {@link ParameterBinding} has been set up from a position.
-		 */
-		public boolean hasName(@Nullable String name) {
+		boolean hasName(@Nullable String name) {
 			return this.position == null && this.name != null && this.name.equals(name);
 		}
 
-		/**
-		 * Returns whether the binding has the given position. Will always be
-		 * {@literal false} in case the {@link ParameterBinding} has been set up from a
-		 * name.
-		 */
-		public boolean hasPosition(@Nullable Integer position) {
-			return position != null && this.name == null
-					&& position.equals(this.position);
+		boolean hasPosition(@Nullable Integer position) {
+			return position != null && this.name == null && position.equals(this.position);
 		}
 
-		/**
-		 * @return the name
-		 */
 		@Nullable
 		public String getName() {
-			return name;
+			return this.name;
 		}
 
-		/**
-		 * @return the name
-		 * @throws IllegalStateException if the name is not available.
-		 * @since 2.0
-		 */
-		public String getRequiredName() throws IllegalStateException {
+		String getRequiredName() throws IllegalStateException {
 
-			String name = getName();
+			String name = this.getName();
 
 			if (name != null) {
 				return name;
 			}
 
-			throw new IllegalStateException(
-					String.format("Required name for %s not available!", this));
+			throw new IllegalStateException(String.format("Required name for %s not available!", this));
 		}
 
-		/**
-		 * @return the position
-		 */
 		@Nullable
-		public Integer getPosition() {
-			return position;
+		Integer getPosition() {
+			return this.position;
 		}
 
-		/**
-		 * @return the position
-		 * @throws IllegalStateException if the position is not available.
-		 * @since 2.0
-		 */
-		public int getRequiredPosition() throws IllegalStateException {
+		int getRequiredPosition() throws IllegalStateException {
 
-			Integer position = getPosition();
+			Integer position = this.getPosition();
 
 			if (position != null) {
 				return position;
 			}
 
-			throw new IllegalStateException(
-					String.format("Required position for %s not available!", this));
+			throw new IllegalStateException(String.format("Required position for %s not available!", this));
 		}
 
-		/**
-		 * @return {@literal true} if this parameter binding is a synthetic SpEL
-		 * expression.
-		 */
 		public boolean isExpression() {
 			return this.expression != null;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see java.lang.Object#hashCode()
-		 */
-		@Override
-		public int hashCode() {
-
-			int result = 17;
-
-			result += nullSafeHashCode(this.name);
-			result += nullSafeHashCode(this.position);
-			result += nullSafeHashCode(this.expression);
-
-			return result;
+		@Nullable
+		public Object prepare(@Nullable Object valueToBind) {
+			return valueToBind;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see java.lang.Object#equals(java.lang.Object)
-		 */
+		@Nullable
+		public String getExpression() {
+			return this.expression;
+		}
+
 		@Override
 		public boolean equals(Object obj) {
 
@@ -551,68 +485,41 @@ public class StringQuery {
 
 			ParameterBinding that = (ParameterBinding) obj;
 
-			return nullSafeEquals(this.name, that.name)
-					&& nullSafeEquals(this.position, that.position)
-					&& nullSafeEquals(this.expression, that.expression);
+			return ObjectUtils.nullSafeEquals(this.name, that.name)
+					&& ObjectUtils.nullSafeEquals(this.position, that.position)
+					&& ObjectUtils.nullSafeEquals(this.expression, that.expression);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see java.lang.Object#toString()
-		 */
+		@Override
+		public int hashCode() {
+
+			int result = 17;
+
+			result += ObjectUtils.nullSafeHashCode(this.name);
+			result += ObjectUtils.nullSafeHashCode(this.position);
+			result += ObjectUtils.nullSafeHashCode(this.expression);
+
+			return result;
+		}
+
 		@Override
 		public String toString() {
-			return String.format(
-					"ParameterBinding [name: %s, position: %d, expression: %s]",
-					getName(), getPosition(), getExpression());
-		}
-
-		/**
-		 * @param valueToBind value to prepare
-		 */
-		@Nullable
-		public Object prepare(@Nullable Object valueToBind) {
-			return valueToBind;
-		}
-
-		@Nullable
-		public String getExpression() {
-			return expression;
+			return String.format("ParameterBinding [name: %s, position: %d, expression: %s]", this.getName(),
+					this.getPosition(), this.getExpression());
 		}
 
 	}
 
-	/**
-	 * Represents a {@link ParameterBinding} in a JPQL query augmented with instructions
-	 * of how to apply a parameter as an {@code IN} parameter.
-	 *
-	 * @author Thomas Darimont
-	 */
-	public static class InParameterBinding extends ParameterBinding {
+	static class InParameterBinding extends ParameterBinding {
 
-		/**
-		 * Creates a new {@link InParameterBinding} for the parameter with the given name.
-		 */
 		InParameterBinding(String name, @Nullable String expression) {
 			super(name, null, expression);
 		}
 
-		/**
-		 * Creates a new {@link InParameterBinding} for the parameter with the given
-		 * position.
-		 */
 		InParameterBinding(int position, @Nullable String expression) {
 			super(null, position, expression);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see
-		 * org.springframework.data.jpa.repository.query.StringQuery.ParameterBinding#
-		 * prepare(java.lang.Object)
-		 */
 		@Override
 		public Object prepare(@Nullable Object value) {
 
@@ -632,94 +539,51 @@ public class StringQuery {
 
 	}
 
-	/**
-	 * Represents a parameter binding in a JPQL query augmented with instructions of how
-	 * to apply a parameter as LIKE parameter. This allows expressions like
-	 * {@code …like %?1} in the JPQL query, which is not allowed by plain JPA.
-	 *
-	 * @author Oliver Gierke
-	 * @author Thomas Darimont
-	 */
-	public static class LikeParameterBinding extends ParameterBinding {
+	static class LikeParameterBinding extends ParameterBinding {
 
-		private static final List<Type> SUPPORTED_TYPES = Arrays.asList(Type.CONTAINING,
-				Type.STARTING_WITH, Type.ENDING_WITH, Type.LIKE);
+		private static final List<Part.Type> SUPPORTED_TYPES = Arrays.asList(Part.Type.CONTAINING,
+				Part.Type.STARTING_WITH, Part.Type.ENDING_WITH, Part.Type.LIKE);
 
-		private final Type type;
+		private final Part.Type type;
 
-		/**
-		 * Creates a new {@link LikeParameterBinding} for the parameter with the given
-		 * name and {@link Type}.
-		 * @param name must not be {@literal null} or empty.
-		 * @param type must not be {@literal null}.
-		 */
-		LikeParameterBinding(String name, Type type) {
+		LikeParameterBinding(String name, Part.Type type) {
 			this(name, type, null);
 		}
 
-		/**
-		 * Creates a new {@link LikeParameterBinding} for the parameter with the given
-		 * name and {@link Type} and parameter binding input.
-		 * @param name must not be {@literal null} or empty.
-		 * @param type must not be {@literal null}.
-		 * @param expression may be {@literal null}.
-		 */
-		LikeParameterBinding(String name, Type type, @Nullable String expression) {
+		LikeParameterBinding(String name, Part.Type type, @Nullable String expression) {
 
 			super(name, null, expression);
 
 			Assert.hasText(name, "Name must not be null or empty!");
 			Assert.notNull(type, "Type must not be null!");
 
-			Assert.isTrue(SUPPORTED_TYPES.contains(type), String.format(
-					"Type must be one of %s!",
+			Assert.isTrue(SUPPORTED_TYPES.contains(type), String.format("Type must be one of %s!",
 					StringUtils.collectionToCommaDelimitedString(SUPPORTED_TYPES)));
 
 			this.type = type;
 		}
 
-		/**
-		 * Creates a new {@link LikeParameterBinding} for the parameter with the given
-		 * position and {@link Type}.
-		 * @param position position of the parameter in the query.
-		 * @param type must not be {@literal null}.
-		 */
-		LikeParameterBinding(int position, Type type) {
+		LikeParameterBinding(int position, Part.Type type) {
 			this(position, type, null);
 		}
 
-		/**
-		 * Creates a new {@link LikeParameterBinding} for the parameter with the given
-		 * position and {@link Type}.
-		 * @param position position of the parameter in the query.
-		 * @param type must not be {@literal null}.
-		 * @param expression may be {@literal null}.
-		 */
-		LikeParameterBinding(int position, Type type, @Nullable String expression) {
+		LikeParameterBinding(int position, Part.Type type, @Nullable String expression) {
 
 			super(null, position, expression);
 
 			Assert.isTrue(position > 0, "Position must be greater than zero!");
 			Assert.notNull(type, "Type must not be null!");
 
-			Assert.isTrue(SUPPORTED_TYPES.contains(type), String.format(
-					"Type must be one of %s!",
+			Assert.isTrue(SUPPORTED_TYPES.contains(type), String.format("Type must be one of %s!",
 					StringUtils.collectionToCommaDelimitedString(SUPPORTED_TYPES)));
 
 			this.type = type;
 		}
 
-		/**
-		 * Returns the {@link Type} of the binding.
-		 * @return the type
-		 */
-		public Type getType() {
-			return type;
+		public Part.Type getType() {
+			return this.type;
 		}
 
-		/**
-		 * Prepares the given raw keyword according to the like type.
-		 */
 		@Nullable
 		@Override
 		public Object prepare(@Nullable Object value) {
@@ -728,7 +592,7 @@ public class StringQuery {
 				return null;
 			}
 
-			switch (type) {
+			switch (this.type) {
 			case STARTING_WITH:
 				return String.format("%s%%", value.toString());
 			case ENDING_WITH:
@@ -741,11 +605,6 @@ public class StringQuery {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see java.lang.Object#equals(java.lang.Object)
-		 */
 		@Override
 		public boolean equals(Object obj) {
 
@@ -758,53 +617,39 @@ public class StringQuery {
 			return super.equals(obj) && this.type.equals(that.type);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see java.lang.Object#hashCode()
-		 */
 		@Override
 		public int hashCode() {
 
 			int result = super.hashCode();
 
-			result += nullSafeHashCode(this.type);
+			result += ObjectUtils.nullSafeHashCode(this.type);
 
 			return result;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see java.lang.Object#toString()
-		 */
 		@Override
 		public String toString() {
-			return String.format("LikeBinding [name: %s, position: %d, type: %s]",
-					getName(), getPosition(), type);
+			return String.format("LikeBinding [name: %s, position: %d, type: %s]", this.getName(), this.getPosition(),
+					this.type);
 		}
 
-		/**
-		 * Extracts the like {@link Type} from the given JPA like expression.
-		 * @param expression must not be {@literal null} or empty.
-		 */
-		private static Type getLikeTypeFrom(String expression) {
+		private static Part.Type getLikeTypeFrom(String expression) {
 
 			Assert.hasText(expression, "Expression must not be null or empty!");
 
 			if (expression.matches("%.*%")) {
-				return Type.CONTAINING;
+				return Part.Type.CONTAINING;
 			}
 
 			if (expression.startsWith("%")) {
-				return Type.ENDING_WITH;
+				return Part.Type.ENDING_WITH;
 			}
 
 			if (expression.endsWith("%")) {
-				return Type.STARTING_WITH;
+				return Part.Type.STARTING_WITH;
 			}
 
-			return Type.LIKE;
+			return Part.Type.LIKE;
 		}
 
 	}

@@ -1,0 +1,6 @@
+<delete id="{{statementName}}">
+    DELETE FROM {{table}}
+    <where>
+        <include refid="__where_clause_by_ids"/>
+    </where>
+</delete>
