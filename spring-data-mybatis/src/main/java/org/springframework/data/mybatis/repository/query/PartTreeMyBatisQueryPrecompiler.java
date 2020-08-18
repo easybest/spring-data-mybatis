@@ -133,8 +133,8 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 				StringUtils.hasText(where) ? (" WHERE " + where) : "");
 
 		if (tree.isLimiting()) {
-			RowSelection rowSelection = new RowSelection();
-			rowSelection.setMaxRows(tree.getMaxResults());
+			RowSelection rowSelection = new RowSelection(0, tree.getMaxResults());
+			// rowSelection.setMaxRows(tree.getMaxResults());
 
 			sql = String.format("SELECT COUNT(*) FROM (%s) __a",
 					this.dialect.getLimitHandler().processSql(sql, rowSelection));
@@ -167,8 +167,8 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 		RowSelection rowSelection = null;
 		if (tree.isLimiting()) {
 			if (!pageable) {
-				rowSelection = new RowSelection();
-				rowSelection.setMaxRows(tree.getMaxResults());
+				rowSelection = new RowSelection(0, tree.getMaxResults());
+				// rowSelection.setMaxRows(tree.getMaxResults());
 			}
 
 			pageable = true;

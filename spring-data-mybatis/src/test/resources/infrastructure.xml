@@ -37,10 +37,10 @@
 	<!--	</bean>-->
 
 	<!-- H2 Database -->
-	<!--		<jdbc:embedded-database id="dataSource" type="H2" generate-name="true">-->
-	<!--			<jdbc:script execution="INIT" separator=";"-->
-	<!--						 location="classpath:scripts/h2-init.sql"/>-->
-	<!--		</jdbc:embedded-database>-->
+	<jdbc:embedded-database id="dataSource" type="H2" generate-name="true">
+		<jdbc:script execution="INIT" separator=";"
+					 location="classpath:scripts/h2-init.sql"/>
+	</jdbc:embedded-database>
 
 	<!-- HSQLDB -->
 	<!--		<jdbc:embedded-database id="dataSource" type="HSQL" generate-name="true">-->
@@ -59,16 +59,29 @@
 	<!--		<property name="password" value="testcase"/>-->
 	<!--	</bean>-->
 
-	<!-- SqlServer 2017/ -->
-	<jdbc:initialize-database>
-		<jdbc:script execution="INIT" separator=";"
-					 location="classpath:scripts/sqlserver-init.sql"/>
-	</jdbc:initialize-database>
-	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">
-		<property name="jdbcUrl"
-				  value="jdbc:sqlserver://10.55.2.17:1433;databaseName=testcase"/>
-		<property name="username" value="testcase"/>
-		<property name="password" value="testcase"/>
-	</bean>
+	<!-- SqlServer -->
+	<!--	<jdbc:initialize-database>-->
+	<!--		<jdbc:script execution="INIT" separator=";"-->
+	<!--					 location="classpath:scripts/sqlserver-init.sql"/>-->
+	<!--	</jdbc:initialize-database>-->
+	<!--	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">-->
+	<!--		<property name="jdbcUrl"-->
+	<!--				  value="jdbc:sqlserver://10.55.2.17:1433;databaseName=testcase"/>-->
+	<!--		<property name="username" value="testcase"/>-->
+	<!--		<property name="password" value="testcase"/>-->
+	<!--	</bean>-->
+
+	<!-- EnterpriseDB -->
+	<!--	<jdbc:initialize-database ignore-failures="DROPS">-->
+	<!--		<jdbc:script execution="INIT" separator=";"-->
+	<!--					 location="classpath:scripts/oracle-init.sql"/>-->
+	<!--	</jdbc:initialize-database>-->
+	<!--	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">-->
+	<!--		<property name="driverClassName" value="com.edb.Driver"/>-->
+	<!--		<property name="jdbcUrl"-->
+	<!--				  value="jdbc:edb://10.55.2.19:3433/testcase"/>-->
+	<!--		<property name="username" value="testcase"/>-->
+	<!--		<property name="password" value="testcase"/>-->
+	<!--	</bean>-->
 
 </beans>

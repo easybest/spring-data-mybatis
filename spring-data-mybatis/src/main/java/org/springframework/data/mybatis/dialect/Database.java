@@ -26,6 +26,58 @@ import java.lang.reflect.InvocationTargetException;
 public enum Database {
 
 	/**
+	 * EnterpriseDB.
+	 */
+	ENTERPRISEDB {
+		@Override
+		public Class<? extends Dialect> latestDialect() {
+			return PostgresPlusDialect.class;
+		}
+
+		@Override
+		public Dialect resolveDialect(DialectResolutionInfo info) {
+			final String databaseName = info.getDatabaseName();
+
+			if ("EnterpriseDB".equals(databaseName)) {
+				return latestDialectInstance(this);
+			}
+
+			return null;
+		}
+	},
+	/**
+	 * Oracle.
+	 */
+	ORACLE {
+		@Override
+		public Class<? extends Dialect> latestDialect() {
+			return Oracle12cDialect.class;
+		}
+
+		@Override
+		public Dialect resolveDialect(DialectResolutionInfo info) {
+			final String databaseName = info.getDatabaseName();
+			if ("Oracle".equals(databaseName)) {
+				final int majorVersion = info.getDatabaseMajorVersion();
+
+				switch (majorVersion) {
+				case 12:
+					return new Oracle12cDialect();
+				case 11:
+				case 10:
+					return new Oracle10gDialect();
+				case 9:
+					return new Oracle9iDialect();
+				case 8:
+					return new Oracle8iDialect();
+				default:
+					return latestDialectInstance(this);
+				}
+			}
+			return null;
+		}
+	},
+	/**
 	 * Microsoft SQL Server.
 	 */
 	SQLSERVER {

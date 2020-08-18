@@ -13,7 +13,7 @@
             </where>
             ) inner_query ) SELECT
             * FROM query WHERE __mybatis_row_nr__
-            &gt;= (#{__offset}+1) AND __mybatis_row_nr__ &lt; (#{__offsetEnd}+1)
+            &gt; #{__offset} AND __mybatis_row_nr__ &lt;= #{__offsetEnd}
         {{/SQLServer2005}}
         {{#SQLServer2012}}
             <if test="__sort != null">
@@ -35,7 +35,7 @@
                 </where>
                 ) inner_query ) SELECT
                 * FROM query WHERE __mybatis_row_nr__
-                &gt;= (#{__offset}+1) AND __mybatis_row_nr__ &lt; (#{__offsetEnd}+1)
+                &gt; #{__offset} AND __mybatis_row_nr__ &lt;= #{__offsetEnd}
             </if>
         {{/SQLServer2012}}
         {{^SQLServer2005}}{{^SQLServer2012}}

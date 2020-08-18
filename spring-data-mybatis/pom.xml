@@ -132,6 +132,18 @@
 			<version>7.4.1.jre8</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc10</artifactId>
+			<version>19.7.0.0</version>
+			<scope>test</scope>
+		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>com.edb</groupId>-->
+<!--			<artifactId>edb-jdbc17</artifactId>-->
+<!--			<version>17</version>-->
+<!--			<scope>test</scope>-->
+<!--		</dependency>-->
 	</dependencies>
 	<build>
 		<plugins>

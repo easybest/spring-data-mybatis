@@ -134,15 +134,18 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 						if (pageable.getPageSize() > maxResultsFromTree && pageable.getOffset() > 0) {
 							params.put(ResidentParameterName.OFFSET,
 									pageable.getOffset() - (pageable.getPageSize() - maxResultsFromTree));
+							params.put(ResidentParameterName.OFFSET_END, pageable.getOffset() + maxResultsFromTree);
 						}
 						else {
 							params.put(ResidentParameterName.OFFSET, pageable.getOffset());
+							params.put(ResidentParameterName.OFFSET_END, pageable.getOffset() + pageable.getPageSize());
 						}
 						params.put(ResidentParameterName.PAGE_SIZE, maxResultsFromTree);
 					}
 					else {
 						params.put(ResidentParameterName.PAGE_SIZE, pageable.getPageSize());
 						params.put(ResidentParameterName.OFFSET, pageable.getOffset());
+						params.put(ResidentParameterName.OFFSET_END, pageable.getOffset() + pageable.getPageSize());
 					}
 
 					if (this.method.isSliceQuery()) {

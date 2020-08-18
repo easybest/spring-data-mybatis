@@ -10,3 +10,4 @@
 ^http://www.springframework.org/schema/data/mybatis.*
 ^http\\://www.springframework.org/schema/data/mybatis.*
 ^http://www.w3.org/.*
+^http://repository.openmindonline.it/.*
