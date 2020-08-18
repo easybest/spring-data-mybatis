@@ -1,0 +1,23 @@
+<sql id="{{statementName}}">
+    <if test="__ids != null">
+        <trim prefixOverrides="and |or ">
+            {{^embedded}}
+                {{idProperty.column.name}} IN
+                <foreach collection="__ids" item="item" index="index" open="("
+                         separator=","
+                         close=")">
+                    #{item}
+                </foreach>
+            {{/embedded}}
+            {{#embedded}}
+                <foreach collection="__ids" item="item" index="index" open="("
+                         separator=") or (" close=")">
+                    {{#properties}}
+                        {{^-first}} AND {{/-first}}
+                        {{column.name}} = #{ item.{{name}} }
+                    {{/properties}}
+                </foreach>
+            {{/embedded}}
+        </trim>
+    </if>
+</sql>

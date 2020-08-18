@@ -1,35 +1,78 @@
+/*
+ * Copyright 2012-2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.mybatis.repository.query;
 
 import java.lang.reflect.Method;
+
 import org.mybatis.spring.SqlSessionTemplate;
+
+import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.data.repository.query.QueryLookupStrategy.Key;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
+/**
+ * Query lookup strategy to execute finders.
+ *
+ * @author JARVIS SONG
+ * @since 1.0.0
+ */
 public final class MybatisQueryLookupStrategy {
 
 	private MybatisQueryLookupStrategy() {
 	}
 
-	private abstract static class AbstractQueryLookupStrategy
-			implements QueryLookupStrategy {
+	public static QueryLookupStrategy create(SqlSessionTemplate sqlSessionTemplate,
+			MybatisMappingContext mappingContext, @Nullable QueryLookupStrategy.Key key,
+			QueryMethodEvaluationContextProvider evaluationContextProvider, EscapeCharacter escape) {
+		Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null!");
+		Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null!");
+		switch ((null != key) ? key : QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND) {
+
+		case CREATE:
+			return new CreateQueryLookupStrategy(sqlSessionTemplate, escape);
+		case USE_DECLARED_QUERY:
+			return new DeclaredQueryLookupStrategy(sqlSessionTemplate, mappingContext, evaluationContextProvider);
+		case CREATE_IF_NOT_FOUND:
+			return new CreateIfNotFoundQueryLookupStrategy(sqlSessionTemplate,
+					new CreateQueryLookupStrategy(sqlSessionTemplate, escape),
+					new DeclaredQueryLookupStrategy(sqlSessionTemplate, mappingContext, evaluationContextProvider));
+		default:
+			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
+		}
+	}
+
+	private abstract static class AbstractQueryLookupStrategy implements QueryLookupStrategy {
 
 		private final SqlSessionTemplate sqlSessionTemplate;
 
-		public AbstractQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate) {
+		protected AbstractQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate) {
 			this.sqlSessionTemplate = sqlSessionTemplate;
 		}
 
 		@Override
-		public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata,
-				ProjectionFactory factory, NamedQueries namedQueries) {
-			return resolveQuery(new MybatisQueryMethod(method, metadata, factory),
-					sqlSessionTemplate, namedQueries);
+		public RepositoryQuery resolveQuery(Method method, RepositoryMetadata metadata, ProjectionFactory factory,
+				NamedQueries namedQueries) {
+			return this.resolveQuery(new MybatisQueryMethod(method, metadata, factory), this.sqlSessionTemplate,
+					namedQueries);
 		}
 
 		protected abstract RepositoryQuery resolveQuery(MybatisQueryMethod method,
@@ -39,96 +82,75 @@ public final class MybatisQueryLookupStrategy {
 
 	private static class CreateQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
-		public CreateQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate) {
+		private final EscapeCharacter escape;
+
+		protected CreateQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate, EscapeCharacter escape) {
 			super(sqlSessionTemplate);
+			this.escape = escape;
 		}
 
 		@Override
-		protected RepositoryQuery resolveQuery(MybatisQueryMethod method,
-				SqlSessionTemplate sqlSessionTemplate, NamedQueries namedQueries) {
-			return new PartTreeMybatisQuery(method, sqlSessionTemplate);
+		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, SqlSessionTemplate sqlSessionTemplate,
+				NamedQueries namedQueries) {
+
+			return new PartTreeMybatisQuery(sqlSessionTemplate, method, this.escape);
 		}
 
 	}
 
 	private static class DeclaredQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
+		private final MybatisMappingContext mappingContext;
+
 		private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
 		protected DeclaredQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate,
-				QueryMethodEvaluationContextProvider evaluationContextProvider) {
+				MybatisMappingContext mappingContext, QueryMethodEvaluationContextProvider evaluationContextProvider) {
 			super(sqlSessionTemplate);
+			this.mappingContext = mappingContext;
 			this.evaluationContextProvider = evaluationContextProvider;
 		}
 
 		@Override
-		protected RepositoryQuery resolveQuery(MybatisQueryMethod method,
-				SqlSessionTemplate sqlSessionTemplate, NamedQueries namedQueries) {
+		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, SqlSessionTemplate sqlSessionTemplate,
+				NamedQueries namedQueries) {
 
-			if (method.isAnnotatedQuery()) {
-				return new SimpleMybatisQuery(method, sqlSessionTemplate);
+			RepositoryQuery query = MybatisQueryFactory.INSTANCE.createQuery(this.mappingContext, sqlSessionTemplate,
+					method, this.evaluationContextProvider, namedQueries);
+			if (null != query) {
+				return query;
 			}
 
-			throw new IllegalStateException(String.format(
-					"Did neither find a NamedQuery nor an annotated query for method %s!",
-					method));
+			throw new IllegalStateException(
+					String.format("Did neither find a NamedQuery nor an annotated query for method %s!", method));
 		}
 
 	}
 
-	private static class CreateIfNotFoundQueryLookupStrategy
-			extends AbstractQueryLookupStrategy {
+	private static class CreateIfNotFoundQueryLookupStrategy extends AbstractQueryLookupStrategy {
 
 		private final DeclaredQueryLookupStrategy lookupStrategy;
 
 		private final CreateQueryLookupStrategy createStrategy;
 
-		public CreateIfNotFoundQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate,
-
-				CreateQueryLookupStrategy createStrategy,
-				DeclaredQueryLookupStrategy lookupStrategy) {
+		protected CreateIfNotFoundQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate,
+				CreateQueryLookupStrategy createStrategy, DeclaredQueryLookupStrategy lookupStrategy) {
 			super(sqlSessionTemplate);
-			this.lookupStrategy = lookupStrategy;
 			this.createStrategy = createStrategy;
+			this.lookupStrategy = lookupStrategy;
 		}
 
 		@Override
-		protected RepositoryQuery resolveQuery(MybatisQueryMethod method,
-				SqlSessionTemplate sqlSessionTemplate, NamedQueries namedQueries) {
+		protected RepositoryQuery resolveQuery(MybatisQueryMethod method, SqlSessionTemplate sqlSessionTemplate,
+				NamedQueries namedQueries) {
 			try {
-				return lookupStrategy.resolveQuery(method, sqlSessionTemplate,
-						namedQueries);
+				return this.lookupStrategy.resolveQuery(method, sqlSessionTemplate, namedQueries);
 			}
-			catch (IllegalStateException e) {
-				return createStrategy.resolveQuery(method, sqlSessionTemplate,
-						namedQueries);
+			catch (IllegalStateException ex) {
+				return this.createStrategy.resolveQuery(method, sqlSessionTemplate, namedQueries);
 			}
 		}
 
-	}
-
-	public static QueryLookupStrategy create(SqlSessionTemplate sqlSessionTemplate,
-			Key key, QueryMethodEvaluationContextProvider evaluationContextProvider) {
-
-		Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null!");
-		Assert.notNull(evaluationContextProvider,
-				"EvaluationContextProvider must not be null!");
-
-		switch (key != null ? key : Key.CREATE_IF_NOT_FOUND) {
-		case CREATE:
-			return new CreateQueryLookupStrategy(sqlSessionTemplate);
-		case USE_DECLARED_QUERY:
-			return new DeclaredQueryLookupStrategy(sqlSessionTemplate,
-					evaluationContextProvider);
-		case CREATE_IF_NOT_FOUND:
-			return new CreateIfNotFoundQueryLookupStrategy(sqlSessionTemplate,
-					new CreateQueryLookupStrategy(sqlSessionTemplate),
-					new DeclaredQueryLookupStrategy(sqlSessionTemplate,
-							evaluationContextProvider));
-		default:
-			throw new IllegalArgumentException(
-					String.format("Unsupported query lookup strategy %s!", key));
-		}
 	}
 
 }

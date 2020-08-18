@@ -1,35 +1,42 @@
+/*
+ * Copyright 2012-2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.mybatis.repository.support;
 
-import org.springframework.core.ResolvableType;
 import org.springframework.data.domain.Persistable;
+import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 
+/**
+ * Extension of {@link MybatisMappingContextEntityInformation} that considers methods of
+ * {@link Persistable} to lookup the id.
+ *
+ * @param <T> entity type
+ * @param <ID> entity id
+ * @author JARVIS SONG
+ * @since 2.0.0
+ */
 public class MybatisPersistableEntityInformation<T extends Persistable<ID>, ID>
-		extends MybatisEntityInformationSupport<T, ID> {
+		extends MybatisMappingContextEntityInformation<T, ID> {
 
-	private Class<ID> idClass;
-
-	public MybatisPersistableEntityInformation(Class<T> domainClass) {
-		super(domainClass);
-
-		Class<?> idClass = ResolvableType.forClass(Persistable.class, domainClass)
-				.resolveGeneric(0);
-
-		if (null == idClass) {
-			throw new IllegalArgumentException(String
-					.format("Could not resolve identifier type for %s!", domainClass));
-		}
-
-		this.idClass = (Class<ID>) idClass;
+	public MybatisPersistableEntityInformation(Class<T> domainClass, MybatisMappingContext mappingContext) {
+		super(domainClass, mappingContext);
 	}
 
 	@Override
 	public ID getId(T entity) {
 		return entity.getId();
-	}
-
-	@Override
-	public Class<ID> getIdType() {
-		return idClass;
 	}
 
 	@Override

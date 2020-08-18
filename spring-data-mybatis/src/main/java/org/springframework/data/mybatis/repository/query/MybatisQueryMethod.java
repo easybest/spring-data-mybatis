@@ -1,30 +1,60 @@
+/*
+ * Copyright 2012-2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.mybatis.repository.query;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.ibatis.mapping.SqlCommandType;
+
+import lombok.Getter;
+
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mybatis.repository.Modifying;
+import org.springframework.data.mybatis.repository.Procedure;
 import org.springframework.data.mybatis.repository.Query;
 import org.springframework.data.mybatis.repository.ResultMap;
+import org.springframework.data.mybatis.repository.ResultType;
 import org.springframework.data.mybatis.repository.SelectColumns;
+import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.QueryMethod;
+import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+/**
+ * Mybatis specific extension of {@link QueryMethod}.
+ *
+ * @author JARVIS SONG
+ * @since 1.0.0
+ */
 public class MybatisQueryMethod extends QueryMethod {
 
-	private static final Set<Class<?>> NATIVE_ARRAY_TYPES;
+	private static final StoredProcedureAttributeSource storedProcedureAttributeSource = StoredProcedureAttributeSource.INSTANCE;
 
+	private static final Set<Class<?>> NATIVE_ARRAY_TYPES;
 	static {
 
 		Set<Class<?>> types = new HashSet<>();
@@ -35,16 +65,26 @@ public class MybatisQueryMethod extends QueryMethod {
 
 		NATIVE_ARRAY_TYPES = Collections.unmodifiableSet(types);
 	}
-
 	private final Method method;
 
-	private final RepositoryMetadata metadata;
+	private @Nullable StoredProcedureAttributes storedProcedureAttributes;
 
+	private final Lazy<MybatisEntityMetadata<?>> entityMetadata;
+
+	private final Lazy<Boolean> isCollectionQuery;
+
+	private final Lazy<Boolean> isProcedureQuery;
+
+	private final Lazy<Modifying> modifying;
+
+	@Getter
 	private final String namespace;
 
+	@Getter
 	private final String statementName;
 
-	private Integer limitSize;
+	@Getter
+	private final String countStatementName;
 
 	/**
 	 * Creates a new {@link QueryMethod} from the given parameters. Looks up the correct
@@ -53,8 +93,7 @@ public class MybatisQueryMethod extends QueryMethod {
 	 * @param metadata must not be {@literal null}.
 	 * @param factory must not be {@literal null}.
 	 */
-	public MybatisQueryMethod(Method method, RepositoryMetadata metadata,
-			ProjectionFactory factory) {
+	public MybatisQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory) {
 
 		super(method, metadata, factory);
 
@@ -62,50 +101,29 @@ public class MybatisQueryMethod extends QueryMethod {
 
 		this.method = method;
 
-		Assert.isTrue(!(isModifyingQuery() && getParameters().hasSpecialParameter()),
+		this.isCollectionQuery = Lazy
+				.of(() -> super.isCollectionQuery() && !NATIVE_ARRAY_TYPES.contains(method.getReturnType()));
+		this.isProcedureQuery = Lazy.of(() -> AnnotationUtils.findAnnotation(method, Procedure.class) != null);
+		this.entityMetadata = Lazy.of(() -> new DefaultMybatisEntityMetadata<>(this.getDomainClass()));
+		this.modifying = Lazy.of(() -> AnnotatedElementUtils.findMergedAnnotation(method, Modifying.class));
+
+		Assert.isTrue(!(this.isModifyingQuery() && this.getParameters().hasSpecialParameter()),
 				String.format("Modifying method must not contain %s!", Parameters.TYPES));
+		this.assertParameterNamesInAnnotatedQuery();
 
-		this.metadata = metadata;
-		String namespace = getAnnotationValue("namespace", String.class);
-		String statementName = getAnnotationValue("statement", String.class);
-		this.namespace = StringUtils.hasText(namespace) ? namespace
-				: metadata.getRepositoryInterface().getName();
-		this.statementName = StringUtils.hasText(statementName) ? statementName
-				: (method.getName() + UUID.randomUUID().toString().replace("-", ""));
-
+		this.namespace = this.getAnnotationValue("namespace", metadata.getRepositoryInterface().getName());
+		this.statementName = this.getAnnotationValue("statement",
+				(method.getName() + UUID.randomUUID().toString().replace("-", "")));
+		this.countStatementName = this.getAnnotationValue("countStatement",
+				ResidentStatementName.COUNT_PREFIX + this.statementName);
 	}
 
-	@Override
-	public MybatisEntityMetadata<?> getEntityInformation() {
-		return new DefaultMybatisEntityMetadata<>(getDomainClass());
+	public String getStatementId() {
+		return this.getNamespace() + '.' + this.getStatementName();
 	}
 
-	@Override
-	public boolean isModifyingQuery() {
-		return null != AnnotationUtils.findAnnotation(method, Modifying.class);
-	}
-
-	public SqlCommandType getModifyingType() {
-		if (!isModifyingQuery()) {
-			throw new IllegalStateException(String.format(
-					"No annotated @Modifying found for query method %s!", getName()));
-		}
-
-		String value = getMergedOrDefaultAnnotationValue("value", Modifying.class,
-				String.class);
-		if (StringUtils.isEmpty(value)) {
-			return null;
-		}
-		if ("insert".equalsIgnoreCase(value)) {
-			return SqlCommandType.INSERT;
-		}
-		if ("update".equalsIgnoreCase(value)) {
-			return SqlCommandType.UPDATE;
-		}
-		if ("delete".equalsIgnoreCase(value)) {
-			return SqlCommandType.DELETE;
-		}
-		return null;
+	public String getCountStatementId() {
+		return this.getNamespace() + '.' + this.getCountStatementName();
 	}
 
 	@Override
@@ -119,155 +137,156 @@ public class MybatisQueryMethod extends QueryMethod {
 	}
 
 	@Override
-	public boolean isCollectionQuery() {
-		return super.isCollectionQuery()
-				&& !NATIVE_ARRAY_TYPES.contains(method.getReturnType());
+	public MybatisEntityMetadata<?> getEntityInformation() {
+		return this.entityMetadata.get();
 	}
 
-	Class<?> getReturnType() {
+	@Override
+	public boolean isCollectionQuery() {
+		return this.isCollectionQuery.get();
+	}
 
-		return method.getReturnType();
+	@Override
+	public boolean isModifyingQuery() {
+		return null != this.modifying.getNullable();
+	}
+
+	@Override
+	public String getNamedQueryName() {
+		return this.getAnnotationValue("name", super.getNamedQueryName());
+	}
+
+	String getNamedCountQueryName() {
+		return this.getAnnotationValue("countName", this.getNamedQueryName() + ".count");
+	}
+
+	@Nullable
+	String getAnnotatedQuery() {
+		String query = this.getAnnotationValue("value", String.class);
+		return StringUtils.hasText(query) ? query : null;
+	}
+
+	@Nullable
+	String getAnnotatedCountQuery() {
+		String query = this.getAnnotationValue("countQuery", String.class);
+		return StringUtils.hasText(query) ? query : null;
+	}
+
+	String getRequiredAnnotatedQuery() throws IllegalStateException {
+		String query = this.getAnnotatedQuery();
+
+		if (query != null) {
+			return query;
+		}
+		throw new IllegalStateException(String.format("No annotated query found for query method %s!", this.getName()));
+	}
+
+	String getResultMap() {
+		ResultMap resultMap = AnnotationUtils.findAnnotation(this.method, ResultMap.class);
+		return (null != resultMap && StringUtils.hasText(resultMap.value())) ? resultMap.value() : null;
+	}
+
+	public Class<?> getResultType() {
+		ResultType resultMap = AnnotationUtils.findAnnotation(this.method, ResultType.class);
+		if (null == resultMap || resultMap.value() == Void.class) {
+			return null;
+		}
+		return resultMap.value();
+	}
+
+	public Modifying.TYPE getModifyingType() {
+		if (this.isModifyingQuery()) {
+			return this.modifying.get().value();
+		}
+		return null;
+	}
+
+	private void assertParameterNamesInAnnotatedQuery() {
+
+		String annotatedQuery = this.getAnnotatedQuery();
+
+		if (!DeclaredQuery.of(annotatedQuery).hasNamedParameter()) {
+			return;
+		}
+
+		for (Parameter parameter : this.getParameters()) {
+
+			if (!parameter.isNamedParameter()) {
+				continue;
+			}
+
+			if (StringUtils.isEmpty(annotatedQuery)
+					|| !annotatedQuery.contains(String.format(":%s", parameter.getName().get()))
+							&& !annotatedQuery.contains(String.format("#%s", parameter.getName().get()))) {
+				throw new IllegalStateException(String.format(
+						"Using named parameters for method %s but parameter '%s' not found in annotated query '%s'!",
+						this.method, parameter.getName(), annotatedQuery));
+			}
+		}
+	}
+
+	////////
+
+	Class<?> getReturnType() {
+		return this.method.getReturnType();
+	}
+
+	String getActualResultType() {
+		Class<?> type = this.getReturnType();
+		if (type == Map.class) {
+			return "map";
+		}
+		if (this.isCollectionQuery() || this.isSliceQuery() || this.isPageQuery() || this.isStreamQuery()) {
+			type = this.getReturnedObjectType();
+		}
+
+		if (type.isInterface()) {
+			type = this.getDomainClass();
+		}
+
+		return type.getName();
+	}
+
+	public boolean isProcedureQuery() {
+		return this.isProcedureQuery.get();
+	}
+
+	public String getSelectColumns() {
+		SelectColumns columns = AnnotationUtils.findAnnotation(this.method, SelectColumns.class);
+		return (null != columns && StringUtils.hasText(columns.value())) ? columns.value() : null;
 	}
 
 	private <T> T getAnnotationValue(String attribute, Class<T> type) {
-		return getMergedOrDefaultAnnotationValue(attribute, Query.class, type);
+		return this.getMergedOrDefaultAnnotationValue(attribute, Query.class, type);
 	}
 
-	private <T> T getMergedOrDefaultAnnotationValue(String attribute,
-			Class annotationType, Class<T> targetType) {
+	public String getAnnotationValue(String attribute, String defaultValue) {
 
-		Annotation annotation = AnnotatedElementUtils.findMergedAnnotation(method,
-				annotationType);
-		if (annotation == null) {
-			return targetType
-					.cast(AnnotationUtils.getDefaultValue(annotationType, attribute));
+		String v = this.getMergedOrDefaultAnnotationValue(attribute, Query.class, String.class);
+		if (StringUtils.isEmpty(v)) {
+			return defaultValue;
+		}
+		return v;
+	}
+
+	private <T> T getMergedOrDefaultAnnotationValue(String attribute, Class annotationType, Class<T> targetType) {
+
+		Annotation annotation = AnnotatedElementUtils.findMergedAnnotation(this.method, annotationType);
+		if (null == annotation) {
+			return targetType.cast(AnnotationUtils.getDefaultValue(annotationType, attribute));
 		}
 
 		return targetType.cast(AnnotationUtils.getValue(annotation, attribute));
 	}
 
-	/**
-	 * If has {@link Query} annotation, will be a Simple Query. <br/>
-	 * Strategy: if just has value, will use value as SQL will generate a statement with
-	 * namespace as repository'name and statement name as method name + UUID; if no value
-	 * set, will scan mapper with defined statement.
-	 * @return
-	 */
-	public boolean isAnnotatedQuery() {
-		return null != AnnotationUtils.findAnnotation(method, Query.class);
-	}
+	StoredProcedureAttributes getProcedureAttributes() {
 
-	public String getNamedQueryName() {
-		String annotatedName = getAnnotationValue("name", String.class);
-		return StringUtils.hasText(annotatedName) ? annotatedName
-				: super.getNamedQueryName();
-	}
-
-	@Nullable
-	public String getAnnotatedQuery() {
-
-		String query = getAnnotationValue("value", String.class);
-		return StringUtils.hasText(query) ? query : null;
-	}
-
-	public String getRequiredAnnotatedQuery() throws IllegalStateException {
-
-		String query = getAnnotatedQuery();
-
-		if (query != null) {
-			return query;
+		if (this.storedProcedureAttributes == null) {
+			this.storedProcedureAttributes = storedProcedureAttributeSource.createFrom(this.method,
+					this.getEntityInformation());
 		}
 
-		throw new IllegalStateException(String
-				.format("No annotated query found for query method %s!", getName()));
-	}
-
-	@Nullable
-	public String getCountQuery() {
-
-		String countQuery = getAnnotationValue("countQuery", String.class);
-		return StringUtils.hasText(countQuery) ? countQuery : null;
-	}
-
-	public String getNamedCountQueryName() {
-
-		String annotatedName = getAnnotationValue("countName", String.class);
-		return StringUtils.hasText(annotatedName) ? annotatedName
-				: getNamedQueryName() + ".count";
-	}
-
-	@Nullable
-	public String getQueryCountNamespace() {
-
-		String annotatedName = getAnnotationValue("countNamespace", String.class);
-		return StringUtils.hasText(annotatedName) ? annotatedName
-				: getNamespace() + ".count";
-
-	}
-
-	@Nullable
-	public String getQueryCountStatement() {
-		String annotatedName = getAnnotationValue("countStatement", String.class);
-		return StringUtils.hasText(annotatedName) ? annotatedName
-				: getStatementName() + ".count";
-	}
-
-	public RepositoryMetadata getMetadata() {
-		return metadata;
-	}
-
-	public String getNamespace() {
-
-		String namespace = getAnnotationValue("namespace", String.class);
-		return StringUtils.hasText(namespace) ? namespace : this.namespace;
-
-	}
-
-	public String getStatementName() {
-		String statement = getAnnotationValue("statement", String.class);
-		return StringUtils.hasText(statement) ? statement
-				: (isAnnotatedQuery() ? method.getName() : this.statementName);
-	}
-
-	public String getStatementId() {
-		return getNamespace() + '.' + getStatementName();
-	}
-
-	public Integer getLimitSize() {
-		return limitSize;
-	}
-
-	public void setLimitSize(Integer limitSize) {
-		this.limitSize = limitSize;
-	}
-
-	public String getCountStatementName() {
-		String statementName = getAnnotationValue("countStatement", String.class);
-		return StringUtils.hasText(statementName) ? statementName
-				: ("count_" + getStatementName());
-	}
-
-	public String getCountStatementId() {
-		return getNamespace() + "." + getCountStatementName();
-	}
-
-	public String getSelectColumns() {
-
-		SelectColumns columns = method.getAnnotation(SelectColumns.class);
-		if (null == columns || StringUtils.isEmpty(columns.value())) {
-			return null;
-		}
-
-		return columns.value();
-
-	}
-
-	public String getResultMap() {
-		ResultMap resultMap = method.getAnnotation(ResultMap.class);
-		if (null == resultMap || StringUtils.isEmpty(resultMap.value())) {
-			return null;
-		}
-		return resultMap.value();
+		return this.storedProcedureAttributes;
 	}
 
 }

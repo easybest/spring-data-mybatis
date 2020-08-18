@@ -1,3 +1,18 @@
+/*
+ * Copyright 2012-2019 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.data.mybatis.repository.query;
 
 import java.util.Arrays;
@@ -7,107 +22,236 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
+
+import org.apache.ibatis.mapping.SqlCommandType;
 import org.mybatis.spring.SqlSessionTemplate;
+
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.CollectionExecution;
-import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.ModifyingExecution;
-import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.PagedExecution;
-import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.SingleEntityExecution;
-import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.SlicedExecution;
-import org.springframework.data.mybatis.repository.query.MybatisQueryExecution.StreamExecution;
-import org.springframework.data.repository.query.ParametersParameterAccessor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mybatis.repository.support.ResidentParameterName;
+import org.springframework.data.repository.query.Parameter;
+import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ResultProcessor;
 import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.data.repository.query.parser.PartTree;
+import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
+/**
+ * Abstract base class to implement {@link RepositoryQuery}s.
+ *
+ * @author JARVIS SONG
+ * @since 1.0.0
+ */
 public abstract class AbstractMybatisQuery implements RepositoryQuery {
-
-	private final MybatisQueryMethod method;
 
 	private final SqlSessionTemplate sqlSessionTemplate;
 
-	protected AbstractMybatisQuery(MybatisQueryMethod method,
-			SqlSessionTemplate sqlSessionTemplate) {
-		this.method = method;
+	protected final MybatisQueryMethod method;
+
+	private final Lazy<MybatisQueryExecution> execution;
+
+	private final Lazy<MybatisExecutor> executor;
+
+	public AbstractMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
+
+		Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null!");
+		Assert.notNull(method, "MybatisQueryMethod must not be null!");
+
 		this.sqlSessionTemplate = sqlSessionTemplate;
+		this.method = method;
+
+		this.executor = Lazy.of(this::createExecutor);
+
+		this.execution = Lazy.of(this::createQueryExecution);
+
+	}
+
+	public abstract SqlCommandType getSqlCommandType();
+
+	public String getNamespace() {
+		return this.method.getNamespace();
+	}
+
+	public String getStatementName() {
+		return this.method.getStatementName();
+	}
+
+	public String getCountStatementName() {
+		return this.method.getCountStatementName();
+	}
+
+	public String getStatementId() {
+		return this.getNamespace() + '.' + this.getStatementName();
+	}
+
+	public String getCountStatementId() {
+		return this.getNamespace() + '.' + this.getCountStatementName();
+	}
+
+	protected MybatisExecutor createExecutor() {
+		MybatisExecutor executor = MybatisExecutor.create(this.sqlSessionTemplate, (statementId, accessor) -> {
+			Map<String, Object> params = new HashMap<>();
+			Parameters<?, ?> parameters = accessor.getParameters();
+			for (Parameter p : parameters.getBindableParameters()) {
+				params.put(p.isNamedParameter() ? p.getName().get()
+						: ResidentParameterName.POSITION_PREFIX + (p.getIndex() + 1), accessor.getValue(p));
+			}
+
+			Sort sort = null;
+			if (parameters.hasSortParameter()) {
+				sort = accessor.getSort();
+			}
+			Integer maxResultsFromTree = null;
+			if (this instanceof PartTreeMybatisQuery) {
+				PartTree tree = ((PartTreeMybatisQuery) this).getTree();
+				Sort treeSort = tree.getSort();
+				if (null != treeSort && treeSort.isSorted()) {
+					if (null != sort) {
+						sort.and(treeSort);
+					}
+					else {
+						sort = treeSort;
+					}
+				}
+
+				if (tree.isLimiting()) {
+					maxResultsFromTree = tree.getMaxResults();
+				}
+			}
+
+			if (parameters.hasPageableParameter()) {
+				Pageable pageable = accessor.getPageable();
+				if (pageable.isPaged()) {
+
+					if (null != maxResultsFromTree) {
+						if (pageable.getPageSize() > maxResultsFromTree && pageable.getOffset() > 0) {
+							params.put(ResidentParameterName.OFFSET,
+									pageable.getOffset() - (pageable.getPageSize() - maxResultsFromTree));
+							params.put(ResidentParameterName.OFFSET_END, pageable.getOffset() + maxResultsFromTree);
+						}
+						else {
+							params.put(ResidentParameterName.OFFSET, pageable.getOffset());
+							params.put(ResidentParameterName.OFFSET_END, pageable.getOffset() + pageable.getPageSize());
+						}
+						params.put(ResidentParameterName.PAGE_SIZE, maxResultsFromTree);
+					}
+					else {
+						params.put(ResidentParameterName.PAGE_SIZE, pageable.getPageSize());
+						params.put(ResidentParameterName.OFFSET, pageable.getOffset());
+						params.put(ResidentParameterName.OFFSET_END, pageable.getOffset() + pageable.getPageSize());
+					}
+
+					if (this.method.isSliceQuery()) {
+						params.put(ResidentParameterName.PAGE_SIZE,
+								(Integer) params.get(ResidentParameterName.PAGE_SIZE) + 1);
+					}
+
+				}
+				Sort pageableSort = pageable.getSort();
+				if (null != pageableSort && pageableSort.isSorted()) {
+					if (null != sort) {
+						sort.and(pageableSort);
+					}
+					else {
+						sort = pageableSort;
+					}
+				}
+
+			}
+
+			if (null != sort && sort.isSorted()) {
+				params.put(ResidentParameterName.SORT, sort);
+			}
+			return params;
+		});
+		return executor;
+	}
+
+	private MybatisQueryExecution createQueryExecution() {
+		if (this.method.isStreamQuery()) {
+			return new MybatisQueryExecution.StreamExecution();
+		}
+		if (this.method.isProcedureQuery()) {
+			return new MybatisQueryExecution.ProcedureExecution();
+		}
+		if (this.method.isCollectionQuery()) {
+			return new MybatisQueryExecution.CollectionExecution();
+		}
+		if (this.method.isSliceQuery()) {
+			return new MybatisQueryExecution.SlicedExecution();
+		}
+		if (this.method.isPageQuery()) {
+			return new MybatisQueryExecution.PagedExecution();
+		}
+		if (this.method.isModifyingQuery()) {
+			return null;
+		}
+		return new MybatisQueryExecution.SingleEntityExecution();
+	}
+
+	public MybatisExecutor getExecutor() {
+		return this.executor.get();
 	}
 
 	@Override
 	public MybatisQueryMethod getQueryMethod() {
-		return method;
+		return this.method;
 	}
 
 	@Override
 	public Object execute(Object[] parameters) {
-		return doExecute(getExecution(), parameters);
+		return this.doExecute(this.getExecution(), parameters);
 	}
-
-	protected abstract MybatisQueryExecution getExecution();
 
 	@Nullable
 	private Object doExecute(MybatisQueryExecution execution, Object[] values) {
 
-		Object result = execution.execute(this, values);
+		MybatisParametersParameterAccessor accessor = new MybatisParametersParameterAccessor(
+				this.method.getParameters(), values);
+		Object result = execution.execute(this, accessor);
 
-		ParametersParameterAccessor accessor = new ParametersParameterAccessor(
-				method.getParameters(), values);
-		ResultProcessor withDynamicProjection = method.getResultProcessor()
-				.withDynamicProjection(accessor);
-
-		return withDynamicProjection.processResult(result,
-				new TupleConverter(withDynamicProjection.getReturnedType()));
+		ResultProcessor withDynamicProjection = this.method.getResultProcessor().withDynamicProjection(accessor);
+		return withDynamicProjection.processResult(result, new TupleConverter(withDynamicProjection.getReturnedType()));
 	}
 
-	protected MybatisQueryExecution createExecution() {
-		if (method.isStreamQuery()) {
-			return new StreamExecution();
+	protected MybatisQueryExecution getExecution() {
+
+		MybatisQueryExecution execution = this.execution.getNullable();
+
+		if (null != execution) {
+			return execution;
 		}
-		else if (method.isCollectionQuery()) {
-			return new CollectionExecution();
-		}
-		else if (method.isSliceQuery()) {
-			return new SlicedExecution(method.getParameters());
-		}
-		else if (method.isPageQuery()) {
-			return new PagedExecution(method.getParameters());
-		}
-		else if (method.isModifyingQuery()) {
-			return new ModifyingExecution();
+
+		if (this.method.isModifyingQuery()) {
+			return new MybatisQueryExecution.ModifyingExecution(this.method);
 		}
 		else {
-			return new SingleEntityExecution();
+			return new MybatisQueryExecution.SingleEntityExecution();
 		}
 	}
 
 	public SqlSessionTemplate getSqlSessionTemplate() {
-		return sqlSessionTemplate;
+		return this.sqlSessionTemplate;
 	}
 
 	static class TupleConverter implements Converter<Object, Object> {
 
 		private final ReturnedType type;
 
-		/**
-		 * Creates a new {@link TupleConverter} for the given {@link ReturnedType}.
-		 * @param type must not be {@literal null}.
-		 */
-		public TupleConverter(ReturnedType type) {
+		TupleConverter(ReturnedType type) {
 
 			Assert.notNull(type, "Returned type must not be null!");
 
 			this.type = type;
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see
-		 * org.springframework.core.convert.converter.Converter#convert(java.lang.Object)
-		 */
 		@Override
 		public Object convert(Object source) {
 
@@ -122,7 +266,7 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 				Object value = tuple.get(elements.get(0));
 
-				if (type.isInstance(value) || value == null) {
+				if (this.type.isInstance(value) || value == null) {
 					return value;
 				}
 			}
@@ -130,13 +274,6 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 			return new TupleBackedMap(tuple);
 		}
 
-		/**
-		 * A {@link Map} implementation which delegates all calls to a {@link Tuple}.
-		 * Depending on the provided {@link Tuple} implementation it might return the same
-		 * value for various keys of which only one will appear in the key/entry set.
-		 *
-		 * @author Jens Schauder
-		 */
 		private static class TupleBackedMap implements Map<String, Object> {
 
 			private static final String UNMODIFIABLE_MESSAGE = "A TupleBackedMap cannot be modified.";
@@ -149,47 +286,31 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 
 			@Override
 			public int size() {
-				return tuple.getElements().size();
+				return this.tuple.getElements().size();
 			}
 
 			@Override
 			public boolean isEmpty() {
-				return tuple.getElements().isEmpty();
+				return this.tuple.getElements().isEmpty();
 			}
 
-			/**
-			 * If the key is not a {@code String} or not a key of the backing
-			 * {@link Tuple} this returns {@code false}. Otherwise this returns
-			 * {@code true} even when the value from the backing {@code Tuple} is
-			 * {@code null}.
-			 * @param key the key for which to get the value from the map.
-			 * @return wether the key is an element of the backing tuple.
-			 */
 			@Override
 			public boolean containsKey(Object key) {
 
 				try {
-					tuple.get((String) key);
+					this.tuple.get((String) key);
 					return true;
 				}
-				catch (IllegalArgumentException e) {
+				catch (IllegalArgumentException ex) {
 					return false;
 				}
 			}
 
 			@Override
 			public boolean containsValue(Object value) {
-				return Arrays.asList(tuple.toArray()).contains(value);
+				return Arrays.asList(this.tuple.toArray()).contains(value);
 			}
 
-			/**
-			 * If the key is not a {@code String} or not a key of the backing
-			 * {@link Tuple} this returns {@code null}. Otherwise the value from the
-			 * backing {@code Tuple} is returned, which also might be {@code null}.
-			 * @param key the key for which to get the value from the map.
-			 * @return the value of the backing {@link Tuple} for that key or
-			 * {@code null}.
-			 */
 			@Override
 			@Nullable
 			public Object get(Object key) {
@@ -199,9 +320,9 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 				}
 
 				try {
-					return tuple.get((String) key);
+					return this.tuple.get((String) key);
 				}
-				catch (IllegalArgumentException e) {
+				catch (IllegalArgumentException ex) {
 					return null;
 				}
 			}
@@ -229,22 +350,21 @@ public abstract class AbstractMybatisQuery implements RepositoryQuery {
 			@Override
 			public Set<String> keySet() {
 
-				return tuple.getElements().stream() //
+				return this.tuple.getElements().stream() //
 						.map(TupleElement::getAlias) //
 						.collect(Collectors.toSet());
 			}
 
 			@Override
 			public Collection<Object> values() {
-				return Arrays.asList(tuple.toArray());
+				return Arrays.asList(this.tuple.toArray());
 			}
 
 			@Override
 			public Set<Entry<String, Object>> entrySet() {
 
-				return tuple.getElements().stream() //
-						.map(e -> new HashMap.SimpleEntry<String, Object>(e.getAlias(),
-								tuple.get(e))) //
+				return this.tuple.getElements().stream() //
+						.map(e -> new HashMap.SimpleEntry<String, Object>(e.getAlias(), this.tuple.get(e))) //
 						.collect(Collectors.toSet());
 			}
 

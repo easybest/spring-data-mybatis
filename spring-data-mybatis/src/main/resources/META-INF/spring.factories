@@ -1,1 +1,2 @@
 org.springframework.data.repository.core.support.RepositoryFactorySupport=org.springframework.data.mybatis.repository.support.MybatisRepositoryFactory
+org.springframework.data.util.ProxyUtils$ProxyDetector=org.springframework.data.mybatis.util.MybatisProxyDetector

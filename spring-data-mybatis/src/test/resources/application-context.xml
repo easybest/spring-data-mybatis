@@ -1,33 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:mybatis="http://www.springframework.org/schema/data/mybatis"
-  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/data/mybatis http://www.springframework.org/schema/data/mybatis/spring-mybatis.xsd">
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:util="http://www.springframework.org/schema/util"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util https://www.springframework.org/schema/util/spring-util.xsd">
 
-  <!-- Database setup -->
-  <import resource="infrastructure.xml"/>
+	<import resource="infrastructure.xml"/>
 
-  <!--&lt;!&ndash; Configure a DAO for User class &ndash;&gt;-->
-  <!--<bean id="userDao" class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">-->
-  <!--<constructor-arg value="org.springframework.data.mybatis.repository.sample.UserRepository"/>-->
-  <!--<property name="customImplementation">-->
-  <!--<bean class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl">-->
-  <!--<constructor-arg ref="sqlSessionTemplate"/>-->
-  <!--</bean>-->
-  <!--</property>-->
-  <!--<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>-->
-  <!--<property name="mappingContext" ref="mappingContext"/>-->
-  <!--</bean>-->
+	<bean id="shopRepository"
+		  class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">
+		<constructor-arg
+				value="org.springframework.data.mybatis.repository.sample.ShopRepository"/>
+		<property name="customImplementation">
+			<bean class="org.springframework.data.mybatis.repository.sample.ShopRepositoryImpl">
+				<constructor-arg>
+					<bean class="org.mybatis.spring.SqlSessionTemplate"
+						  autowire="constructor"/>
+				</constructor-arg>
+			</bean>
+		</property>
+		<property name="mappingContext" ref="mappingContext"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="namedQueries">
+			<bean class="org.springframework.data.repository.core.support.PropertiesBasedNamedQueries">
+				<constructor-arg>
+					<util:properties
+							location="META-INF/mybatis-named-queries.properties"/>
+				</constructor-arg>
+			</bean>
+		</property>
+		<property name="evaluationContextProvider"
+				  ref="expressionEvaluationContextProvider"/>
+	</bean>
 
-  <!--<bean id="mappingContext"-->
-  <!--class="org.springframework.data.mybatis.repository.config.MybatisMappingContextFactoryBean"/>-->
+	<bean id="goodsRepository"
+		  class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">
+		<constructor-arg
+				value="org.springframework.data.mybatis.repository.sample.GoodsRepository"/>
+		<property name="mappingContext" ref="mappingContext"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="evaluationContextProvider"
+				  ref="expressionEvaluationContextProvider"/>
+	</bean>
 
-  <mybatis:auditing auditor-aware-ref="auditorAware"/>
-  <mybatis:repositories base-package="org.springframework.data.mybatis.repository.sample"/>
+	<bean id="categoryRepository"
+		  class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">
+		<constructor-arg
+				value="org.springframework.data.mybatis.repository.sample.CategoryRepository"/>
+		<property name="mappingContext" ref="mappingContext"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="evaluationContextProvider"
+				  ref="expressionEvaluationContextProvider"/>
+	</bean>
 
-  <bean id="auditorAware" class="org.springframework.data.mybatis.repository.CurrentUserAuditorAware"/>
-  <bean id="snowflake" class="org.springframework.data.mybatis.id.Snowflake">
-    <constructor-arg value="0"/>
-    <constructor-arg value="0"/>
-  </bean>
+	<bean id="customerRepository"
+		  class="org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean">
+		<constructor-arg
+				value="org.springframework.data.mybatis.repository.sample.CustomerRepository"/>
+		<property name="mappingContext" ref="mappingContext"/>
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+		<property name="evaluationContextProvider"
+				  ref="expressionEvaluationContextProvider"/>
+	</bean>
+
+	<bean id="mappingContext"
+		  class="org.springframework.data.mybatis.repository.config.MybatisMappingContextFactoryBean">
+		<constructor-arg>
+			<util:map>
+				<entry key="org.springframework.data.mybatis.repository.sample.CategoryRepository"
+					   value="org.springframework.data.mybatis.domain.sample.Category"></entry>
+				<entry key="org.springframework.data.mybatis.repository.sample.GoodsRepository"
+					   value="org.springframework.data.mybatis.domain.sample.Goods"></entry>
+				<entry key="org.springframework.data.mybatis.repository.sample.ShopRepository"
+					   value="org.springframework.data.mybatis.domain.sample.Shop"></entry>
+				<entry key="org.springframework.data.mybatis.repository.sample.CustomerRepository"
+					   value="org.springframework.data.mybatis.domain.sample.Customer"></entry>
+			</util:map>
+		</constructor-arg>
+	</bean>
+
+
+	<bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
+
+	<bean id="expressionEvaluationContextProvider"
+		  class="org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider"
+		  autowire="constructor"/>
+
+
 </beans>

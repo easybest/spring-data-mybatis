@@ -1,0 +1,15 @@
+<sql id="{{ statementName }}">
+    {{#embedded}}
+        {{#properties}}
+            AND {{column.name}} = #{ {{name}} }
+        {{/properties}}
+    {{/embedded}}
+    {{^embedded}}
+        {{#properties}}
+            {{#isIdProperty}}
+                AND {{column.name}} = #{ {{name}} }
+            {{/isIdProperty}}
+        {{/properties}}
+    {{/embedded}}
+</sql>
+

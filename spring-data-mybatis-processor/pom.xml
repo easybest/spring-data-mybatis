@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>spring-data-mybatis-parent</artifactId>
+        <groupId>io.easybest</groupId>
+        <version>${revision}</version>
+        <relativePath>../spring-data-mybatis-parent</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>spring-data-mybatis-processor</artifactId>
+
+    <name>Spring Data MyBatis Processor</name>
+    <description>Spring Data module for MyBatis repositories.</description>
+    <url>https://github.com/easybest/spring-data-mybatis</url>
+    <developers>
+        <developer>
+            <id>jarvis</id>
+            <name>Jarvis Song</name>
+            <email>iamjarvissong@gmail.com</email>
+        </developer>
+    </developers>
+    <organization>
+        <name>EasyBest</name>
+        <url>https://easybest.io</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <scm>
+        <url>https://github.com/easybest/spring-data-mybatis</url>
+        <connection>scm:git:git://github.com/easybest/spring-data-mybatis.git
+        </connection>
+        <developerConnection>
+            scm:git:ssh://git@github.com/easybest/spring-data-mybatis.git
+        </developerConnection>
+    </scm>
+    <dependencies>
+        <dependency>
+            <groupId>io.easybest</groupId>
+            <artifactId>spring-data-mybatis-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.samskivert</groupId>
+            <artifactId>jmustache</artifactId>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${source.level}</source>
+                    <target>${source.level}</target>
+                    <compilerArgument>-proc:none</compilerArgument>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>java-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>java-test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
