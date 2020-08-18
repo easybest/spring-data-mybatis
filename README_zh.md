@@ -1,5 +1,5 @@
 # Spring Data MyBatis 
-[![Build Status](https://travis-ci.org/hatunet/spring-data-mybatis.svg?branch=master)](https://travis-ci.org/hatunet/spring-data-mybatis)   [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/spring-data-mybatis)
+[![Build Status](https://travis-ci.org/easybest/spring-data-mybatis.svg?branch=master)](https://travis-ci.org/easybest/spring-data-mybatis)   [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/spring-data-mybatis)
 
 
 Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 应用程序变得更加容易。此模块处理增强基于 MyBatis 的数据访问层的支持。
@@ -44,9 +44,9 @@ Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 
 
 ## 获得帮助 ##
 
-这里有一份文档可以帮助你快速学习 Spring Data Mybatis。 [reference documentation](https://hatunet.github.io/spring-data-mybatis/)  
+这里有一份文档可以帮助你快速学习 Spring Data Mybatis。 [reference documentation](https://easybest.github.io/spring-data-mybatis/)  
 
-如果你有任何疑问或者建议，可以录一个[issue](https://github.com/hatunet/spring-data-mybatis/issues) 给我。
+如果你有任何疑问或者建议，可以录一个[issue](https://github.com/easybest/spring-data-mybatis/issues) 给我。
 
 ## 快速开始 ##
 
@@ -54,18 +54,18 @@ Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 
 
 ```xml
 <dependency>
-  <groupId>com.ifrabbit</groupId>
+  <groupId>io.easybest</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>1.0.17.RELEASE</version>
+  <version>2.1.0.RELEASE</version>
 </dependency>
 ```
 
 如果你想使用快照版本:
 ```xml
 <dependency>
-  <groupId>com.ifrabbit</groupId>
+  <groupId>io.easybest</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>1.0.18.BUILD-SNAPSHOT</version>
+  <version>2.1.0.BUILD-SNAPSHOT</version>
 </dependency>
 ```
 使用快照版本前，需要在pom.xml中配置:
@@ -233,7 +233,7 @@ class Reservation extends LongId {
 }
 ```
 
-完整的例子可以在  [https://github.com/hatunet/spring-data-mybatis-samples](https://github.com/hatunet/spring-data-mybatis-samples) 找到。
+完整的例子可以在  [https://github.com/easybest/spring-data-mybatis-samples](https://github.com/easybest/spring-data-mybatis-samples) 找到。
 
 
 ## 贡献代码给 Spring Data MyBatis ##
