@@ -6,7 +6,7 @@ Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 
 
 通过使用此模块，你可以在基于MyBatis为ORM的结构下使用Spring Data模式带来的便利性。
 
-如果你还没有接触过[Spring Data](http://projects.spring.io/spring-data/)，建议先了解下该[项目](http://projects.spring.io/spring-data/)。
+如果你还没有接触过[Spring Data](https://projects.spring.io/spring-data/)，建议先了解下该[项目](https://projects.spring.io/spring-data/)。
 
 
 ## 支持的一些特性 ##
@@ -218,7 +218,7 @@ class Reservation extends LongId {
 
 Here are some ways for you to get involved in the community:
 
-* Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](http://help.github.com/forking/). 
+* Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](https://help.github.com/forking/). 
 
 ## Help me better - Donation
 [![paypal](https://www.paypal.com/en_US/i/btn/x-click-butcc-donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W7PLNCBK5K8JS)
