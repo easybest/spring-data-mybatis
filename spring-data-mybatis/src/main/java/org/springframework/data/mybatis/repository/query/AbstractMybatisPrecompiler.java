@@ -295,7 +295,7 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 	}
 
 	protected String buildQueryByConditionRightSegment(Part.Type type, Part.IgnoreCaseType ignoreCaseType,
-			String[] properties) {
+			String[] properties, Column column) {
 		switch (type) {
 		case BETWEEN:
 			return String.format("#{%s} and #{%s}", properties[0], properties[1]);
@@ -322,7 +322,15 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 			return " = 0";
 		default:
 			if (ignoreCaseType == Part.IgnoreCaseType.ALWAYS || ignoreCaseType == Part.IgnoreCaseType.WHEN_POSSIBLE) {
+				if (null != column.getTypeHandler()) {
+					return String.format("%s(#{%s,javaType=%s,typeHandler=%s})", this.dialect.getLowercaseFunction(),
+							properties[0], column.getJavaType().getName(), column.getTypeHandler().getName());
+				}
 				return String.format("%s(#{%s})", this.dialect.getLowercaseFunction(), properties[0]);
+			}
+			if (null != column.getTypeHandler()) {
+				return String.format("#{%s,javaType=%s,typeHandler=%s}", properties[0], column.getJavaType().getName(),
+						column.getTypeHandler().getName());
 			}
 			return String.format("#{%s}", properties[0]);
 

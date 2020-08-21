@@ -34,4 +34,6 @@ public interface MybatisPersistentProperty extends PersistentProperty<MybatisPer
 
 	Column getColumn();
 
+	boolean isEnumerated();
+
 }

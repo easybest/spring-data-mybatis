@@ -6,9 +6,11 @@ drop table if exists t_customer;
 
 create table t_customer
 (
-    firstname varchar(32) not null,
-    lastname  varchar(32) not null,
-    age       integer     null,
+    firstname     varchar(32) not null,
+    lastname      varchar(32) not null,
+    age           integer     null,
+    gender        integer     null,
+    constellation varchar(32) null,
     primary key (firstname, lastname)
 );
 

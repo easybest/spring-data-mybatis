@@ -21,9 +21,25 @@
                         =
                         <choose>
                             <when test="__accessor.isIgnoreCaseForPath('{{key}}')">
-                                {{dialect.lowercaseFunction}}(#{ __entity.{{key}} })
+                                {{dialect.lowercaseFunction}}(#{
+                                __entity.{{key}}
+                                {{#value.hasJavaType}}
+                                    ,javaType={{value.javaTypeString}}
+                                {{/value.hasJavaType}}
+                                {{#value.hasTypeHandler}}
+                                    ,typeHandler={{value.typeHandlerString}}
+                                {{/value.hasTypeHandler}}
+                                })
                             </when>
-                            <otherwise>#{ __entity.{{key}} }</otherwise>
+                            <otherwise>#{ __entity.{{key}}
+                                {{#value.hasJavaType}}
+                                    ,javaType={{value.javaTypeString}}
+                                {{/value.hasJavaType}}
+                                {{#value.hasTypeHandler}}
+                                    ,typeHandler={{value.typeHandlerString}}
+                                {{/value.hasTypeHandler}}
+                                }
+                            </otherwise>
                         </choose>
                     {{/value.string}}
                     {{#value.string}}
@@ -36,9 +52,23 @@
                                 <choose>
                                     <when test="__accessor.isIgnoreCaseForPath('{{key}}')">
                                         {{dialect.lowercaseFunction}}(#{ __entity.{{key}}
+                                        {{#value.hasJavaType}}
+                                            ,javaType={{value.javaTypeString}}
+                                        {{/value.hasJavaType}}
+                                        {{#value.hasTypeHandler}}
+                                            ,typeHandler={{value.typeHandlerString}}
+                                        {{/value.hasTypeHandler}}
                                         })
                                     </when>
-                                    <otherwise>#{ __entity.{{key}} }</otherwise>
+                                    <otherwise>#{ __entity.{{key}}
+                                        {{#value.hasJavaType}}
+                                            ,javaType={{value.javaTypeString}}
+                                        {{/value.hasJavaType}}
+                                        {{#value.hasTypeHandler}}
+                                            ,typeHandler={{value.typeHandlerString}}
+                                        {{/value.hasTypeHandler}}
+                                        }
+                                    </otherwise>
                                 </choose>
                             </when>
                             <when test="__string_{{#replaceDotToUnderline}}{{key}}{{/replaceDotToUnderline}}.equals('STARTING')">

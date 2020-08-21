@@ -35,11 +35,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.mybatis.domain.sample.Customer;
+import org.springframework.data.mybatis.domain.sample.Customer.Constellation;
+import org.springframework.data.mybatis.domain.sample.Customer.Gender;
 import org.springframework.data.mybatis.domain.sample.Name;
 import org.springframework.data.mybatis.repository.sample.CustomerRepository;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * .
@@ -67,10 +71,14 @@ public class CustomerRepositoryTest {
 	@Before
 	public void setUp() {
 
-		this.first = new Customer("Oliver", "Gierke").setAge(28);
-		this.second = new Customer("Joachim", "Arrasz").setAge(35);
-		this.third = new Customer("Dave", "Matthews").setAge(43);
-		this.fourth = new Customer("kevin", "raymond").setAge(31);
+		this.first = new Customer("Oliver", "Gierke").setAge(28).setGender(Gender.MALE)
+				.setConstellation(Constellation.Aquarius);
+		this.second = new Customer("Joachim", "Arrasz").setAge(35).setGender(Gender.FEMALE)
+				.setConstellation(Constellation.Cancer);
+		this.third = new Customer("Dave", "Matthews").setAge(43).setGender(Gender.MALE)
+				.setConstellation(Constellation.Cancer);
+		this.fourth = new Customer("kevin", "raymond").setAge(31).setGender(Gender.FEMALE)
+				.setConstellation(Constellation.Libra);
 
 	}
 
@@ -370,6 +378,29 @@ public class CustomerRepositoryTest {
 		Assertions.assertThat(users.getSize()).isEqualTo(10);
 		Assertions.assertThat(users.hasNext()).isEqualTo(true);
 		Assertions.assertThat(users.getTotalElements()).isEqualTo(100L);
+	}
+
+	@Test
+	public void findByEnum() {
+		this.flushTestCustomers();
+
+		List<Customer> customers = this.repository.findByGender(Gender.FEMALE);
+		Assertions.assertThat(customers).hasSize(2).contains(this.second, this.fourth);
+
+		customers = this.repository.findByConstellation(Constellation.Cancer);
+		Assertions.assertThat(customers).hasSize(2).contains(this.second, this.third);
+	}
+
+	@Test
+	public void findAllByExampleWithEnum() {
+		this.flushTestCustomers();
+		Customer prototype = new Customer();
+		prototype.setGender(Gender.FEMALE);
+		prototype.setConstellation(Constellation.Cancer);
+
+		List<Customer> customers = this.repository.findAll(Example.of(prototype));
+		assertThat(customers).hasSize(1).contains(this.second);
+
 	}
 
 }

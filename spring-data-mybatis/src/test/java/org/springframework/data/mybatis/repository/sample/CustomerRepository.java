@@ -20,6 +20,8 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.mybatis.domain.sample.Customer;
+import org.springframework.data.mybatis.domain.sample.Customer.Constellation;
+import org.springframework.data.mybatis.domain.sample.Customer.Gender;
 import org.springframework.data.mybatis.domain.sample.Name;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.Query;
@@ -59,5 +61,9 @@ public interface CustomerRepository extends MybatisRepository<Customer, Name> {
 	Slice<Customer> findTop3CustomersBy(Pageable pageable);
 
 	Slice<Customer> findTop2CustomersBy(Pageable pageable);
+
+	List<Customer> findByGender(Gender gender);
+
+	List<Customer> findByConstellation(Constellation constellation);
 
 }
