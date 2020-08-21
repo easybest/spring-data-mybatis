@@ -84,4 +84,17 @@
 	<!--		<property name="password" value="testcase"/>-->
 	<!--	</bean>-->
 
+	<!-- DM -->
+	<!--	<jdbc:initialize-database ignore-failures="DROPS">-->
+	<!--		<jdbc:script execution="INIT" separator=";"-->
+	<!--					 location="classpath:scripts/oracle-init.sql"/>-->
+	<!--	</jdbc:initialize-database>-->
+	<!--	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">-->
+	<!--		<property name="driverClassName" value="dm.jdbc.driver.DmDriver"/>-->
+	<!--		<property name="jdbcUrl"-->
+	<!--				  value="jdbc:dm://10.55.2.20:5236"/>-->
+	<!--		<property name="username" value="SYSDBA"/>-->
+	<!--		<property name="password" value="SYSDBA"/>-->
+	<!--	</bean>-->
+
 </beans>
