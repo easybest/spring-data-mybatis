@@ -26,6 +26,25 @@ import java.lang.reflect.InvocationTargetException;
 public enum Database {
 
 	/**
+	 * DaMeng.
+	 */
+	DM {
+		@Override
+		public Class<? extends Dialect> latestDialect() {
+			return DMDialect.class;
+		}
+
+		@Override
+		public Dialect resolveDialect(DialectResolutionInfo info) {
+			final String databaseName = info.getDatabaseName();
+			if ("DM DBMS".equals(databaseName)) {
+				return latestDialectInstance(this);
+			}
+			return null;
+		}
+	},
+
+	/**
 	 * EnterpriseDB.
 	 */
 	ENTERPRISEDB {
