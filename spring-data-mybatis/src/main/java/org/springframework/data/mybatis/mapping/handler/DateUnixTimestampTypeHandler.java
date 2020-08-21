@@ -40,28 +40,34 @@ public class DateUnixTimestampTypeHandler extends BaseTypeHandler<Date> {
 
 	@Override
 	public Date getNullableResult(ResultSet rs, String columnName) throws SQLException {
-		Long time = rs.getObject(columnName, Long.class);
-		if (null == time) {
+		Object object = rs.getObject(columnName);
+		if (null == object) {
 			return null;
 		}
+
+		Long time = Long.valueOf(String.valueOf(object));
 		return new Date(time);
 	}
 
 	@Override
 	public Date getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
-		Long time = rs.getObject(columnIndex, Long.class);
-		if (null == time) {
+		Object object = rs.getObject(columnIndex);
+		if (null == object) {
 			return null;
 		}
+
+		Long time = Long.valueOf(String.valueOf(object));
 		return new Date(time);
 	}
 
 	@Override
 	public Date getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
-		Long time = cs.getObject(columnIndex, Long.class);
-		if (null == time) {
+		Object object = cs.getObject(columnIndex);
+		if (null == object) {
 			return null;
 		}
+
+		Long time = Long.valueOf(String.valueOf(object));
 		return new Date(time);
 	}
 

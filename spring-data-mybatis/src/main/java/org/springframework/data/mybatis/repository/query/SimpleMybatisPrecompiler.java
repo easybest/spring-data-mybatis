@@ -387,11 +387,12 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put("keyColumn", keyColumn);
 		scopes.put("useGeneratedKeys", useGeneratedKeys);
 		scopes.put("testNotNull", this.lambdaTestNotNull());
-		scopes.put("excludeId", excludeId);
 
 		if (useGeneratedKeys) {
 			scopes.putAll(this.buildKeyGenerator(idProperty));
 		}
+
+		scopes.put("excludeId", !"BEFORE".equals(scopes.get("order")) && excludeId);
 
 		return this.render("Insert", scopes);
 
