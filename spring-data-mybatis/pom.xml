@@ -138,12 +138,18 @@
 			<version>19.7.0.0</version>
 			<scope>test</scope>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>com.edb</groupId>-->
-<!--			<artifactId>edb-jdbc17</artifactId>-->
-<!--			<version>17</version>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
+		<!--		<dependency>-->
+		<!--			<groupId>dm.jdbc</groupId>-->
+		<!--			<artifactId>dm7-jdbc18</artifactId>-->
+		<!--			<version>7.18</version>-->
+		<!--			<scope>test</scope>-->
+		<!--		</dependency>-->
+		<!--		<dependency>-->
+		<!--			<groupId>com.edb</groupId>-->
+		<!--			<artifactId>edb-jdbc17</artifactId>-->
+		<!--			<version>17</version>-->
+		<!--			<scope>test</scope>-->
+		<!--		</dependency>-->
 	</dependencies>
 	<build>
 		<plugins>

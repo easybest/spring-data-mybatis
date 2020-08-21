@@ -9,7 +9,7 @@ create table t_customer
 (
     firstname varchar(32) not null,
     lastname  varchar(32) not null,
-    age       number(4)      null,
+    age       number(4)   null,
     primary key (firstname, lastname)
 );
 
@@ -28,7 +28,7 @@ create table t_goods
     id               number(19)   not null,
     category_id      number(19)   null,
     name             varchar(128) not null,
-    inventory        number(8)       null,
+    inventory        number(8)    null,
     brand            varchar(32)  null,
     created_by       number(19)   null,
     last_updated_by  number(19)   null,
@@ -40,8 +40,8 @@ create table t_shop
 (
     id               number(19)   not null,
     name             varchar(128) not null,
-    active           boolean      null,
-    duration         number          null,
+    active           number(1)    null,
+    duration         number       null,
     introduce        clob         null,
     email_address    varchar(128) null,
     openingTime      number(19)   null,
