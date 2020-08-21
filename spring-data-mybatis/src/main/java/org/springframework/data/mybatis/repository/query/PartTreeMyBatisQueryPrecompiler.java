@@ -237,7 +237,8 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 			}
 		}
 
-		builder.append(this.buildQueryByConditionRightSegment(type, part.shouldIgnoreCase(), properties));
+		builder.append(this.buildQueryByConditionRightSegment(type, part.shouldIgnoreCase(), properties,
+				persistentProperty.getColumn()));
 		return builder.toString();
 	}
 

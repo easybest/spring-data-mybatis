@@ -713,7 +713,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 						: pp.getColumn().getName().render(this.dialect);
 				String left = this.buildQueryByConditionLeftSegment(columnName, ignoreCaseType, pp);
 				String operator = this.buildQueryByConditionOperator(type);
-				String right = this.buildQueryByConditionRightSegment(type, ignoreCaseType, properties);
+				String right = this.buildQueryByConditionRightSegment(type, ignoreCaseType, properties, pp.getColumn());
 				return String.format("<if test=\"%s\"> AND %s %s %s</if>", cond, left, operator, right);
 			}).collect(Collectors.joining());
 		}).collect(Collectors.joining());

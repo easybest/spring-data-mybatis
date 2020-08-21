@@ -7,9 +7,11 @@ drop sequence SEQ_SPRING_DATA_MYBATIS;
 
 create table t_customer
 (
-    firstname varchar(32) not null,
-    lastname  varchar(32) not null,
-    age       number(4)   null,
+    firstname     varchar(32) not null,
+    lastname      varchar(32) not null,
+    age           number(4)   null,
+    gender        number(1)   null,
+    constellation varchar(32) null,
     primary key (firstname, lastname)
 );
 

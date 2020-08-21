@@ -19,6 +19,8 @@ import java.io.Serializable;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 
 import lombok.Data;
@@ -42,8 +44,26 @@ public class Customer implements Serializable {
 
 	private Integer age;
 
+	@Enumerated(EnumType.ORDINAL)
+	private Gender gender;
+
+	@Enumerated(EnumType.STRING)
+	private Constellation constellation;
+
 	public Customer(String firstname, String lastname) {
 		this.name = new Name(firstname, lastname);
+	}
+
+	public enum Gender {
+
+		MALE, FEMALE
+
+	}
+
+	public enum Constellation {
+
+		Aries, Taurus, Gemini, Cancer, Leo, Virgo, Libra, Scorpio, Sagittarius, Capricorn, Aquarius, Pisces
+
 	}
 
 }

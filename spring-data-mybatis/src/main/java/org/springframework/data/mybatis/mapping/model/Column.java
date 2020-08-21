@@ -19,7 +19,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeHandler;
 
 /**
  * Column model.
@@ -38,7 +37,7 @@ public class Column {
 
 	private Class<?> javaType;
 
-	private Class<? extends TypeHandler<?>> typeHandler;
+	private Class<?> typeHandler;
 
 	private boolean primaryKey;
 
@@ -59,6 +58,18 @@ public class Column {
 	public boolean isString() {
 		return this.javaType == String.class
 				|| (null != this.javaType && CharSequence.class.isAssignableFrom(this.javaType));
+	}
+
+	public boolean hasJdbcType() {
+		return null != this.jdbcType;
+	}
+
+	public boolean hasJavaType() {
+		return null != this.jdbcType;
+	}
+
+	public boolean hasTypeHandler() {
+		return null != this.typeHandler;
 	}
 
 	public String getJdbcTypeString() {

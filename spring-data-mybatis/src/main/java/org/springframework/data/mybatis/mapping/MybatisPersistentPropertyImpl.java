@@ -31,6 +31,8 @@ import javax.persistence.Embeddable;
 import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
@@ -43,6 +45,8 @@ import javax.persistence.Temporal;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
+import org.apache.ibatis.type.EnumOrdinalTypeHandler;
+import org.apache.ibatis.type.EnumTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
 import org.springframework.core.annotation.AnnotationUtils;
@@ -240,10 +244,19 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 			}
 			else {
 
-				if (actualType == Long.class && jdbcType == JdbcType.TIMESTAMP) {
+				if (this.isEnumerated()) {
+					Enumerated enumerated = this.getRequiredAnnotation(Enumerated.class);
+					if (enumerated.value() == EnumType.ORDINAL) {
+						col.setTypeHandler(EnumOrdinalTypeHandler.class);
+					}
+					else {
+						col.setTypeHandler(EnumTypeHandler.class);
+					}
+				}
+				else if (actualType == Long.class && jdbcType == JdbcType.TIMESTAMP) {
 					col.setTypeHandler(UnixTimestampDateTypeHandler.class);
 				}
-				if (actualType == Date.class && jdbcType == JdbcType.BIGINT) {
+				else if (actualType == Date.class && jdbcType == JdbcType.BIGINT) {
 					col.setTypeHandler(DateUnixTimestampTypeHandler.class);
 				}
 
@@ -255,6 +268,11 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 	@Override
 	public Column getColumn() {
 		return this.column.get();
+	}
+
+	@Override
+	public boolean isEnumerated() {
+		return this.isAnnotationPresent(Enumerated.class);
 	}
 
 	@Override
