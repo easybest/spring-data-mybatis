@@ -42,6 +42,8 @@ public class Customer implements Serializable {
 	@EmbeddedId
 	private Name name;
 
+	private String emailAddress;
+
 	private Integer age;
 
 	@Enumerated(EnumType.ORDINAL)

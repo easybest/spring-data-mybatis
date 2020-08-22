@@ -52,7 +52,7 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 	private final PartTreeMybatisQuery query;
 
-	private AtomicInteger argumentCounter = new AtomicInteger();
+	private AtomicInteger argumentCounter = new AtomicInteger(0);
 
 	PartTreeMyBatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			PartTreeMybatisQuery query) {
@@ -222,6 +222,7 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 	}
 
 	public List<OrPart> convert(PartTree tree) {
+		this.argumentCounter.set(0);
 		return tree.stream().map(orPart -> new OrPart(orPart, this.persistentEntity, this.mappingContext,
 				this.argumentCounter, this.query.getQueryMethod(), this.dialect)).collect(Collectors.toList());
 	}
@@ -326,12 +327,12 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 			}
 			this.column = persistentProperty.getColumn();
 
-			this.arguments = new String[part.getType().getNumberOfArguments()];
-			if (part.getType().getNumberOfArguments() > 0) {
+			this.arguments = new String[part.getNumberOfArguments()];
+			if (part.getNumberOfArguments() > 0) {
 				MybatisParameters parameters = method.getParameters();
-				for (int i = 0; i < part.getType().getNumberOfArguments(); i++) {
-					MybatisParameter bindableParameter = parameters
-							.getBindableParameter(argumentCounter.getAndIncrement());
+				for (int i = 0; i < part.getNumberOfArguments(); i++) {
+					int counter = argumentCounter.getAndIncrement();
+					MybatisParameter bindableParameter = parameters.getBindableParameter(counter);
 					this.arguments[i] = bindableParameter.getName().orElse("__p" + (bindableParameter.getIndex() + 1));
 				}
 			}

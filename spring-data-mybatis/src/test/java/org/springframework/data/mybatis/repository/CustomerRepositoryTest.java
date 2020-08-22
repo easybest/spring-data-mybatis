@@ -72,13 +72,13 @@ public class CustomerRepositoryTest {
 	public void setUp() {
 
 		this.first = new Customer("Oliver", "Gierke").setAge(28).setGender(Gender.MALE)
-				.setConstellation(Constellation.Aquarius);
+				.setConstellation(Constellation.Aquarius).setEmailAddress("gierke@synyx.de");
 		this.second = new Customer("Joachim", "Arrasz").setAge(35).setGender(Gender.FEMALE)
-				.setConstellation(Constellation.Cancer);
+				.setConstellation(Constellation.Cancer).setEmailAddress("arrasz@synyx.de");
 		this.third = new Customer("Dave", "Matthews").setAge(43).setGender(Gender.MALE)
-				.setConstellation(Constellation.Cancer);
+				.setConstellation(Constellation.Cancer).setEmailAddress("no@email.com");
 		this.fourth = new Customer("kevin", "raymond").setAge(31).setGender(Gender.FEMALE)
-				.setConstellation(Constellation.Libra);
+				.setConstellation(Constellation.Libra).setEmailAddress("no@email.com");
 
 	}
 
@@ -401,6 +401,54 @@ public class CustomerRepositoryTest {
 		List<Customer> customers = this.repository.findAll(Example.of(prototype));
 		assertThat(customers).hasSize(1).contains(this.second);
 
+	}
+
+	@Test
+	public void testFindByEmailAddress() throws Exception {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByEmailAddress("gierke@synyx.de")).isEqualTo(this.first);
+	}
+
+	@Test
+	public void testSimpleCustomCreatedFinder() {
+		this.flushTestCustomers();
+		Customer user = this.repository.findByEmailAddressAndNameLastname("no@email.com", "Matthews");
+		assertThat(user).isEqualTo(this.third);
+	}
+
+	@Test
+	public void testAndOrFinder() {
+		this.flushTestCustomers();
+
+		List<Customer> customers = this.repository.findByEmailAddressAndNameLastnameOrNameFirstname("no@email.com",
+				"Matthews", "Joachim");
+
+		assertThat(customers).isNotNull();
+		assertThat(customers).containsExactlyInAnyOrder(this.third, this.second);
+	}
+
+	@Test
+	public void testUsesQueryAnnotation() {
+		assertThat(this.repository.findByAnnotatedQuery("gierke@synyx.de")).isNull();
+	}
+
+	@Test
+	public void executesPagingMethodToPageCorrectly() {
+		this.flushTestCustomers();
+
+		Page<Customer> page = this.repository.findByNameLastname(PageRequest.of(0, 1), "Matthews");
+
+		assertThat(page.getNumberOfElements()).isEqualTo(1);
+		assertThat(page.getTotalElements()).isEqualTo(1);
+		assertThat(page.getTotalPages()).isEqualTo(1);
+
+		page = this.repository.findByEmailAddress(PageRequest.of(0, 1), "no@email.com");
+
+		assertThat(page.getNumberOfElements()).isEqualTo(1);
+		assertThat(page.getTotalElements()).isEqualTo(2L);
+		assertThat(page.getTotalPages()).isEqualTo(2L);
 	}
 
 }
