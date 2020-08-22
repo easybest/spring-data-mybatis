@@ -15,6 +15,7 @@
  */
 package org.springframework.data.mybatis.repository.sample;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -82,5 +83,11 @@ public interface CustomerRepository extends MybatisRepository<Customer, Name> {
 	Page<Customer> findByNameLastname(Pageable pageable, String lastname);
 
 	Page<Customer> findByEmailAddress(Pageable pageable, String emailAddress);
+
+	List<Customer> findByNameFirstname(String firstname, Pageable pageable);
+
+	Page<Customer> findByNameFirstnameIn(Pageable pageable, String... firstnames);
+
+	List<Customer> findByNameFirstnameNotIn(Collection<String> firstnames);
 
 }

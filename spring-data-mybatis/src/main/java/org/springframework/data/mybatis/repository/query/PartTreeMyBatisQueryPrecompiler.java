@@ -134,7 +134,8 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 	}
 
 	private String addCollectionStatement() {
-		return this.buildSelectStatementSegment(this.query.getStatementName(), false);
+		return this.buildSelectStatementSegment(this.query.getStatementName(),
+				this.query.getQueryMethod().getParameters().hasPageableParameter());
 	}
 
 	private String buildCountStatementSegment(String statementName) {

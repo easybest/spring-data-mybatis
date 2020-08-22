@@ -404,7 +404,7 @@ public class CustomerRepositoryTest {
 	}
 
 	@Test
-	public void testFindByEmailAddress() throws Exception {
+	public void testFindByEmailAddress() {
 
 		this.flushTestCustomers();
 
@@ -449,6 +449,33 @@ public class CustomerRepositoryTest {
 		assertThat(page.getNumberOfElements()).isEqualTo(1);
 		assertThat(page.getTotalElements()).isEqualTo(2L);
 		assertThat(page.getTotalPages()).isEqualTo(2L);
+	}
+
+	@Test
+	public void executesPagingMethodToListCorrectly() {
+		this.flushTestCustomers();
+		List<Customer> list = this.repository.findByNameFirstname("Dave", PageRequest.of(0, 1));
+		assertThat(list).containsExactly(this.third);
+	}
+
+	@Test
+	public void executesInKeywordForPageCorrectly() {
+		this.flushTestCustomers();
+
+		Page<Customer> page = this.repository.findByNameFirstnameIn(PageRequest.of(0, 1), "Dave", "Joachim");
+
+		assertThat(page.getNumberOfElements()).isEqualTo(1);
+		assertThat(page.getTotalElements()).isEqualTo(2L);
+		assertThat(page.getTotalPages()).isEqualTo(2);
+	}
+
+	@Test
+	public void executesNotInQueryCorrectly() {
+		this.flushTestCustomers();
+
+		List<Customer> result = this.repository.findByNameFirstnameNotIn(Arrays.asList("Dave", "Joachim"));
+
+		assertThat(result).containsExactly(this.first, this.fourth);
 	}
 
 }
