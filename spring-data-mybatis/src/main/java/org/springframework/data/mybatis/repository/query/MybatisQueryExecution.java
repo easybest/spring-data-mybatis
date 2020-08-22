@@ -63,7 +63,7 @@ public abstract class MybatisQueryExecution {
 		Object result;
 
 		try {
-			result = doExecute(query, accessor);
+			result = this.doExecute(query, accessor);
 		}
 		catch (NoResultException ex) {
 			return null;
@@ -238,7 +238,7 @@ public abstract class MybatisQueryExecution {
 			else {
 				content = query.getExecutor().getResultList(query.getStatementId(), accessor);
 			}
-			return PageableExecutionUtils.getPage(content, pageable, () -> count(query, accessor));
+			return PageableExecutionUtils.getPage(content, pageable, () -> this.count(query, accessor));
 		}
 
 		private long count(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
