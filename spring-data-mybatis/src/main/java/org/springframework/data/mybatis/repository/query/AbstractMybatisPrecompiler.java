@@ -95,7 +95,11 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(
 				new DatabaseMetaDataDialectResolutionInfoAdapter(configuration.getEnvironment().getDataSource()));
 
-		this.mustache = Mustache.compiler().escapeHTML(false).withCollector(new DefaultCollector());
+		this.mustache = Mustache.compiler().withLoader(name -> {
+			String path = "org/springframework/data/mybatis/repository/query/template/" + name + ".mustache";
+			InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(path);
+			return new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+		}).escapeHTML(false).withCollector(new DefaultCollector());
 	}
 
 	protected String render(String name, Object context) {

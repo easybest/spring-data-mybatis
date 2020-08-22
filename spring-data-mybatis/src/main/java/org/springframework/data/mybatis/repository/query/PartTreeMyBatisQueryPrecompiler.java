@@ -15,20 +15,31 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.persistence.EmbeddedId;
 
+import com.samskivert.mustache.Mustache.Lambda;
+import lombok.Getter;
 import org.apache.ibatis.session.Configuration;
 
-import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
+import org.springframework.data.mybatis.dialect.pagination.SQLServer2005LimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.SQLServer2012LimitHandler;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+import org.springframework.data.mybatis.mapping.model.Column;
+import org.springframework.data.mybatis.repository.query.MybatisParameters.MybatisParameter;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 import org.springframework.data.repository.query.parser.Part;
+import org.springframework.data.repository.query.parser.Part.IgnoreCaseType;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.util.StringUtils;
 
@@ -41,7 +52,7 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 	private final PartTreeMybatisQuery query;
 
-	private int count = 0;
+	private AtomicInteger argumentCounter = new AtomicInteger();
 
 	PartTreeMyBatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			PartTreeMybatisQuery query) {
@@ -80,73 +91,79 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 		}
 
 		if (method.isQueryForEntity()) {
-			return this.buildSelectStatement(this.query.getStatementName(), false);
+			return this.buildSelectStatementSegment(this.query.getStatementName(), false);
 		}
 
 		return null;
 	}
 
+	private String addDeleteStatement(PartTree tree, MybatisQueryMethod method) {
+
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put("statementName", this.query.getStatementName());
+		scopes.put("table", this.getTableName());
+		scopes.put("tree", this.convert(tree));
+
+		if (method.isCollectionQuery()) {
+			// need to return the deleted entities collection
+			return this.render("PartTreeDelete", scopes) + this.buildSelectStatementSegment(
+					ResidentStatementName.QUERY_PREFIX + this.query.getStatementName(), false);
+		}
+
+		return this.render("PartTreeDelete", scopes);
+
+	}
+
+	private String addCountStatement() {
+		return this.buildCountStatementSegment(this.query.getStatementName());
+	}
+
+	private String addExistsStatement() {
+		return this.buildCountStatementSegment(this.query.getStatementName());
+	}
+
 	private String addPageStatement(boolean includeCount) {
-		String sql = this.buildSelectStatement(this.query.getStatementName(), true);
-		sql += this.buildSelectStatement(ResidentStatementName.UNPAGED_PREFIX + this.query.getStatementName(), false);
+		String sql = this.buildSelectStatementSegment(this.query.getStatementName(), true);
+		sql += this.buildSelectStatementSegment(ResidentStatementName.UNPAGED_PREFIX + this.query.getStatementName(),
+				false);
 		if (includeCount) {
-			String count = this.buildCountStatement(this.query.getCountStatementName());
+			String count = this.buildCountStatementSegment(this.query.getCountStatementName());
 			return sql + count;
 		}
 		return sql;
 	}
 
-	private String addExistsStatement() {
-		return this.buildCountStatement(this.query.getStatementName());
-	}
-
-	private String addDeleteStatement(PartTree tree, MybatisQueryMethod method) {
-
-		String where = this.buildTreeOrConditionSegment(tree);
-		String sql = String.format("<delete id=\"%s\">delete from %s %s</delete>", //
-				this.query.getStatementName(), this.getTableName(),
-				StringUtils.hasText(where) ? (" WHERE " + where) : "");
-		if (method.isCollectionQuery()) {
-			String query = this.buildSelectStatement(ResidentStatementName.QUERY_PREFIX + this.query.getStatementName(),
-					false);
-			return query + sql;
-		}
-		return sql;
-	}
-
-	private String addCountStatement() {
-		return this.buildCountStatement(this.query.getStatementName());
-	}
-
 	private String addCollectionStatement() {
-
-		return this.buildSelectStatement(this.query.getStatementName(), false);
+		return this.buildSelectStatementSegment(this.query.getStatementName(), false);
 	}
 
-	private String buildCountStatement(String statementName) {
-		this.count = 0;
+	private String buildCountStatementSegment(String statementName) {
 		PartTree tree = this.query.getTree();
-		MybatisQueryMethod method = this.query.getQueryMethod();
-
-		String where = this.buildTreeOrConditionSegment(tree);
-		String sql = String.format("SELECT %s FROM %s %s", tree.isLimiting() ? "1" : "COUNT(*)", this.getTableName(),
-				StringUtils.hasText(where) ? (" WHERE " + where) : "");
-
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put("statementName", statementName);
+		scopes.put("table", this.getTableName());
+		scopes.put("tree", this.convert(tree));
+		scopes.put("columns", tree.isLimiting() ? "1" : "COUNT(*)");
+		scopes.put("limiting", tree.isLimiting());
 		if (tree.isLimiting()) {
-			RowSelection rowSelection = new RowSelection(0, tree.getMaxResults());
-			// rowSelection.setMaxRows(tree.getMaxResults());
-
-			sql = String.format("SELECT COUNT(*) FROM (%s) __a",
-					this.dialect.getLimitHandler().processSql(sql, rowSelection));
+			RowSelection selection = new RowSelection(0, tree.getMaxResults());
+			scopes.put("limitHandler", (Lambda) (frag, out) -> {
+				out.write(this.dialect.getLimitHandler().processSql(frag.execute(), selection));
+			});
+			scopes.put("SQLServer2005", this.dialect.getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
+			scopes.put("SQLServer2012", this.dialect.getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
 		}
 
-		return String.format("<select id=\"%s\" resultType=\"long\">%s</select>", statementName, sql);
+		return this.render("PartTreeCount", scopes);
 	}
 
-	private String buildSelectStatement(String statementName, boolean pageable) {
-		this.count = 0;
+	private String buildSelectStatementSegment(String statementName, boolean pageable) {
 		PartTree tree = this.query.getTree();
 		MybatisQueryMethod method = this.query.getQueryMethod();
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put("statementName", statementName);
+		scopes.put("table", this.getTableName());
+		scopes.put("tree", this.convert(tree));
 
 		String columns = "*";
 		if (StringUtils.hasText(method.getSelectColumns())) {
@@ -155,96 +172,263 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 					sc -> this.persistentEntity.getRequiredPersistentProperty(sc).getColumn().getName().render(dialect))
 					.collect(Collectors.joining(","));
 		}
-
-		String where = this.buildTreeOrConditionSegment(tree);
-		String sort = "";
+		scopes.put("columns", columns);
 		if (null != tree.getSort() || method.getParameters().hasSortParameter()) {
-			sort = this.buildStandardOrderBySegment();
+			scopes.put("sortable", true);
 		}
-		String sql = String.format("SELECT %s %s FROM %s %s %s", tree.isDistinct() ? "DISTINCT" : "", columns,
-				this.getTableName(), StringUtils.hasText(where) ? (" WHERE " + where) : "", sort);
-
-		RowSelection rowSelection = null;
-		if (tree.isLimiting()) {
-			if (!pageable) {
-				rowSelection = new RowSelection(0, tree.getMaxResults());
-				// rowSelection.setMaxRows(tree.getMaxResults());
-			}
-
-			pageable = true;
+		if (tree.isDistinct()) {
+			scopes.put("distinct", true);
 		}
-
-		if (pageable) {
-			if (null == rowSelection) {
-				rowSelection = new RowSelection(true);
-			}
-			sql = this.dialect.getLimitHandler().processSql(sql, rowSelection);
-		}
-		String result = String.format("resultMap=\"%s\"", ResidentStatementName.RESULT_MAP);
 		if (StringUtils.hasText(method.getResultMap())) {
-			result = String.format("resultMap=\"%s\"", method.getResultMap());
+			scopes.put("isResultMap", true);
+			scopes.put("result", method.getResultMap());
 		}
 		else if (null != method.getResultType()) {
+			scopes.put("isResultMap", false);
 			if (method.getResultType() == Void.class) {
-				result = String.format("resultType=\"%\"", method.getActualResultType());
+				scopes.put("result", method.getActualResultType());
 			}
 			else {
-				result = String.format("resultType=\"%\"", method.getResultType().getName());
+				scopes.put("result", method.getResultType().getName());
 			}
 		}
-
-		return String.format("<select id=\"%s\" %s>%s</select>", statementName, result, sql);
-	}
-
-	private String buildTreeOrConditionSegment(PartTree tree) {
-		return tree.stream().map(node -> String.format("(%s)", this.buildTreeAndConditionSegment(node)))
-				.collect(Collectors.joining(" OR "));
-	}
-
-	private String buildTreeAndConditionSegment(PartTree.OrPart parts) {
-		return parts.stream().map(part -> this.buildTreePredicateSegment(part)).collect(Collectors.joining(" AND "));
-	}
-
-	private String buildTreePredicateSegment(Part part) {
-		StringBuilder builder = new StringBuilder();
-
-		PropertyPath property = part.getProperty();
-		Part.Type type = part.getType();
-
-		MybatisPersistentProperty persistentProperty = this.persistentEntity
-				.getRequiredPersistentProperty(property.getSegment());
-
-		if (persistentProperty.isAnnotationPresent(EmbeddedId.class) || persistentProperty.isEmbeddable()) {
-			MybatisPersistentEntity<?> leafEntity = this.mappingContext
-					.getRequiredPersistentEntity(property.getLeafProperty().getOwningType());
-			persistentProperty = leafEntity.getPersistentProperty(part.getProperty().getLeafProperty().getSegment());
+		else {
+			scopes.put("isResultMap", true);
+			scopes.put("result", ResidentStatementName.RESULT_MAP);
 		}
 
-		builder.append(
-				this.buildQueryByConditionLeftSegment(persistentProperty.getColumn().getName().render(this.dialect),
-						part.shouldIgnoreCase(), persistentProperty));
-		builder.append(this.buildQueryByConditionOperator(type));
-
-		String[] properties = new String[type.getNumberOfArguments()];
-		if (type.getNumberOfArguments() > 0) {
-			MybatisQueryMethod method = this.query.getQueryMethod();
-			MybatisParameters parameters = method.getParameters();
-
-			for (int i = 0; i < type.getNumberOfArguments(); i++) {
-				MybatisParameters.MybatisParameter parameter = parameters.getBindableParameter(this.count++);
-				properties[i] = parameter.isNamedParameter() ? parameter.getName().get()
-						: "__p" + (parameter.getIndex() + 1);
+		RowSelection selection = null;
+		if (tree.isLimiting()) {
+			if (!pageable) {
+				selection = new RowSelection(0, tree.getMaxResults());
 			}
+			pageable = true;
+		}
+		if (pageable) {
+			if (null == selection) {
+				selection = new RowSelection(true);
+			}
+
+			RowSelection rowSelection = selection;
+			scopes.put("limitHandler", (Lambda) (frag, out) -> {
+				out.write(this.dialect.getLimitHandler().processSql(frag.execute(), rowSelection));
+			});
+			scopes.put("SQLServer2005", this.dialect.getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
+			scopes.put("SQLServer2012", this.dialect.getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
 		}
 
-		builder.append(this.buildQueryByConditionRightSegment(type, part.shouldIgnoreCase(), properties,
-				persistentProperty.getColumn()));
-		return builder.toString();
+		scopes.put("pageable", pageable);
+		return render("PartTreeSelect", scopes);
+	}
+
+	public List<OrPart> convert(PartTree tree) {
+		return tree.stream().map(orPart -> new OrPart(orPart, this.persistentEntity, this.mappingContext,
+				this.argumentCounter, this.query.getQueryMethod(), this.dialect)).collect(Collectors.toList());
 	}
 
 	@Override
 	protected String getResourceSuffix() {
 		return "_tree_" + this.query.getStatementName() + super.getResourceSuffix();
+	}
+
+	@Getter
+	public static class OrPart {
+
+		private List<AndPart> parts;
+
+		OrPart(PartTree.OrPart or, MybatisPersistentEntity<?> persistentEntity, MybatisMappingContext mappingContext,
+				AtomicInteger argumentCounter, MybatisQueryMethod method, Dialect dialect) {
+			this.parts = or.stream()
+					.map(part -> new AndPart(part, persistentEntity, mappingContext, argumentCounter, method, dialect))
+					.collect(Collectors.toList());
+		}
+
+	}
+
+	@Getter
+	public static class AndPart {
+
+		private final Column column;
+
+		private final String[] arguments;
+
+		private boolean ignoreCase;
+
+		private String lowercaseFunction;
+
+		private boolean opBetween;
+
+		private boolean opNotNull;
+
+		private boolean opNull;
+
+		private boolean opRlike;
+
+		private boolean opLlike;
+
+		private boolean opLike;
+
+		private boolean opIn;
+
+		private boolean opNotIn;
+
+		private boolean opTrue;
+
+		private boolean opFalse;
+
+		private boolean opDefault;
+
+		private boolean opLessThan;
+
+		private boolean opLessThanEqual;
+
+		private boolean opGreaterThan;
+
+		private boolean opGreaterThanEqual;
+
+		private boolean opBefore;
+
+		private boolean opAfter;
+
+		private boolean opNotLike;
+
+		private boolean opIsEmpty;
+
+		private boolean opIsNotEmpty;
+
+		private boolean opNear;
+
+		private boolean opWithin;
+
+		private boolean opRegex;
+
+		private boolean opExists;
+
+		private boolean opNegatingSimpleProperty;
+
+		private boolean opSimpleProperty;
+
+		AndPart(Part part, MybatisPersistentEntity<?> persistentEntity, MybatisMappingContext mappingContext,
+				AtomicInteger argumentCounter, MybatisQueryMethod method, Dialect dialect) {
+			MybatisPersistentProperty persistentProperty = persistentEntity
+					.getRequiredPersistentProperty(part.getProperty().getSegment());
+			if (persistentProperty.isAnnotationPresent(EmbeddedId.class) || persistentProperty.isEmbeddable()) {
+				MybatisPersistentEntity<?> leafEntity = mappingContext
+						.getRequiredPersistentEntity(part.getProperty().getLeafProperty().getOwningType());
+				persistentProperty = leafEntity
+						.getPersistentProperty(part.getProperty().getLeafProperty().getSegment());
+			}
+			if (part.shouldIgnoreCase() == IgnoreCaseType.ALWAYS
+					|| (part.shouldIgnoreCase() == IgnoreCaseType.WHEN_POSSIBLE && null != persistentProperty
+							&& CharSequence.class.isAssignableFrom(persistentProperty.getType()))) {
+				this.ignoreCase = true;
+				this.lowercaseFunction = dialect.getLowercaseFunction();
+			}
+			this.column = persistentProperty.getColumn();
+
+			this.arguments = new String[part.getType().getNumberOfArguments()];
+			if (part.getType().getNumberOfArguments() > 0) {
+				MybatisParameters parameters = method.getParameters();
+				for (int i = 0; i < part.getType().getNumberOfArguments(); i++) {
+					MybatisParameter bindableParameter = parameters
+							.getBindableParameter(argumentCounter.getAndIncrement());
+					this.arguments[i] = bindableParameter.getName().orElse("__p" + (bindableParameter.getIndex() + 1));
+				}
+			}
+
+			switch (part.getType()) {
+			case BETWEEN:
+				this.opBetween = true;
+				break;
+			case IS_NOT_NULL:
+				this.opNotNull = true;
+				break;
+			case IS_NULL:
+				this.opNull = true;
+				break;
+			case STARTING_WITH:
+				this.opRlike = true;
+				break;
+			case ENDING_WITH:
+				this.opLlike = true;
+				break;
+			case LESS_THAN:
+				this.opDefault = true;
+				this.opLessThan = true;
+				break;
+			case LESS_THAN_EQUAL:
+				this.opDefault = true;
+				this.opLessThanEqual = true;
+				break;
+			case GREATER_THAN:
+				this.opDefault = true;
+				this.opGreaterThan = true;
+				break;
+			case GREATER_THAN_EQUAL:
+				this.opDefault = true;
+				this.opGreaterThanEqual = true;
+				break;
+			case BEFORE:
+				this.opDefault = true;
+				this.opBefore = true;
+				break;
+			case AFTER:
+				this.opDefault = true;
+				this.opAfter = true;
+				break;
+			case NOT_LIKE:
+			case NOT_CONTAINING:
+				this.opLike = true;
+				this.opNotLike = true;
+				break;
+			case CONTAINING:
+			case LIKE:
+				this.opLike = true;
+				break;
+			case NOT_IN:
+				this.opNotIn = true;
+				break;
+			case IN:
+				this.opIn = true;
+				break;
+			case TRUE:
+				this.opTrue = true;
+				break;
+			case FALSE:
+				this.opFalse = true;
+				break;
+			case IS_NOT_EMPTY:
+				this.opIsNotEmpty = true;
+				break;
+			case IS_EMPTY:
+				this.opIsEmpty = true;
+				break;
+			case NEAR:
+				this.opNear = true;
+				break;
+			case WITHIN:
+				this.opWithin = true;
+				break;
+			case REGEX:
+				this.opRegex = true;
+				break;
+			case EXISTS:
+				this.opExists = true;
+				break;
+			case NEGATING_SIMPLE_PROPERTY:
+				this.opDefault = true;
+				this.opNegatingSimpleProperty = true;
+				break;
+			case SIMPLE_PROPERTY:
+				this.opSimpleProperty = true;
+				this.opDefault = true;
+				break;
+			default:
+				this.opDefault = true;
+				break;
+			}
+		}
+
 	}
 
 }

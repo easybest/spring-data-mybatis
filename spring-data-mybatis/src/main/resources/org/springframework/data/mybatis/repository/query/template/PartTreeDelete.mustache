@@ -1,0 +1,6 @@
+<delete id="{{statementName}}">
+    DELETE FROM {{table}}
+    <where>
+        {{>PartTreeCondition}}
+    </where>
+</delete>

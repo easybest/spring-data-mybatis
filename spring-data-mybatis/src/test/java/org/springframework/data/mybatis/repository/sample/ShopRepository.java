@@ -41,4 +41,6 @@ public interface ShopRepository extends MybatisRepository<Shop, Long>, ShopRepos
 
 	List<Shop> findByActiveFalse();
 
+	void removeByNameAndActiveOrEmailAddressNotLike(String name, Boolean active, String email);
+
 }

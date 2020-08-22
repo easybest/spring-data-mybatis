@@ -1,5 +1,7 @@
-<select id="{{statementName}}" resultMap="{{resultMap}}">
-    {{#pageable}}
+<select id="{{statementName}}" resultType="long">
+    {{#limiting}}
+        SELECT COUNT(*) FROM (
+
         {{#SQLServer2005}}
             WITH query AS (SELECT inner_query.*, ROW_NUMBER() OVER (
             <if test="__sort != null">
@@ -8,8 +10,7 @@
             <if test="__sort == null">ORDER BY CURRENT_TIMESTAMP</if>
             ) AS __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
             <where>
-                <include refid="__where_clause_by_ids"/>
-                {{conditionQuery}}
+                {{>PartTreeCondition}}
             </where>
             ) inner_query ) SELECT * FROM query WHERE __mybatis_row_nr__ &gt; #{__offset}
             AND __mybatis_row_nr__ &lt;= #{__offsetEnd}
@@ -18,18 +19,17 @@
             <if test="__sort != null">
                 SELECT * FROM {{table}}
                 <where>
-                    <include refid="__where_clause_by_ids"/>
-                    {{conditionQuery}}
+                    {{>PartTreeCondition}}
                 </where>
                 <include refid="__standard_sort"/>
                 OFFSET #{__offset} ROWS FETCH NEXT #{__pageSize} ROWS ONLY
             </if>
             <if test="__sort == null">
-                WITH query AS (SELECT inner_query.*, ROW_NUMBER() OVER (ORDER BY
-                CURRENT_TIMESTAMP ) AS __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
+                WITH query AS (
+                SELECT inner_query.*, ROW_NUMBER() OVER (ORDER BY CURRENT_TIMESTAMP ) AS
+                __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
                 <where>
-                    <include refid="__where_clause_by_ids"/>
-                    {{conditionQuery}}
+                    {{>PartTreeCondition}}
                 </where>
                 ) inner_query ) SELECT * FROM query WHERE __mybatis_row_nr__ &gt;
                 #{__offset} AND __mybatis_row_nr__ &lt;= #{__offsetEnd}
@@ -37,21 +37,14 @@
         {{/SQLServer2012}}
         {{^SQLServer2005}}{{^SQLServer2012}}
             {{#limitHandler}}
-                SELECT * FROM {{table}}
-                <where>
-                    <include refid="__where_clause_by_ids"/>
-                    {{conditionQuery}}
-                </where>
-                <include refid="__standard_sort"/>
+                SELECT {{columns}} FROM {{table}}
+                <where>{{>PartTreeCondition}}</where>
             {{/limitHandler}}
         {{/SQLServer2012}}{{/SQLServer2005}}
-    {{/pageable}}
-    {{^pageable}}
-        SELECT * FROM {{table}}
-        <where>
-            <include refid="__where_clause_by_ids"/>
-            {{conditionQuery}}
-        </where>
-        <include refid="__standard_sort"/>
-    {{/pageable}}
+        ) __a
+    {{/limiting}}
+    {{^limiting}}
+        SELECT {{columns}} FROM {{table}}
+        <where>{{>PartTreeCondition}}</where>
+    {{/limiting}}
 </select>
