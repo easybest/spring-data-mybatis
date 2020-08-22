@@ -166,9 +166,9 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Transactional
 	public int remove(T entity) {
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
-		if (this.entityInformation.isNew(entity)) {
-			return 0;
-		}
+		// if (this.entityInformation.isNew(entity)) {
+		// return 0;
+		// }
 		return this.removeById(this.entityInformation.getId(entity));
 	}
 
@@ -345,6 +345,9 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Transactional
 	public <S extends T> S insert(S entity) {
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
+
+		this.entityInformation.initVersion(entity);
+
 		this.insert(ResidentStatementName.INSERT, entity);
 		return entity;
 	}
@@ -353,6 +356,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Transactional
 	public <S extends T> S insertSelective(S entity) {
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
+		this.entityInformation.initVersion(entity);
 		this.insert(ResidentStatementName.INSERT_SELECTIVE, entity);
 		return entity;
 	}

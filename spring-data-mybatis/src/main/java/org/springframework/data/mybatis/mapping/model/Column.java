@@ -41,6 +41,8 @@ public class Column {
 
 	private boolean primaryKey;
 
+	private boolean version;
+
 	public Column(String name) {
 		this.name = Identifier.toIdentifier(name);
 	}

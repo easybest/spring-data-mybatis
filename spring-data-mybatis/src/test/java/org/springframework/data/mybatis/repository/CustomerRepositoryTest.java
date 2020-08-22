@@ -147,7 +147,7 @@ public class CustomerRepositoryTest {
 	}
 
 	@Test
-	public void returnsAllSortedCorrectly() throws Exception {
+	public void returnsAllSortedCorrectly() {
 
 		this.flushTestCustomers();
 		List<Customer> all = this.repository.findAll(Sort.by(Direction.ASC, "name.lastname"));
@@ -155,7 +155,7 @@ public class CustomerRepositoryTest {
 	}
 
 	@Test
-	public void returnsAllIgnoreCaseSortedCorrectly() throws Exception {
+	public void returnsAllIgnoreCaseSortedCorrectly() {
 
 		this.flushTestCustomers();
 

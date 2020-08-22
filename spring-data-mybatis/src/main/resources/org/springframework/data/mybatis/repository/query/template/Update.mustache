@@ -3,12 +3,18 @@
     <set>
         {{#properties}}
             {{^value.primaryKey}}
-                {{#selective}}
-                <if test="{{#testNotNull}} __entity.{{key}}{{/testNotNull}}">{{/selective}}
-                {{value.name}} = #{ __entity.{{key}}{{#value.jdbcType}}
-                ,jdbcType={{value.jdbcType}}{{/value.jdbcType}}{{#value.typeHandler}}
-                ,typeHandler={{value.typeHandler.name}}{{/value.typeHandler}} },
-                {{#selective}}</if>{{/selective}}
+                {{^value.version}}
+                    {{#selective}}
+                    <if test="{{#testNotNull}} __entity.{{key}}{{/testNotNull}}">
+                    {{/selective}}
+                    {{value.name}} = #{ __entity.{{key}}{{#value.jdbcType}}
+                    ,jdbcType={{value.jdbcType}}{{/value.jdbcType}}{{#value.typeHandler}}
+                    ,typeHandler={{value.typeHandler.name}}{{/value.typeHandler}} },
+                    {{#selective}}</if>{{/selective}}
+                {{/value.version}}
+                {{#value.version}}
+                    {{value.name}} = {{value.name}} + 1,
+                {{/value.version}}
             {{/value.primaryKey}}
         {{/properties}}
     </set>
@@ -19,5 +25,13 @@
         {{^byId}}
             <include refid="__where_clause_by_entity"/>
         {{/byId}}
+        {{#properties}}
+            {{#value.version}}
+                AND
+                {{value.name}} = #{ __entity.{{key}}{{#value.jdbcType}}
+                ,jdbcType={{value.jdbcType}}{{/value.jdbcType}}{{#value.typeHandler}}
+                ,typeHandler={{value.typeHandler.name}}{{/value.typeHandler}} }
+            {{/value.version}}
+        {{/properties}}
     </where>
 </update>

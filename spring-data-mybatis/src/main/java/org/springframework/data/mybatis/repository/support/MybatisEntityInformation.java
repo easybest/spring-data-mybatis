@@ -35,4 +35,6 @@ public interface MybatisEntityInformation<T, ID> extends EntityInformation<T, ID
 	 */
 	boolean hasCompositeId();
 
+	void initVersion(T entity);
+
 }

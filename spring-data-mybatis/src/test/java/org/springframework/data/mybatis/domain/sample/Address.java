@@ -19,11 +19,13 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 @Embeddable
 @Data
 @Accessors(chain = true)
+@NoArgsConstructor
 public class Address {
 
 	private String country;
@@ -34,9 +36,6 @@ public class Address {
 
 	@Column(name = "street_number")
 	private String streetNo;
-
-	public Address() {
-	}
 
 	public Address(String country, String city, String streetName, String streetNo) {
 		this.country = country;
