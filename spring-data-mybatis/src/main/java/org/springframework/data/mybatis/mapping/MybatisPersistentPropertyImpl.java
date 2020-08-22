@@ -230,13 +230,15 @@ class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProperty<My
 				}
 			}
 			Column col = new Column(columnName, jdbcType);
+			if (this.isVersionProperty()) {
+				col.setVersion(true);
+			}
 			col.setJavaType(actualType);
 			col.setPrimaryKey(this.isIdProperty.get());
 			TypeHandler typeHandler = this.findAnnotation(TypeHandler.class);
 			if (null != typeHandler && StringUtils.hasText(typeHandler.value())) {
 				try {
-					col.setTypeHandler((Class<? extends org.apache.ibatis.type.TypeHandler<?>>) ClassUtils
-							.forName(typeHandler.value(), this.getClass().getClassLoader()));
+					col.setTypeHandler(ClassUtils.forName(typeHandler.value(), this.getClass().getClassLoader()));
 				}
 				catch (Exception ex) {
 					throw new MappingException(ex.getMessage(), ex);

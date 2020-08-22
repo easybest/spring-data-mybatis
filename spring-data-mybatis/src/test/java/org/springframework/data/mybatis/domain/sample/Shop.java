@@ -25,6 +25,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -47,6 +48,9 @@ import org.springframework.data.mybatis.domain.Audit;
 @Accessors(chain = true)
 @NoArgsConstructor
 public class Shop extends Audit<Long, Long> {
+
+	@Version
+	private Integer version;
 
 	private String name;
 

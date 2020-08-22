@@ -17,6 +17,7 @@ package org.springframework.data.mybatis.repository.support;
 
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
+import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.util.Assert;
 
 /**
@@ -44,6 +45,22 @@ public class MybatisMappingContextEntityInformation<T, ID> extends MybatisEntity
 	@Override
 	public boolean hasCompositeId() {
 		return this.entity.hasCompositeId();
+	}
+
+	@Override
+	public void initVersion(T entity) {
+		if (this.entity.hasVersionProperty()) {
+			MybatisPersistentProperty property = this.entity.getRequiredVersionProperty();
+			Object val = null;
+			if (property.getType() == Long.class) {
+				val = 0L;
+			}
+			else if (property.getType() == Integer.class) {
+				val = 0;
+			}
+
+			this.entity.getPropertyAccessor(entity).setProperty(property, val);
+		}
 	}
 
 	@Override

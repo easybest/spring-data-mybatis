@@ -12,6 +12,7 @@ create table t_customer
     gender        integer      null,
     constellation varchar(32)  null,
     email_address varchar(128) null,
+    version       bigint       null,
     primary key (firstname, lastname)
 );
 
@@ -56,6 +57,7 @@ create table t_shop
     last_updated_by  bigint          null,
     creation_date    datetime        null,
     last_update_date datetime        null,
+    version          bigint          null,
     primary key (id)
 );
 create table t_shop_goods

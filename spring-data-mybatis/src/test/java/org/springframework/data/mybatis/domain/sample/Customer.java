@@ -22,6 +22,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -51,6 +52,9 @@ public class Customer implements Serializable {
 
 	@Enumerated(EnumType.STRING)
 	private Constellation constellation;
+
+	@Version
+	private Long version;
 
 	public Customer(String firstname, String lastname) {
 		this.name = new Name(firstname, lastname);

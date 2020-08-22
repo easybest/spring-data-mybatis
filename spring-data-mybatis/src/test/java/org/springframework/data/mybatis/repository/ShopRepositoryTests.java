@@ -124,6 +124,7 @@ public class ShopRepositoryTests {
 	public void findAll() {
 		this.flushTestShops();
 		List<Shop> shops = this.repository.findAll();
+		System.out.println(shops);
 		assertThat(shops).hasSize(4).contains(this.first, this.second, this.third, this.fourth);
 	}
 
