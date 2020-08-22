@@ -17,6 +17,7 @@ package org.springframework.data.mybatis.repository.sample;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.mybatis.domain.sample.Customer;
@@ -26,6 +27,7 @@ import org.springframework.data.mybatis.domain.sample.Name;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * .
@@ -65,5 +67,20 @@ public interface CustomerRepository extends MybatisRepository<Customer, Name> {
 	List<Customer> findByGender(Gender gender);
 
 	List<Customer> findByConstellation(Constellation constellation);
+
+	Customer findByEmailAddress(String emailAddress);
+
+	Customer findByEmailAddressAndNameLastname(String emailAddress, String lastname);
+
+	List<Customer> findByEmailAddressAndNameLastnameOrNameFirstname(String emailAddress, String lastname,
+			String username);
+
+	@Query("select * from #{#entityName} where email_address = ?1")
+	@Transactional(readOnly = true)
+	Customer findByAnnotatedQuery(String emailAddress);
+
+	Page<Customer> findByNameLastname(Pageable pageable, String lastname);
+
+	Page<Customer> findByEmailAddress(Pageable pageable, String emailAddress);
 
 }

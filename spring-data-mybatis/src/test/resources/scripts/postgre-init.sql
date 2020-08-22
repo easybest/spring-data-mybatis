@@ -6,11 +6,12 @@ drop table if exists t_customer;
 
 create table t_customer
 (
-    firstname     varchar(32) not null,
-    lastname      varchar(32) not null,
-    age           int         null,
-    gender        int         null,
-    constellation varchar(32) null,
+    firstname     varchar(32)  not null,
+    lastname      varchar(32)  not null,
+    age           int          null,
+    gender        int          null,
+    constellation varchar(32)  null,
+    email_address varchar(128) null,
     primary key (firstname, lastname)
 );
 
