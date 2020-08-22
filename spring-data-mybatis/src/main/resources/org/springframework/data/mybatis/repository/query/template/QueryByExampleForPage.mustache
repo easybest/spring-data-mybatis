@@ -5,32 +5,29 @@
             <include refid="__standard_sort"/>
         </if>
         <if test="__sort == null">ORDER BY CURRENT_TIMESTAMP</if>
-        ) as __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
+        ) AS __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
         <include refid="__query_by_example_where_clause"/>
-        ) inner_query ) SELECT
-        * FROM query WHERE __mybatis_row_nr__
-        &gt; #{__offset} AND __mybatis_row_nr__ &lt;= #{__offsetEnd}
+        ) inner_query ) SELECT * FROM query WHERE __mybatis_row_nr__ &gt; #{__offset} AND
+        __mybatis_row_nr__ &lt;= #{__offsetEnd}
     {{/SQLServer2005}}
     {{#SQLServer2012}}
         <if test="__sort != null">
             SELECT * FROM {{table}}
             <include refid="__query_by_example_where_clause"/>
             <include refid="__standard_sort"/>
-            offset #{__offset} rows fetch next #{__pageSize} rows
-            only
+            OFFSET #{__offset} ROWS FETCH NEXT #{__pageSize} ROWS ONLY
         </if>
         <if test="__sort == null">
             WITH query AS (SELECT inner_query.*, ROW_NUMBER() OVER (ORDER BY
-            CURRENT_TIMESTAMP ) as __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
+            CURRENT_TIMESTAMP ) AS __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
             <include refid="__query_by_example_where_clause"/>
-            ) inner_query ) SELECT
-            * FROM query WHERE __mybatis_row_nr__
-            &gt; #{__offset} AND __mybatis_row_nr__ &lt;= #{__offsetEnd}
+            ) inner_query ) SELECT * FROM query WHERE __mybatis_row_nr__ &gt; #{__offset}
+            AND __mybatis_row_nr__ &lt;= #{__offsetEnd}
         </if>
     {{/SQLServer2012}}
     {{^SQLServer2005}}{{^SQLServer2012}}
         {{#limitHandler}}
-            select * from {{table}}
+            SELECT * FROM {{table}}
             <include refid="__query_by_example_where_clause"/>
             <include refid="__standard_sort"/>
         {{/limitHandler}}

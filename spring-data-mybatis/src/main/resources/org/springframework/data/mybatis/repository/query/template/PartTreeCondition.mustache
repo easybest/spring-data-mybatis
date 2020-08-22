@@ -1,0 +1,96 @@
+{{#tree}}
+    {{^-first}} OR {{/-first}}
+    (
+    {{#parts}}
+        {{^-first}} AND {{/-first}}
+        {{#ignoreCase}}{{lowercaseFunction}}({{column.name}}){{/ignoreCase}}
+        {{^ignoreCase}}{{column.name}}{{/ignoreCase}}
+        {{#opBetween}}
+            BETWEEN
+            {{#arguments}}
+                {{^-first}} AND {{/-first}} {{.}}
+            {{/arguments}}
+        {{/opBetween}}
+        {{#opNotNull}} IS NOT NULL {{/opNotNull}}
+        {{#opNull}} IS NULL {{/opNull}}
+        {{#opRlike}} LIKE
+        <bind name="__bind_{{#arguments}}{{.}}{{/arguments}}"
+              value="{{#arguments}}{{.}}{{/arguments}}+'%'"/>
+        {{#ignoreCase}}{{lowercaseFunction}}(#{
+        __bind_{{#arguments}}{{.}}{{/arguments}} }){{/ignoreCase}}
+        {{^ignoreCase}}
+            #{ __bind_{{#arguments}}{{.}}{{/arguments}} }{{/ignoreCase}}
+        {{/opRlike}}
+        {{#opLlike}}
+            {{#opNotLike}} NOT {{/opNotLike}}
+            LIKE
+            <bind name="__bind_{{#arguments}}{{.}}{{/arguments}}"
+                  value="'%'+{{#arguments}}{{.}}{{/arguments}}"/>
+            {{#ignoreCase}}
+                {{lowercaseFunction}}(#{ __bind_{{#arguments}}{{.}}{{/arguments}}
+                })
+            {{/ignoreCase}}
+            {{^ignoreCase}}
+                #{ __bind_{{#arguments}}{{.}}{{/arguments}} }
+            {{/ignoreCase}}
+        {{/opLlike}}
+        {{#opLike}} LIKE
+        <bind name="__bind_{{#arguments}}{{.}}{{/arguments}}"
+              value="'%'+{{#arguments}}{{.}}{{/arguments}}+'%'"/>
+        {{#ignoreCase}}{{lowercaseFunction}}(#{
+        __bind_{{#arguments}}{{.}}{{/arguments}} }){{/ignoreCase}}
+        {{^ignoreCase}}
+            #{ __bind_{{#arguments}}{{.}}{{/arguments}} }{{/ignoreCase}}
+        {{/opLike}}
+        {{#opIn}} IN
+        <foreach item="__item" index="__index"
+                 collection="{{#arguments}}{{.}}{{/arguments}}" open="("
+                 separator="," close=")">#{__item
+            {{#column.hasJavaType}}
+                ,javaType={{column.javaTypeString}}
+            {{/column.hasJavaType}}
+            {{#column.hasTypeHandler}}
+                ,typeHandler={{column.typeHandlerString}}
+            {{/column.hasTypeHandler}} }
+        </foreach>
+        {{/opIn}}
+        {{#opNotIn}} NOT IN
+        <foreach item="__item" index="__index"
+                 collection="{{#arguments}}{{.}}{{/arguments}}" open="("
+                 separator="," close=")">#{ __item
+            {{#column.hasJavaType}}
+                ,javaType={{column.javaTypeString}}
+            {{/column.hasJavaType}}
+            {{#column.hasTypeHandler}}
+                ,typeHandler={{column.typeHandlerString}}
+            {{/column.hasTypeHandler}} }
+        </foreach>
+        {{/opNotIn}}
+        {{#opTrue}} = 1 {{/opTrue}}
+        {{#opFalse}} = 0 {{/opFalse}}
+        {{#opDefault}}
+            {{#opSimpleProperty}}={{/opSimpleProperty}}
+            {{#opNegatingSimpleProperty}}&lt;&gt;{{/opNegatingSimpleProperty}}
+            {{#opLessThan}}&lt;{{/opLessThan}}
+            {{#opBefore}}&lt;{{/opBefore}}
+            {{#opLessThanEqual}}&lt;={{/opLessThanEqual}}
+            {{#opGreaterThan}}&gt;{{/opGreaterThan}}
+            {{#opAfter}}&gt;{{/opAfter}}
+            {{#opGreaterThanEqual}}&gt;{{/opGreaterThanEqual}}
+            {{#ignoreCase}}
+                {{lowercaseFunction}}(#{ {{#arguments}}{{.}}{{/arguments}}
+                })
+            {{/ignoreCase}}
+            {{^ignoreCase}}
+                #{ {{#arguments}}{{.}}{{/arguments}}
+                {{#column.hasJavaType}}
+                    ,javaType={{column.javaTypeString}}
+                {{/column.hasJavaType}}
+                {{#column.hasTypeHandler}}
+                    ,typeHandler={{column.typeHandlerString}}
+                {{/column.hasTypeHandler}} }
+            {{/ignoreCase}}
+        {{/opDefault}}
+    {{/parts}}
+    )
+{{/tree}}
