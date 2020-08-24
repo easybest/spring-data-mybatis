@@ -21,6 +21,7 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Lob;
 import javax.persistence.Table;
 import javax.persistence.Version;
 
@@ -53,11 +54,19 @@ public class Customer implements Serializable {
 	@Enumerated(EnumType.STRING)
 	private Constellation constellation;
 
+	@Lob
+	private byte[] binaryData;
+
 	@Version
 	private Long version;
 
 	public Customer(String firstname, String lastname) {
 		this.name = new Name(firstname, lastname);
+	}
+
+	public Customer(String firstname, String lastname, String emailAddress) {
+		this.name = new Name(firstname, lastname);
+		this.emailAddress = emailAddress;
 	}
 
 	public enum Gender {

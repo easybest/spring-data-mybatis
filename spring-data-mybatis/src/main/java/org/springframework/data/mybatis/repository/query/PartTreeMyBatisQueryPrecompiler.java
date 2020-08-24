@@ -310,6 +310,8 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 		private boolean opSimpleProperty;
 
+		private boolean arrayParameter;
+
 		AndPart(Part part, MybatisPersistentEntity<?> persistentEntity, MybatisMappingContext mappingContext,
 				AtomicInteger argumentCounter, MybatisQueryMethod method, Dialect dialect) {
 			MybatisPersistentProperty persistentProperty = persistentEntity
@@ -335,6 +337,7 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 					int counter = argumentCounter.getAndIncrement();
 					MybatisParameter bindableParameter = parameters.getBindableParameter(counter);
 					this.arguments[i] = bindableParameter.getName().orElse("__p" + (bindableParameter.getIndex() + 1));
+					this.arrayParameter = bindableParameter.getType().isArray();
 				}
 			}
 

@@ -15,9 +15,13 @@
  */
 package org.springframework.data.mybatis.repository;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -30,6 +34,7 @@ import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.ExampleMatcher.StringMatcher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
@@ -68,6 +73,12 @@ public class CustomerRepositoryTest {
 
 	Name name;
 
+	Customer dave;
+
+	Customer carter;
+
+	Customer oliver;
+
 	@Before
 	public void setUp() {
 
@@ -79,6 +90,13 @@ public class CustomerRepositoryTest {
 				.setConstellation(Constellation.Cancer).setEmailAddress("no@email.com");
 		this.fourth = new Customer("kevin", "raymond").setAge(31).setGender(Gender.FEMALE)
 				.setConstellation(Constellation.Libra).setEmailAddress("no@email.com");
+
+	}
+
+	protected void flushSimple() {
+		this.dave = this.repository.save(new Customer("Dave", "Matthews", "dave@dmband.com"));
+		this.carter = this.repository.save(new Customer("Carter", "Beauford", "carter@dmband.com"));
+		this.oliver = this.repository.save(new Customer("Oliver August", "Matthews", "oliver@dmband.com"));
 
 	}
 
@@ -210,21 +228,11 @@ public class CustomerRepositoryTest {
 	}
 
 	@Test
-	public void executesManualQueryWithPositionLikeExpressionCorrectly() {
+	public void executesQueryLikeExpressionCorrectly() {
 
 		this.flushTestCustomers();
 
 		List<Customer> result = this.repository.findByNameFirstnameLike("Da");
-
-		Assertions.assertThat(result).containsOnly(this.third);
-	}
-
-	@Test
-	public void executesManualQueryWithNamedLikeExpressionCorrectly() {
-
-		this.flushTestCustomers();
-
-		List<Customer> result = this.repository.findByNameFirstnameLikeNamed("Da");
 
 		Assertions.assertThat(result).containsOnly(this.third);
 	}
@@ -476,6 +484,440 @@ public class CustomerRepositoryTest {
 		List<Customer> result = this.repository.findByNameFirstnameNotIn(Arrays.asList("Dave", "Joachim"));
 
 		assertThat(result).containsExactly(this.first, this.fourth);
+	}
+
+	@Test
+	public void executesManualQueryWithPositionLikeExpressionCorrectly() {
+
+		this.flushTestCustomers();
+
+		List<Customer> result = this.repository.findByFirstnameLike("Da");
+
+		assertThat(result).containsOnly(this.third);
+	}
+
+	@Test
+	public void executesManualQueryWithNamedLikeExpressionCorrectly() {
+
+		this.flushTestCustomers();
+
+		List<Customer> result = this.repository.findByFirstnameLikeNamed("Da");
+
+		assertThat(result).containsOnly(this.third);
+	}
+
+	@Test
+	public void executesManipulatingQuery() throws Exception {
+
+		this.flushTestCustomers();
+		this.repository.renameAllUsersTo("newLastname");
+
+		long expected = this.repository.count();
+		assertThat(this.repository.findByNameLastname("newLastname").size())
+				.isEqualTo(Long.valueOf(expected).intValue());
+	}
+
+	@Test
+	public void testExecutionOfProjectingMethod() {
+
+		this.flushTestCustomers();
+		assertThat(this.repository.countWithFirstname("Oliver")).isEqualTo(1L);
+	}
+
+	@Test
+	public void executesMethodWithAnnotatedNamedParametersCorrectly() {
+
+		this.first = this.repository.save(this.first);
+		this.second = this.repository.save(this.second);
+
+		assertThat(this.repository.findByLastnameOrFirstname("Oliver", "Arrasz")).contains(this.first, this.second);
+	}
+
+	@Test
+	public void executesMethodWithNamedParametersCorrectlyOnMethodsWithQueryCreation() {
+
+		this.first = this.repository.save(this.first);
+		this.second = this.repository.save(this.second);
+
+		assertThat(this.repository.findByNameFirstnameOrNameLastname("Oliver", "Arrasz")).containsOnly(this.first,
+				this.second);
+	}
+
+	@Test
+	public void executesLikeAndOrderByCorrectly() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByNameLastnameLikeOrderByNameFirstnameDesc("%r%")).hasSize(3)
+				.containsExactly(this.fourth, this.first, this.second);
+	}
+
+	@Test
+	public void executesNotLikeCorrectly() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByNameLastnameNotLike("%er%")).containsOnly(this.second, this.third,
+				this.fourth);
+	}
+
+	@Test
+	public void executesFindByNotNullLastnameCorrectly() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByNameLastnameNotNull()).containsOnly(this.first, this.second, this.third,
+				this.fourth);
+	}
+
+	@Test
+	public void executesFindByNullLastnameCorrectly() {
+
+		this.flushTestCustomers();
+		Customer forthUser = this.repository.save(new Customer("Foo", "Bar").setEmailAddress(null));
+
+		assertThat(this.repository.findByEmailAddressNull()).containsOnly(forthUser);
+	}
+
+	@Test
+	public void findsSortedByLastname() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByEmailAddressLike("%@%", Sort.by(Direction.ASC, "name.lastname")))
+				.containsExactly(this.second, this.first, this.third, this.fourth);
+	}
+
+	@Test
+	public void findsUsersBySpringDataNamedQuery() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findBySpringDataNamedQuery("Gierke")).containsOnly(this.first);
+	}
+
+	@Test
+	public void findsByLastnameIgnoringCase() {
+		this.flushTestCustomers();
+
+		List<Customer> result = this.repository.findByNameLastnameIgnoringCase("gIeRKe");
+
+		assertThat(result).containsExactly(this.first);
+	}
+
+	@Test
+	public void respectsPageableOrderOnQueryGenerateFromMethodName() {
+		this.flushSimple();
+		Page<Customer> ascending = this.repository.findByNameLastnameIgnoringCase(
+				PageRequest.of(0, 10, Sort.by(Direction.ASC, "name.firstname")), "Matthews");
+		Page<Customer> descending = this.repository.findByNameLastnameIgnoringCase(
+				PageRequest.of(0, 10, Sort.by(Direction.DESC, "name.firstname")), "Matthews");
+
+		assertThat(ascending).containsExactly(this.dave, this.oliver);
+		assertThat(descending).containsExactly(this.oliver, this.dave);
+	}
+
+	@Test
+	public void findsByLastnameIgnoringCaseLike() {
+		this.flushSimple();
+
+		List<Customer> result = this.repository.findByNameLastnameIgnoringCaseLike("BeAUfo%");
+
+		assertThat(result).containsExactly(this.carter);
+	}
+
+	@Test
+	public void findByLastnameAndFirstnameAllIgnoringCase() {
+		this.flushSimple();
+
+		List<Customer> result = this.repository.findByNameLastnameAndNameFirstnameAllIgnoringCase("MaTTheWs", "DaVe");
+
+		assertThat(result).containsExactly(this.dave);
+	}
+
+	@Test
+	public void executesGreaterThatOrEqualQueriesCorrectly() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByAgeGreaterThanEqual(35)).containsOnly(this.second, this.third);
+	}
+
+	@Test
+	public void executesLessThatOrEqualQueriesCorrectly() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByAgeLessThanEqual(35)).containsOnly(this.first, this.second, this.fourth);
+	}
+
+	@Test
+	public void readsPageWithGroupByClauseCorrectly() {
+
+		this.flushTestCustomers();
+
+		Page<String> result = this.repository.findByLastnameGrouped(PageRequest.of(0, 10));
+		assertThat(result.getTotalPages()).isEqualTo(1);
+	}
+
+	@Test
+	public void executesFinderWithStartingWithCorrectly() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByNameFirstnameStartingWith("Oli")).containsOnly(this.first);
+	}
+
+	@Test
+	public void executesFinderWithEndingWithCorrectly() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByNameFirstnameEndingWith("er")).containsOnly(this.first);
+	}
+
+	@Test
+	public void executesFinderWithContainingCorrectly() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.findByNameFirstnameContaining("a")).containsOnly(this.second, this.third);
+	}
+
+	@Test
+	public void executesNativeQueryForNonEntitiesCorrectly() {
+
+		this.flushTestCustomers();
+
+		List<Integer> result = this.repository.findOnesByNativeQuery();
+
+		assertThat(result.size()).isEqualTo(4);
+		assertThat(result).contains(1);
+	}
+
+	@Test
+	public void deleteByShouldRemoveElementsMatchingDerivedQuery() {
+
+		this.flushTestCustomers();
+
+		this.repository.deleteByNameLastname(this.first.getName().getLastname());
+		assertThat(this.repository.countByNameLastname(this.first.getName().getLastname())).isEqualTo(0L);
+	}
+
+	@Test
+	public void findsUserByBinaryDataReference() {
+
+		byte[] data = "Woho!!".getBytes(StandardCharsets.UTF_8);
+		this.first.setBinaryData(data);
+
+		this.flushTestCustomers();
+
+		List<Customer> result = this.repository.findByBinaryData(data);
+		assertThat(result).containsOnly(this.first);
+		assertThat(result.get(0).getBinaryData()).isEqualTo(data);
+	}
+
+	@Test
+	public void executesQueryToSlice() {
+		this.flushSimple();
+		Slice<Customer> slice = this.repository.findSliceByNameLastname("Matthews",
+				PageRequest.of(0, 1, Direction.ASC, "name.firstname"));
+
+		assertThat(slice.getContent()).containsExactly(this.dave);
+		assertThat(slice.hasNext()).isTrue();
+	}
+
+	@Test
+	public void executesQueryToSliceWithUnpaged() {
+		this.flushSimple();
+
+		Slice<Customer> slice = this.repository.findSliceByNameLastname("Matthews", Pageable.unpaged());
+
+		assertThat(slice).containsExactlyInAnyOrder(this.dave, this.oliver);
+		assertThat(slice.getNumberOfElements()).isEqualTo(2);
+		assertThat(slice.hasNext()).isEqualTo(false);
+	}
+
+	@Test
+	public void deleteByShouldReturnNumberOfEntitiesRemovedIfReturnTypeIsLong() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.removeByNameLastname(this.first.getName().getLastname())).isEqualTo(1L);
+	}
+
+	@Test
+	public void deleteByShouldReturnListOfDeletedElementsWhenRetunTypeIsCollectionLike() {
+
+		this.flushTestCustomers();
+
+		List<Customer> result = this.repository.deleteByNameLastname(this.first.getName().getLastname());
+		assertThat(result).containsOnly(this.first);
+	}
+
+	@Test
+	public void deleteByShouldReturnEmptyListInCaseNoEntityHasBeenRemovedAndReturnTypeIsCollectionLike() {
+
+		this.flushTestCustomers();
+
+		assertThat(this.repository.deleteByNameLastname("dorfuaeB")).isEmpty();
+	}
+
+	@Test
+	public void findYoungestUser() {
+
+		this.flushTestCustomers();
+
+		Customer youngest = this.first;
+
+		assertThat(this.repository.findTopByOrderByAgeAsc()).isEqualTo(youngest);
+		assertThat(this.repository.findTop1ByOrderByAgeAsc()).isEqualTo(youngest);
+	}
+
+	@Test
+	public void find2YoungestUsers() {
+
+		this.flushTestCustomers();
+
+		Customer youngest1 = this.first;
+		Customer youngest2 = this.fourth;
+
+		assertThat(this.repository.findFirst2CustomersBy(Sort.by(Direction.ASC, "age"))).contains(youngest1, youngest2);
+		assertThat(this.repository.findTop2CustomersBy(Sort.by(Direction.ASC, "age"))).contains(youngest1, youngest2);
+	}
+
+	@Test
+	public void find3YoungestUsersPageableWithPageSize2() {
+
+		this.flushTestCustomers();
+
+		Customer youngest1 = this.first;
+		Customer youngest2 = this.fourth;
+		Customer youngest3 = this.second;
+
+		Page<Customer> firstPage = this.repository.findFirst3CustomersBy(PageRequest.of(0, 2, Direction.ASC, "age"));
+		assertThat(firstPage.getContent()).contains(youngest1, youngest2);
+
+		Page<Customer> secondPage = this.repository.findFirst3CustomersBy(PageRequest.of(1, 2, Direction.ASC, "age"));
+		assertThat(secondPage.getContent()).contains(youngest3);
+	}
+
+	@Test
+	public void find2YoungestUsersPageableWithPageSize3() {
+
+		this.flushTestCustomers();
+
+		Customer youngest1 = this.first;
+		Customer youngest2 = this.fourth;
+		Customer youngest3 = this.second;
+
+		Page<Customer> firstPage = this.repository.findFirst2CustomersBy(PageRequest.of(0, 3, Direction.ASC, "age"));
+		assertThat(firstPage.getContent()).contains(youngest1, youngest2);
+
+		Page<Customer> secondPage = this.repository.findFirst2CustomersBy(PageRequest.of(1, 3, Direction.ASC, "age"));
+		assertThat(secondPage.getContent()).contains(youngest3);
+	}
+
+	@Test
+	public void invokesQueryWithWrapperType() {
+
+		this.flushTestCustomers();
+
+		Optional<Customer> result = this.repository.findOptionalByEmailAddress("gierke@synyx.de");
+
+		assertThat(result.isPresent()).isEqualTo(true);
+		assertThat(result.get()).isEqualTo(this.first);
+	}
+
+	@Test
+	public void shouldFindUserByFirstnameAndLastnameWithSpelExpressionInStringBasedQuery() {
+
+		this.flushTestCustomers();
+		List<Customer> users = this.repository.findByFirstnameAndLastnameWithSpelExpression("Oliver", "ierk");
+
+		assertThat(users).containsOnly(this.first);
+	}
+
+	@Test
+	public void shouldFindBySpELExpressionWithoutArgumentsWithQuestionmark() {
+
+		this.flushTestCustomers();
+		List<Customer> users = this.repository.findOliverBySpELExpressionWithoutArgumentsWithQuestionmark();
+
+		assertThat(users).containsOnly(this.first);
+	}
+
+	@Test
+	public void shouldFindUsersByAgeForSpELExpression() {
+
+		this.flushTestCustomers();
+		List<Customer> users = this.repository.findUsersByAgeForSpELExpressionByIndexedParameter(35);
+
+		assertThat(users).containsOnly(this.second);
+	}
+
+	@Test
+	public void findByEmptyCollectionOfIntegers() throws Exception {
+
+		this.flushTestCustomers();
+
+		List<Customer> users = this.repository.findByAgeIn(Collections.emptyList());
+		assertThat(users).hasSize(0);
+	}
+
+	@Test
+	public void findByEmptyArrayOfIntegers() throws Exception {
+
+		this.flushTestCustomers();
+
+		List<Customer> users = this.repository.queryByAgeIn(new Integer[0]);
+		assertThat(users).hasSize(0);
+	}
+
+	@Test
+	public void findByAgeWithEmptyArrayOfIntegersOrFirstName() {
+
+		this.flushTestCustomers();
+
+		List<Customer> users = this.repository.queryByAgeInOrNameFirstname(new Integer[0],
+				this.second.getName().getFirstname());
+		assertThat(users).containsOnly(this.second);
+	}
+
+	@Test
+	public void shouldSupportJava8StreamsForRepositoryFinderMethods() {
+
+		this.flushTestCustomers();
+
+		try (Stream<Customer> stream = this.repository.findAllByCustomQueryAndStream()) {
+			assertThat(stream).hasSize(4);
+		}
+	}
+
+	@Test
+	public void shouldSupportJava8StreamsForRepositoryDerivedFinderMethods() {
+
+		this.flushTestCustomers();
+
+		try (Stream<Customer> stream = this.repository.readAllByNameFirstnameNotNull()) {
+			assertThat(stream).hasSize(4);
+		}
+	}
+
+	@Test
+	public void supportsJava8StreamForPageableMethod() {
+
+		this.flushTestCustomers();
+
+		try (Stream<Customer> stream = this.repository.streamAllPaged(PageRequest.of(0, 2))) {
+			assertThat(stream).hasSize(2);
+		}
+	}
+
+	@Test
+	public void executesMethodWithNotContainingOnStringCorrectly() {
+		this.flushSimple();
+		assertThat(this.repository.findByNameLastnameNotContaining("u")).containsExactly(this.dave, this.oliver);
 	}
 
 }

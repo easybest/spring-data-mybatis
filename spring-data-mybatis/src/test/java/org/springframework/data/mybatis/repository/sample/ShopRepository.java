@@ -15,6 +15,7 @@
  */
 package org.springframework.data.mybatis.repository.sample;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.mybatis.domain.sample.Shop;
@@ -42,5 +43,13 @@ public interface ShopRepository extends MybatisRepository<Shop, Long>, ShopRepos
 	List<Shop> findByActiveFalse();
 
 	void removeByNameAndActiveOrEmailAddressNotLike(String name, Boolean active, String email);
+
+	Collection<Shop> findByIdIn(@Param("ids") Long... ids);
+
+	@Query("select * from #{#entityName} u where u.id in ?1")
+	Collection<Shop> findByIdsCustomWithPositionalVarArgs(Long... ids);
+
+	@Query("select * from #{#entityName} u where u.id in :ids")
+	Collection<Shop> findByIdsCustomWithNamedVarArgs(@Param("ids") Long... ids);
 
 }

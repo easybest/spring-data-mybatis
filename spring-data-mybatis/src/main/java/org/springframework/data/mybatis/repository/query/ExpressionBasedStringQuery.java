@@ -45,7 +45,11 @@ class ExpressionBasedStringQuery extends StringQuery {
 
 	private static final String ENTITY_NAME_VARIABLE = "#" + ENTITY_NAME;
 
+	private static final String TABLE_NAME_VARIABLE = "#" + TABLE_NAME;
+
 	private static final String ENTITY_NAME_VARIABLE_EXPRESSION = "#{" + ENTITY_NAME_VARIABLE + "}";
+
+	private static final String TABLE_NAME_VARIABLE_EXPRESSION = "#{" + TABLE_NAME_VARIABLE + "}";
 
 	ExpressionBasedStringQuery(String query, MybatisEntityMetadata<?> metadata, SpelExpressionParser parser) {
 		super(renderQueryIfExpressionOrReturnQuery(query, metadata, parser));
@@ -58,7 +62,6 @@ class ExpressionBasedStringQuery extends StringQuery {
 
 	private static String renderQueryIfExpressionOrReturnQuery(String query, MybatisEntityMetadata<?> metadata,
 			SpelExpressionParser parser) {
-
 		Assert.notNull(query, "query must not be null!");
 		Assert.notNull(metadata, "metadata must not be null!");
 		Assert.notNull(parser, "parser must not be null!");
@@ -68,7 +71,6 @@ class ExpressionBasedStringQuery extends StringQuery {
 		}
 
 		StandardEvaluationContext evalContext = new StandardEvaluationContext();
-		// evalContext.setVariable(ENTITY_NAME, metadata.getEntityName());
 		evalContext.setVariable(ENTITY_NAME, metadata.getTableName());
 		evalContext.setVariable(TABLE_NAME, metadata.getTableName());
 
@@ -94,7 +96,7 @@ class ExpressionBasedStringQuery extends StringQuery {
 	}
 
 	private static boolean containsExpression(String query) {
-		return query.contains(ENTITY_NAME_VARIABLE_EXPRESSION);
+		return query.contains(ENTITY_NAME_VARIABLE_EXPRESSION) || query.contains(TABLE_NAME_VARIABLE_EXPRESSION);
 	}
 
 }

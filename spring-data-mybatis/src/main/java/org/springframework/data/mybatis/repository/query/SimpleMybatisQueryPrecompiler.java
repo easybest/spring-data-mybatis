@@ -18,6 +18,8 @@ package org.springframework.data.mybatis.repository.query;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Parameter;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +42,12 @@ import org.springframework.util.StringUtils;
 class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 	private final SimpleMybatisQuery query;
+
+	private static Pattern patternIndex = Pattern.compile("[(\\d+)]");
+
+	private static Pattern patternName = Pattern.compile("[(.+)]");
+
+	private static Pattern patternString = Pattern.compile("'.+'");
 
 	SimpleMybatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			SimpleMybatisQuery query) {
@@ -72,11 +80,26 @@ class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 			if (StringUtils.hasText(parameterBinding.getName())) {
 				replace = ":" + parameterBinding.getRequiredName();
 				bindName = parameterBinding.getName();
+
 			}
 			else {
 				replace = "?" + parameterBinding.getPosition();
 				if (parameterBinding.isExpression()) {
-					bindName = ResidentParameterName.POSITION_PREFIX + parameterBinding.getPosition();
+					Matcher matcher = patternIndex.matcher(parameterBinding.getExpression());
+					if (matcher.find()) {
+						String group = matcher.group(0);
+						int position = Integer.valueOf(group) + 1;
+						bindName = ResidentParameterName.POSITION_PREFIX + position;
+					}
+					else {
+						matcher = patternName.matcher(parameterBinding.getExpression());
+						if (matcher.find()) {
+							bindName = matcher.group(0);
+						}
+						else if (patternString.matcher(parameterBinding.getExpression()).find()) {
+							sql = sql.replace(replace, parameterBinding.getExpression());
+						}
+					}
 				}
 				else {
 					MybatisParameters.MybatisParameter mp = this.query.getQueryMethod().getParameters()
@@ -135,8 +158,8 @@ class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 			sql = sql.replace(replace, String.format("#{%s%s}", bindName, typeHandler));
 		}
-
 		return sql;
+
 	}
 
 	@Override

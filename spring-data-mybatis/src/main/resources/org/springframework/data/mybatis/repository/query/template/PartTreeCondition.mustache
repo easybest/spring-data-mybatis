@@ -3,8 +3,12 @@
     (
     {{#parts}}
         {{^-first}} AND {{/-first}}
-        {{#ignoreCase}}{{lowercaseFunction}}({{column.name}}){{/ignoreCase}}
-        {{^ignoreCase}}{{column.name}}{{/ignoreCase}}
+        {{^opIn}}
+            {{^opNotIn}}
+                {{#ignoreCase}}{{lowercaseFunction}}({{column.name}}){{/ignoreCase}}
+                {{^ignoreCase}}{{column.name}}{{/ignoreCase}}
+            {{/opNotIn}}
+        {{/opIn}}
         {{#opBetween}}
             BETWEEN
             {{#arguments}}
@@ -22,7 +26,6 @@
             #{ __bind_{{#arguments}}{{.}}{{/arguments}} }{{/ignoreCase}}
         {{/opRlike}}
         {{#opLlike}}
-            {{#opNotLike}} NOT {{/opNotLike}}
             LIKE
             <bind name="__bind_{{#arguments}}{{.}}{{/arguments}}"
                   value="'%'+{{#arguments}}{{.}}{{/arguments}}"/>
@@ -34,7 +37,7 @@
                 #{ __bind_{{#arguments}}{{.}}{{/arguments}} }
             {{/ignoreCase}}
         {{/opLlike}}
-        {{#opLike}} LIKE
+        {{#opLike}}{{#opNotLike}} NOT {{/opNotLike}} LIKE
         <bind name="__bind_{{#arguments}}{{.}}{{/arguments}}"
               value="'%'+{{#arguments}}{{.}}{{/arguments}}+'%'"/>
         {{#ignoreCase}}{{lowercaseFunction}}(#{
@@ -42,29 +45,45 @@
         {{^ignoreCase}}
             #{ __bind_{{#arguments}}{{.}}{{/arguments}} }{{/ignoreCase}}
         {{/opLike}}
-        {{#opIn}} IN
-        <foreach item="__item" index="__index"
-                 collection="{{#arguments}}{{.}}{{/arguments}}" open="("
-                 separator="," close=")">#{__item
-            {{#column.hasJavaType}}
-                ,javaType={{column.javaTypeString}}
-            {{/column.hasJavaType}}
-            {{#column.hasTypeHandler}}
-                ,typeHandler={{column.typeHandlerString}}
-            {{/column.hasTypeHandler}} }
-        </foreach>
+        {{#opIn}}
+            <choose>
+                <when test="{{#arguments}}{{.}}{{/arguments}} != null and {{#arguments}}{{.}}{{/arguments}}.{{#arrayParameter}}length{{/arrayParameter}}{{^arrayParameter}}size(){{/arrayParameter}} > 0">
+                    {{#ignoreCase}}{{lowercaseFunction}}({{column.name}}){{/ignoreCase}}
+                    {{^ignoreCase}}{{column.name}}{{/ignoreCase}}
+                    IN
+                    <foreach item="__item" index="__index"
+                             collection="{{#arguments}}{{.}}{{/arguments}}" open="("
+                             separator="," close=")">#{__item
+                        {{#column.hasJavaType}}
+                            ,javaType={{column.javaTypeString}}
+                        {{/column.hasJavaType}}
+                        {{#column.hasTypeHandler}}
+                            ,typeHandler={{column.typeHandlerString}}
+                        {{/column.hasTypeHandler}} }
+                    </foreach>
+                </when>
+                <otherwise>0=1</otherwise>
+            </choose>
         {{/opIn}}
-        {{#opNotIn}} NOT IN
-        <foreach item="__item" index="__index"
-                 collection="{{#arguments}}{{.}}{{/arguments}}" open="("
-                 separator="," close=")">#{ __item
-            {{#column.hasJavaType}}
-                ,javaType={{column.javaTypeString}}
-            {{/column.hasJavaType}}
-            {{#column.hasTypeHandler}}
-                ,typeHandler={{column.typeHandlerString}}
-            {{/column.hasTypeHandler}} }
-        </foreach>
+        {{#opNotIn}}
+            <choose>
+                <when test="{{#arguments}}{{.}}{{/arguments}} != null and {{#arguments}}{{.}}{{/arguments}}.{{#arrayParameter}}length{{/arrayParameter}}{{^arrayParameter}}size(){{/arrayParameter}} > 0">
+                    {{#ignoreCase}}{{lowercaseFunction}}({{column.name}}){{/ignoreCase}}
+                    {{^ignoreCase}}{{column.name}}{{/ignoreCase}}
+                    NOT IN
+                    <foreach item="__item" index="__index"
+                             collection="{{#arguments}}{{.}}{{/arguments}}" open="("
+                             separator="," close=")">#{__item
+                        {{#column.hasJavaType}}
+                            ,javaType={{column.javaTypeString}}
+                        {{/column.hasJavaType}}
+                        {{#column.hasTypeHandler}}
+                            ,typeHandler={{column.typeHandlerString}}
+                        {{/column.hasTypeHandler}} }
+                    </foreach>
+                </when>
+                <otherwise>0=1</otherwise>
+            </choose>
         {{/opNotIn}}
         {{#opTrue}} = 1 {{/opTrue}}
         {{#opFalse}} = 0 {{/opFalse}}
@@ -76,7 +95,7 @@
             {{#opLessThanEqual}}&lt;={{/opLessThanEqual}}
             {{#opGreaterThan}}&gt;{{/opGreaterThan}}
             {{#opAfter}}&gt;{{/opAfter}}
-            {{#opGreaterThanEqual}}&gt;{{/opGreaterThanEqual}}
+            {{#opGreaterThanEqual}}&gt;={{/opGreaterThanEqual}}
             {{#ignoreCase}}
                 {{lowercaseFunction}}(#{ {{#arguments}}{{.}}{{/arguments}}
                 })
