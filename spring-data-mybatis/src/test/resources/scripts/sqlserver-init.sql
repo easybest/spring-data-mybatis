@@ -12,6 +12,7 @@ create table t_customer
     gender        int          null,
     constellation varchar(32)  null,
     email_address varchar(128) null,
+    binary_data   binary       null,
     version       bigint       null,
     primary key (firstname, lastname)
 );

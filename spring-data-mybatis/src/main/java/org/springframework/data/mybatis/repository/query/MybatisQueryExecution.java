@@ -211,13 +211,21 @@ public abstract class MybatisQueryExecution {
 		protected Object doExecute(AbstractMybatisQuery query, MybatisParametersParameterAccessor accessor) {
 
 			Pageable pageable = accessor.getPageable();
+			List resultList;
+
 			int pageSize = 0;
 			if (pageable.isPaged()) {
 				pageSize = pageable.getPageSize();
 			}
-
-			List resultList = query.getExecutor().getResultList(query.getStatementId(), accessor);
-			boolean hasNext = pageable.isPaged() && resultList.size() > pageSize;
+			if (null == pageable || pageable.isUnpaged()) {
+				resultList = query.getExecutor().getResultList(
+						query.getNamespace() + '.' + ResidentStatementName.UNPAGED_PREFIX + query.getStatementName(),
+						accessor);
+			}
+			else {
+				resultList = query.getExecutor().getResultList(query.getStatementId(), accessor);
+			}
+			boolean hasNext = null != pageable && pageable.isPaged() && resultList.size() > pageSize;
 
 			return new SliceImpl<>(hasNext ? resultList.subList(0, pageSize) : resultList, pageable, hasNext);
 		}

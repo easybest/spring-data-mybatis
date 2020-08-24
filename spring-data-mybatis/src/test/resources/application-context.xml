@@ -61,6 +61,14 @@
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 		<property name="evaluationContextProvider"
 				  ref="expressionEvaluationContextProvider"/>
+		<property name="namedQueries">
+			<bean class="org.springframework.data.repository.core.support.PropertiesBasedNamedQueries">
+				<constructor-arg>
+					<util:properties
+							location="META-INF/mybatis-named-queries.properties"/>
+				</constructor-arg>
+			</bean>
+		</property>
 	</bean>
 
 	<bean id="mappingContext"

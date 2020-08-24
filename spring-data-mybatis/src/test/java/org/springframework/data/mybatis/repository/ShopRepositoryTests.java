@@ -18,6 +18,7 @@ package org.springframework.data.mybatis.repository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.List;
 
 import org.assertj.core.api.Assertions;
@@ -433,6 +434,36 @@ public class ShopRepositoryTests {
 
 		assertThat(page.getContent()).hasSize(4);
 		assertThat(page.getContent().get(3)).isEqualTo(this.first);
+	}
+
+	@Test
+	public void invokesQueryWithVarargsParametersCorrectly() {
+
+		this.flushTestShops();
+		Collection<Shop> result = this.repository.findByIdIn(this.first.getId(), this.second.getId());
+		assertThat(result).containsOnly(this.first, this.second);
+	}
+
+	@Test
+	public void customFindByQueryWithPositionalVarargsParameters() {
+
+		this.flushTestShops();
+
+		Collection<Shop> result = this.repository.findByIdsCustomWithPositionalVarArgs(this.first.getId(),
+				this.second.getId());
+
+		assertThat(result).containsOnly(this.first, this.second);
+	}
+
+	@Test
+	public void customFindByQueryWithNamedVarargsParameters() {
+
+		this.flushTestShops();
+
+		Collection<Shop> result = this.repository.findByIdsCustomWithNamedVarArgs(this.first.getId(),
+				this.second.getId());
+
+		assertThat(result).containsOnly(this.first, this.second);
 	}
 
 }
