@@ -22,6 +22,8 @@ import java.util.List;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import org.springframework.util.StringUtils;
+
 /**
  * Collection association.
  *
@@ -50,9 +52,15 @@ public class Collection implements Serializable {
 
 	private boolean manyToMany;
 
+	private String order;
+
 	public Collection addJoinColumn(JoinColumn jc) {
 		this.joinColumns.add(jc);
 		return this;
+	}
+
+	public boolean isOrderBy() {
+		return StringUtils.hasText(this.order);
 	}
 
 	@Data

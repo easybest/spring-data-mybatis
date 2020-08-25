@@ -28,6 +28,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.Version;
 
@@ -66,6 +67,7 @@ public class Customer implements Serializable {
 	@Version
 	private Long version;
 
+	@OrderBy("name desc")
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "t_customer_goods",
 			joinColumns = { @JoinColumn(name = "customer_firstname", referencedColumnName = "firstname"),
