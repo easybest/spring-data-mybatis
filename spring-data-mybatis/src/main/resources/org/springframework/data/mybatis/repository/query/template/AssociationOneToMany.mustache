@@ -4,4 +4,7 @@
         {{^-first}} AND {{/-first}}
         {{name}} = #{ {{referencedColumnName}} }
     {{/collection.joinColumns}}
+    {{#collection.orderBy}}
+    ORDER BY {{collection.order}}
+    {{/collection.orderBy}}
 </select>

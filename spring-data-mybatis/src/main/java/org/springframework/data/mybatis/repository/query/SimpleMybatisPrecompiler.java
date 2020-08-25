@@ -39,6 +39,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.SequenceGenerators;
 
@@ -383,6 +384,18 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 				Collection collection = new Collection().setProperty(inverse.getName())
 						.setOfType(inverse.getActualType().getName())
 						.setTargetTable(targetEntity.getTable().getFullName());
+
+				OrderBy orderBy = inverse.findAnnotation(OrderBy.class);
+				if (null != orderBy) {
+					if (StringUtils.hasText(orderBy.value())) {
+						collection.setOrder(orderBy.value());
+					}
+					else if (targetEntity.hasIdProperty() && !targetEntity.hasCompositeId()) {
+						collection.setOrder(
+								targetEntity.getIdProperty().getColumn().getName().render(this.dialect) + " ASC");
+					}
+				}
+
 				ManyToMany manyToMany = inverse.findAnnotation(ManyToMany.class);
 				if (null != manyToMany) {
 					collection.setManyToMany(true).setFetch(manyToMany.fetch().name().toLowerCase());

@@ -9,4 +9,7 @@
         {{^-first}} AND {{/-first}}
         {{collection.joinTable.tableName}}.{{name}} = #{ {{referencedColumnName}} }
     {{/collection.joinTable.joinColumns}}
+    {{#collection.orderBy}}
+        ORDER BY {{collection.order}}
+    {{/collection.orderBy}}
 </select>

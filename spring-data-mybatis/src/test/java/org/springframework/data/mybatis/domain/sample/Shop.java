@@ -25,6 +25,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -83,6 +84,7 @@ public class Shop extends Audit<Long, Long> {
 	@Embedded
 	private Address address;
 
+	@OrderBy("name asc")
 	@OneToMany(fetch = FetchType.EAGER)
 	@JoinColumn(referencedColumnName = "id", name = "shop_id")
 	private List<Goods> goods = Collections.emptyList();
