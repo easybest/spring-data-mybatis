@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.persistence.EmbeddedId;
@@ -123,24 +124,27 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		String xml = this.doPrecompile();
 
 		if (StringUtils.hasText(xml)) {
-
-			xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-					+ "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"https://mybatis.org/dtd/mybatis-3-mapper.dtd\">\n"
-					+ "<mapper namespace=\"" + this.namespace + "\">\n" + xml + "\n</mapper>";
-			if (log.isDebugEnabled()) {
-				log.debug(xml);
-			}
-			try (InputStream inputStream = new ByteArrayInputStream(xml.getBytes())) {
-				XMLMapperBuilder mapperBuilder = new XMLMapperBuilder(inputStream, this.configuration,
-						this.namespace.replace('.', '/') + this.getResourceSuffix(),
-						this.configuration.getSqlFragments());
-				mapperBuilder.parse();
-			}
-			catch (IOException ex) {
-				throw new MappingException(ex.getMessage(), ex);
-			}
+			this.compileMapper(this.namespace, xml);
 		}
 
+	}
+
+	protected void compileMapper(String namespace, String content) {
+		String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+				+ "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"https://mybatis.org/dtd/mybatis-3-mapper.dtd\">\n"
+				+ "<mapper namespace=\"" + namespace + "\">\n" + content + "\n</mapper>";
+		if (log.isDebugEnabled()) {
+			log.debug(xml);
+		}
+		try (InputStream inputStream = new ByteArrayInputStream(xml.getBytes())) {
+			XMLMapperBuilder mapperBuilder = new XMLMapperBuilder(inputStream, this.configuration,
+					this.namespace.replace('.', '/') + UUID.randomUUID().toString() + this.getResourceSuffix(),
+					this.configuration.getSqlFragments());
+			mapperBuilder.parse();
+		}
+		catch (IOException ex) {
+			throw new MappingException(ex.getMessage(), ex);
+		}
 	}
 
 	protected abstract String doPrecompile();

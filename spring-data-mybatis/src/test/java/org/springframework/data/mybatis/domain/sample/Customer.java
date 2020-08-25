@@ -16,12 +16,18 @@
 package org.springframework.data.mybatis.domain.sample;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.Lob;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.persistence.Version;
 
@@ -59,6 +65,13 @@ public class Customer implements Serializable {
 
 	@Version
 	private Long version;
+
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(name = "t_customer_goods",
+			joinColumns = { @JoinColumn(name = "customer_firstname", referencedColumnName = "firstname"),
+					@JoinColumn(name = "customer_lastname", referencedColumnName = "lastname") },
+			inverseJoinColumns = @JoinColumn(name = "goods_id", referencedColumnName = "id"))
+	private List<Goods> goods = Collections.emptyList();
 
 	public Customer(String firstname, String lastname) {
 		this.name = new Name(firstname, lastname);
