@@ -22,7 +22,14 @@
     {{/embeddedAssociations}}
     {{#associations}}
         <association property="{{property}}" javaType="{{javaType}}" fetchType="{{fetch}}"
-                     select="{{select}}" column="{{column}}"/>
+                     select="{{select}}" column="{ {{#joinColumns}}{{^-first}},{{/-first}}{{name}}={{name}}{{/joinColumns}} }"/>
     {{/associations}}
+    {{#collections}}
+    <collection property="{{property}}"
+                ofType="{{ofType}}"
+                select="{{select}}"
+            column="{ {{^manyToMany}}{{#joinColumns}}{{^-first}},{{/-first}}{{referencedColumnName}}={{referencedColumnName}}{{/joinColumns}}{{/manyToMany}}{{#manyToMany}}{{#joinTable.joinColumns}}{{^-first}},{{/-first}}{{referencedColumnName}}={{referencedColumnName}}{{/joinTable.joinColumns}}{{/manyToMany}} }"
+        fetchType="{{fetch}}"></collection>
+    {{/collections}}
 </resultMap>
 

@@ -15,16 +15,19 @@
  */
 package org.springframework.data.mybatis.domain.sample;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
 import lombok.Data;
@@ -65,6 +68,7 @@ public class Shop extends Audit<Long, Long> {
 	/**
 	 * Date <=> Unix timestamp.
 	 */
+	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "openingTime")
 	@JdbcType("BIGINT")
 	private Date openingTime;
@@ -79,10 +83,9 @@ public class Shop extends Audit<Long, Long> {
 	@Embedded
 	private Address address;
 
-	@ManyToMany
-	@JoinTable(name = "t_shop_goods", joinColumns = @JoinColumn(name = "shop_id", referencedColumnName = "id"),
-			inverseJoinColumns = @JoinColumn(name = "goods_id", referencedColumnName = "id"))
-	private List<Goods> goods;
+	@OneToMany(fetch = FetchType.EAGER)
+	@JoinColumn(referencedColumnName = "id", name = "shop_id")
+	private List<Goods> goods = Collections.emptyList();
 
 	public Shop(String name, String emailAddress) {
 		this.name = name;

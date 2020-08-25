@@ -17,44 +17,68 @@ package org.springframework.data.mybatis.mapping.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 /**
- * Association.
+ * Collection association.
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.1.0
  */
 @Data
 @Accessors(chain = true)
-public class Association implements Serializable {
+public class Collection implements Serializable {
 
 	private String property;
 
-	private String javaType;
+	private String ofType;
+
+	private String column;
 
 	private String select;
 
 	private String fetch;
 
-	private String targetTable;
+	private JoinTable joinTable;
 
 	private List<JoinColumn> joinColumns = new ArrayList<>();
 
-	private List<ColumnResult> results = new LinkedList<>();
+	private String targetTable;
 
-	public Association addResult(ColumnResult cr) {
-		this.results.add(cr);
+	private boolean manyToMany;
+
+	public Collection addJoinColumn(JoinColumn jc) {
+		this.joinColumns.add(jc);
 		return this;
 	}
 
-	public Association addJoinColumn(JoinColumn jc) {
-		this.joinColumns.add(jc);
-		return this;
+	@Data
+	@Accessors(chain = true)
+	public static class JoinTable {
+
+		private String tableName;
+
+		private List<JoinColumn> joinColumns = new ArrayList<>();
+
+		private List<JoinColumn> inverseJoinColumns = new ArrayList<>();
+
+		public JoinTable(String tableName) {
+			this.tableName = tableName;
+		}
+
+		public JoinTable addJoinColumn(JoinColumn jc) {
+			this.joinColumns.add(jc);
+			return this;
+		}
+
+		public JoinTable addInverseJoinColumns(JoinColumn jc) {
+			this.inverseJoinColumns.add(jc);
+			return this;
+		}
+
 	}
 
 	@Data

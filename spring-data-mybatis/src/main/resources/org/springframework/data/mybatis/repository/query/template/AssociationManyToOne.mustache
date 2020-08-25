@@ -1,0 +1,7 @@
+<select id="{{statementName}}" parameterType="map" resultMap="{{resultMap}}">
+    SELECT * FROM {{association.targetTable}} WHERE
+    {{#association.joinColumns}}
+        {{^-first}} AND {{/-first}}
+        {{referencedColumnName}} = #{ {{name}} }
+    {{/association.joinColumns}}
+</select>

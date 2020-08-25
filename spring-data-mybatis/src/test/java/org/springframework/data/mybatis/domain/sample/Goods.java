@@ -16,10 +16,12 @@
 package org.springframework.data.mybatis.domain.sample;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import org.springframework.data.mybatis.domain.Audit;
@@ -34,6 +36,7 @@ import org.springframework.data.mybatis.domain.Audit;
 @Table(name = "t_goods")
 @Data
 @Accessors(chain = true)
+@NoArgsConstructor
 public class Goods extends Audit<Long, Long> {
 
 	private String name;
@@ -42,9 +45,16 @@ public class Goods extends Audit<Long, Long> {
 
 	private String brand;
 
-	private Long categoryId;
+	@ManyToOne
+	@JoinColumn(name = "category_id", referencedColumnName = "id")
+	private Category category;
 
 	@ManyToOne
-	private Category category;
+	@JoinColumn(name = "shop_id", referencedColumnName = "id")
+	private Shop shop;
+
+	public Goods(String name) {
+		this.name = name;
+	}
 
 }

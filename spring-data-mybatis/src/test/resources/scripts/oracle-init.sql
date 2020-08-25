@@ -35,6 +35,7 @@ create table t_goods
     name             varchar(128) not null,
     inventory        number(8)    null,
     brand            varchar(32)  null,
+    shop_id          number(19)   null,
     created_by       number(19)   null,
     last_updated_by  number(19)   null,
     creation_date    timestamp    null,
@@ -62,11 +63,12 @@ create table t_shop
     version          number(19)   null,
     primary key (id)
 );
-create table t_shop_goods
+create table t_customer_goods
 (
-    shop_id  number(19) not null,
-    goods_id number(19) not null,
-    primary key (shop_id, goods_id)
+    customer_firstname varchar(32) not null,
+    customer_lastname  varchar(32) not null,
+    goods_id           number(19)  not null,
+    primary key (customer_firstname, customer_lastname, goods_id)
 );
 
 create sequence SEQ_SPRING_DATA_MYBATIS start with 1 increment by 1;

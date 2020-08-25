@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,7 +33,11 @@ import javax.persistence.EmbeddedId;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.SequenceGenerators;
@@ -55,6 +60,7 @@ import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.model.Association;
+import org.springframework.data.mybatis.mapping.model.Collection;
 import org.springframework.data.mybatis.mapping.model.Column;
 import org.springframework.data.mybatis.mapping.model.ColumnResult;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
@@ -163,7 +169,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		params.put("statementName", ResidentStatementName.BASE_COLUMN_LIST);
 		params.put("columns", this.mappingPropertyToColumn().values().stream()
 				.map(c -> c.getName().render(this.dialect)).collect(Collectors.joining(",")));
-		return render("BasicColumns", params);
+		return this.render("BasicColumns", params);
 	}
 
 	private String addQueryByExampleWhereClauseSQL() {
@@ -177,7 +183,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put("dialect", this.dialect);
 		scopes.put("replaceDotToUnderline", this.lambdaReplaceDotToUnderline());
 		scopes.put("regexLike", this.lambdaRegexLike());
-		return render("QueryByExampleWhereClause", scopes);
+		return this.render("QueryByExampleWhereClause", scopes);
 	}
 
 	private String addStandardSortSQL() {
@@ -192,7 +198,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 								entry.getValue().getName().render(this.dialect)))
 						.collect(Collectors.joining(",")));
 		scopes.put("lowercaseFunction", this.dialect.getLowercaseFunction());
-		return render("StandardSort", scopes);
+		return this.render("StandardSort", scopes);
 	}
 
 	private String addWhereClauseByFixedIdSQL() {
@@ -211,7 +217,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		else {
 			scopes.put("properties", this.findProperties());
 		}
-		return render("WhereClauseByFixedId", scopes);
+		return this.render("WhereClauseByFixedId", scopes);
 	}
 
 	private String addWhereClauseByEntitySQL() {
@@ -231,7 +237,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		else {
 			scopes.put("properties", this.findProperties());
 		}
-		return render("WhereClauseByEntity", scopes);
+		return this.render("WhereClauseByEntity", scopes);
 
 	}
 
@@ -251,7 +257,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		else {
 			scopes.put("properties", this.findProperties());
 		}
-		return render("WhereClauseById", scopes);
+		return this.render("WhereClauseById", scopes);
 	}
 
 	private String addWhereClauseByIdsSQL() {
@@ -268,7 +274,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			scopes.put("properties",
 					this.findProperties(this.mappingContext.getRequiredPersistentEntity(idProperty.getActualType())));
 		}
-		return render("WhereClauseByIds", scopes);
+		return this.render("WhereClauseByIds", scopes);
 
 	}
 
@@ -285,16 +291,6 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			if (pp.isAnnotationPresent(EmbeddedId.class) || pp.isEmbeddable()) {
 				MybatisPersistentEntity<?> embeddedEntity = this.mappingContext
 						.getRequiredPersistentEntity(pp.getActualType());
-
-				// Notice!!! will lost data :
-				// Association ass = new
-				// Association().setProperty(pp.getName()).setJavaType(pp.getType().getName());
-				// embeddedEntity.doWithProperties(
-				// (PropertyHandler<MybatisPersistentProperty>) epp ->
-				// ass.addResult(this.columnResult(epp)));
-				// ass.getResults().sort((o1, o2) -> o1.isPrimaryKey() ? -1 : 1);
-				// embeddedAssociations.add(ass);
-
 				embeddedEntity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) epp -> {
 					ColumnResult cr = this.columnResult(epp);
 					cr.setPrimaryKey(true);
@@ -308,13 +304,20 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		});
 		results.sort((o1, o2) -> o1.isPrimaryKey() ? -1 : 1);
 		List<Association> associations = new ArrayList<>();
+		List<Collection> collections = new ArrayList<>();
 		this.persistentEntity.doWithAssociations((AssociationHandler<MybatisPersistentProperty>) ass -> {
 			MybatisPersistentProperty inverse = ass.getInverse();
 			if (inverse.isAnnotationPresent(ManyToOne.class) || inverse.isAnnotationPresent(OneToOne.class)) {
 				MybatisPersistentEntity<?> targetEntity = this.mappingContext
 						.getRequiredPersistentEntity(inverse.getActualType());
+				Class<?> repositoryInterface = this.mappingContext.getRepositoryInterface(targetEntity.getType());
+				if (null == repositoryInterface) {
+					throw new MappingException(
+							"Could not find namespace for entity: " + targetEntity.getType().getName());
+				}
 				Association association = new Association().setProperty(inverse.getName())
-						.setJavaType(inverse.getActualType().getName());
+						.setJavaType(inverse.getActualType().getName())
+						.setTargetTable(targetEntity.getTable().getFullName());
 				String fetch = null;
 				ManyToOne manyToOne = inverse.findAnnotation(ManyToOne.class);
 				if (null != manyToOne) {
@@ -327,25 +330,166 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 					}
 				}
 				association.setFetch(fetch);
-				String column;
-				JoinColumn joinColumn = inverse.findAnnotation(JoinColumn.class);
-				if (null != joinColumn && StringUtils.hasText(joinColumn.name())) {
-					column = joinColumn.name();
+
+				List<Association.JoinColumn> joinColumns = new ArrayList<>();
+
+				JoinColumns joinColumnsAnn = inverse.findAnnotation(JoinColumns.class);
+				if (null != joinColumnsAnn && null != joinColumnsAnn.value() && joinColumnsAnn.value().length > 0) {
+					for (JoinColumn joinColumn : joinColumnsAnn.value()) {
+						joinColumns.add(new Association.JoinColumn(
+								StringUtils.hasText(joinColumn.name()) ? joinColumn.name()
+										: targetEntity.getTable().getName() + "_"
+												+ targetEntity.getIdProperty().getColumn().getName()
+														.render(this.dialect),
+								StringUtils.hasText(joinColumn.referencedColumnName())
+										? joinColumn.referencedColumnName() : this.persistentEntity.getIdProperty()
+												.getColumn().getName().render(this.dialect)));
+					}
 				}
-				else {
-					column = inverse.getName() + "_" + targetEntity.getRequiredIdProperty().getName();
+				JoinColumn joinColumnAnn = inverse.findAnnotation(JoinColumn.class);
+				if (null != joinColumnAnn) {
+					joinColumns
+							.add(new Association.JoinColumn(
+									StringUtils.hasText(joinColumnAnn.name()) ? joinColumnAnn.name()
+											: targetEntity.getTable().getName() + "_"
+													+ targetEntity.getIdProperty().getColumn().getName()
+															.render(this.dialect),
+									StringUtils.hasText(joinColumnAnn.referencedColumnName())
+											? joinColumnAnn.referencedColumnName() : this.persistentEntity
+													.getIdProperty().getColumn().getName().render(this.dialect)));
 				}
-				association.setColumn(column);
+
+				if (joinColumns.isEmpty()) {
+					joinColumns.add(new Association.JoinColumn(
+							targetEntity.getTable().getName() + "_"
+									+ targetEntity.getIdProperty().getColumn().getName().render(this.dialect),
+							this.persistentEntity.getIdProperty().getColumn().getName().render(this.dialect)));
+				}
+
+				association.setJoinColumns(joinColumns).setSelect(repositoryInterface.getName() + '.'
+						+ this.addAssociationManyToOne(repositoryInterface.getName(), association));
+
+				associations.add(association);
+			}
+
+			if (inverse.isAnnotationPresent(ManyToMany.class) || inverse.isAnnotationPresent(OneToMany.class)) {
+				MybatisPersistentEntity<?> targetEntity = this.mappingContext
+						.getRequiredPersistentEntity(inverse.getActualType());
 				Class<?> repositoryInterface = this.mappingContext.getRepositoryInterface(targetEntity.getType());
 				if (null == repositoryInterface) {
 					throw new MappingException(
 							"Could not find namespace for entity: " + targetEntity.getType().getName());
 				}
-				String select = repositoryInterface.getName() + "." + ResidentStatementName.GET_BY_ID;
-				association.setSelect(select);
-				associations.add(association);
-			}
+				Collection collection = new Collection().setProperty(inverse.getName())
+						.setOfType(inverse.getActualType().getName())
+						.setTargetTable(targetEntity.getTable().getFullName());
+				ManyToMany manyToMany = inverse.findAnnotation(ManyToMany.class);
+				if (null != manyToMany) {
+					collection.setManyToMany(true).setFetch(manyToMany.fetch().name().toLowerCase());
+					JoinTable joinTable = inverse.findAnnotation(JoinTable.class);
+					if (null != joinTable) {
+						Collection.JoinTable jt = new Collection.JoinTable(StringUtils.hasText(joinTable.name())
+								? joinTable.name() : (this.persistentEntity.getTable().getName() + "_"
+										+ targetEntity.getTable().getName()));
 
+						JoinColumn[] joinColumns = joinTable.joinColumns();
+						if (null == joinColumns || joinColumns.length == 0) {
+							jt.addJoinColumn(new Collection.JoinColumn(
+									this.persistentEntity.getTable().getName() + "_"
+											+ this.persistentEntity.getIdProperty().getColumn().getName()
+													.render(this.dialect),
+									this.persistentEntity.getIdProperty().getColumn().getName().render(this.dialect)));
+						}
+						else {
+							for (JoinColumn joinColumn : joinColumns) {
+								jt.addJoinColumn(new Collection.JoinColumn(joinColumn.name(),
+										joinColumn.referencedColumnName()));
+							}
+						}
+
+						JoinColumn[] inverseJoinColumns = joinTable.inverseJoinColumns();
+						if (null == inverseJoinColumns || inverseJoinColumns.length == 0) {
+							jt.addInverseJoinColumns(
+									new Collection.JoinColumn(
+											targetEntity.getTable().getName() + "_"
+													+ targetEntity.getIdProperty().getColumn().getName()
+															.render(this.dialect),
+											targetEntity.getIdProperty().getColumn().getName().render(this.dialect)));
+						}
+						else {
+							for (JoinColumn joinColumn : inverseJoinColumns) {
+								jt.addInverseJoinColumns(new Collection.JoinColumn(joinColumn.name(),
+										joinColumn.referencedColumnName()));
+							}
+						}
+						collection.setJoinTable(jt);
+					}
+					else {
+						collection.setJoinTable(new Collection.JoinTable(
+								this.persistentEntity.getTable().getName() + "_" + targetEntity.getTable().getName())
+										.addJoinColumn(new Collection.JoinColumn(
+												this.persistentEntity.getTable().getName() + "_"
+														+ this.persistentEntity.getIdProperty().getColumn().getName()
+																.render(this.dialect),
+												this.persistentEntity.getIdProperty().getColumn().getName()
+														.render(this.dialect)))
+										.addInverseJoinColumns(new Collection.JoinColumn(
+												targetEntity.getTable().getName() + "_"
+														+ targetEntity.getIdProperty().getColumn().getName()
+																.render(this.dialect),
+												targetEntity.getIdProperty().getColumn().getName()
+														.render(this.dialect))));
+					}
+					collection.setSelect(repositoryInterface.getName() + '.'
+							+ this.addAssociationManyToMany(repositoryInterface.getName(), collection));
+				}
+				else {
+					OneToMany oneToMany = inverse.findAnnotation(OneToMany.class);
+					if (null != oneToMany) {
+						collection.setManyToMany(false).setFetch(oneToMany.fetch().name().toLowerCase());
+
+						List<Collection.JoinColumn> joinColumns = new ArrayList<>();
+
+						JoinColumns joinColumnsAnn = inverse.findAnnotation(JoinColumns.class);
+						if (null != joinColumnsAnn && null != joinColumnsAnn.value()
+								&& joinColumnsAnn.value().length > 0) {
+							for (JoinColumn joinColumn : joinColumnsAnn.value()) {
+								joinColumns.add(new Collection.JoinColumn(
+										StringUtils.hasText(joinColumn.name()) ? joinColumn.name()
+												: this.persistentEntity.getTable().getName() + "_"
+														+ this.persistentEntity.getIdProperty().getColumn().getName()
+																.render(this.dialect),
+										StringUtils.hasText(joinColumn.referencedColumnName())
+												? joinColumn.referencedColumnName() : this.persistentEntity
+														.getIdProperty().getColumn().getName().render(this.dialect)));
+							}
+						}
+						JoinColumn joinColumnAnn = inverse.findAnnotation(JoinColumn.class);
+						if (null != joinColumnAnn) {
+							joinColumns.add(new Collection.JoinColumn(
+									StringUtils.hasText(joinColumnAnn.name()) ? joinColumnAnn.name()
+											: this.persistentEntity.getTable().getName() + "_"
+													+ this.persistentEntity.getIdProperty().getColumn().getName()
+															.render(this.dialect),
+									StringUtils.hasText(joinColumnAnn.referencedColumnName())
+											? joinColumnAnn.referencedColumnName() : this.persistentEntity
+													.getIdProperty().getColumn().getName().render(this.dialect)));
+						}
+
+						if (joinColumns.isEmpty()) {
+							joinColumns.add(new Collection.JoinColumn(
+									this.persistentEntity.getTable().getName() + "_"
+											+ this.persistentEntity.getIdProperty().getColumn().getName()
+													.render(this.dialect),
+									this.persistentEntity.getIdProperty().getColumn().getName().render(this.dialect)));
+						}
+
+						collection.setJoinColumns(joinColumns).setSelect(repositoryInterface.getName() + '.'
+								+ this.addAssociationOneToMany(repositoryInterface.getName(), collection));
+					}
+				}
+				collections.add(collection);
+			}
 		});
 
 		params.put("statementName", ResidentStatementName.RESULT_MAP);
@@ -353,8 +497,41 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		params.put("results", results);
 		params.put("embeddedAssociations", embeddedAssociations);
 		params.put("associations", associations);
-		return render("ResultMap", params);
+		params.put("collections", collections);
+		return this.render("ResultMap", params);
+	}
 
+	private String addAssociationManyToOne(String namespace, Association association) {
+		String statementName = "__association_" + UUID.randomUUID().toString();
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put("statementName", statementName);
+		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
+		scopes.put("association", association);
+		this.compileMapper(namespace, this.render("AssociationManyToOne", scopes));
+
+		return statementName;
+	}
+
+	private String addAssociationManyToMany(String namespace, Collection collection) {
+		String statementName = "__association_" + UUID.randomUUID().toString();
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put("statementName", statementName);
+		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
+		scopes.put("collection", collection);
+		this.compileMapper(namespace, this.render("AssociationManyToMany", scopes));
+
+		return statementName;
+	}
+
+	private String addAssociationOneToMany(String namespace, Collection collection) {
+		String statementName = "__association_" + UUID.randomUUID().toString();
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put("statementName", statementName);
+		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
+		scopes.put("collection", collection);
+		this.compileMapper(namespace, this.render("AssociationOneToMany", scopes));
+
+		return statementName;
 	}
 
 	private String addInsertStatement(boolean selective) {
@@ -452,12 +629,6 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		else {
 			throw new UnsupportedOperationException("unsupported generated value id strategy: " + gv.strategy());
 		}
-		// return String.format(
-		// "<selectKey keyProperty=\"%s\" keyColumn=\"%s\" order=\"%s\"
-		// resultType=\"%s\">%s</selectKey>",
-		// idProperty.getName(), idProperty.getColumn().getName().getText(), executeBefore
-		// ? "BEFORE" : "AFTER",
-		// idProperty.getType().getName(), sql);
 		result.put("order", executeBefore ? "BEFORE" : "AFTER");
 		result.put("keySql", sql);
 		result.put("keyType", idProperty.getType().getName());
@@ -491,7 +662,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put("statementName", ResidentStatementName.DELETE_BY_ID);
 		scopes.put("parameterType", this.persistentEntity.getIdClass().getName());
 		scopes.put("table", this.getTableName());
-		return render("DeleteById", scopes);
+		return this.render("DeleteById", scopes);
 	}
 
 	private String addDeleteByIdsStatement() {
@@ -501,7 +672,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put("statementName", ResidentStatementName.DELETE_BY_IDS);
 		scopes.put("table", this.getTableName());
-		return render("DeleteByIds", scopes);
+		return this.render("DeleteByIds", scopes);
 	}
 
 	private String addDeleteAllStatement() {
@@ -613,14 +784,14 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put("entityType", this.persistentEntity.getType().getName());
 		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
 
-		return render("FindByExample", scopes);
+		return this.render("FindByExample", scopes);
 	}
 
 	private String addFindByExampleWhereClauseSQL() {
 		if (this.configuration.getSqlFragments().containsKey(this.namespace + ".__example_where_clause")) {
 			return "";
 		}
-		return render("FindByExampleWhereClause", null);
+		return this.render("FindByExampleWhereClause", null);
 	}
 
 	Mustache.Lambda limitHandler() {

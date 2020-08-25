@@ -34,6 +34,7 @@ create table t_goods
     name             varchar(128) not null,
     inventory        int(8)       null,
     brand            varchar(32)  null,
+    shop_id          bigint       null,
     created_by       bigint       null,
     last_updated_by  bigint       null,
     creation_date    datetime     null,
@@ -61,10 +62,11 @@ create table t_shop
     version          bigint       null,
     primary key (id)
 );
-create table t_shop_goods
+create table t_customer_goods
 (
-    shop_id  bigint not null,
-    goods_id bigint not null,
-    primary key (shop_id, goods_id)
+    customer_firstname varchar(32) not null,
+    customer_lastname  varchar(32) not null,
+    goods_id           bigint      not null,
+    primary key (customer_firstname, customer_lastname, goods_id)
 );
 

@@ -1,0 +1,7 @@
+<select id="{{statementName}}" parameterType="map" resultMap="{{resultMap}}">
+    SELECT * FROM {{collection.targetTable}} WHERE
+    {{#collection.joinColumns}}
+        {{^-first}} AND {{/-first}}
+        {{name}} = #{ {{referencedColumnName}} }
+    {{/collection.joinColumns}}
+</select>
