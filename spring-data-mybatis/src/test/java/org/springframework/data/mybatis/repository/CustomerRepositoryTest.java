@@ -56,7 +56,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author JARVIS SONG
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("classpath:application-context.xml")
+@ContextConfiguration(locations = "classpath:config/namespace-application-context.xml")
 @Transactional
 public class CustomerRepositoryTest {
 
