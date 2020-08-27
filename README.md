@@ -37,7 +37,7 @@ Download the jar through Maven:
 <dependency>
   <groupId>io.easybest</groupId>
   <artifactId>spring-data-mybatis</artifactId>
-  <version>2.1.0.RELEASE</version>
+  <version>2.0.1.RELEASE</version>
 </dependency>
 ```
 
@@ -146,7 +146,7 @@ add the jar through Maven:
    <dependency>
        <groupId>io.easybest</groupId>
        <artifactId>spring-data-mybatis-boot-starter</artifactId>
-       <version>2.1.0.RELEASE</version>
+       <version>2.0.1.RELEASE</version>
    </dependency>
    ```
 
