@@ -5,6 +5,8 @@
 
 [Simplified Chinese](README_zh.md)
 
+[Documentation](https://easybest.github.io/spring-data-mybatis/)
+
 [Example Project](https://github.com/easybest/spring-data-mybatis-samples)
 
 The primary goal of the Spring Data project is to make it easier to build Spring-powered applications that use data access technologies. 
