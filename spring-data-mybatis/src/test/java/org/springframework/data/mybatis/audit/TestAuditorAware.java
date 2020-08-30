@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.annotation;
+package org.springframework.data.mybatis.audit;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.Optional;
+
+import org.springframework.data.domain.AuditorAware;
 
 /**
- * Declares a field as the one representing the principal that created the entity
- * containing the field.
+ * Test AuditorAware.
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.1
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
-public @interface CreatedBy {
+public class TestAuditorAware implements AuditorAware<Long> {
+
+	@Override
+	public Optional<Long> getCurrentAuditor() {
+		return Optional.of(1L);
+	}
 
 }

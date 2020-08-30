@@ -20,6 +20,7 @@ import org.w3c.dom.Element;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
+import org.springframework.data.auditing.config.AuditingHandlerBeanDefinitionParser;
 
 /**
  * {@link BeanDefinitionParser} for the {@code auditing} element.
@@ -29,8 +30,14 @@ import org.springframework.beans.factory.xml.ParserContext;
  */
 public class AuditingBeanDefinitionParser implements BeanDefinitionParser {
 
+	private final AuditingHandlerBeanDefinitionParser auditingHandlerParser = new AuditingHandlerBeanDefinitionParser(
+			BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME);
+
 	@Override
-	public BeanDefinition parse(Element element, ParserContext parserContext) {
+	public BeanDefinition parse(Element element, ParserContext parser) {
+
+		this.auditingHandlerParser.parse(element, parser);
+
 		return null;
 	}
 

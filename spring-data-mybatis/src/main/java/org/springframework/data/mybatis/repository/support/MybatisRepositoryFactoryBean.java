@@ -19,6 +19,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.auditing.AuditingHandler;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
@@ -47,6 +48,8 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 
 	private @Nullable MybatisMappingContext mappingContext;
 
+	private @Nullable AuditingHandler auditingHandler;
+
 	private EntityPathResolver entityPathResolver;
 
 	private EscapeCharacter escapeCharacter = EscapeCharacter.DEFAULT;
@@ -70,17 +73,18 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-		return this.createRepositoryFactory(this.mappingContext, this.sqlSessionTemplate);
+		return this.createRepositoryFactory(this.mappingContext, this.sqlSessionTemplate, this.auditingHandler);
 	}
 
 	private RepositoryFactorySupport createRepositoryFactory(MybatisMappingContext mappingContext,
-			SqlSessionTemplate sqlSessionTemplate) {
+			SqlSessionTemplate sqlSessionTemplate, AuditingHandler auditingHandler) {
 		Assert.state(null != this.mappingContext, "MybatisMappingContext must not be null!");
 		Assert.state(null != this.sqlSessionTemplate, "SqlSessionTemplate must not be null!");
 
 		MybatisRepositoryFactory repositoryFactory = new MybatisRepositoryFactory(mappingContext, sqlSessionTemplate);
 		repositoryFactory.setEntityPathResolver(this.entityPathResolver);
 		repositoryFactory.setEscapeCharacter(this.escapeCharacter);
+		repositoryFactory.setAuditingHandler(auditingHandler);
 		return repositoryFactory;
 	}
 
@@ -101,6 +105,10 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 	@Autowired
 	public void setEntityPathResolver(ObjectProvider<EntityPathResolver> resolver) {
 		this.entityPathResolver = resolver.getIfAvailable(() -> SimpleEntityPathResolver.INSTANCE);
+	}
+
+	public void setAuditingHandler(@Nullable AuditingHandler auditingHandler) {
+		this.auditingHandler = auditingHandler;
 	}
 
 }
