@@ -20,9 +20,16 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 /**
  * Basic Audit.
@@ -37,15 +44,21 @@ import lombok.NoArgsConstructor;
 @MappedSuperclass
 public abstract class Audit<AUDITOR, ID extends Serializable> extends Id<ID> {
 
+	@CreatedBy
 	@Column(name = "created_by")
 	private AUDITOR createdBy;
 
+	@CreatedDate
+	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "creation_date")
 	private Date creationDate;
 
+	@LastModifiedBy
 	@Column(name = "last_updated_by")
 	private AUDITOR lastUpdatedBy;
 
+	@LastModifiedDate
+	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "last_update_date")
 	private Date lastUpdateDate;
 

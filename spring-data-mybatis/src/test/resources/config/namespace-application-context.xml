@@ -7,9 +7,13 @@
 
 	<import resource="../infrastructure.xml"/>
 
-	<mybatis:repositories base-package="org.springframework.data.mybatis.repository.sample"/>
-
+	<mybatis:repositories
+			base-package="org.springframework.data.mybatis.repository.sample"/>
+	<mybatis:auditing auditor-aware-ref="auditorAware"/>
+	<bean id="auditorAware"
+		  class="org.springframework.data.mybatis.audit.TestAuditorAware"/>
 	<!-- Register custom DAO implementation explicitly -->
-	<bean id="userRepositoryImpl" class="org.springframework.data.mybatis.repository.sample.ShopRepositoryImpl"/>
+	<bean id="userRepositoryImpl"
+		  class="org.springframework.data.mybatis.repository.sample.ShopRepositoryImpl"/>
 
 </beans>

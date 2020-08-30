@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.mybatis.spring.SqlSessionTemplate;
 
+import org.springframework.data.auditing.AuditingHandler;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.stereotype.Repository;
@@ -39,8 +40,9 @@ public class SimpleMybatisExampleRepository<T, ID, EXAMPLE> extends SimpleMybati
 		implements MybatisRepositoryImplementation<T, ID>, MybatisExampleRepository<T, ID, EXAMPLE> {
 
 	public SimpleMybatisExampleRepository(MybatisEntityInformation<T, ID> entityInformation,
-			RepositoryInformation repositoryInformation, SqlSessionTemplate sqlSessionTemplate) {
-		super(entityInformation, repositoryInformation, sqlSessionTemplate);
+			RepositoryInformation repositoryInformation, SqlSessionTemplate sqlSessionTemplate,
+			AuditingHandler auditingHandler) {
+		super(entityInformation, repositoryInformation, sqlSessionTemplate, auditingHandler);
 	}
 
 	@Override
