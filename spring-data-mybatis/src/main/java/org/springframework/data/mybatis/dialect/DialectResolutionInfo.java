@@ -17,10 +17,9 @@ package org.springframework.data.mybatis.dialect;
 
 /**
  * Exposes information about the database and JDBC driver that can be used in resolving
- * the appropriate Dialect to use.
- * <p/>
- * The information here mimics part of the JDBC {@link java.sql.DatabaseMetaData}
- * contract, specifically the portions about database and driver names and versions.
+ * the appropriate Dialect to use. The information here mimics part of the JDBC
+ * {@link java.sql.DatabaseMetaData} contract, specifically the portions about database
+ * and driver names and versions.
  *
  * @author JARVIS SONG
  * @since 2.0.0
