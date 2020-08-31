@@ -17,10 +17,12 @@ package org.springframework.data.mybatis.repository.config;
 
 import org.w3c.dom.Element;
 
-import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
-import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.data.auditing.config.AuditingHandlerBeanDefinitionParser;
+import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mybatis.domain.support.MybatisAuditingHandler;
+import org.springframework.util.StringUtils;
 
 /**
  * {@link BeanDefinitionParser} for the {@code auditing} element.
@@ -28,17 +30,31 @@ import org.springframework.data.auditing.config.AuditingHandlerBeanDefinitionPar
  * @author JARVIS SONG
  * @since 2.0.0
  */
-public class AuditingBeanDefinitionParser implements BeanDefinitionParser {
+public class AuditingBeanDefinitionParser extends AuditingHandlerBeanDefinitionParser {
 
-	private final AuditingHandlerBeanDefinitionParser auditingHandlerParser = new AuditingHandlerBeanDefinitionParser(
-			BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME);
+	/**
+	 * Creates a new {@link AuditingHandlerBeanDefinitionParser} to point to a
+	 * {@link MappingContext} with the given bean name.
+	 * @param mappingContextBeanName must not be {@literal null} or empty.
+	 */
+	public AuditingBeanDefinitionParser(String mappingContextBeanName) {
+		super(mappingContextBeanName);
+	}
 
 	@Override
-	public BeanDefinition parse(Element element, ParserContext parser) {
+	protected Class<?> getBeanClass(Element element) {
+		return MybatisAuditingHandler.class;
+	}
 
-		this.auditingHandlerParser.parse(element, parser);
+	@Override
+	protected void doParse(Element element, BeanDefinitionBuilder builder) {
+		super.doParse(element, builder);
 
-		return null;
+		String sqlSessionTemplateRef = element.getAttribute("sql-session-template-ref");
+
+		if (StringUtils.hasText(sqlSessionTemplateRef)) {
+			builder.addPropertyReference("sqlSessionTemplate", sqlSessionTemplateRef);
+		}
 	}
 
 }

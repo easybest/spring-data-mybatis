@@ -13,25 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.repository.config;
+package org.springframework.data.mybatis.repository.query;
 
-import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
+import org.apache.ibatis.mapping.SqlCommandType;
+import org.mybatis.spring.SqlSessionTemplate;
 
 /**
- * Simple namespace handler for {@literal repositories} namespace.
+ * Will find statement from Mybatis Mapper xml file.
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.1
  */
-public class MybatisRepositoryNameSpaceHandler extends NamespaceHandlerSupport {
+public class MybatisDirectlyQuery extends AbstractMybatisQuery {
+
+	public MybatisDirectlyQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method) {
+		super(sqlSessionTemplate, method);
+	}
 
 	@Override
-	public void init() {
-		RepositoryBeanDefinitionParser repositoryBeanDefinitionParser = new RepositoryBeanDefinitionParser();
+	public SqlCommandType getSqlCommandType() {
+		return null;
+	}
 
-		registerBeanDefinitionParser("repositories", repositoryBeanDefinitionParser);
-		registerBeanDefinitionParser("auditing",
-				new AuditingBeanDefinitionParser(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME));
+	@Override
+	public String getStatementName() {
+		return this.method.getAnnotationValue("statement", this.method.getName());
 	}
 
 }

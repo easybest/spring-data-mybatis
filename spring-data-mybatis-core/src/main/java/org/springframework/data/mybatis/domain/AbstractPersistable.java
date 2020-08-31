@@ -31,6 +31,7 @@ import org.springframework.lang.Nullable;
  * auto-generation and implements {@link #equals(Object)} and {@link #hashCode()} based on
  * that id.
  *
+ * @param <PK> primary key type
  * @author JARVIS SONG
  * @since 2.0.1
  */
@@ -60,38 +61,30 @@ public abstract class AbstractPersistable<PK extends Serializable> implements Pe
 	}
 
 	@Override
-	public String toString() {
-		return String.format("Entity of type %s with id: %s", this.getClass().getName(), this.getId());
-	}
-
-	@Override
 	public boolean equals(Object obj) {
-
 		if (null == obj) {
 			return false;
 		}
-
 		if (this == obj) {
 			return true;
 		}
-
 		if (!this.getClass().equals(ProxyUtils.getUserClass(obj))) {
 			return false;
 		}
-
 		AbstractPersistable<?> that = (AbstractPersistable<?>) obj;
-
 		return null != this.getId() && this.getId().equals(that.getId());
 	}
 
 	@Override
 	public int hashCode() {
-
 		int hashCode = 17;
-
-		hashCode += null == this.getId() ? 0 : this.getId().hashCode() * 31;
-
+		hashCode += (null != this.getId()) ? this.getId().hashCode() * 31 : 0;
 		return hashCode;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("Entity of type %s with id: %s", this.getClass().getName(), this.getId());
 	}
 
 }

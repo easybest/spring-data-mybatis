@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.repository.config;
+package org.springframework.data.mybatis.domain.sample;
 
-import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+import lombok.Data;
+
+import org.springframework.data.mybatis.domain.LongId;
 
 /**
- * Simple namespace handler for {@literal repositories} namespace.
+ * Sample for User.
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.1
  */
-public class MybatisRepositoryNameSpaceHandler extends NamespaceHandlerSupport {
+@Entity
+@Table(name = "t_user")
+@Data
+public class User extends LongId {
 
-	@Override
-	public void init() {
-		RepositoryBeanDefinitionParser repositoryBeanDefinitionParser = new RepositoryBeanDefinitionParser();
-
-		registerBeanDefinitionParser("repositories", repositoryBeanDefinitionParser);
-		registerBeanDefinitionParser("auditing",
-				new AuditingBeanDefinitionParser(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME));
-	}
+	private String name;
 
 }

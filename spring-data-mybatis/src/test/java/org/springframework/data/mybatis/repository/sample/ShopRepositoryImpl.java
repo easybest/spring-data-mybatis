@@ -15,9 +15,14 @@
  */
 package org.springframework.data.mybatis.repository.sample;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.SqlSessionTemplate;
 
+import org.springframework.data.mybatis.domain.sample.Shop;
 import org.springframework.data.mybatis.repository.support.SqlSessionRepositorySupport;
 
 /**
@@ -34,7 +39,13 @@ public class ShopRepositoryImpl extends SqlSessionRepositorySupport implements S
 
 	@Override
 	protected String getNamespace() {
-		return ShopRepository.class.getName();
+		return Shop.class.getName();
+	}
+
+	@Override
+	public List<Shop> findByCustom(Long... ids) {
+		Map<String, Object> params = Collections.singletonMap("ids", ids);
+		return this.getSqlSession().selectList(this.getStatement("custom"), params);
 	}
 
 }

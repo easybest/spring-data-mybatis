@@ -33,8 +33,6 @@ import org.springframework.data.mybatis.dialect.pagination.LimitHandler;
 public abstract class Dialect {
 
 	protected Dialect() {
-		log.info("Using dialect: {}", this);
-
 	}
 
 	/**

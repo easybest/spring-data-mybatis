@@ -84,7 +84,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 		super(sqlSessionTemplate);
 		Assert.notNull(entityInformation, "MybatisEntityInformation must not be null.");
 		this.entityInformation = entityInformation;
-		this.namespace = repositoryInformation.getRepositoryInterface().getName();
+		this.namespace = entityInformation.getJavaType().getName();
 	}
 
 	@Override

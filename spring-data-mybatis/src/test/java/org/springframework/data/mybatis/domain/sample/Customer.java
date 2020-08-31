@@ -17,8 +17,10 @@ package org.springframework.data.mybatis.domain.sample;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -30,11 +32,18 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 /**
  * .
@@ -66,6 +75,24 @@ public class Customer implements Serializable {
 
 	@Version
 	private Long version;
+
+	@CreatedBy
+	@Column(name = "created_by")
+	private Long createdBy;
+
+	@CreatedDate
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "creation_date")
+	private Date creationDate;
+
+	@LastModifiedBy
+	@Column(name = "last_updated_by")
+	private Long lastUpdatedBy;
+
+	@LastModifiedDate
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "last_update_date")
+	private Date lastUpdateDate;
 
 	@OrderBy("name desc")
 	@ManyToMany(fetch = FetchType.EAGER)

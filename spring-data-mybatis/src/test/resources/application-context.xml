@@ -102,13 +102,4 @@
 		<property name="auditorAware" ref="auditorAware"/>
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
-	<bean id="mybatisAuditingHandlerFactory"
-		  class="org.springframework.beans.factory.config.ObjectFactoryCreatingFactoryBean">
-		<property name="targetBeanName" value="mybatisAuditingHandler"/>
-	</bean>
-	<bean id="auditingEntityListener"
-		  class="org.springframework.data.mybatis.domain.support.AuditingEntityListener">
-		<property name="auditingHandler" ref="mybatisAuditingHandlerFactory"/>
-	</bean>
-
 </beans>

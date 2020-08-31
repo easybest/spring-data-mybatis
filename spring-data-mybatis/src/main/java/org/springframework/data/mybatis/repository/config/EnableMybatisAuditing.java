@@ -42,21 +42,21 @@ public @interface EnableMybatisAuditing {
 	/**
 	 * Configures the {@link AuditorAware} bean to be used to lookup the current
 	 * principal.
-	 * @return
+	 * @return reference of {@link AuditorAware}
 	 */
 	String auditorAwareRef() default "";
 
 	/**
 	 * Configures whether the creation and modification dates are set. Defaults to
 	 * {@literal true}.
-	 * @return
+	 * @return result
 	 */
 	boolean setDates() default true;
 
 	/**
 	 * Configures whether the entity shall be marked as modified on creation. Defaults to
 	 * {@literal true}.
-	 * @return
+	 * @return result
 	 */
 	boolean modifyOnCreate() default true;
 
@@ -64,10 +64,14 @@ public @interface EnableMybatisAuditing {
 	 * Configures a {@link DateTimeProvider} bean name that allows customizing the
 	 * {@link org.joda.time.DateTime} to be used for setting creation and modification
 	 * dates.
-	 * @return
+	 * @return result
 	 */
 	String dateTimeProviderRef() default "";
 
+	/**
+	 * The reference of sqlSessionTemplate.
+	 * @return result
+	 */
 	String sqlSessionTemplateRef() default "";
 
 }

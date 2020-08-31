@@ -37,8 +37,7 @@ abstract class MybatisQueryMethodPrecompiler extends AbstractMybatisPrecompiler 
 
 	MybatisQueryMethodPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			AbstractMybatisQuery query) {
-		super(mappingContext, configuration, query.getQueryMethod().getNamespace(),
-				query.getQueryMethod().getEntityInformation().getJavaType());
+		super(mappingContext, configuration, query.getQueryMethod().getEntityInformation().getJavaType());
 
 		this.query = query;
 	}
@@ -89,7 +88,8 @@ abstract class MybatisQueryMethodPrecompiler extends AbstractMybatisPrecompiler 
 		MybatisQueryMethod method = this.query.getQueryMethod();
 
 		return String.format("%s=\"%s\"",
-				(null != method.getResultMap() || SELECT_ALL_FROM.matcher(sql).matches()) ? "resultMap" : "resultType",
+				(null != method.getResultMap() || SELECT_ALL_FROM.matcher(sql.toLowerCase()).matches()) ? "resultMap"
+						: "resultType",
 				((null != method.getResultMap()) ? method.getResultMap() : //
 						(SELECT_ALL_FROM.matcher(sql).matches() ? //
 								ResidentStatementName.RESULT_MAP : //

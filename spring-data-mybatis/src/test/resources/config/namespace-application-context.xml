@@ -9,7 +9,8 @@
 
 	<mybatis:repositories
 			base-package="org.springframework.data.mybatis.repository.sample"/>
-	<mybatis:auditing auditor-aware-ref="auditorAware"/>
+	<mybatis:auditing auditor-aware-ref="auditorAware"
+					  sql-session-template-ref="sqlSessionTemplate"/>
 	<bean id="auditorAware"
 		  class="org.springframework.data.mybatis.audit.TestAuditorAware"/>
 	<!-- Register custom DAO implementation explicitly -->

@@ -111,7 +111,7 @@ public class MybatisQueryMethod extends QueryMethod {
 				String.format("Modifying method must not contain %s!", Parameters.TYPES));
 		this.assertParameterNamesInAnnotatedQuery();
 
-		this.namespace = this.getAnnotationValue("namespace", metadata.getRepositoryInterface().getName());
+		this.namespace = this.getAnnotationValue("namespace", metadata.getDomainType().getTypeName());
 		this.statementName = this.getAnnotationValue("statement",
 				(method.getName() + UUID.randomUUID().toString().replace("-", "")));
 		this.countStatementName = this.getAnnotationValue("countStatement",
@@ -139,6 +139,11 @@ public class MybatisQueryMethod extends QueryMethod {
 	@Override
 	public MybatisEntityMetadata<?> getEntityInformation() {
 		return this.entityMetadata.get();
+	}
+
+	public boolean hasQueryAnnotation() {
+		Annotation annotation = AnnotatedElementUtils.findMergedAnnotation(this.method, Query.class);
+		return null != annotation;
 	}
 
 	@Override

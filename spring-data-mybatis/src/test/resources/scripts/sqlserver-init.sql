@@ -1,19 +1,23 @@
 drop table if exists t_category;
 drop table if exists t_goods;
 drop table if exists t_shop;
-drop table if exists t_shop_goods;
+drop table if exists t_customer_goods;
 drop table if exists t_customer;
 
 create table t_customer
 (
-    firstname     varchar(32)  not null,
-    lastname      varchar(32)  not null,
-    age           int          null,
-    gender        int          null,
-    constellation varchar(32)  null,
-    email_address varchar(128) null,
-    binary_data   binary       null,
-    version       bigint       null,
+    firstname        varchar(32)  not null,
+    lastname         varchar(32)  not null,
+    age              int          null,
+    gender           int          null,
+    constellation    varchar(32)  null,
+    email_address    varchar(128) null,
+    binary_data      binary       null,
+    version          bigint       null,
+    created_by       bigint       null,
+    last_updated_by  bigint       null,
+    creation_date    datetime     null,
+    last_update_date datetime     null,
     primary key (firstname, lastname)
 );
 

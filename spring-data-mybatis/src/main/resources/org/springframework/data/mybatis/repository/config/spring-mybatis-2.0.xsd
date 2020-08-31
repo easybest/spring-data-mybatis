@@ -1,57 +1,108 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <xsd:schema xmlns="http://www.springframework.org/schema/data/mybatis"
-            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-            xmlns:tool="http://www.springframework.org/schema/tool"
-            xmlns:repository="http://www.springframework.org/schema/data/repository"
-            targetNamespace="http://www.springframework.org/schema/data/mybatis"
-            elementFormDefault="qualified" attributeFormDefault="unqualified">
+			xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+			xmlns:tool="http://www.springframework.org/schema/tool"
+			xmlns:repository="http://www.springframework.org/schema/data/repository"
+			targetNamespace="http://www.springframework.org/schema/data/mybatis"
+			elementFormDefault="qualified" attributeFormDefault="unqualified">
 
-    <xsd:import namespace="http://www.springframework.org/schema/tool"/>
-    <xsd:import namespace="http://www.springframework.org/schema/context"/>
-    <xsd:import namespace="http://www.springframework.org/schema/data/repository"
-                schemaLocation="https://www.springframework.org/schema/data/repository/spring-repository.xsd"/>
+	<xsd:import namespace="http://www.springframework.org/schema/tool"/>
+	<xsd:import namespace="http://www.springframework.org/schema/context"/>
+	<xsd:import namespace="http://www.springframework.org/schema/data/repository"
+				schemaLocation="https://www.springframework.org/schema/data/repository/spring-repository.xsd"/>
 
-    <xsd:element name="repositories">
-        <xsd:complexType>
-            <xsd:complexContent>
-                <xsd:extension base="repository:repositories">
-                    <xsd:attributeGroup ref="repository:transactional-repository-attributes"/>
-                    <xsd:attribute name="sql-session-template-ref" type="sqlSessionTemplateRef"/>
-                    <xsd:attribute name="enable-default-transactions" type="xsd:boolean">
-                        <xsd:annotation>
-                            <xsd:documentation><![CDATA[
+	<xsd:element name="repositories">
+		<xsd:complexType>
+			<xsd:complexContent>
+				<xsd:extension base="repository:repositories">
+					<xsd:attributeGroup
+							ref="repository:transactional-repository-attributes"/>
+					<xsd:attribute name="sql-session-template-ref"
+								   type="sqlSessionTemplateRef"/>
+					<xsd:attribute name="enable-default-transactions" type="xsd:boolean">
+						<xsd:annotation>
+							<xsd:documentation><![CDATA[
    							Controls whether repositories get transactions enabled by default.
 							]]></xsd:documentation>
-                        </xsd:annotation>
-                    </xsd:attribute>
-                </xsd:extension>
-            </xsd:complexContent>
-        </xsd:complexType>
-    </xsd:element>
+						</xsd:annotation>
+					</xsd:attribute>
+				</xsd:extension>
+			</xsd:complexContent>
+		</xsd:complexType>
+	</xsd:element>
 
-    <xsd:element name="auditing">
-        <xsd:annotation>
-            <xsd:appinfo>
-                <tool:annotation>
-                    <tool:exports type="org.springframework.data.mybatis.domain.support.AuditingEntityListener"/>
-                    <tool:exports type="org.springframework.data.auditing.AuditingHandler"/>
-                </tool:annotation>
-            </xsd:appinfo>
-        </xsd:annotation>
-        <xsd:complexType>
-            <xsd:attributeGroup ref="repository:auditing-attributes"/>
-        </xsd:complexType>
-    </xsd:element>
+	<xsd:element name="auditing">
+		<xsd:annotation>
+			<xsd:appinfo>
+				<tool:annotation>
+					<tool:exports
+							type="org.springframework.data.mybatis.domain.support.AuditingEntityListener"/>
+					<tool:exports
+							type="org.springframework.data.mybatis.domain.support.MybatisAuditingHandler"/>
+				</tool:annotation>
+			</xsd:appinfo>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:attributeGroup ref="auditing-attributes"/>
+		</xsd:complexType>
+	</xsd:element>
 
-    <xsd:simpleType name="sqlSessionTemplateRef">
-        <xsd:annotation>
-            <xsd:appinfo>
-                <tool:annotation kind="ref">
-                    <tool:assignable-to type="org.mybatis.spring.SqlSessionTemplate"/>
-                </tool:annotation>
-            </xsd:appinfo>
-        </xsd:annotation>
-        <xsd:union memberTypes="xsd:string"/>
-    </xsd:simpleType>
+	<xsd:simpleType name="sqlSessionTemplateRef">
+		<xsd:annotation>
+			<xsd:appinfo>
+				<tool:annotation kind="ref">
+					<tool:assignable-to type="org.mybatis.spring.SqlSessionTemplate"/>
+				</tool:annotation>
+			</xsd:appinfo>
+		</xsd:annotation>
+		<xsd:union memberTypes="xsd:string"/>
+	</xsd:simpleType>
+
+
+	<xsd:attributeGroup name="auditing-attributes">
+		<xsd:attribute name="sql-session-template-ref"
+					   type="sqlSessionTemplateRef"/>
+		<xsd:attribute name="auditor-aware-ref">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[
+				References a bean of type AuditorAware to represent the current principal.
+				]]></xsd:documentation>
+				<xsd:appinfo>
+					<tool:annotation kind="ref">
+						<tool:assignable-to
+								type="org.springframework.data.domain.AuditorAware"/>
+					</tool:annotation>
+				</xsd:appinfo>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="set-dates" default="true" type="xsd:boolean">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[
+				Configures whether the creation and modification dates are set.
+				]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="date-time-provider-ref">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[
+				Configures a DateTimeProvider that allows customizing which DateTime shall be used for setting
+				creation and modification dates.
+				]]></xsd:documentation>
+				<xsd:appinfo>
+					<tool:annotation kind="ref">
+						<tool:assignable-to
+								type="org.springframework.data.jpa.domain.support.DateTimeProvider"/>
+					</tool:annotation>
+				</xsd:appinfo>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="modify-on-creation" default="true" type="xsd:boolean">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[
+				Configures whether the entity shall be marked as modified on creation.
+				]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+	</xsd:attributeGroup>
 
 </xsd:schema>
