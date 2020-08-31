@@ -46,7 +46,7 @@
 		<maven>3.5</maven>
 	</prerequisites>
 	<properties>
-		<revision>2.0.1.BUILD-SNAPSHOT</revision>
+		<revision>2.0.1.RELEASE</revision>
 		<disable.checks>false</disable.checks>
 		<main.basedir>${basedir}</main.basedir>
 		<spring-javaformat.version>0.0.24</spring-javaformat.version>
