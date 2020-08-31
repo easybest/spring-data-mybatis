@@ -53,7 +53,7 @@ public abstract class Dialect {
 
 	/**
 	 * Apply dialect-specific quoting.
-	 * <p/>
+	 *
 	 * By default, the incoming value is checked to see if its first character is the
 	 * back-tick (`). If so, the dialect specific quoting is applied.
 	 * @param name the value to be quoted.
