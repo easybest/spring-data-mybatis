@@ -5,7 +5,7 @@
 
 [Simplified Chinese](README_zh.md)
 
-[Documentation](https://easybest.github.io/spring-data-mybatis/)
+[Documentation](https://sdm.easybest.io)
 
 [Example Project](https://github.com/easybest/spring-data-mybatis-samples)
 
