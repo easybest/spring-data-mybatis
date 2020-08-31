@@ -68,4 +68,6 @@ public @interface EnableMybatisAuditing {
 	 */
 	String dateTimeProviderRef() default "";
 
+	String sqlSessionTemplateRef() default "";
+
 }

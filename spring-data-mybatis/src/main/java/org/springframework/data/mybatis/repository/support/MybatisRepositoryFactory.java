@@ -23,7 +23,6 @@ import java.util.stream.Stream;
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.data.auditing.AuditingHandler;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
@@ -55,8 +54,6 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 	private final MybatisMappingContext mappingContext;
 
 	private final SqlSessionTemplate sqlSessionTemplate;
-
-	private AuditingHandler auditingHandler;
 
 	private EntityPathResolver entityPathResolver;
 
@@ -101,18 +98,17 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
 	@Override
 	protected final MybatisRepositoryImplementation<?, ?> getTargetRepository(RepositoryInformation metadata) {
-		MybatisRepositoryImplementation<?, ?> repository = this.getTargetRepository(metadata, this.sqlSessionTemplate,
-				this.auditingHandler);
+		MybatisRepositoryImplementation<?, ?> repository = this.getTargetRepository(metadata, this.sqlSessionTemplate);
 		repository.setEscapeCharacter(this.escapeCharacter);
 		return repository;
 	}
 
 	protected MybatisRepositoryImplementation<?, ?> getTargetRepository(RepositoryInformation information,
-			SqlSessionTemplate sqlSessionTemplate, AuditingHandler auditingHandler) {
+			SqlSessionTemplate sqlSessionTemplate) {
 		MybatisEntityInformation<?, Serializable> entityInformation = this
 				.getEntityInformation(information.getDomainType());
 		Object repository = this.getTargetRepositoryViaReflection(information, entityInformation, information,
-				sqlSessionTemplate, auditingHandler);
+				sqlSessionTemplate);
 		Assert.isInstanceOf(MybatisRepositoryImplementation.class, repository);
 		return (MybatisRepositoryImplementation<?, ?>) repository;
 	}
@@ -149,10 +145,6 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
 	public void setEscapeCharacter(EscapeCharacter escapeCharacter) {
 		this.escapeCharacter = escapeCharacter;
-	}
-
-	public void setAuditingHandler(AuditingHandler auditingHandler) {
-		this.auditingHandler = auditingHandler;
 	}
 
 }

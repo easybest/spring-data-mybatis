@@ -311,10 +311,16 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			if (inverse.isAnnotationPresent(ManyToOne.class) || inverse.isAnnotationPresent(OneToOne.class)) {
 				MybatisPersistentEntity<?> targetEntity = this.mappingContext
 						.getRequiredPersistentEntity(inverse.getActualType());
+				String namespace;
 				Class<?> repositoryInterface = this.mappingContext.getRepositoryInterface(targetEntity.getType());
 				if (null == repositoryInterface) {
-					throw new MappingException(
-							"Could not find namespace for entity: " + targetEntity.getType().getName());
+					// throw new MappingException(
+					// "Could not find namespace for entity: " +
+					// targetEntity.getType().getName());
+					namespace = targetEntity.getClass().getName();
+				}
+				else {
+					namespace = repositoryInterface.getName();
 				}
 				Association association = new Association().setProperty(inverse.getName())
 						.setJavaType(inverse.getActualType().getName())
@@ -367,8 +373,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 							this.persistentEntity.getIdProperty().getColumn().getName().render(this.dialect)));
 				}
 
-				association.setJoinColumns(joinColumns).setSelect(repositoryInterface.getName() + '.'
-						+ this.addAssociationManyToOne(repositoryInterface.getName(), association));
+				association.setJoinColumns(joinColumns)
+						.setSelect(namespace + '.' + this.addAssociationManyToOne(namespace, association));
 
 				associations.add(association);
 			}
@@ -376,10 +382,17 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			if (inverse.isAnnotationPresent(ManyToMany.class) || inverse.isAnnotationPresent(OneToMany.class)) {
 				MybatisPersistentEntity<?> targetEntity = this.mappingContext
 						.getRequiredPersistentEntity(inverse.getActualType());
+
+				String namespace;
 				Class<?> repositoryInterface = this.mappingContext.getRepositoryInterface(targetEntity.getType());
 				if (null == repositoryInterface) {
-					throw new MappingException(
-							"Could not find namespace for entity: " + targetEntity.getType().getName());
+					// throw new MappingException(
+					// "Could not find namespace for entity: " +
+					// targetEntity.getType().getName());
+					namespace = targetEntity.getClass().getName();
+				}
+				else {
+					namespace = repositoryInterface.getName();
 				}
 				Collection collection = new Collection().setProperty(inverse.getName())
 						.setOfType(inverse.getActualType().getName())
@@ -453,8 +466,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 												targetEntity.getIdProperty().getColumn().getName()
 														.render(this.dialect))));
 					}
-					collection.setSelect(repositoryInterface.getName() + '.'
-							+ this.addAssociationManyToMany(repositoryInterface.getName(), collection));
+					collection.setSelect(namespace + '.' + this.addAssociationManyToMany(namespace, collection));
 				}
 				else {
 					OneToMany oneToMany = inverse.findAnnotation(OneToMany.class);
@@ -497,8 +509,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 									this.persistentEntity.getIdProperty().getColumn().getName().render(this.dialect)));
 						}
 
-						collection.setJoinColumns(joinColumns).setSelect(repositoryInterface.getName() + '.'
-								+ this.addAssociationOneToMany(repositoryInterface.getName(), collection));
+						collection.setJoinColumns(joinColumns)
+								.setSelect(namespace + '.' + this.addAssociationOneToMany(namespace, collection));
 					}
 				}
 				collections.add(collection);

@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 import org.mybatis.spring.SqlSessionTemplate;
 
-import org.springframework.data.auditing.AuditingHandler;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.domain.Page;
@@ -66,8 +65,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 
 	private EscapeCharacter escapeCharacter = EscapeCharacter.DEFAULT;
 
-	private AuditingHandler auditingHandler;
-
 	private final String namespace;
 
 	private static <T> Collection<T> toCollection(Iterable<T> ts) {
@@ -83,13 +80,11 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	}
 
 	public SimpleMybatisRepository(MybatisEntityInformation<T, ID> entityInformation,
-			RepositoryInformation repositoryInformation, SqlSessionTemplate sqlSessionTemplate,
-			AuditingHandler auditingHandler) {
+			RepositoryInformation repositoryInformation, SqlSessionTemplate sqlSessionTemplate) {
 		super(sqlSessionTemplate);
 		Assert.notNull(entityInformation, "MybatisEntityInformation must not be null.");
 		this.entityInformation = entityInformation;
 		this.namespace = repositoryInformation.getRepositoryInterface().getName();
-		this.auditingHandler = auditingHandler;
 	}
 
 	@Override
@@ -352,11 +347,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
 
 		this.entityInformation.initVersion(entity);
-
-		if (null != this.auditingHandler) {
-			this.auditingHandler.markCreated(entity);
-		}
-
 		this.insert(ResidentStatementName.INSERT, entity);
 		return entity;
 	}
@@ -366,9 +356,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	public <S extends T> S insertSelective(S entity) {
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
 		this.entityInformation.initVersion(entity);
-		if (null != this.auditingHandler) {
-			this.auditingHandler.markCreated(entity);
-		}
 		this.insert(ResidentStatementName.INSERT_SELECTIVE, entity);
 		return entity;
 	}
@@ -377,9 +364,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Transactional
 	public <S extends T> S update(S entity) {
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
-		if (null != this.auditingHandler) {
-			this.auditingHandler.markModified(entity);
-		}
 		this.update(ResidentStatementName.UPDATE, Collections.singletonMap(ResidentParameterName.ENTITY, entity));
 		return entity;
 	}
@@ -389,9 +373,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	public <S extends T> S update(ID id, S entity) {
 		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
-		if (null != this.auditingHandler) {
-			this.auditingHandler.markModified(entity);
-		}
 		Map<String, Object> params = new HashMap<>();
 		params.put(ResidentParameterName.ID, id);
 		params.put(ResidentParameterName.ENTITY, entity);
@@ -403,9 +384,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	@Transactional
 	public <S extends T> S updateSelective(S entity) {
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
-		if (null != this.auditingHandler) {
-			this.auditingHandler.markModified(entity);
-		}
+
 		this.update(ResidentStatementName.UPDATE_SELECTIVE,
 				Collections.singletonMap(ResidentParameterName.ENTITY, entity));
 		return entity;
@@ -416,9 +395,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	public <S extends T> S updateSelective(ID id, S entity) {
 		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
-		if (null != this.auditingHandler) {
-			this.auditingHandler.markModified(entity);
-		}
 		Map<String, Object> params = new HashMap<>();
 		params.put(ResidentParameterName.ID, id);
 		params.put(ResidentParameterName.ENTITY, entity);
