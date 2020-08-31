@@ -31,9 +31,11 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import org.springframework.data.mybatis.annotation.JdbcType;
@@ -47,8 +49,10 @@ import org.springframework.data.mybatis.domain.Audit;
  */
 @Entity
 @Table(name = "t_shop")
-@Data
+@Getter
+@Setter
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Accessors(chain = true)
 @NoArgsConstructor
 public class Shop extends Audit<Long, Long> {

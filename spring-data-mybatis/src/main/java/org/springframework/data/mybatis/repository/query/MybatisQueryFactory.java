@@ -51,6 +51,11 @@ enum MybatisQueryFactory {
 					method.getAnnotatedCountQuery(), evaluationContextProvider, PARSER);
 		}
 
+		// Query in mapper
+		if (method.hasQueryAnnotation()) {
+			return new MybatisDirectlyQuery(sqlSessionTemplate, method);
+		}
+
 		// Procedure query
 		if (method.isProcedureQuery()) {
 			return new StoredProcedureMybatisQuery(sqlSessionTemplate, method);

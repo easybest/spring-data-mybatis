@@ -25,8 +25,6 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport;
 import org.springframework.data.auditing.config.AuditingConfiguration;
-import org.springframework.data.config.ParsingUtils;
-import org.springframework.data.mybatis.domain.support.AuditingEntityListener;
 import org.springframework.data.mybatis.domain.support.MybatisAuditingHandler;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -36,7 +34,6 @@ import org.springframework.util.StringUtils;
  * annotation.
  *
  * @author JARVIS SONG
- * @since 2.0.1
  */
 class MybatisAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 
@@ -57,20 +54,6 @@ class MybatisAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 			registry.registerBeanDefinition(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME, //
 					new RootBeanDefinition(MybatisMappingContextFactoryBean.class));
 		}
-
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder.rootBeanDefinition(AuditingEntityListener.class);
-		builder.addPropertyValue("auditingHandler",
-				ParsingUtils.getObjectFactoryBeanDefinition(this.getAuditingHandlerBeanName(), null));
-		this.registerInfrastructureBeanWithId(builder.getRawBeanDefinition(), AuditingEntityListener.class.getName(),
-				registry);
-	}
-
-	@Override
-	public void registerBeanDefinitions(AnnotationMetadata annotationMetadata, BeanDefinitionRegistry registry) {
-		Assert.notNull(annotationMetadata, "AnnotationMetadata must not be null!");
-		Assert.notNull(registry, "BeanDefinitionRegistry must not be null!");
-
-		super.registerBeanDefinitions(annotationMetadata, registry);
 	}
 
 	@Override

@@ -24,7 +24,9 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -40,6 +42,8 @@ import org.springframework.data.annotation.LastModifiedDate;
  * @since 2.0.0
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @NoArgsConstructor
 @MappedSuperclass
 public abstract class Audit<AUDITOR, ID extends Serializable> extends Id<ID> {

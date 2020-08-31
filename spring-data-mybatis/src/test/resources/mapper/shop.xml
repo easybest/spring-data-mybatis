@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE mapper PUBLIC
+		"-//mybatis.org//DTD Mapper 3.0//EN"
+		"https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springframework.data.mybatis.domain.sample.Shop">
+	<select id="custom" resultMap="__result_map">
+		SELECT * FROM t_shop
+		<where>
+			(
+			<choose>
+				<when test="ids != null and ids.length > 0">
+					id IN
+					<foreach item="__item" index="__index" collection="ids" open="("
+							 separator="," close=")">#{__item}
+					</foreach>
+				</when>
+				<otherwise>0=1</otherwise>
+			</choose>
+			)
+		</where>
+	</select>
+</mapper>

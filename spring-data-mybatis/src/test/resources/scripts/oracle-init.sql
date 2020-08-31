@@ -1,20 +1,24 @@
 drop table t_category;
 drop table t_goods;
 drop table t_shop;
-drop table t_shop_goods;
+drop table t_customer_goods;
 drop table t_customer;
 drop sequence SEQ_SPRING_DATA_MYBATIS;
 
 create table t_customer
 (
-    firstname     varchar(32)  not null,
-    lastname      varchar(32)  not null,
-    age           number(4)    null,
-    gender        number(1)    null,
-    constellation varchar(32)  null,
-    email_address varchar(128) null,
-    binary_data   blob         null,
-    version       number(19)   null,
+    firstname        varchar(32)  not null,
+    lastname         varchar(32)  not null,
+    age              number(4)    null,
+    gender           number(1)    null,
+    constellation    varchar(32)  null,
+    email_address    varchar(128) null,
+    binary_data      blob         null,
+    version          number(19)   null,
+    created_by       number(19)   null,
+    last_updated_by  number(19)   null,
+    creation_date    timestamp    null,
+    last_update_date timestamp    null,
     primary key (firstname, lastname)
 );
 

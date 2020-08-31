@@ -41,6 +41,17 @@ import org.springframework.transaction.annotation.Transactional;
  */
 public interface CustomerRepository extends MybatisRepository<Customer, Name> {
 
+	/**
+	 * Will find statement from `customer.xml`.
+	 * @param firstname param
+	 * @return customers
+	 */
+	@Query
+	List<Customer> findByNameFirstnameLikeInMapper(@Param("firstname") String firstname);
+
+	@Query(statement = "specifyFindByFirstnameLike")
+	List<Customer> findByFirstnameLikeInMapper(@Param("firstname") String firstname);
+
 	List<Customer> findByNameFirstnameLike(String firstname);
 
 	long countByNameLastname(String lastname);

@@ -18,9 +18,10 @@ package org.springframework.data.mybatis.repository.config;
 import org.springframework.data.auditing.config.AuditingConfiguration;
 
 /**
- * .
+ * MybatisAuditingConfiguration.
  *
  * @author JARVIS SONG
+ * @since 2.0.1
  */
 public interface MybatisAuditingConfiguration extends AuditingConfiguration {
 

@@ -93,8 +93,10 @@ public class ShopRepositoryTests {
 
 		this.first = this.repository.saveSelective(this.first);
 		this.second = this.repository.save(this.second);
-		this.third = this.repository.save(this.third);
-		this.fourth = this.repository.save(this.fourth);
+		// this.third = this.repository.save(this.third);
+		// this.fourth = this.repository.save(this.fourth);
+
+		this.repository.saveAll(Arrays.asList(this.third, this.fourth));
 
 		this.id = this.first.getId();
 
@@ -441,6 +443,14 @@ public class ShopRepositoryTests {
 
 		this.flushTestShops();
 		Collection<Shop> result = this.repository.findByIdIn(this.first.getId(), this.second.getId());
+		assertThat(result).containsOnly(this.first, this.second);
+	}
+
+	@Test
+	public void invokesQueryCustomCorrectly() {
+
+		this.flushTestShops();
+		List<Shop> result = this.repository.findByCustom(this.first.getId(), this.second.getId());
 		assertThat(result).containsOnly(this.first, this.second);
 	}
 

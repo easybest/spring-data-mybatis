@@ -22,11 +22,13 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.context.PersistentEntities;
+import org.springframework.util.Assert;
 
 /**
- * .
+ * Mybatis auditing handler.
  *
  * @author JARVIS SONG
+ * @since 2.0.1
  */
 public class MybatisAuditingHandler extends AuditingHandler {
 
@@ -45,7 +47,11 @@ public class MybatisAuditingHandler extends AuditingHandler {
 		this.sqlSessionTemplate = sqlSessionTemplate;
 	}
 
-	public SqlSessionTemplate getSqlSessionTemplate() {
-		return sqlSessionTemplate;
+	@Override
+	public void afterPropertiesSet() {
+		super.afterPropertiesSet();
+		Assert.notNull(this.sqlSessionTemplate, "SqlSessionTemplate must not be null!");
+		this.sqlSessionTemplate.getConfiguration().addInterceptor(new AuditingInterceptor(this));
 	}
+
 }

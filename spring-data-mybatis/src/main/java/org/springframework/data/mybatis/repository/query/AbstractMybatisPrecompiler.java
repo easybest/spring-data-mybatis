@@ -81,17 +81,15 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
 			RepositoryInformation repositoryInformation) {
 
-		this(mappingContext, configuration, repositoryInformation.getRepositoryInterface().getName(),
-				repositoryInformation.getDomainType());
+		this(mappingContext, configuration, repositoryInformation.getDomainType());
 
 		this.repositoryInterface = repositoryInformation.getRepositoryInterface();
 	}
 
-	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, String namespace,
-			Class<?> domainType) {
+	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Class<?> domainType) {
 		this.mappingContext = mappingContext;
 		this.configuration = configuration;
-		this.namespace = namespace;
+		this.namespace = domainType.getName();
 		this.persistentEntity = mappingContext.getRequiredPersistentEntity(domainType);
 		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(
 				new DatabaseMetaDataDialectResolutionInfoAdapter(configuration.getEnvironment().getDataSource()));

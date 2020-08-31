@@ -238,6 +238,26 @@ public class CustomerRepositoryTest {
 	}
 
 	@Test
+	public void executesQueryInMapperCorrectly() {
+
+		this.flushTestCustomers();
+
+		List<Customer> result = this.repository.findByNameFirstnameLikeInMapper("Da");
+
+		Assertions.assertThat(result).containsOnly(this.third);
+	}
+
+	@Test
+	public void executesQueryInMapperSpecifyCorrectly() {
+
+		this.flushTestCustomers();
+
+		List<Customer> result = this.repository.findByFirstnameLikeInMapper("Da");
+
+		Assertions.assertThat(result).containsOnly(this.third);
+	}
+
+	@Test
 	public void executesDerivedCountQueryToLong() {
 
 		this.flushTestCustomers();

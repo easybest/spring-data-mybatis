@@ -27,24 +27,21 @@ import org.apache.ibatis.plugin.Intercepts;
 import org.apache.ibatis.plugin.Invocation;
 import org.apache.ibatis.plugin.Signature;
 
-import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 
 /**
- * .
+ * Mybatis interceptor of auditing.
  *
  * @author JARVIS SONG
+ * @since 2.0.1
  */
-@Intercepts({ @Signature(type = Executor.class, method = "update", args = { MappedStatement.class, Object.class }), })
+@Intercepts({ @Signature(type = Executor.class, method = "update", args = { MappedStatement.class, Object.class }) })
 public class AuditingInterceptor implements Interceptor {
 
-	private MybatisAuditingHandler handler;
+	private final MybatisAuditingHandler handler;
 
-	public AuditingInterceptor(ObjectFactory<MybatisAuditingHandler> auditingHandler) {
-
-		if (null != auditingHandler) {
-			this.handler = auditingHandler.getObject();
-		}
+	public AuditingInterceptor(MybatisAuditingHandler auditingHandler) {
+		this.handler = auditingHandler;
 	}
 
 	@Override

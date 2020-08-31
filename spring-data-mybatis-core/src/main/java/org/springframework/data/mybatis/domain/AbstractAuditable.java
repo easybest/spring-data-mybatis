@@ -33,6 +33,8 @@ import org.springframework.lang.Nullable;
  * Abstract base class for auditable entities. Stores the audition values in persistent
  * fields.
  *
+ * @param <PK> primary key type
+ * @param <U> auditor
  * @author JARVIS SONG
  * @since 2.0.1
  */
@@ -66,8 +68,9 @@ public class AbstractAuditable<U, PK extends Serializable> extends AbstractPersi
 
 	@Override
 	public Optional<LocalDateTime> getCreatedDate() {
-		return null == this.createdDate ? Optional.empty()
-				: Optional.of(LocalDateTime.ofInstant(this.createdDate.toInstant(), ZoneId.systemDefault()));
+		return (null != this.createdDate)
+				? Optional.of(LocalDateTime.ofInstant(this.createdDate.toInstant(), ZoneId.systemDefault()))
+				: Optional.empty();
 	}
 
 	@Override
@@ -87,8 +90,9 @@ public class AbstractAuditable<U, PK extends Serializable> extends AbstractPersi
 
 	@Override
 	public Optional<LocalDateTime> getLastModifiedDate() {
-		return null == this.lastModifiedDate ? Optional.empty()
-				: Optional.of(LocalDateTime.ofInstant(this.lastModifiedDate.toInstant(), ZoneId.systemDefault()));
+		return (null != this.lastModifiedDate)
+				? Optional.of(LocalDateTime.ofInstant(this.lastModifiedDate.toInstant(), ZoneId.systemDefault()))
+				: Optional.empty();
 	}
 
 	@Override
