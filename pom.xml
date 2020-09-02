@@ -41,7 +41,7 @@
 		<maven>3.5</maven>
 	</prerequisites>
 	<properties>
-		<revision>2.0.1.RELEASE</revision>
+		<revision>2.0.2.BUILD-SNAPSHOT</revision>
 		<disable.checks>false</disable.checks>
 		<main.basedir>${basedir}</main.basedir>
 		<spring-javaformat.version>0.0.24</spring-javaformat.version>
@@ -57,6 +57,7 @@
 		<module>spring-data-mybatis</module>
 		<module>spring-data-mybatis-boot-starter</module>
 		<module>spring-data-mybatis-processor</module>
+		<module>spring-data-mybatis-querydsl</module>
 	</modules>
 	<build>
 		<pluginManagement>
@@ -205,18 +206,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 	<profiles>
@@ -273,7 +262,6 @@
 						</plugin>
 
 						<!-- Deploy to Sonatype OSS Nexus -->
-
 						<plugin>
 							<groupId>org.sonatype.plugins</groupId>
 							<artifactId>nexus-staging-maven-plugin</artifactId>
@@ -284,6 +272,18 @@
 								<nexusUrl>https://oss.sonatype.org/</nexusUrl>
 								<autoReleaseAfterClose>false</autoReleaseAfterClose>
 							</configuration>
+						</plugin>
+						<plugin>
+							<groupId>org.apache.maven.plugins</groupId>
+							<artifactId>maven-javadoc-plugin</artifactId>
+							<executions>
+								<execution>
+									<id>attach-javadocs</id>
+									<goals>
+										<goal>jar</goal>
+									</goals>
+								</execution>
+							</executions>
 						</plugin>
 					</plugins>
 

@@ -21,7 +21,6 @@ import javax.persistence.Embeddable;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 /**
  * .
@@ -31,7 +30,6 @@ import lombok.experimental.Accessors;
 @Embeddable
 @Data
 @NoArgsConstructor
-@Accessors(chain = true)
 public class Name implements Serializable {
 
 	private String firstname;

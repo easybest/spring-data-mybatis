@@ -6,9 +6,9 @@
 			<pattern>%d %5p [%t] %40.40c:%4L - %m%n</pattern>
 		</encoder>
 	</appender>
-
+	<logger name="com.querydsl.sql" level="debug"/>
 	<logger name="org.springframework.data" level="error"/>
-	<logger name="org.springframework.data.mybatis" level="debug"/>
+	<!--	<logger name="org.springframework.data.mybatis" level="debug"/>-->
 	<!--    <logger name="org.springframework.transaction" level="debug"/>-->
 	<!--    <logger name="org.springframework.jdbc.datasource" level="debug"/>-->
 	<!--    <logger name="org.springframework.data.repository.config" level="info"/>-->

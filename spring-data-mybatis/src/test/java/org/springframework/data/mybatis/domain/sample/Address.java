@@ -20,11 +20,9 @@ import javax.persistence.Embeddable;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 @Embeddable
 @Data
-@Accessors(chain = true)
 @NoArgsConstructor
 public class Address {
 

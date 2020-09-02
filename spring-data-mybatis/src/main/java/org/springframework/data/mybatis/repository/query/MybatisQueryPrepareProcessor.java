@@ -17,6 +17,7 @@ package org.springframework.data.mybatis.repository.query;
 
 import org.apache.ibatis.session.Configuration;
 
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.repository.core.support.QueryCreationListener;
 import org.springframework.data.repository.query.RepositoryQuery;
@@ -33,22 +34,26 @@ public class MybatisQueryPrepareProcessor implements QueryCreationListener<Repos
 
 	private final Configuration configuration;
 
-	public MybatisQueryPrepareProcessor(MybatisMappingContext mappingContext, Configuration configuration) {
+	private final Dialect dialect;
+
+	public MybatisQueryPrepareProcessor(MybatisMappingContext mappingContext, Configuration configuration,
+			Dialect dialect) {
 		this.mappingContext = mappingContext;
 		this.configuration = configuration;
+		this.dialect = dialect;
 	}
 
 	@Override
 	public void onCreation(RepositoryQuery query) {
 
 		if (query instanceof SimpleMybatisQuery) {
-			new SimpleMybatisQueryPrecompiler(this.mappingContext, this.configuration, (SimpleMybatisQuery) query)
-					.precompile();
+			new SimpleMybatisQueryPrecompiler(this.mappingContext, this.configuration, this.dialect,
+					(SimpleMybatisQuery) query).precompile();
 			return;
 		}
 		if (query instanceof PartTreeMybatisQuery) {
-			new PartTreeMyBatisQueryPrecompiler(this.mappingContext, this.configuration, (PartTreeMybatisQuery) query)
-					.precompile();
+			new PartTreeMyBatisQueryPrecompiler(this.mappingContext, this.configuration, this.dialect,
+					(PartTreeMybatisQuery) query).precompile();
 			return;
 		}
 

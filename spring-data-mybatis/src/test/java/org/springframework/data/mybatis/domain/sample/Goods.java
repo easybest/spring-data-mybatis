@@ -21,8 +21,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 import org.springframework.data.mybatis.domain.Audit;
 
@@ -35,7 +35,7 @@ import org.springframework.data.mybatis.domain.Audit;
 @Entity
 @Table(name = "t_goods")
 @Data
-@Accessors(chain = true)
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class Goods extends Audit<Long, Long> {
 

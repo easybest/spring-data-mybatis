@@ -20,6 +20,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mapping.context.MappingContext;
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
 import org.springframework.data.querydsl.EntityPathResolver;
@@ -47,6 +48,8 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 
 	private @Nullable MybatisMappingContext mappingContext;
 
+	private @Nullable Dialect dialect;
+
 	private EntityPathResolver entityPathResolver;
 
 	private EscapeCharacter escapeCharacter = EscapeCharacter.DEFAULT;
@@ -70,15 +73,16 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-		return this.createRepositoryFactory(this.mappingContext, this.sqlSessionTemplate);
+		return this.createRepositoryFactory(this.mappingContext, this.sqlSessionTemplate, this.dialect);
 	}
 
 	private RepositoryFactorySupport createRepositoryFactory(MybatisMappingContext mappingContext,
-			SqlSessionTemplate sqlSessionTemplate) {
+			SqlSessionTemplate sqlSessionTemplate, Dialect dialect) {
 		Assert.state(null != this.mappingContext, "MybatisMappingContext must not be null!");
 		Assert.state(null != this.sqlSessionTemplate, "SqlSessionTemplate must not be null!");
 
-		MybatisRepositoryFactory repositoryFactory = new MybatisRepositoryFactory(mappingContext, sqlSessionTemplate);
+		MybatisRepositoryFactory repositoryFactory = new MybatisRepositoryFactory(mappingContext, sqlSessionTemplate,
+				dialect);
 		repositoryFactory.setEntityPathResolver(this.entityPathResolver);
 		repositoryFactory.setEscapeCharacter(this.escapeCharacter);
 		return repositoryFactory;
@@ -101,6 +105,10 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 	@Autowired
 	public void setEntityPathResolver(ObjectProvider<EntityPathResolver> resolver) {
 		this.entityPathResolver = resolver.getIfAvailable(() -> SimpleEntityPathResolver.INSTANCE);
+	}
+
+	public void setDialect(@Nullable Dialect dialect) {
+		this.dialect = dialect;
 	}
 
 }

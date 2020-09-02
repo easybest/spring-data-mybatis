@@ -63,10 +63,22 @@ public class GoodsRepositoryTest {
 		this.food = new Category("food");
 		this.drinks = new Category("drinks");
 
-		this.first = new Goods("biscuits").setBrand("Oreo").setInventory(980).setCategory(this.food);
-		this.second = new Goods("chips").setBrand("Lay's").setInventory(301).setCategory(this.food);
-		this.third = new Goods("coke").setBrand("Coca-Cola").setInventory(890).setCategory(this.drinks);
-		this.fourth = new Goods("soda water").setBrand("Watson").setInventory(120).setCategory(this.drinks);
+		this.first = new Goods("biscuits");
+		this.first.setBrand("Oreo");
+		this.first.setInventory(980);
+		this.first.setCategory(this.food);
+		this.second = new Goods("chips");
+		this.second.setBrand("Lay's");
+		this.second.setInventory(301);
+		this.second.setCategory(this.food);
+		this.third = new Goods("coke");
+		this.third.setBrand("Coca-Cola");
+		this.third.setInventory(890);
+		this.third.setCategory(this.drinks);
+		this.fourth = new Goods("soda water");
+		this.fourth.setBrand("Watson");
+		this.fourth.setInventory(120);
+		this.fourth.setCategory(this.drinks);
 	}
 
 	protected void flushTestGoods() {

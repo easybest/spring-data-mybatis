@@ -54,6 +54,7 @@ import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.annotation.Condition;
 import org.springframework.data.mybatis.annotation.Conditions;
 import org.springframework.data.mybatis.annotation.Example;
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 import org.springframework.data.mybatis.dialect.pagination.SQLServer2005LimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.SQLServer2012LimitHandler;
@@ -81,9 +82,9 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 
 	static final String DEFAULT_SEQUENCE_NAME = "seq_spring_data_mybatis";
 
-	SimpleMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
+	SimpleMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
 			RepositoryInformation repositoryInformation) {
-		super(mappingContext, configuration, repositoryInformation);
+		super(mappingContext, configuration, dialect, repositoryInformation);
 	}
 
 	@Override

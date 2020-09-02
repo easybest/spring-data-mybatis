@@ -23,7 +23,6 @@ import javax.persistence.MappedSuperclass;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 /**
  * Basic Id.
@@ -33,7 +32,6 @@ import lombok.experimental.Accessors;
  * @since 2.0.0
  */
 @Data
-@Accessors(chain = true)
 @NoArgsConstructor
 @MappedSuperclass
 public abstract class Id<T extends Serializable> implements Serializable {

@@ -36,7 +36,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import lombok.experimental.Accessors;
 
 import org.springframework.data.mybatis.annotation.JdbcType;
 import org.springframework.data.mybatis.domain.Audit;
@@ -53,9 +52,10 @@ import org.springframework.data.mybatis.domain.Audit;
 @Setter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-@Accessors(chain = true)
 @NoArgsConstructor
 public class Shop extends Audit<Long, Long> {
+
+	private static final long serialVersionUID = -5847896988104735259L;
 
 	@Version
 	private Integer version;

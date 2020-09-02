@@ -82,14 +82,26 @@ public class CustomerRepositoryTest {
 	@Before
 	public void setUp() {
 
-		this.first = new Customer("Oliver", "Gierke").setAge(28).setGender(Gender.MALE)
-				.setConstellation(Constellation.Aquarius).setEmailAddress("gierke@synyx.de");
-		this.second = new Customer("Joachim", "Arrasz").setAge(35).setGender(Gender.FEMALE)
-				.setConstellation(Constellation.Cancer).setEmailAddress("arrasz@synyx.de");
-		this.third = new Customer("Dave", "Matthews").setAge(43).setGender(Gender.MALE)
-				.setConstellation(Constellation.Cancer).setEmailAddress("no@email.com");
-		this.fourth = new Customer("kevin", "raymond").setAge(31).setGender(Gender.FEMALE)
-				.setConstellation(Constellation.Libra).setEmailAddress("no@email.com");
+		this.first = new Customer("Oliver", "Gierke");
+		this.first.setAge(28);
+		this.first.setGender(Gender.MALE);
+		this.first.setConstellation(Constellation.Aquarius);
+		this.first.setEmailAddress("gierke@synyx.de");
+		this.second = new Customer("Joachim", "Arrasz");
+		this.second.setAge(35);
+		this.second.setGender(Gender.FEMALE);
+		this.second.setConstellation(Constellation.Cancer);
+		this.second.setEmailAddress("arrasz@synyx.de");
+		this.third = new Customer("Dave", "Matthews");
+		this.third.setAge(43);
+		this.third.setGender(Gender.MALE);
+		this.third.setConstellation(Constellation.Cancer);
+		this.third.setEmailAddress("no@email.com");
+		this.fourth = new Customer("kevin", "raymond");
+		this.fourth.setAge(31);
+		this.fourth.setGender(Gender.FEMALE);
+		this.fourth.setConstellation(Constellation.Libra);
+		this.fourth.setEmailAddress("no@email.com");
 
 	}
 
@@ -594,7 +606,9 @@ public class CustomerRepositoryTest {
 	public void executesFindByNullLastnameCorrectly() {
 
 		this.flushTestCustomers();
-		Customer forthUser = this.repository.save(new Customer("Foo", "Bar").setEmailAddress(null));
+		Customer customer = new Customer("Foo", "Bar");
+		customer.setEmailAddress(null);
+		Customer forthUser = this.repository.save(customer);
 
 		assertThat(this.repository.findByEmailAddressNull()).containsOnly(forthUser);
 	}

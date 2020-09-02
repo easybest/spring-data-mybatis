@@ -19,6 +19,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import org.springframework.data.mybatis.domain.LongId;
 
@@ -31,6 +32,7 @@ import org.springframework.data.mybatis.domain.LongId;
 @Entity
 @Table(name = "t_user")
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class User extends LongId {
 
 	private String name;
