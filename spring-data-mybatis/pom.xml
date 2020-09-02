@@ -63,6 +63,16 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>commons-logging</groupId>
+					<artifactId>commons-logging</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
 		</dependency>
 		<dependency>
@@ -102,6 +112,21 @@
 			<scope>compile</scope>
 			<optional>true</optional>
 		</dependency>
+
+		<!-- QueryDsl -->
+		<dependency>
+			<groupId>io.easybest</groupId>
+			<artifactId>spring-data-mybatis-querydsl</artifactId>
+			<version>${revision}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.querydsl</groupId>
+			<artifactId>querydsl-sql</artifactId>
+			<version>${querydsl}</version>
+			<optional>true</optional>
+		</dependency>
+
 		<dependency>
 			<groupId>com.zaxxer</groupId>
 			<artifactId>HikariCP</artifactId>

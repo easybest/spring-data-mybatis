@@ -34,6 +34,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.domain.sample.Address;
+import org.springframework.data.mybatis.domain.sample.QShop;
 import org.springframework.data.mybatis.domain.sample.Shop;
 import org.springframework.data.mybatis.repository.sample.ShopRepository;
 import org.springframework.test.context.ContextConfiguration;
@@ -68,25 +69,35 @@ public class ShopRepositoryTests {
 	@Before
 	public void setUp() {
 
-		this.first = new Shop("Walmart", "shop@walmart.com").setActive(true).setDuration(9)
-				.setIntroduce("I am the 300th shop of Walmart.").setAddress(new Address("USA", "NY", "Queen", "351"))
-				.setBrandEstablishmentTime(new Calendar.Builder().setDate(1962, 1, 1).build().getTime().getTime())
-				.setOpeningTime(new Calendar.Builder().setDate(2010, 10, 1).build().getTime());
+		this.first = new Shop("Walmart", "shop@walmart.com");
+		this.first.setActive(true);
+		this.first.setDuration(9);
+		this.first.setIntroduce("I am the 300th shop of Walmart.");
+		this.first.setAddress(new Address("USA", "NY", "Queen", "351"));
+		this.first.setBrandEstablishmentTime(new Calendar.Builder().setDate(1962, 1, 1).build().getTime().getTime());
+		this.first.setOpeningTime(new Calendar.Builder().setDate(2010, 10, 1).build().getTime());
 
-		this.second = new Shop("Costco", "costco@gmail.com").setActive(false).setDuration(9)
-				.setIntroduce("I am the 20th shop of Costco.").setAddress(new Address("USA", "WA", "Issaquah", "908"))
-				.setBrandEstablishmentTime(new Calendar.Builder().setDate(1976, 1, 1).build().getTime().getTime())
-				.setOpeningTime(new Calendar.Builder().setDate(2009, 5, 15).build().getTime());
+		this.second = new Shop("Costco", "costco@gmail.com");
+		this.second.setActive(false);
+		this.second.setDuration(9);
+		this.second.setIntroduce("I am the 20th shop of Costco.");
+		this.second.setAddress(new Address("USA", "WA", "Issaquah", "908"));
+		this.second.setBrandEstablishmentTime(new Calendar.Builder().setDate(1976, 1, 1).build().getTime().getTime());
+		this.second.setOpeningTime(new Calendar.Builder().setDate(2009, 5, 15).build().getTime());
 
-		this.third = new Shop("Carrefour", "carrefour@gmail.com").setActive(true).setDuration(12)
-				.setAddress(new Address("FR", "Boulogne", "Golden", "18"))
-				.setBrandEstablishmentTime(new Calendar.Builder().setDate(1959, 1, 1).build().getTime().getTime())
-				.setOpeningTime(new Calendar.Builder().setDate(2011, 6, 25).build().getTime());
+		this.third = new Shop("Carrefour", "carrefour@gmail.com");
+		this.third.setActive(true);
+		this.third.setDuration(12);
+		this.third.setAddress(new Address("FR", "Boulogne", "Golden", "18"));
+		this.third.setBrandEstablishmentTime(new Calendar.Builder().setDate(1959, 1, 1).build().getTime().getTime());
+		this.third.setOpeningTime(new Calendar.Builder().setDate(2011, 6, 25).build().getTime());
 
-		this.fourth = new Shop("Auchan", "shop@auchan.com").setActive(true).setDuration(11)
-				.setAddress(new Address("FR", "London", "Oushang", "93"))
-				.setBrandEstablishmentTime(new Calendar.Builder().setDate(1961, 1, 1).build().getTime().getTime())
-				.setOpeningTime(new Calendar.Builder().setDate(2010, 3, 15).build().getTime());
+		this.fourth = new Shop("Auchan", "shop@auchan.com");
+		this.fourth.setActive(true);
+		this.fourth.setDuration(11);
+		this.fourth.setAddress(new Address("FR", "London", "Oushang", "93"));
+		this.fourth.setBrandEstablishmentTime(new Calendar.Builder().setDate(1961, 1, 1).build().getTime().getTime());
+		this.fourth.setOpeningTime(new Calendar.Builder().setDate(2010, 3, 15).build().getTime());
 	}
 
 	protected void flushTestShops() {
@@ -474,6 +485,15 @@ public class ShopRepositoryTests {
 				this.second.getId());
 
 		assertThat(result).containsOnly(this.first, this.second);
+	}
+
+	@Test
+	public void testQuerydslFind() {
+		this.flushTestShops();
+
+		Iterable<Shop> shops = this.repository.findAll(QShop.shop.name.contains("re"));
+		assertThat(shops).hasSize(1);
+
 	}
 
 }

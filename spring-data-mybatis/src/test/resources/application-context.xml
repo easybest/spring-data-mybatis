@@ -31,6 +31,7 @@
 		</property>
 		<property name="evaluationContextProvider"
 				  ref="expressionEvaluationContextProvider"/>
+		<property name="dialect" ref="dialect"/>
 	</bean>
 
 	<bean id="goodsRepository"
@@ -41,6 +42,7 @@
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 		<property name="evaluationContextProvider"
 				  ref="expressionEvaluationContextProvider"/>
+		<property name="dialect" ref="dialect"/>
 	</bean>
 
 	<bean id="categoryRepository"
@@ -51,6 +53,7 @@
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 		<property name="evaluationContextProvider"
 				  ref="expressionEvaluationContextProvider"/>
+		<property name="dialect" ref="dialect"/>
 	</bean>
 
 	<bean id="customerRepository"
@@ -69,6 +72,7 @@
 				</constructor-arg>
 			</bean>
 		</property>
+		<property name="dialect" ref="dialect"/>
 	</bean>
 
 	<bean id="mappingContext"
@@ -87,6 +91,10 @@
 		</constructor-arg>
 	</bean>
 
+	<bean id="dialect"
+		  class="org.springframework.data.mybatis.dialect.DialectFactoryBean">
+		<constructor-arg ref="sqlSessionTemplate"/>
+	</bean>
 
 	<bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
 

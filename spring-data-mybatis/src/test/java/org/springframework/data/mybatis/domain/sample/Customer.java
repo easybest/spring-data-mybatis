@@ -38,7 +38,6 @@ import javax.persistence.Version;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -54,7 +53,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 @Table(name = "t_customer")
 @Data
 @NoArgsConstructor
-@Accessors(chain = true)
 public class Customer implements Serializable {
 
 	@EmbeddedId

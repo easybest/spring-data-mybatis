@@ -43,8 +43,6 @@ import org.springframework.data.mapping.AssociationHandler;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.dialect.Dialect;
-import org.springframework.data.mybatis.dialect.internal.DatabaseMetaDataDialectResolutionInfoAdapter;
-import org.springframework.data.mybatis.dialect.internal.StandardDialectResolver;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
@@ -78,21 +76,21 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	private final Mustache.Compiler mustache;
 
-	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
+	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
 			RepositoryInformation repositoryInformation) {
 
-		this(mappingContext, configuration, repositoryInformation.getDomainType());
+		this(mappingContext, configuration, dialect, repositoryInformation.getDomainType());
 
 		this.repositoryInterface = repositoryInformation.getRepositoryInterface();
 	}
 
-	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Class<?> domainType) {
+	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
+			Class<?> domainType) {
 		this.mappingContext = mappingContext;
 		this.configuration = configuration;
 		this.namespace = domainType.getName();
 		this.persistentEntity = mappingContext.getRequiredPersistentEntity(domainType);
-		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(
-				new DatabaseMetaDataDialectResolutionInfoAdapter(configuration.getEnvironment().getDataSource()));
+		this.dialect = dialect;
 
 		this.mustache = Mustache.compiler().withLoader(name -> {
 			String path = "org/springframework/data/mybatis/repository/query/template/" + name + ".mustache";

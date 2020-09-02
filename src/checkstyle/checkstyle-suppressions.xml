@@ -31,7 +31,9 @@
     <suppress files="Ansi.*\.java" checks="JavadocVariable"/>
     <suppress files="Ansi.*\.java" checks="JavadocStyle"/>
     <suppress files="LogLevel\.java" checks="JavadocVariable"/>
-    <suppress files="HelpMojo\.java" checks=".*"/>
+	<suppress files="HelpMojo\.java" checks=".*"/>
+	<suppress files="[\\/]target[\\/]generated-sources[\\/]" checks=".*"/>
+	<suppress files="[\\/]target[\\/]generated-test-sources[\\/]" checks=".*"/>
     <suppress
             files="[\\/]org.springframework.boot.configurationprocessor.json[\\/].*\.java$"
             checks=".*"/>

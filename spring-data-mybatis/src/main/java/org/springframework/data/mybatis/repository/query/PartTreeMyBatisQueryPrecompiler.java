@@ -54,9 +54,9 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 	private AtomicInteger argumentCounter = new AtomicInteger(0);
 
-	PartTreeMyBatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
+	PartTreeMyBatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
 			PartTreeMybatisQuery query) {
-		super(mappingContext, configuration, query);
+		super(mappingContext, configuration, dialect, query);
 
 		this.query = query;
 	}

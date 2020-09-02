@@ -22,6 +22,7 @@ import org.springframework.data.mybatis.domain.sample.Shop;
 import org.springframework.data.mybatis.repository.Modifying;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.Query;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 
 /**
@@ -30,7 +31,8 @@ import org.springframework.data.repository.query.Param;
  * @author JARVIS SONG
  * @since 2.0.0
  */
-public interface ShopRepository extends MybatisRepository<Shop, Long>, ShopRepositoryCustom {
+public interface ShopRepository
+		extends MybatisRepository<Shop, Long>, ShopRepositoryCustom, QuerydslPredicateExecutor<Shop> {
 
 	List<Shop> findByNameLike(String name);
 

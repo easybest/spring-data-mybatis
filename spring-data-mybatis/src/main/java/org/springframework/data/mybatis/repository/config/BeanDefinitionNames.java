@@ -28,4 +28,9 @@ public abstract class BeanDefinitionNames {
 	 */
 	public static final String MYBATIS_MAPPING_CONTEXT_BEAN_NAME = "mybatisMappingContext";
 
+	/**
+	 * The bean's name of dialect.
+	 */
+	public static final String DIALECT_BEAN_NAME = "dialect";
+
 }

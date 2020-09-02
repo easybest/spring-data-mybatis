@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import org.apache.ibatis.session.Configuration;
 
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.support.ResidentParameterName;
@@ -49,10 +50,10 @@ class SimpleMybatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 	private static Pattern patternString = Pattern.compile("'.+'");
 
-	SimpleMybatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration,
+	SimpleMybatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
 			SimpleMybatisQuery query) {
 
-		super(mappingContext, configuration, query);
+		super(mappingContext, configuration, dialect, query);
 
 		this.query = query;
 	}

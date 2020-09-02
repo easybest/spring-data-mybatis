@@ -1,0 +1,61 @@
+/*
+* Copyright 2012-2019 the original author or authors.
+*
+* Generate by Spring Data MyBatis (https://github.com/hatunet/spring-data-mybatis).
+*/
+{{#domain}}
+package {{packageName}};
+
+import static com.querydsl.core.types.PathMetadataFactory.*;
+
+import com.querydsl.core.types.dsl.*;
+
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.Path;
+
+import com.querydsl.sql.ColumnMetadata;
+import java.sql.Types;
+
+public class {{queryClassName}} extends com.querydsl.sql.RelationalPathBase<{{queryClassName}}> {
+
+    private static final long serialVersionUID = {{serialVersion}}L;
+
+    public static final {{queryClassName}} {{instanceName}} = new {{queryClassName}}("{{tableName}}");
+
+    public {{queryClassName}}(String variable) {
+        super({{queryClassName}}.class, forVariable(variable), {{#hasSchema}}"{{schema}}"{{/hasSchema}}{{^hasSchema}}null{{/hasSchema}}, "{{tableName}}");
+        addMetadata();
+    }
+
+    public {{queryClassName}}(String variable, String schema, String table) {
+        super({{queryClassName}}.class, forVariable(variable), schema, table);
+        addMetadata();
+    }
+
+    public {{queryClassName}}(String variable, String schema) {
+        super({{queryClassName}}.class, forVariable(variable), schema, "{{tableName}}");
+        addMetadata();
+    }
+
+    public {{queryClassName}}(Path<? extends {{queryClassName}}> path) {
+        super(path.getType(), path.getMetadata(), {{#hasSchema}}"{{schema}}"{{/hasSchema}}{{^hasSchema}}null{{/hasSchema}}, "{{tableName}}");
+        addMetadata();
+    }
+
+    public {{queryClassName}}(PathMetadata metadata) {
+        super({{queryClassName}}.class, metadata, {{#hasSchema}}"{{table.schema}}"{{/hasSchema}}{{^hasSchema}}null{{/hasSchema}}, "{{tableName}}");
+        addMetadata();
+    }
+
+{{#properties}}
+    public final {{pathType}}{{#needPattern}}<{{javaTypeString}}>{{/needPattern}} {{name}} = create{{pathFactory}}("{{name}}"{{#needPattern}}, {{javaTypeString}}.class{{/needPattern}});
+{{/properties}}
+
+    public void addMetadata() {
+{{#properties}}
+        addMetadata({{name}}, ColumnMetadata.named("{{columnName}}").withIndex({{-index}}).ofType(Types.{{jdbcTypeString}}));
+{{/properties}}
+    }
+
+}
+{{/domain}}

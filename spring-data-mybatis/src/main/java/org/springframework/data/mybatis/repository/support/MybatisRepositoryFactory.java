@@ -23,6 +23,8 @@ import java.util.stream.Stream;
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
@@ -31,11 +33,14 @@ import org.springframework.data.mybatis.repository.query.MybatisQueryPrepareProc
 import org.springframework.data.mybatis.repository.query.MybatisRepositoryPrepareProcessor;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.querydsl.EntityPathResolver;
+import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.data.querydsl.QuerydslUtils;
 import org.springframework.data.querydsl.SimpleEntityPathResolver;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.RepositoryComposition;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
+import org.springframework.data.repository.core.support.RepositoryFragment;
 import org.springframework.data.repository.core.support.SurroundingTransactionDetectorMethodInterceptor;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
@@ -55,13 +60,17 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
 	private final SqlSessionTemplate sqlSessionTemplate;
 
+	private final Dialect dialect;
+
 	private EntityPathResolver entityPathResolver;
 
 	private EscapeCharacter escapeCharacter = EscapeCharacter.DEFAULT;
 
-	public MybatisRepositoryFactory(MybatisMappingContext mappingContext, SqlSessionTemplate sqlSessionTemplate) {
+	public MybatisRepositoryFactory(MybatisMappingContext mappingContext, SqlSessionTemplate sqlSessionTemplate,
+			Dialect dialect) {
 		this.mappingContext = mappingContext;
 		this.sqlSessionTemplate = sqlSessionTemplate;
+		this.dialect = dialect;
 		this.entityPathResolver = SimpleEntityPathResolver.INSTANCE;
 
 		this.addRepositoryProxyPostProcessor((factory, repositoryInformation) -> {
@@ -71,9 +80,9 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 		});
 
 		this.addRepositoryProxyPostProcessor(
-				new MybatisRepositoryPrepareProcessor(mappingContext, sqlSessionTemplate.getConfiguration()));
+				new MybatisRepositoryPrepareProcessor(mappingContext, sqlSessionTemplate.getConfiguration(), dialect));
 		this.addQueryCreationListener(
-				new MybatisQueryPrepareProcessor(mappingContext, sqlSessionTemplate.getConfiguration()));
+				new MybatisQueryPrepareProcessor(mappingContext, sqlSessionTemplate.getConfiguration(), dialect));
 
 	}
 
@@ -135,7 +144,29 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
 	@Override
 	protected RepositoryComposition.RepositoryFragments getRepositoryFragments(RepositoryMetadata metadata) {
-		return super.getRepositoryFragments(metadata);
+
+		RepositoryComposition.RepositoryFragments fragments = RepositoryComposition.RepositoryFragments.empty();
+		boolean isQueryDslRepository = QuerydslUtils.QUERY_DSL_PRESENT
+				&& QuerydslPredicateExecutor.class.isAssignableFrom(metadata.getRepositoryInterface());
+
+		if (isQueryDslRepository) {
+
+			if (metadata.isReactiveRepository()) {
+				throw new InvalidDataAccessApiUsageException(
+						"Cannot combine Querydsl and reactive repository support in a single interface");
+			}
+
+			MybatisEntityInformation<?, Serializable> entityInformation = this
+					.getEntityInformation(metadata.getDomainType());
+
+			Object querydslFragment = this.getTargetRepositoryViaReflection(QuerydslMybatisPredicateExecutor.class,
+					entityInformation, this.entityPathResolver, this.mappingContext, this.sqlSessionTemplate,
+					this.dialect);
+
+			fragments = fragments.append(RepositoryFragment.implemented(querydslFragment));
+		}
+
+		return fragments;
 	}
 
 	public void setEntityPathResolver(EntityPathResolver entityPathResolver) {

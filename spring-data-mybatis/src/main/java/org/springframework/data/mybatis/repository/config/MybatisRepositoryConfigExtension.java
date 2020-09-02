@@ -35,6 +35,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mybatis.dialect.DialectFactoryBean;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
@@ -103,6 +104,11 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 
 		Object source = config.getSource();
 		Optional<String> sqlSessionTemplateRef = config.getAttribute("sqlSessionTemplateRef");
+
+		registerIfNotAlreadyRegistered(() -> BeanDefinitionBuilder.rootBeanDefinition(DialectFactoryBean.class)
+				.addConstructorArgReference(sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME))
+				.getBeanDefinition(), registry, BeanDefinitionNames.DIALECT_BEAN_NAME, source);
+
 		registerIfNotAlreadyRegistered(
 				() -> BeanDefinitionBuilder.rootBeanDefinition(MybatisMappingContextFactoryBean.class)
 						.addConstructorArgValue(this.scanDomains(config))
@@ -123,6 +129,7 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME));
 		builder.addPropertyValue(ESCAPE_CHARACTER_PROPERTY, getEscapeCharacter(source).orElse('\\'));
 		builder.addPropertyReference("mappingContext", BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME);
+		builder.addPropertyReference("dialect", BeanDefinitionNames.DIALECT_BEAN_NAME);
 	}
 
 	@Override
