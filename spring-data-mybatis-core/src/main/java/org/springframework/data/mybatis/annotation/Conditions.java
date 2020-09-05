@@ -25,6 +25,7 @@ import java.lang.annotation.Target;
  * @author JARVIS SONG
  * @since 2.0.0
  */
+@Deprecated
 @Target({ ElementType.METHOD, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Conditions {
