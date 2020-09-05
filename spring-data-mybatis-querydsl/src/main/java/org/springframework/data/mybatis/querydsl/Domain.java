@@ -53,6 +53,8 @@ public class Domain implements Serializable {
 
 	private static final long serialVersionUID = -5860693531341982730L;
 
+	private final ProcessingEnvironment processingEnv;
+
 	private final boolean mapUnderscoreToCamelCase;
 
 	private String packageName;
@@ -72,6 +74,7 @@ public class Domain implements Serializable {
 	private final Map<String, Map<String, Object>> genericInfo = new HashMap<>();
 
 	public Domain(ProcessingEnvironment processingEnv, boolean mapUnderscoreToCamelCase, TypeElement element) {
+		this.processingEnv = processingEnv;
 		this.mapUnderscoreToCamelCase = mapUnderscoreToCamelCase;
 		Elements utils = processingEnv.getElementUtils();
 		PackageElement packageElement = utils.getPackageOf(element);
@@ -109,12 +112,12 @@ public class Domain implements Serializable {
 						&& null == member.getAnnotation(Transient.class)
 						&& null == member.getAnnotation(org.springframework.data.annotation.Transient.class))
 				.map(member -> {
-					Property property = new Property(this);
+					Property property = new Property(this, member);
 					property.setName(member.getSimpleName().toString());
 					property.setColumnName(this.columnName(member));
 					this.processType(element, member, property);
 					return property;
-				}).filter(p -> null != p.getPathType()).collect(Collectors.toList()));
+				}).filter(Property::valid).collect(Collectors.toList()));
 	}
 
 	private void processType(TypeElement element, VariableElement member, Property property) {
@@ -122,7 +125,7 @@ public class Domain implements Serializable {
 		if (null != jdbcTypeAnn && StringUtils.hasText(jdbcTypeAnn.value())) {
 			property.setJdbcType(org.apache.ibatis.type.JdbcType.valueOf(jdbcTypeAnn.value()));
 		}
-		member.asType().accept(new DomainTypeVisitor(element), property);
+		member.asType().accept(new DomainTypeVisitor(element, this.processingEnv), property);
 	}
 
 	private String columnName(Element member) {

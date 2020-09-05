@@ -16,7 +16,7 @@
 package org.springframework.data.mybatis.domain;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.sql.Timestamp;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
@@ -55,7 +55,7 @@ public abstract class Audit<AUDITOR, ID extends Serializable> extends Id<ID> {
 	@CreatedDate
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "creation_date")
-	private Date creationDate;
+	private Timestamp creationDate;
 
 	@LastModifiedBy
 	@Column(name = "last_updated_by")
@@ -64,6 +64,6 @@ public abstract class Audit<AUDITOR, ID extends Serializable> extends Id<ID> {
 	@LastModifiedDate
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "last_update_date")
-	private Date lastUpdateDate;
+	private Timestamp lastUpdateDate;
 
 }

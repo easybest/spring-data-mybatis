@@ -17,6 +17,9 @@ package org.springframework.data.mybatis.querydsl;
 
 import java.io.Serializable;
 
+import javax.lang.model.element.VariableElement;
+import javax.persistence.Embedded;
+
 import org.apache.ibatis.type.JdbcType;
 
 /**
@@ -33,7 +36,7 @@ public class Property implements Serializable {
 
 	private String columnName;
 
-	private Class<?> javaType;
+	private String javaType;
 
 	private JdbcType jdbcType;
 
@@ -41,8 +44,27 @@ public class Property implements Serializable {
 
 	private final Domain domain;
 
-	public Property(Domain domain) {
+	private final VariableElement member;
+
+	public Property(Domain domain, VariableElement member) {
 		this.domain = domain;
+		this.member = member;
+	}
+
+	public boolean valid() {
+		if (null != this.name && null != this.javaType) {
+			return true;
+		}
+		return false;
+	}
+
+	public boolean isPath() {
+		return null != this.pathType && !"null".equals(this.pathType);
+	}
+
+	public boolean isEmbedded() {
+		Embedded embedded = this.member.getAnnotation(Embedded.class);
+		return null != embedded;
 	}
 
 	public boolean isNeedPattern() {
@@ -61,22 +83,25 @@ public class Property implements Serializable {
 		return this.pathType.replace("Path", "");
 	}
 
-	public String getJdbcTypeString() {
-		if (null == this.jdbcType) {
-			return null;
-		}
-		return this.jdbcType.name();
+	public String getJavaType() {
+		return this.javaType;
 	}
 
-	public String getJavaTypeString() {
-		if (null == this.javaType) {
+	public void setJavaType(String javaType) {
+		this.javaType = javaType;
+	}
+
+	public String getQueryJavaType() {
+		String javaTypeString = this.getJavaType();
+		if (null == javaTypeString) {
 			return null;
 		}
-
-		if (this.javaType.getName().startsWith("java.lang.")) {
-			return this.javaType.getSimpleName();
+		int pos = javaTypeString.lastIndexOf('.');
+		if (pos > 0) {
+			return javaTypeString.substring(0, pos + 1) + "Q" + javaTypeString.substring(pos + 1);
 		}
-		return this.javaType.getName();
+		return "Q" + javaTypeString;
+
 	}
 
 	public void setPathType(String pathType) {
@@ -97,14 +122,6 @@ public class Property implements Serializable {
 
 	public void setColumnName(String columnName) {
 		this.columnName = columnName;
-	}
-
-	public Class<?> getJavaType() {
-		return this.javaType;
-	}
-
-	public void setJavaType(Class<?> javaType) {
-		this.javaType = javaType;
 	}
 
 	public JdbcType getJdbcType() {
