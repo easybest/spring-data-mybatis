@@ -18,6 +18,7 @@ package org.springframework.data.mybatis.querydsl;
 import java.util.Arrays;
 import java.util.Map;
 
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
@@ -53,11 +54,14 @@ public class DomainTypeVisitor implements TypeVisitor<DomainTypeVisitor, Propert
 
 	private final TypeElement typeElement;
 
+	private final ProcessingEnvironment processingEnv;
+
 	private final JavaTypeMapping javaTypeMapping;
 
-	public DomainTypeVisitor(TypeElement element) {
+	public DomainTypeVisitor(TypeElement element, ProcessingEnvironment processingEnv) {
 
 		this.typeElement = element;
+		this.processingEnv = processingEnv;
 		this.javaTypeMapping = new JavaTypeMapping();
 	}
 
@@ -107,7 +111,7 @@ public class DomainTypeVisitor implements TypeVisitor<DomainTypeVisitor, Propert
 			return this;
 		}
 
-		property.setJavaType(types.getJavaClass());
+		property.setJavaType(types.getJavaClass().getSimpleName());
 		this.setPathType(types.getCategory(), property);
 		Type<?> tt = this.javaTypeMapping.getType(types.getJavaClass());
 		if (null == property.getJdbcType()) {
@@ -151,30 +155,26 @@ public class DomainTypeVisitor implements TypeVisitor<DomainTypeVisitor, Propert
 
 	@Override
 	public DomainTypeVisitor visitNull(NullType t, Property property) {
-		// property.setJavaType(t.toString());
-
 		return this;
 	}
 
 	@Override
 	public DomainTypeVisitor visitArray(ArrayType t, Property property) {
-		// property.setJavaType(t.toString());
-
 		return this;
 	}
 
 	@Override
 	public DomainTypeVisitor visitDeclared(DeclaredType t, Property property) {
-		// property.setJavaType(t.toString());
 		this.fillTypes(t.toString(), property);
+
 		return this;
 	}
 
 	@Nullable
 	private void fillTypes(String t, Property property) {
+		property.setJavaType(t);
 		try {
 			Class<?> type = Class.forName(t);
-			property.setJavaType(type);
 
 			Type<?> types = this.javaTypeMapping.getType(type);
 			if (null == property.getJdbcType()) {

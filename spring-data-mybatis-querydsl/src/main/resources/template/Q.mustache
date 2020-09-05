@@ -7,20 +7,20 @@
 package {{packageName}};
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
+import static com.querydsl.core.types.Projections.*;
 
-import com.querydsl.core.types.dsl.*;
-
-import com.querydsl.core.types.PathMetadata;
-import com.querydsl.core.types.Path;
-
-import com.querydsl.sql.ColumnMetadata;
 import java.sql.Types;
+import java.util.*;
 
-public class {{queryClassName}} extends com.querydsl.sql.RelationalPathBase<{{queryClassName}}> {
+import com.querydsl.core.types.*;
+import com.querydsl.core.types.dsl.*;
+import com.querydsl.sql.ColumnMetadata;
+
+public class {{queryClassName}} extends org.springframework.data.mybatis.querydsl.MybatisRelationalPathBase<{{queryClassName}}, {{className}}> {
 
     private static final long serialVersionUID = {{serialVersion}}L;
 
-    public static final {{queryClassName}} {{instanceName}} = new {{queryClassName}}("{{tableName}}");
+    public static final {{queryClassName}} {{instanceName}} = new {{queryClassName}}("{{instanceName}}");
 
     public {{queryClassName}}(String variable) {
         super({{queryClassName}}.class, forVariable(variable), {{#hasSchema}}"{{schema}}"{{/hasSchema}}{{^hasSchema}}null{{/hasSchema}}, "{{tableName}}");
@@ -47,14 +47,39 @@ public class {{queryClassName}} extends com.querydsl.sql.RelationalPathBase<{{qu
         addMetadata();
     }
 
-{{#properties}}
-    public final {{pathType}}{{#needPattern}}<{{javaTypeString}}>{{/needPattern}} {{name}} = create{{pathFactory}}("{{name}}"{{#needPattern}}, {{javaTypeString}}.class{{/needPattern}});
-{{/properties}}
+    {{#properties}}
+    {{#path}}
+    public final {{pathType}}{{#needPattern}}<{{javaType}}>{{/needPattern}} {{name}} = create{{pathFactory}}("{{name}}"{{#needPattern}}, {{javaType}}.class{{/needPattern}});
+    {{/path}}
+    {{#embedded}}
+    public final {{queryJavaType}} {{name}} = new {{queryJavaType}}("{{instanceName}}");
+    {{/embedded}}
+    {{/properties}}
 
     public void addMetadata() {
-{{#properties}}
-        addMetadata({{name}}, ColumnMetadata.named("{{columnName}}").withIndex({{-index}}).ofType(Types.{{jdbcTypeString}}));
-{{/properties}}
+    {{#properties}}
+    {{#path}}
+        addMetadata({{name}}, ColumnMetadata.named("{{columnName}}").withIndex({{-index}}).ofType(Types.{{jdbcType}}));
+    {{/path}}
+    {{/properties}}
+    }
+
+    @Override
+    protected Class<{{className}}> domainClass() {
+        return {{className}}.class;
+    }
+
+    @Override
+    public FactoryExpression<{{className}}> projections() {
+        List<Expression<?>> paths = new LinkedList<>();
+        paths.addAll(Arrays.asList(all()));
+        {{#properties}}
+        {{#embedded}}
+        paths.add(bean({{javaType}}.class, {{name}}.all()).as("{{name}}"));
+        {{/embedded}}
+        {{/properties}}
+        Expression[] expressions = paths.toArray(new Expression[paths.size()]);
+        return bean({{className}}.class, expressions);
     }
 
 }

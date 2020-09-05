@@ -19,14 +19,11 @@ import java.util.List;
 import java.util.Optional;
 
 import com.querydsl.core.NonUniqueResultException;
+import com.querydsl.core.types.FactoryExpression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
-import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.QBean;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.sql.AbstractSQLQuery;
-import com.querydsl.sql.RelationalPathBase;
-import com.querydsl.sql.SQLQuery;
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -35,6 +32,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.querydsl.MybatisRelationalPathBase;
+import org.springframework.data.mybatis.querydsl.MybatisSQLQuery;
 import org.springframework.data.querydsl.EntityPathResolver;
 import org.springframework.data.querydsl.QSort;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
@@ -44,46 +43,47 @@ import org.springframework.util.Assert;
 /**
  * .
  *
+ * @param <Q> query type
  * @param <T> domain type
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public class QuerydslMybatisPredicateExecutor<T> implements QuerydslPredicateExecutor<T> {
+public class QuerydslMybatisPredicateExecutor<Q, T> implements QuerydslPredicateExecutor<T> {
 
-	private final RelationalPathBase<T> path;
+	private final MybatisRelationalPathBase<Q, T> path;
 
-	private final Querydsl<T> querydsl;
+	private final Querydsl<Q, T> querydsl;
 
-	private QBean<T> bean;
+	private FactoryExpression<T> bean;
 
 	public QuerydslMybatisPredicateExecutor(MybatisEntityInformation<T, ?> entityInformation,
 			EntityPathResolver resolver, MybatisMappingContext mappingContext, SqlSessionTemplate sqlSessionTemplate,
 			Dialect dialect) {
-		this.path = (RelationalPathBase<T>) resolver.createPath(entityInformation.getJavaType());
+		this.path = (MybatisRelationalPathBase<Q, T>) resolver.createPath(entityInformation.getJavaType());
 		this.querydsl = new Querydsl<>(sqlSessionTemplate, mappingContext, dialect, entityInformation,
-				new PathBuilder<T>(this.path.getType(), this.path.getMetadata()));
-		this.bean = Projections.bean(entityInformation.getJavaType(), this.path.all());
+				new PathBuilder<>(this.path.getType(), this.path.getMetadata()));
+		this.bean = this.path.projections();
 	}
 
-	protected SQLQuery<T> createQuery(Predicate... predicate) {
+	protected MybatisSQLQuery<T> createQuery(Predicate... predicate) {
 		Assert.notNull(predicate, "Predicate must not be null!");
 		AbstractSQLQuery<T, ?> query = this.doCreateQuery(predicate);
-		return (SQLQuery<T>) query;
+		return (MybatisSQLQuery<T>) query;
 	}
 
 	private AbstractSQLQuery<T, ?> doCreateQuery(Predicate... predicate) {
-		AbstractSQLQuery<T, SQLQuery<T>> query = this.querydsl.createQuery(this.path);
+		AbstractSQLQuery<T, MybatisSQLQuery<T>> query = this.querydsl.createQuery(this.path);
 		if (predicate != null) {
 			query = query.where(predicate);
 		}
 		return query;
 	}
 
-	private List<T> executeSorted(SQLQuery<T> query, Sort sort) {
+	private List<T> executeSorted(MybatisSQLQuery<T> query, Sort sort) {
 		return this.querydsl.applySorting(sort, query).fetch();
 	}
 
-	private List<T> executeSorted(SQLQuery<T> query, OrderSpecifier<?>... orders) {
+	private List<T> executeSorted(MybatisSQLQuery<T> query, OrderSpecifier<?>... orders) {
 		return this.executeSorted(query, new QSort(orders));
 	}
 
@@ -133,8 +133,9 @@ public class QuerydslMybatisPredicateExecutor<T> implements QuerydslPredicateExe
 		Assert.notNull(predicate, "Predicate must not be null!");
 		Assert.notNull(pageable, "Pageable must not be null!");
 
-		final SQLQuery<?> countQuery = this.createQuery(predicate);
-		SQLQuery<T> query = this.querydsl.applyPagination(pageable, this.createQuery(predicate).select(this.bean));
+		final MybatisSQLQuery<?> countQuery = this.createQuery(predicate);
+		MybatisSQLQuery<T> query = this.querydsl.applyPagination(pageable,
+				this.createQuery(predicate).select(this.bean));
 
 		return PageableExecutionUtils.getPage(query.fetch(), pageable, countQuery::fetchCount);
 	}

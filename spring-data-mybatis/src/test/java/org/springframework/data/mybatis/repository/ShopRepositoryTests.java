@@ -492,7 +492,7 @@ public class ShopRepositoryTests {
 		this.flushTestShops();
 
 		Iterable<Shop> shops = this.repository.findAll(QShop.shop.name.contains("re"));
-		assertThat(shops).hasSize(1);
+		assertThat(shops).hasSize(1).containsOnly(this.third);
 
 	}
 

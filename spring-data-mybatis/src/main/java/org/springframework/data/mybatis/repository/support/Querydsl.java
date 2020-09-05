@@ -31,7 +31,6 @@ import com.querydsl.sql.HSQLDBTemplates;
 import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.OracleTemplates;
 import com.querydsl.sql.PostgreSQLTemplates;
-import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.SQLServer2005Templates;
 import com.querydsl.sql.SQLServer2008Templates;
 import com.querydsl.sql.SQLServer2012Templates;
@@ -56,6 +55,7 @@ import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.handler.DateUnixTimestampTypeHandler;
 import org.springframework.data.mybatis.mapping.handler.UnixTimestampDateTypeHandler;
 import org.springframework.data.mybatis.mapping.model.Column;
+import org.springframework.data.mybatis.querydsl.MybatisSQLQuery;
 import org.springframework.data.mybatis.querydsl.type.DateAsLongType;
 import org.springframework.data.mybatis.querydsl.type.LongAsDateType;
 import org.springframework.data.querydsl.QSort;
@@ -64,20 +64,21 @@ import org.springframework.util.Assert;
 /**
  * .
  *
+ * @param <Q> query type
  * @param <T> domain type
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public class Querydsl<T> {
+public class Querydsl<Q, T> {
 
 	private final SqlSessionTemplate sqlSessionTemplate;
 
-	private final PathBuilder<?> builder;
+	private final PathBuilder<Q> builder;
 
 	private final Configuration configuration;
 
 	public Querydsl(SqlSessionTemplate sqlSessionTemplate, MybatisMappingContext mappingContext, Dialect dialect,
-			MybatisEntityInformation<T, ?> entityInformation, PathBuilder<T> builder) {
+			MybatisEntityInformation<T, ?> entityInformation, PathBuilder<Q> builder) {
 
 		this.sqlSessionTemplate = sqlSessionTemplate;
 		this.builder = builder;
@@ -125,17 +126,17 @@ public class Querydsl<T> {
 		});
 	}
 
-	public AbstractSQLQuery<T, SQLQuery<T>> createQuery() {
-		return new SQLQuery<>(this.sqlSessionTemplate.getConnection(), this.configuration);
+	public AbstractSQLQuery<T, MybatisSQLQuery<T>> createQuery() {
+		return new MybatisSQLQuery<>(this.sqlSessionTemplate.getConnection(), this.configuration);
 	}
 
-	public AbstractSQLQuery<T, SQLQuery<T>> createQuery(EntityPath<?>... paths) {
+	public AbstractSQLQuery<T, MybatisSQLQuery<T>> createQuery(EntityPath<?>... paths) {
 
 		Assert.notNull(paths, "Paths must not be null!");
 		return this.createQuery().from(paths);
 	}
 
-	public SQLQuery<T> applySorting(Sort sort, SQLQuery<T> query) {
+	public MybatisSQLQuery<T> applySorting(Sort sort, MybatisSQLQuery<T> query) {
 
 		Assert.notNull(sort, "Sort must not be null!");
 		Assert.notNull(query, "Query must not be null!");
@@ -151,14 +152,14 @@ public class Querydsl<T> {
 		return this.addOrderByFrom(sort, query);
 	}
 
-	private <T> SQLQuery<T> addOrderByFrom(QSort qsort, SQLQuery<T> query) {
+	private <T> MybatisSQLQuery<T> addOrderByFrom(QSort qsort, MybatisSQLQuery<T> query) {
 
 		List<OrderSpecifier<?>> orderSpecifiers = qsort.getOrderSpecifiers();
 
 		return query.orderBy(orderSpecifiers.toArray(new OrderSpecifier[0]));
 	}
 
-	private <T> SQLQuery<T> addOrderByFrom(Sort sort, SQLQuery<T> query) {
+	private <T> MybatisSQLQuery<T> addOrderByFrom(Sort sort, MybatisSQLQuery<T> query) {
 
 		Assert.notNull(sort, "Sort must not be null!");
 		Assert.notNull(query, "Query must not be null!");
@@ -170,7 +171,7 @@ public class Querydsl<T> {
 		return query;
 	}
 
-	public SQLQuery<T> applyPagination(Pageable pageable, SQLQuery<T> query) {
+	public MybatisSQLQuery<T> applyPagination(Pageable pageable, MybatisSQLQuery<T> query) {
 
 		Assert.notNull(pageable, "Pageable must not be null!");
 		Assert.notNull(query, "SQLQuery must not be null!");

@@ -37,6 +37,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.persistence.ElementCollection;
+import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -107,10 +108,14 @@ public class MybatisAnnotationProcessor extends AbstractProcessor {
 			return ALLOW_OTHER_PROCESSORS_TO_CLAIM_ANNOTATIONS;
 		}
 
-		Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(Entity.class);
+		Set<Element> elements = (Set<Element>) roundEnv.getElementsAnnotatedWith(Entity.class);
 		if (null == elements || elements.isEmpty()) {
 			this.logInfo("No sources to process");
 			return ALLOW_OTHER_PROCESSORS_TO_CLAIM_ANNOTATIONS;
+		}
+		Set<Element> embeddableElements = (Set<Element>) roundEnv.getElementsAnnotatedWith(Embeddable.class);
+		if (null != embeddableElements) {
+			elements.addAll(embeddableElements);
 		}
 
 		Boolean mapUnderscoreToCamelCase = Boolean
