@@ -26,6 +26,31 @@ import java.lang.reflect.InvocationTargetException;
 public enum Database {
 
 	/**
+	 * DB2.
+	 */
+	DB2 {
+		@Override
+		public Class<? extends Dialect> latestDialect() {
+			return DB2400Dialect.class;
+		}
+
+		@Override
+		public Dialect resolveDialect(DialectResolutionInfo info) {
+			final String databaseName = info.getDatabaseName();
+
+			if ("DB2 UDB for AS/400".equals(databaseName)) {
+				return new DB2400Dialect();
+			}
+
+			if (databaseName.startsWith("DB2/")) {
+				return new DB2Dialect();
+			}
+
+			return null;
+		}
+	},
+
+	/**
 	 * SQLite.
 	 */
 	SQLITE {
