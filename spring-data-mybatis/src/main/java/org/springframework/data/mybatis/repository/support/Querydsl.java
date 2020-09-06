@@ -35,6 +35,7 @@ import com.querydsl.sql.SQLServer2005Templates;
 import com.querydsl.sql.SQLServer2008Templates;
 import com.querydsl.sql.SQLServer2012Templates;
 import com.querydsl.sql.SQLTemplates;
+import com.querydsl.sql.SQLiteTemplates;
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.data.domain.Pageable;
@@ -49,6 +50,7 @@ import org.springframework.data.mybatis.dialect.PostgreSQLDialect;
 import org.springframework.data.mybatis.dialect.SQLServer2005Dialect;
 import org.springframework.data.mybatis.dialect.SQLServer2012Dialect;
 import org.springframework.data.mybatis.dialect.SQLServerDialect;
+import org.springframework.data.mybatis.dialect.SQLiteDialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
@@ -106,6 +108,9 @@ public class Querydsl<Q, T> {
 		}
 		else if (dialect.getClass() == SQLServer2012Dialect.class) {
 			sqlTemplates = SQLServer2012Templates.builder().build();
+		}
+		else if (dialect.getClass() == SQLiteDialect.class) {
+			sqlTemplates = SQLiteTemplates.builder().build();
 		}
 		this.configuration = new Configuration(sqlTemplates);
 
