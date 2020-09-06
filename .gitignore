@@ -5,6 +5,7 @@ target/
 !**/src/test/**
 .DS_Store
 .flattened-pom.xml
+testcase.db
 
 ### STS ###
 .apt_generated

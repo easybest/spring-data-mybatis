@@ -169,6 +169,12 @@
 			<version>19.7.0.0</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.32.3.2</version>
+			<scope>test</scope>
+		</dependency>
 		<!--		<dependency>-->
 		<!--			<groupId>dm.jdbc</groupId>-->
 		<!--			<artifactId>dm7-jdbc18</artifactId>-->

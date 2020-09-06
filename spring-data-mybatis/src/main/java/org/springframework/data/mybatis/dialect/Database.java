@@ -26,6 +26,25 @@ import java.lang.reflect.InvocationTargetException;
 public enum Database {
 
 	/**
+	 * SQLite.
+	 */
+	SQLITE {
+		@Override
+		public Class<? extends Dialect> latestDialect() {
+			return SQLiteDialect.class;
+		}
+
+		@Override
+		public Dialect resolveDialect(DialectResolutionInfo info) {
+			final String databaseName = info.getDatabaseName();
+			if ("SQLite".equals(databaseName)) {
+				return latestDialectInstance(this);
+			}
+			return null;
+		}
+	},
+
+	/**
 	 * DaMeng.
 	 */
 	DM {
