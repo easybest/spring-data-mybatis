@@ -26,6 +26,39 @@ import java.lang.reflect.InvocationTargetException;
 public enum Database {
 
 	/**
+	 * Derby.
+	 */
+	DERBY {
+		@Override
+		public Class<? extends Dialect> latestDialect() {
+			return DerbyTenSevenDialect.class;
+		}
+
+		@Override
+		public Dialect resolveDialect(DialectResolutionInfo info) {
+			final String databaseName = info.getDatabaseName();
+
+			if ("Apache Derby".equals(databaseName)) {
+				final int majorVersion = info.getDatabaseMajorVersion();
+				final int minorVersion = info.getDatabaseMinorVersion();
+
+				if (majorVersion > 10 || (majorVersion == 10 && minorVersion >= 7)) {
+					return latestDialectInstance(this);
+				}
+				else if (majorVersion == 10 && minorVersion == 6) {
+					return new DerbyTenSixDialect();
+				}
+				else if (majorVersion == 10 && minorVersion == 5) {
+					return new DerbyTenFiveDialect();
+				}
+				else {
+					return new DerbyDialect();
+				}
+			}
+			return null;
+		}
+	},
+	/**
 	 * DB2.
 	 */
 	DB2 {
