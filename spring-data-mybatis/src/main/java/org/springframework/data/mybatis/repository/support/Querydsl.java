@@ -26,6 +26,8 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.sql.AbstractSQLQuery;
 import com.querydsl.sql.Configuration;
+import com.querydsl.sql.DB2Templates;
+import com.querydsl.sql.DerbyTemplates;
 import com.querydsl.sql.H2Templates;
 import com.querydsl.sql.HSQLDBTemplates;
 import com.querydsl.sql.MySQLTemplates;
@@ -111,6 +113,12 @@ public class Querydsl<Q, T> {
 		}
 		else if (dialect.getClass() == SQLiteDialect.class) {
 			sqlTemplates = SQLiteTemplates.builder().build();
+		}
+		else if (dialect.getClass().getName().startsWith("Derby")) {
+			sqlTemplates = DerbyTemplates.builder().build();
+		}
+		else if (dialect.getClass().getName().startsWith("DB2")) {
+			sqlTemplates = DB2Templates.builder().build();
 		}
 		this.configuration = new Configuration(sqlTemplates);
 
