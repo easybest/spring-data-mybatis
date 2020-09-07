@@ -3,7 +3,7 @@
 *
 * Generate by Spring Data MyBatis (https://github.com/hatunet/spring-data-mybatis).
 */
-{{#domain}}
+{{#entity}}
 package {{packageName}};
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
@@ -54,6 +54,15 @@ public class {{queryClassName}} extends org.springframework.data.mybatis.queryds
     {{#embedded}}
     public final {{queryJavaType}} {{name}} = new {{queryJavaType}}("{{instanceName}}");
     {{/embedded}}
+    {{#toOne}}
+    {{#association}}
+    {{#locals}}
+    public final {{pathType}}{{#needPattern}}<{{javaType}}>{{/needPattern}} {{name}} = create{{pathFactory}}("{{name}}"{{#needPattern}}, {{javaType}}.class{{/needPattern}});
+    {{/locals}}
+    public final com.querydsl.sql.ForeignKey<{{property.queryJavaType}}> {{property.name}}FK = createForeignKey(Arrays.asList({{#locals}}{{^-first}}, {{/-first}}{{name}}{{/locals}}),Arrays.asList({{#foreigns}}{{^-first}}, {{/-first}}"{{columnName}}"{{/foreigns}}));
+    public final {{property.queryJavaType}} {{property.name}} = new {{property.queryJavaType}}("{{property.name}}");
+    {{/association}}
+    {{/toOne}}
     {{/properties}}
 
     public void addMetadata() {
@@ -77,10 +86,28 @@ public class {{queryClassName}} extends org.springframework.data.mybatis.queryds
         {{#embedded}}
         paths.add(bean({{javaType}}.class, {{name}}.all()).as("{{name}}"));
         {{/embedded}}
+        {{#toOne}}
+            {{#association}}
+        paths.add(bean({{property.javaType}}.class, {{property.name}}.all()).as("{{property.name}}"));
+            {{/association}}
+        {{/toOne}}
         {{/properties}}
         Expression[] expressions = paths.toArray(new Expression[paths.size()]);
         return bean({{className}}.class, expressions);
     }
 
+    @Override
+    public org.springframework.data.mybatis.querydsl.MybatisSQLQuery<{{className}}> handleQuery(org.springframework.data.mybatis.querydsl.MybatisSQLQuery<{{className}}> query) {
+        return query
+    {{#properties}}
+        {{#toOne}}
+            {{#association}}
+        .leftJoin({{property.name}}FK, {{property.name}})
+            {{/association}}
+        {{/toOne}}
+    {{/properties}}
+        ;
+    }
+
 }
-{{/domain}}
+{{/entity}}

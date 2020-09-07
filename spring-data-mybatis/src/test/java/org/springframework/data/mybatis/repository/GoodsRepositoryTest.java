@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mybatis.domain.sample.Category;
 import org.springframework.data.mybatis.domain.sample.Goods;
+import org.springframework.data.mybatis.domain.sample.QGoods;
 import org.springframework.data.mybatis.repository.sample.CategoryRepository;
 import org.springframework.data.mybatis.repository.sample.GoodsRepository;
 import org.springframework.test.context.ContextConfiguration;
@@ -102,6 +103,16 @@ public class GoodsRepositoryTest {
 
 		assertThat(this.first.getCategory()).isNotNull();
 		assertThat(this.first.getCategory()).isEqualTo(this.food);
+
+	}
+
+	@Test
+	public void testQuerydslFind() {
+		this.flushTestGoods();
+
+		Iterable<Goods> goods = this.repository.findAll(QGoods.goods.name.contains("ok"));
+		assertThat(goods).hasSize(1);
+		assertThat(goods.iterator().next().getCategory()).isEqualTo(this.drinks);
 
 	}
 

@@ -15,22 +15,13 @@
  */
 package org.springframework.data.mybatis.querydsl;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Writer;
 import java.lang.annotation.Annotation;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
@@ -46,12 +37,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderColumn;
-import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
-import javax.tools.JavaFileObject;
-
-import com.samskivert.mustache.Mustache;
-import com.samskivert.mustache.Template;
 
 import org.springframework.data.mybatis.annotation.Snowflake;
 
@@ -98,7 +84,6 @@ public class MybatisAnnotationProcessor extends AbstractProcessor {
 
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-
 		if (roundEnv.processingOver() || annotations.size() == 0) {
 			return ALLOW_OTHER_PROCESSORS_TO_CLAIM_ANNOTATIONS;
 		}
@@ -113,42 +98,14 @@ public class MybatisAnnotationProcessor extends AbstractProcessor {
 			this.logInfo("No sources to process");
 			return ALLOW_OTHER_PROCESSORS_TO_CLAIM_ANNOTATIONS;
 		}
+
+		MappingContext context = new MappingContext(this.processingEnv);
+		context.addEntityElements(elements);
 		Set<Element> embeddableElements = (Set<Element>) roundEnv.getElementsAnnotatedWith(Embeddable.class);
 		if (null != embeddableElements) {
-			elements.addAll(embeddableElements);
+			context.addEmbeddableEntityElements(embeddableElements);
 		}
-
-		Boolean mapUnderscoreToCamelCase = Boolean
-				.valueOf(this.processingEnv.getOptions().getOrDefault("mapUnderscoreToCamelCase", "true"));
-
-		Mustache.Compiler mustache = Mustache.compiler().escapeHTML(false);
-		ClassLoader classLoader = MybatisAnnotationProcessor.class.getClassLoader();
-		Filer filer = this.processingEnv.getFiler();
-
-		for (Element element : elements) {
-			this.logInfo("Processing Entity: " + element);
-
-			try {
-				Domain domain = new Domain(this.processingEnv, mapUnderscoreToCamelCase, (TypeElement) element);
-				Map<String, Object> scopes = new HashMap<>();
-				scopes.put("domain", domain);
-				JavaFileObject javaFileObject = filer
-						.createSourceFile(domain.getPackageName() + '.' + domain.getQueryClassName(), element);
-				InputStream is = classLoader.getResourceAsStream("template/Q.mustache");
-				try (InputStreamReader in = new InputStreamReader(is, StandardCharsets.UTF_8);
-						Writer writer = javaFileObject.openWriter()) {
-					Template template = mustache.compile(in);
-					template.execute(scopes, writer);
-				}
-			}
-			catch (Exception ex) {
-				this.processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
-						ex.getMessage() + "\n"
-								+ Stream.of(ex.getStackTrace()).map(stackTraceElement -> stackTraceElement.toString())
-										.collect(Collectors.joining("\n")));
-			}
-
-		}
+		context.process();
 
 		return true;
 	}
