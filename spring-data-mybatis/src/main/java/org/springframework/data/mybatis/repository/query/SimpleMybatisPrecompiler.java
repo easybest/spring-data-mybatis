@@ -25,7 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -281,10 +280,6 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String addResultMap() {
-		if (this.configuration.hasResultMap(this.namespace + '.' + ResidentStatementName.RESULT_MAP)) {
-			return "";
-		}
-
 		Map<String, Object> params = new HashMap<>();
 		List<ColumnResult> results = new LinkedList<>();
 		List<Association> embeddedAssociations = new ArrayList<>();
@@ -295,7 +290,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 						.getRequiredPersistentEntity(pp.getActualType());
 				embeddedEntity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) epp -> {
 					ColumnResult cr = this.columnResult(epp);
-					cr.setPrimaryKey(true);
+					cr.setPrimaryKey(pp.isAnnotationPresent(EmbeddedId.class));
 					cr.setProperty(pp.getName() + "." + epp.getName());
 					results.add(cr);
 				});
@@ -505,11 +500,18 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		params.put("embeddedAssociations", embeddedAssociations);
 		params.put("associations", associations);
 		params.put("collections", collections);
+
+		// avoid custom __result_map in mapper file, but has not generate association
+		// select statement.
+		if (this.configuration.hasResultMap(this.namespace + '.' + ResidentStatementName.RESULT_MAP)) {
+			return "";
+		}
+
 		return this.render("ResultMap", params);
 	}
 
 	private String addAssociationManyToOne(String namespace, Association association) {
-		String statementName = "__association_" + UUID.randomUUID().toString();
+		String statementName = "__association_to_one_" + association.getProperty();
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put("statementName", statementName);
 		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
@@ -520,7 +522,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String addAssociationManyToMany(String namespace, Collection collection) {
-		String statementName = "__association_" + UUID.randomUUID().toString();
+		String statementName = "__association_many_to_many_" + collection.getProperty();
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put("statementName", statementName);
 		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
@@ -531,7 +533,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String addAssociationOneToMany(String namespace, Collection collection) {
-		String statementName = "__association_" + UUID.randomUUID().toString();
+		String statementName = "__association_one_to_many_" + collection.getProperty();
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put("statementName", statementName);
 		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
