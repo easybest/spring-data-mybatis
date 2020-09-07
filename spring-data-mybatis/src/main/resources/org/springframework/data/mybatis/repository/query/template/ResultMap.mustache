@@ -1,11 +1,6 @@
 <resultMap id="{{statementName}}" type="{{entityType}}">
     {{#results}}
-        <{{#primaryKey}}id{{/primaryKey}}{{^primaryKey}}result{{/primaryKey}}
-                property="{{property}}" column="{{column}}"
-                {{#javaType}}javaType="{{javaType}}"{{/javaType}}
-            {{#jdbcType}}jdbcType="{{jdbcType}}"{{/jdbcType}}
-            {{#typeHandler}} typeHandler="{{typeHandler}}"{{/typeHandler}}
-        />
+        <{{#primaryKey}}id{{/primaryKey}}{{^primaryKey}}result{{/primaryKey}} property="{{property}}" column="{{column}}" {{#javaType}}javaType="{{javaType}}"{{/javaType}} {{#jdbcType}}jdbcType="{{jdbcType}}"{{/jdbcType}} {{#typeHandler}} typeHandler="{{typeHandler}}"{{/typeHandler}} />
     {{/results}}
     {{#embeddedAssociations}}
         <association property="{{property}}"{{#javaType}}

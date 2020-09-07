@@ -81,4 +81,3 @@ create table t_customer_goods
     goods_id           bigint      not null,
     primary key (customer_firstname, customer_lastname, goods_id)
 );
-
