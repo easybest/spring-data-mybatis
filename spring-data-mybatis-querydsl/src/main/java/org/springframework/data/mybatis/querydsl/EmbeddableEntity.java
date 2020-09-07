@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.repository.sample;
+package org.springframework.data.mybatis.querydsl;
 
-import org.springframework.data.mybatis.domain.sample.Goods;
-import org.springframework.data.mybatis.repository.MybatisRepository;
-import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import javax.lang.model.element.TypeElement;
 
 /**
- * Repository interface for {@code Goods}.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
-public interface GoodsRepository extends MybatisRepository<Goods, Long>, QuerydslPredicateExecutor<Goods> {
+public class EmbeddableEntity extends Entity {
+
+	private static final long serialVersionUID = -4659358907701861820L;
+
+	public EmbeddableEntity(TypeElement element) {
+		super(element);
+	}
 
 }

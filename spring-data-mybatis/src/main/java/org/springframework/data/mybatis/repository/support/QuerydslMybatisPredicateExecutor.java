@@ -91,7 +91,7 @@ public class QuerydslMybatisPredicateExecutor<Q, T> implements QuerydslPredicate
 	public Optional<T> findOne(Predicate predicate) {
 		Assert.notNull(predicate, "Predicate must not be null!");
 		try {
-			return Optional.ofNullable(this.createQuery(predicate).select(this.bean).fetchOne());
+			return Optional.ofNullable(this.path.handleQuery(this.createQuery(predicate).select(this.bean)).fetchOne());
 		}
 		catch (NonUniqueResultException ex) {
 			throw new IncorrectResultSizeDataAccessException(ex.getMessage(), 1, ex);
@@ -102,7 +102,7 @@ public class QuerydslMybatisPredicateExecutor<Q, T> implements QuerydslPredicate
 	public Iterable<T> findAll(Predicate predicate) {
 		Assert.notNull(predicate, "Predicate must not be null!");
 
-		return this.createQuery(predicate).select(this.bean).fetch();
+		return this.path.handleQuery(this.createQuery(predicate).select(this.bean)).fetch();
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class QuerydslMybatisPredicateExecutor<Q, T> implements QuerydslPredicate
 		Assert.notNull(predicate, "Predicate must not be null!");
 		Assert.notNull(sort, "Sort must not be null!");
 
-		return this.executeSorted(this.createQuery(predicate).select(this.bean), sort);
+		return this.executeSorted(this.path.handleQuery(this.createQuery(predicate).select(this.bean)), sort);
 	}
 
 	@Override
@@ -118,14 +118,14 @@ public class QuerydslMybatisPredicateExecutor<Q, T> implements QuerydslPredicate
 		Assert.notNull(predicate, "Predicate must not be null!");
 		Assert.notNull(orders, "Order specifiers must not be null!");
 
-		return this.executeSorted(this.createQuery(predicate).select(this.bean), orders);
+		return this.executeSorted(this.path.handleQuery(this.createQuery(predicate).select(this.bean)), orders);
 	}
 
 	@Override
 	public Iterable<T> findAll(OrderSpecifier<?>... orders) {
 		Assert.notNull(orders, "Order specifiers must not be null!");
 
-		return this.executeSorted(this.createQuery(new Predicate[0]).select(this.bean), orders);
+		return this.executeSorted(this.path.handleQuery(this.createQuery(new Predicate[0]).select(this.bean)), orders);
 	}
 
 	@Override
@@ -135,7 +135,7 @@ public class QuerydslMybatisPredicateExecutor<Q, T> implements QuerydslPredicate
 
 		final MybatisSQLQuery<?> countQuery = this.createQuery(predicate);
 		MybatisSQLQuery<T> query = this.querydsl.applyPagination(pageable,
-				this.createQuery(predicate).select(this.bean));
+				this.path.handleQuery(this.createQuery(new Predicate[0]).select(this.bean)));
 
 		return PageableExecutionUtils.getPage(query.fetch(), pageable, countQuery::fetchCount);
 	}

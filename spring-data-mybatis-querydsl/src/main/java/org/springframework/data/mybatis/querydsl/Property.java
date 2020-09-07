@@ -16,11 +16,19 @@
 package org.springframework.data.mybatis.querydsl;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.lang.model.element.VariableElement;
 import javax.persistence.Embedded;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 
 import org.apache.ibatis.type.JdbcType;
+
+import org.springframework.util.StringUtils;
 
 /**
  * .
@@ -30,7 +38,11 @@ import org.apache.ibatis.type.JdbcType;
  */
 public class Property implements Serializable {
 
-	private static final long serialVersionUID = -6184974239170584300L;
+	private static final long serialVersionUID = 4593515230257618786L;
+
+	private Entity entity;
+
+	private final VariableElement member;
 
 	private String name;
 
@@ -42,53 +54,55 @@ public class Property implements Serializable {
 
 	private String pathType;
 
-	private final Domain domain;
+	private Association association;
 
-	private final VariableElement member;
-
-	public Property(Domain domain, VariableElement member) {
-		this.domain = domain;
+	public Property(Entity entity, VariableElement member) {
+		this.entity = entity;
 		this.member = member;
 	}
 
 	public boolean valid() {
-		if (null != this.name && null != this.javaType) {
+		return StringUtils.hasText(this.name) && StringUtils.hasText(this.javaType);
+	}
+
+	public boolean isId() {
+		if (null != this.member.getAnnotation(Id.class)) {
 			return true;
 		}
 		return false;
 	}
 
 	public boolean isPath() {
-		return null != this.pathType && !"null".equals(this.pathType);
+		return null != this.pathType;
 	}
 
 	public boolean isEmbedded() {
-		Embedded embedded = this.member.getAnnotation(Embedded.class);
-		return null != embedded;
+		javax.persistence.Embedded embedded = this.member.getAnnotation(Embedded.class);
+		if (null != embedded) {
+			return true;
+		}
+		EmbeddedId embeddedId = this.member.getAnnotation(EmbeddedId.class);
+		return null != embeddedId;
+	}
+
+	public boolean isToOne() {
+		ManyToOne manyToOne = this.member.getAnnotation(ManyToOne.class);
+		if (null != manyToOne) {
+			return true;
+		}
+		OneToOne oneToOne = this.member.getAnnotation(OneToOne.class);
+		return null != oneToOne;
 	}
 
 	public boolean isNeedPattern() {
 		return !"StringPath".equals(this.pathType) && !"BooleanPath".equals(this.pathType);
 	}
 
-	public String getPathType() {
-		return this.pathType;
-	}
-
 	public String getPathFactory() {
 		if (null == this.pathType) {
 			return null;
 		}
-
 		return this.pathType.replace("Path", "");
-	}
-
-	public String getJavaType() {
-		return this.javaType;
-	}
-
-	public void setJavaType(String javaType) {
-		this.javaType = javaType;
 	}
 
 	public String getQueryJavaType() {
@@ -101,11 +115,6 @@ public class Property implements Serializable {
 			return javaTypeString.substring(0, pos + 1) + "Q" + javaTypeString.substring(pos + 1);
 		}
 		return "Q" + javaTypeString;
-
-	}
-
-	public void setPathType(String pathType) {
-		this.pathType = pathType;
 	}
 
 	public String getName() {
@@ -124,6 +133,14 @@ public class Property implements Serializable {
 		this.columnName = columnName;
 	}
 
+	public String getJavaType() {
+		return this.javaType;
+	}
+
+	public void setJavaType(String javaType) {
+		this.javaType = javaType;
+	}
+
 	public JdbcType getJdbcType() {
 		return this.jdbcType;
 	}
@@ -132,8 +149,67 @@ public class Property implements Serializable {
 		this.jdbcType = jdbcType;
 	}
 
-	public Domain getDomain() {
-		return this.domain;
+	public Entity getEntity() {
+		return this.entity;
+	}
+
+	public void setEntity(Entity entity) {
+		this.entity = entity;
+	}
+
+	public String getPathType() {
+		return this.pathType;
+	}
+
+	public void setPathType(String pathType) {
+		this.pathType = pathType;
+	}
+
+	public VariableElement getMember() {
+		return this.member;
+	}
+
+	public Association getAssociation() {
+		return this.association;
+	}
+
+	public void setAssociation(Association association) {
+		this.association = association;
+	}
+
+	@Override
+	public String toString() {
+		return "Property{" + "member=" + this.member + ", name='" + this.name + '\'' + ", columnName='"
+				+ this.columnName + '\'' + ", javaType='" + this.javaType + '\'' + ", jdbcType=" + this.jdbcType
+				+ ", pathType='" + this.pathType + '\'' + '}';
+	}
+
+	static class Association {
+
+		private final List<Property> locals = new ArrayList<>();
+
+		private final List<Property> foreigns = new ArrayList<>();
+
+		private Property property;
+
+		public void add(Property property, Property local, Property foreign) {
+			this.property = property;
+			this.locals.add(local);
+			this.foreigns.add(foreign);
+		}
+
+		public List<Property> getLocals() {
+			return this.locals;
+		}
+
+		public List<Property> getForeigns() {
+			return this.foreigns;
+		}
+
+		public Property getProperty() {
+			return this.property;
+		}
+
 	}
 
 }

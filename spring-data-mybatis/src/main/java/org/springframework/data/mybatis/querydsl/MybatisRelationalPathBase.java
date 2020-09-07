@@ -42,6 +42,10 @@ public abstract class MybatisRelationalPathBase<T, P> extends RelationalPathBase
 		return Projections.bean(this.domainClass(), this.all());
 	}
 
+	public MybatisSQLQuery<P> handleQuery(MybatisSQLQuery<P> query) {
+		return query;
+	}
+
 	protected abstract Class<P> domainClass();
 
 }
