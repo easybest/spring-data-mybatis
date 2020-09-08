@@ -15,10 +15,14 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.ibatis.type.JdbcType;
+import org.apache.ibatis.type.TypeAliasRegistry;
 
 /**
  * Column model.
@@ -30,6 +34,13 @@ import org.apache.ibatis.type.JdbcType;
 @Setter
 @ToString
 public class Column {
+
+	private static Map<Class<?>, String> TYPE_ALIAS = new HashMap<>();
+	static {
+		TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
+		Map<String, Class<?>> typeAliases = typeAliasRegistry.getTypeAliases();
+		typeAliases.entrySet().stream().forEach(entry -> TYPE_ALIAS.put(entry.getValue(), entry.getKey()));
+	}
 
 	private Identifier name;
 
@@ -85,8 +96,10 @@ public class Column {
 		if (null == this.javaType) {
 			return null;
 		}
-		if (this.javaType == byte[].class) {
-			return "_byte[]";
+
+		String type = TYPE_ALIAS.get(this.javaType);
+		if (null != type) {
+			return type;
 		}
 		return this.javaType.getName();
 	}
