@@ -13,34 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.domain.sample;
-
-import javax.persistence.Entity;
-import javax.persistence.Table;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-
-import org.springframework.data.mybatis.domain.Audit;
+package org.springframework.data.mybatis.repository.query;
 
 /**
- * Goods category, for test case use.
+ * .
  *
+ * @param <T> domain type
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
-@Entity
-@Table(name = "category")
-@Data
-@EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
-public class Category extends Audit<Long, Long> {
-
-	private String name;
-
-	public Category(String name) {
-		this.name = name;
-	}
+public interface CascadeBeanWrapper<T> {
 
 }

@@ -8,7 +8,8 @@
 	</appender>
 	<logger name="com.querydsl.sql" level="debug"/>
 	<logger name="org.springframework.data" level="error"/>
-	<!--	<logger name="org.springframework.data.mybatis" level="debug"/>-->
+	<logger name="org.springframework.data.mybatis.domain.sample" level="debug"/>
+	<logger name="org.springframework.data.mybatis" level="debug"/>
 	<!--    <logger name="org.springframework.transaction" level="debug"/>-->
 	<!--    <logger name="org.springframework.jdbc.datasource" level="debug"/>-->
 	<!--    <logger name="org.springframework.data.repository.config" level="info"/>-->

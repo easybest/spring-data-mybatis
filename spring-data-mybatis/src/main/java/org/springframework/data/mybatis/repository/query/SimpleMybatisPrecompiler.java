@@ -511,7 +511,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String addAssociationManyToOne(String namespace, Association association) {
-		String statementName = "__association_to_one_" + association.getProperty();
+		String statementName = "__association_to_one_" + this.persistentEntity.getName().replace('.', '_') + "_"
+				+ association.getProperty();
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put("statementName", statementName);
 		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
@@ -522,7 +523,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String addAssociationManyToMany(String namespace, Collection collection) {
-		String statementName = "__association_many_to_many_" + collection.getProperty();
+		String statementName = "__association_many_to_many_" + this.persistentEntity.getName().replace('.', '_') + "_"
+				+ collection.getProperty();
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put("statementName", statementName);
 		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);
@@ -533,7 +535,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String addAssociationOneToMany(String namespace, Collection collection) {
-		String statementName = "__association_one_to_many_" + collection.getProperty();
+		String statementName = "__association_one_to_many_" + this.persistentEntity.getName().replace('.', '_') + "_"
+				+ collection.getProperty();
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put("statementName", statementName);
 		scopes.put("resultMap", ResidentStatementName.RESULT_MAP);

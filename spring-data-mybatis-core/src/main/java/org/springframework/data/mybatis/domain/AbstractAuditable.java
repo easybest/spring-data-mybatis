@@ -21,6 +21,8 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.Optional;
 
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Temporal;
@@ -39,20 +41,24 @@ import org.springframework.lang.Nullable;
  * @since 2.0.1
  */
 @MappedSuperclass
-public class AbstractAuditable<U, PK extends Serializable> extends AbstractPersistable<PK>
+public abstract class AbstractAuditable<U, PK extends Serializable> extends AbstractPersistable<PK>
 		implements Auditable<U, PK, LocalDateTime> {
 
-	private static final long serialVersionUID = 779906810082104339L;
+	private static final long serialVersionUID = 4103127148219197466L;
 
 	@ManyToOne
+	@JoinColumn(name = "created_by")
 	private @Nullable U createdBy;
 
+	@Column(name = "created_date")
 	@Temporal(TemporalType.TIMESTAMP)
 	private @Nullable Date createdDate;
 
 	@ManyToOne
+	@JoinColumn(name = "last_modified_by")
 	private @Nullable U lastModifiedBy;
 
+	@Column(name = "last_modified_date")
 	@Temporal(TemporalType.TIMESTAMP)
 	private @Nullable Date lastModifiedDate;
 

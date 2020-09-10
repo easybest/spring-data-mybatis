@@ -22,24 +22,24 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import org.springframework.data.mybatis.domain.Audit;
+import org.springframework.data.mybatis.domain.AbstractPersistable;
 
 /**
- * Goods category, for test case use.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
 @Entity
-@Table(name = "category")
+@Table(name = "role")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Category extends Audit<Long, Long> {
+@EqualsAndHashCode(callSuper = true)
+public class Role extends AbstractPersistable<Long> {
 
 	private String name;
 
-	public Category(String name) {
+	public Role(String name) {
 		this.name = name;
 	}
 

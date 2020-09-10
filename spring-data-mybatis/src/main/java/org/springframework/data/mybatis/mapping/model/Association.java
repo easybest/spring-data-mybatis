@@ -33,6 +33,8 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class Association implements Serializable {
 
+	private static final long serialVersionUID = 3169794115053267639L;
+
 	private String property;
 
 	private String javaType;

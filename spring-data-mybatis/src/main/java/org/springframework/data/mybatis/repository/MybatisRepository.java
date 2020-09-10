@@ -59,11 +59,17 @@ public interface MybatisRepository<T, ID> extends PagingAndSortingRepository<T, 
 
 	<S extends T> List<S> saveSelectiveAll(Iterable<S> entities);
 
+	<S extends T> List<S> saveAll(S... entities);
+
+	<S extends T> List<S> saveSelectiveAll(S... entities);
+
 	<S extends T> S saveSelective(S entity);
 
 	<S extends T> S insert(S entity);
 
 	<S extends T> S insertSelective(S entity);
+
+	<S extends T> S insertCascade(S entity);
 
 	<S extends T> S update(S entity);
 

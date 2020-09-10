@@ -226,6 +226,14 @@ public class MappingContext {
 			return;
 		}
 
+		Entity target = this.initialEntitySet.get(property.getJavaType());
+		if (null == target) {
+			return;
+		}
+
+		String targetPk = target.getProperties().stream().filter(Property::isId).map(p -> p.getColumnName()).findFirst()
+				.orElse("id");
+
 		List<JoinColumn> joinColumns = new ArrayList<>();
 		JoinColumn joinColumnAnn = element.getAnnotation(JoinColumn.class);
 		if (null != joinColumnAnn) {
@@ -236,50 +244,48 @@ public class MappingContext {
 			joinColumns.addAll(Stream.of(joinColumnsAnn.value()).collect(Collectors.toList()));
 		}
 
+		String[] locals;
+		String[] foreigns;
+		if (CollectionUtils.isEmpty(joinColumns)) {
+			locals = new String[] { property.getName() + "_" + targetPk };
+			foreigns = new String[] { targetPk };
+		}
+		else {
+			locals = new String[joinColumns.size()];
+			foreigns = new String[joinColumns.size()];
+			for (int i = 0; i < joinColumns.size(); i++) {
+				JoinColumn joinColumn = joinColumns.get(i);
+				String local = property.getName() + "_" + targetPk;
+				String foreign = targetPk;
+
+				if (StringUtils.hasText(joinColumn.name())) {
+					local = joinColumn.name();
+				}
+				if (StringUtils.hasText(joinColumn.referencedColumnName())) {
+					foreign = joinColumn.referencedColumnName();
+				}
+				locals[i] = local;
+				foreigns[i] = foreign;
+			}
+
+		}
+
 		Association association = new Association();
-
-		joinColumns.stream().forEach(joinColumn -> {
-
-			String local = property.getName() + "_id";
-			String foreign = "id";
-
-			if (StringUtils.hasText(joinColumn.name())) {
-				local = joinColumn.name();
-			}
-			if (StringUtils.hasText(joinColumn.referencedColumnName())) {
-				foreign = joinColumn.referencedColumnName();
-			}
-
-			Entity target = this.initialEntitySet.get(property.getJavaType());
-
-			if (null == target) {
-				return;
-			}
-			String targetPk = target.getProperties().stream().filter(Property::isId).map(p -> p.getColumnName())
-					.findFirst().orElse("id");
-
-			if (null == local) {
-				local = element.getSimpleName() + "_" + targetPk;
-			}
-			if (null == foreign) {
-				foreign = targetPk;
-			}
-
-			String finalForeign = foreign;
-			String finalLocal = local;
-			target.getProperties().stream().filter(p -> finalForeign.equals(p.getColumnName())).findFirst()
+		for (int i = 0; i < locals.length; i++) {
+			String local = locals[i];
+			String foreign = foreigns[i];
+			target.getProperties().stream().filter(p -> foreign.equals(p.getColumnName())).findFirst()
 					.ifPresent(targetProperty -> {
 						Property localProperty = new Property(entity, targetProperty.getMember());
-						localProperty.setName(finalLocal);
-						localProperty.setColumnName(finalLocal);
+						localProperty.setName(local);
+						localProperty.setColumnName(local);
 						localProperty.setJdbcType(targetProperty.getJdbcType());
 						localProperty.setJavaType(targetProperty.getJavaType());
 						localProperty.setPathType(targetProperty.getPathType());
 						localProperty.setEntity(targetProperty.getEntity());
 						association.add(property, localProperty, targetProperty);
 					});
-
-		});
+		}
 		property.setAssociation(association);
 	}
 

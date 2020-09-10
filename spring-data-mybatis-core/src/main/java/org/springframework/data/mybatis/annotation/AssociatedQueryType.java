@@ -13,34 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.domain.sample;
+package org.springframework.data.mybatis.annotation;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-
-import org.springframework.data.mybatis.domain.Audit;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Goods category, for test case use.
+ * Associated query type.
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
-@Entity
-@Table(name = "category")
-@Data
-@EqualsAndHashCode(callSuper = true)
-@NoArgsConstructor
-public class Category extends Audit<Long, Long> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface AssociatedQueryType {
 
-	private String name;
+	Type value() default Type.JOIN;
 
-	public Category(String name) {
-		this.name = name;
+	enum Type {
+
+		NONE, JOIN, SELECT
+
 	}
 
 }

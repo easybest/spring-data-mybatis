@@ -66,10 +66,7 @@ public class Property implements Serializable {
 	}
 
 	public boolean isId() {
-		if (null != this.member.getAnnotation(Id.class)) {
-			return true;
-		}
-		return false;
+		return null != this.member.getAnnotation(Id.class);
 	}
 
 	public boolean isPath() {
@@ -181,7 +178,7 @@ public class Property implements Serializable {
 	public String toString() {
 		return "Property{" + "member=" + this.member + ", name='" + this.name + '\'' + ", columnName='"
 				+ this.columnName + '\'' + ", javaType='" + this.javaType + '\'' + ", jdbcType=" + this.jdbcType
-				+ ", pathType='" + this.pathType + '\'' + '}';
+				+ ", pathType='" + this.pathType + '\'' + ", association=" + this.association + '}';
 	}
 
 	static class Association {
@@ -208,6 +205,11 @@ public class Property implements Serializable {
 
 		public Property getProperty() {
 			return this.property;
+		}
+
+		@Override
+		public String toString() {
+			return "Association{" + "locals=" + this.locals + ", foreigns=" + this.foreigns + '}';
 		}
 
 	}

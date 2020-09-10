@@ -38,11 +38,11 @@ import org.springframework.lang.Nullable;
 @MappedSuperclass
 public abstract class AbstractPersistable<PK extends Serializable> implements Persistable<PK> {
 
-	private static final long serialVersionUID = 2187006761716387936L;
+	private static final long serialVersionUID = -6431424829764207156L;
 
 	@Id
 	@GeneratedValue
-	private @Nullable PK id;
+	protected @Nullable PK id;
 
 	@Nullable
 	@Override
@@ -50,7 +50,7 @@ public abstract class AbstractPersistable<PK extends Serializable> implements Pe
 		return this.id;
 	}
 
-	protected void setId(@Nullable PK id) {
+	public void setId(@Nullable PK id) {
 		this.id = id;
 	}
 
@@ -62,23 +62,31 @@ public abstract class AbstractPersistable<PK extends Serializable> implements Pe
 
 	@Override
 	public boolean equals(Object obj) {
+
 		if (null == obj) {
 			return false;
 		}
+
 		if (this == obj) {
 			return true;
 		}
+
 		if (!this.getClass().equals(ProxyUtils.getUserClass(obj))) {
 			return false;
 		}
+
 		AbstractPersistable<?> that = (AbstractPersistable<?>) obj;
+
 		return null != this.getId() && this.getId().equals(that.getId());
 	}
 
 	@Override
 	public int hashCode() {
+
 		int hashCode = 17;
+
 		hashCode += (null != this.getId()) ? this.getId().hashCode() * 31 : 0;
+
 		return hashCode;
 	}
 
