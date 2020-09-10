@@ -67,37 +67,24 @@ class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPer
 	}
 
 	@Override
+	public boolean isCompositePrimaryKey() {
+		if (this.isAnnotationPresent(IdClass.class)) {
+			return true;
+		}
+
+		return this.hasIdProperty() ? this.getRequiredIdProperty().isAnnotationPresent(EmbeddedId.class) : false;
+	}
+
+	@Override
 	public Table getTable() {
 		return this.table.get();
 	}
 
 	@Override
-	public String getName() {
-		Entity entity = this.findAnnotation(Entity.class);
-		return ((null != entity) && StringUtils.hasText(entity.name())) ? entity.name() : super.getName();
-	}
-
-	@Override
-	public boolean hasCompositeId() {
-		if (this.isAnnotationPresent(IdClass.class)) {
-			return true;
-		}
-		if (this.hasIdProperty()) {
-			return this.getRequiredIdProperty().isAnnotationPresent(EmbeddedId.class);
-		}
-		return false;
-	}
-
-	@Override
 	public Class<?> getIdClass() {
-		if (this.isAnnotationPresent(IdClass.class)) {
-			IdClass idClass = this.getRequiredAnnotation(IdClass.class);
-			return idClass.value();
-		}
-		if (this.hasIdProperty()) {
-			return this.getRequiredIdProperty().getActualType();
-		}
-		return null;
+
+		return this.isAnnotationPresent(IdClass.class) ? this.getRequiredAnnotation(IdClass.class).value()
+				: (this.hasIdProperty() ? this.getRequiredIdProperty().getActualType() : null);
 	}
 
 	@Override

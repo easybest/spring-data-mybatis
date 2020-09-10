@@ -27,9 +27,13 @@ import org.springframework.data.mybatis.mapping.model.Table;
  */
 public interface MybatisPersistentEntity<T> extends PersistentEntity<T, MybatisPersistentProperty> {
 
-	Table getTable();
+	/**
+	 * Returns whether this entity represents a composite primary key.
+	 * @return whether composite primary key
+	 */
+	boolean isCompositePrimaryKey();
 
-	boolean hasCompositeId();
+	Table getTable();
 
 	Class<?> getIdClass();
 

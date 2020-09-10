@@ -76,21 +76,19 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	private final Mustache.Compiler mustache;
 
-	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
-			RepositoryInformation repositoryInformation) {
+	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, RepositoryInformation repositoryInformation) {
 
-		this(mappingContext, configuration, dialect, repositoryInformation.getDomainType());
+		this(mappingContext, repositoryInformation.getDomainType());
 
 		this.repositoryInterface = repositoryInformation.getRepositoryInterface();
 	}
 
-	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
-			Class<?> domainType) {
+	AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Class<?> domainType) {
 		this.mappingContext = mappingContext;
-		this.configuration = configuration;
+		this.configuration = mappingContext.getSqlSessionTemplate().getConfiguration();
 		this.namespace = domainType.getName();
 		this.persistentEntity = mappingContext.getRequiredPersistentEntity(domainType);
-		this.dialect = dialect;
+		this.dialect = mappingContext.getDialect();
 
 		this.mustache = Mustache.compiler().withLoader(name -> {
 			String path = "org/springframework/data/mybatis/repository/query/template/" + name + ".mustache";

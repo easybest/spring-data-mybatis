@@ -17,10 +17,7 @@ package org.springframework.data.mybatis.repository.query;
 
 import java.util.regex.Pattern;
 
-import org.apache.ibatis.session.Configuration;
-
 import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
 
@@ -36,9 +33,8 @@ abstract class MybatisQueryMethodPrecompiler extends AbstractMybatisPrecompiler 
 
 	protected final AbstractMybatisQuery query;
 
-	MybatisQueryMethodPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
-			AbstractMybatisQuery query) {
-		super(mappingContext, configuration, dialect, query.getQueryMethod().getEntityInformation().getJavaType());
+	MybatisQueryMethodPrecompiler(MybatisMappingContext mappingContext, AbstractMybatisQuery query) {
+		super(mappingContext, query.getQueryMethod().getEntityInformation().getJavaType());
 
 		this.query = query;
 	}

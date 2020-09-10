@@ -26,7 +26,6 @@ import javax.persistence.EmbeddedId;
 
 import com.samskivert.mustache.Mustache.Lambda;
 import lombok.Getter;
-import org.apache.ibatis.session.Configuration;
 
 import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
@@ -54,9 +53,8 @@ class PartTreeMyBatisQueryPrecompiler extends MybatisQueryMethodPrecompiler {
 
 	private AtomicInteger argumentCounter = new AtomicInteger(0);
 
-	PartTreeMyBatisQueryPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
-			PartTreeMybatisQuery query) {
-		super(mappingContext, configuration, dialect, query);
+	PartTreeMyBatisQueryPrecompiler(MybatisMappingContext mappingContext, PartTreeMybatisQuery query) {
+		super(mappingContext, query);
 
 		this.query = query;
 	}

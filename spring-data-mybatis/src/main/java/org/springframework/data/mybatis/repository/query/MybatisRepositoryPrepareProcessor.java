@@ -15,10 +15,7 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
-import org.apache.ibatis.session.Configuration;
-
 import org.springframework.aop.framework.ProxyFactory;
-import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.support.RepositoryProxyPostProcessor;
@@ -34,21 +31,13 @@ public class MybatisRepositoryPrepareProcessor implements RepositoryProxyPostPro
 
 	private final MybatisMappingContext mappingContext;
 
-	private final Configuration configuration;
-
-	private final Dialect dialect;
-
-	public MybatisRepositoryPrepareProcessor(MybatisMappingContext mappingContext, Configuration configuration,
-			Dialect dialect) {
+	public MybatisRepositoryPrepareProcessor(MybatisMappingContext mappingContext) {
 		this.mappingContext = mappingContext;
-		this.configuration = configuration;
-		this.dialect = dialect;
 	}
 
 	@Override
 	public void postProcess(ProxyFactory factory, RepositoryInformation repositoryInformation) {
-		new SimpleMybatisPrecompiler(this.mappingContext, this.configuration, this.dialect, repositoryInformation)
-				.precompile();
+		new SimpleMybatisPrecompiler(this.mappingContext, repositoryInformation).precompile();
 	}
 
 }

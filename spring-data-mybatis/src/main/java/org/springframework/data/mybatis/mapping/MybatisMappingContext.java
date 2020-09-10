@@ -16,23 +16,26 @@
 package org.springframework.data.mybatis.mapping;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
 
+import org.mybatis.spring.SqlSessionTemplate;
+
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.FieldNamingStrategy;
 import org.springframework.data.mapping.model.Property;
+import org.springframework.data.mapping.model.PropertyNameFieldNamingStrategy;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
-import org.springframework.data.mybatis.repository.MybatisRepository;
+import org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy;
+import org.springframework.data.mybatis.dialect.Dialect;
+import org.springframework.data.mybatis.dialect.internal.DatabaseMetaDataDialectResolutionInfoAdapter;
+import org.springframework.data.mybatis.dialect.internal.StandardDialectResolver;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
 /**
  * {@link MappingContext} implementation based on JPA annotations.
@@ -40,20 +43,62 @@ import org.springframework.util.MultiValueMap;
  * @author JARVIS SONG
  * @since 1.0.0
  */
-public class MybatisMappingContext
-		extends AbstractMappingContext<MybatisPersistentEntityImpl<?>, MybatisPersistentProperty> {
+public class MybatisMappingContext extends
+		AbstractMappingContext<MybatisPersistentEntityImpl<?>, MybatisPersistentProperty> implements InitializingBean {
+
+	private static final SnakeCaseFieldNamingStrategy SNAKE_CASE_FIELD_NAMING_STRATEGY = new SnakeCaseFieldNamingStrategy();
+
+	private final SqlSessionTemplate sqlSessionTemplate;
+
+	private final Dialect dialect;
 
 	private FieldNamingStrategy fieldNamingStrategy;
 
 	private Map<String, String> namedQueries = new HashMap<>();
 
-	private MultiValueMap<Class<?>, Class<?>> entityRepositoryMapping = new LinkedMultiValueMap<>();
+	public MybatisMappingContext(SqlSessionTemplate sqlSessionTemplate) {
+		this.sqlSessionTemplate = sqlSessionTemplate;
+		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(new DatabaseMetaDataDialectResolutionInfoAdapter(
+				sqlSessionTemplate.getConfiguration().getEnvironment().getDataSource()));
+	}
+
+	@Override
+	public void afterPropertiesSet() {
+		super.afterPropertiesSet();
+	}
 
 	@Override
 	protected <T> MybatisPersistentEntityImpl<?> createPersistentEntity(TypeInformation<T> typeInformation) {
 
-		MybatisPersistentEntityImpl<T> entity = new MybatisPersistentEntityImpl(typeInformation);
+		MybatisPersistentEntityImpl<T> entity = new MybatisPersistentEntityImpl<>(typeInformation);
+		this.processNamedQueries(entity);
+		return entity;
+	}
 
+	@Override
+	protected MybatisPersistentProperty createPersistentProperty(Property property,
+			MybatisPersistentEntityImpl<?> owner, SimpleTypeHolder simpleTypeHolder) {
+		FieldNamingStrategy fns;
+		if (null != this.fieldNamingStrategy) {
+			fns = this.fieldNamingStrategy;
+		}
+		else {
+			if (null != this.sqlSessionTemplate
+					&& this.sqlSessionTemplate.getConfiguration().isMapUnderscoreToCamelCase()) {
+				fns = SNAKE_CASE_FIELD_NAMING_STRATEGY;
+			}
+			else {
+				fns = PropertyNameFieldNamingStrategy.INSTANCE;
+			}
+		}
+		return new MybatisPersistentPropertyImpl(property, owner, simpleTypeHolder, fns);
+	}
+
+	public String getNamedQuery(String name) {
+		return this.namedQueries.get(name);
+	}
+
+	private void processNamedQueries(MybatisPersistentEntityImpl<?> entity) {
 		javax.persistence.NamedQuery namedQuery = entity.findAnnotation(javax.persistence.NamedQuery.class);
 		if ((null != namedQuery)) {
 			this.namedQueries.put(namedQuery.name(), namedQuery.query());
@@ -75,41 +120,18 @@ public class MybatisMappingContext
 				this.namedQueries.put(nq.name(), nq.query());
 			}
 		}
-
-		return entity;
-	}
-
-	@Override
-	protected MybatisPersistentProperty createPersistentProperty(Property property,
-			MybatisPersistentEntityImpl<?> owner, SimpleTypeHolder simpleTypeHolder) {
-		return new MybatisPersistentPropertyImpl(property, owner, simpleTypeHolder, this.fieldNamingStrategy);
 	}
 
 	public void setFieldNamingStrategy(FieldNamingStrategy fieldNamingStrategy) {
 		this.fieldNamingStrategy = fieldNamingStrategy;
 	}
 
-	public String getNamedQuery(String name) {
-		return this.namedQueries.get(name);
+	public SqlSessionTemplate getSqlSessionTemplate() {
+		return this.sqlSessionTemplate;
 	}
 
-	public void setEntityRepositoryMapping(MultiValueMap<Class<?>, Class<?>> entityRepositoryMapping) {
-		this.entityRepositoryMapping = entityRepositoryMapping;
-	}
-
-	public Class<?> getRepositoryInterface(Class<?> entityClass) {
-		List<Class<?>> repositories = this.entityRepositoryMapping.get(entityClass);
-		if (CollectionUtils.isEmpty(repositories)) {
-			return null;
-		}
-
-		if (repositories.size() == 1) {
-			return repositories.get(0);
-		}
-
-		return repositories.stream().filter(r -> MybatisRepository.class.isAssignableFrom(r)).findFirst()
-				.orElse(repositories.get(0));
-
+	public Dialect getDialect() {
+		return this.dialect;
 	}
 
 }

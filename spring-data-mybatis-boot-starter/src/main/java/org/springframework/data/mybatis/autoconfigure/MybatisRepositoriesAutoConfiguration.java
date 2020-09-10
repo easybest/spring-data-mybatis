@@ -15,20 +15,29 @@
  */
 package org.springframework.data.mybatis.autoconfigure;
 
+import java.util.List;
+
 import javax.sql.DataSource;
 
+import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration;
 
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
 import org.springframework.boot.autoconfigure.task.TaskExecutionAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.mybatis.mapping.MybatisEntityClassScanner;
+import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
 import org.springframework.data.mybatis.repository.config.MybatisRepositoryConfigExtension;
@@ -57,11 +66,27 @@ import org.springframework.data.mybatis.repository.support.MybatisRepositoryFact
 @ConditionalOnBean(DataSource.class)
 @ConditionalOnClass(MybatisRepository.class)
 @ConditionalOnMissingBean({ MybatisRepositoryFactoryBean.class, MybatisRepositoryConfigExtension.class })
-@ConditionalOnProperty(prefix = "spring.data.mybatis.repositories", name = "enabled", havingValue = "true",
+@ConditionalOnProperty(prefix = SpringDataMybatisProperties.PREFIX, name = "enabled", havingValue = "true",
 		matchIfMissing = true)
 @Import(MybatisRepositoriesAutoConfigureRegistrar.class)
 @AutoConfigureAfter({ MybatisAutoConfiguration.class, TaskExecutionAutoConfiguration.class })
 @EnableConfigurationProperties(SpringDataMybatisProperties.class)
 public class MybatisRepositoriesAutoConfiguration {
+
+	@Bean
+	@ConditionalOnMissingBean
+	public MybatisMappingContext mybatisMappingContext(BeanFactory beanFactory, SqlSessionTemplate sqlSessionTemplate)
+			throws ClassNotFoundException {
+		MybatisMappingContext context = new MybatisMappingContext(sqlSessionTemplate);
+
+		List<String> packages = EntityScanPackages.get(beanFactory).getPackageNames();
+		if (packages.isEmpty() && AutoConfigurationPackages.has(beanFactory)) {
+			packages = AutoConfigurationPackages.get(beanFactory);
+		}
+		if (!packages.isEmpty()) {
+			context.setInitialEntitySet(MybatisEntityClassScanner.scan(packages));
+		}
+		return context;
+	}
 
 }
