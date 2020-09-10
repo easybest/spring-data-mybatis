@@ -30,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
@@ -55,12 +54,6 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 	private static final String ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE = "enableDefaultTransactions";
 
 	private static final String ESCAPE_CHARACTER_PROPERTY = "escapeCharacter";
-
-	private final ResourceLoader resourceLoader;
-
-	public MybatisRepositoryConfigExtension(ResourceLoader resourceLoader) {
-		this.resourceLoader = resourceLoader;
-	}
 
 	@Override
 	public String getModuleName() {
@@ -116,7 +109,7 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		try {
 			return source.getAttribute(ESCAPE_CHARACTER_PROPERTY, Character.class);
 		}
-		catch (IllegalArgumentException ___) {
+		catch (IllegalArgumentException ex) {
 			return Optional.empty();
 		}
 	}
