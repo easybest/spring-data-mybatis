@@ -15,6 +15,7 @@
  */
 package org.springframework.data.mybatis.domain.sample;
 
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
@@ -25,22 +26,29 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.mybatis.domain.Audit;
 
 /**
- * Goods category, for test case use.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
 @Entity
-@Table(name = "category")
+@Table(name = "person")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Category extends Audit<Long, Long> {
+@EqualsAndHashCode(callSuper = true)
+public class Person extends Audit<Long, Long> {
 
-	private String name;
+	private String firstname;
 
-	public Category(String name) {
-		this.name = name;
+	private String lastname;
+
+	@Embedded
+	private Address address;
+
+	public Person(String firstname, String lastname, Address address) {
+		this.firstname = firstname;
+		this.lastname = lastname;
+		this.address = address;
 	}
 
 }

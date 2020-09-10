@@ -47,7 +47,7 @@ import org.springframework.data.mybatis.domain.Audit;
  * @since 2.0.0
  */
 @Entity
-@Table(name = "t_shop")
+@Table(name = "shop")
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true)

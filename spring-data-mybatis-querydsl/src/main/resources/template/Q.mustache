@@ -48,9 +48,9 @@ public class {{queryClassName}} extends org.springframework.data.mybatis.queryds
     }
 
     {{#properties}}
-    {{#path}}
+    {{#path}}{{^embedded}}
     public final {{pathType}}{{#needPattern}}<{{javaType}}>{{/needPattern}} {{name}} = create{{pathFactory}}("{{name}}"{{#needPattern}}, {{javaType}}.class{{/needPattern}});
-    {{/path}}
+    {{/embedded}}{{/path}}
     {{#embedded}}
     public final {{queryJavaType}} {{name}} = new {{queryJavaType}}("{{instanceName}}");
     {{/embedded}}

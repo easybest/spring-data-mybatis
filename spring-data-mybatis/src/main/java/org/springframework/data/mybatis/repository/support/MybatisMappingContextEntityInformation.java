@@ -42,6 +42,10 @@ public class MybatisMappingContextEntityInformation<T, ID> extends MybatisEntity
 
 	}
 
+	public MybatisPersistentEntity<?> getEntity() {
+		return this.entity;
+	}
+
 	@Override
 	public boolean hasCompositeId() {
 		return this.entity.hasCompositeId();

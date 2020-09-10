@@ -46,7 +46,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 @ToString(callSuper = true)
 @NoArgsConstructor
 @MappedSuperclass
-public abstract class Audit<AUDITOR, ID extends Serializable> extends Id<ID> {
+public abstract class Audit<AUDITOR extends Serializable, ID extends Serializable> extends Id<ID> {
 
 	@CreatedBy
 	@Column(name = "created_by")
@@ -54,16 +54,16 @@ public abstract class Audit<AUDITOR, ID extends Serializable> extends Id<ID> {
 
 	@CreatedDate
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "creation_date")
+	@Column(name = "created_date")
 	private Timestamp creationDate;
 
 	@LastModifiedBy
-	@Column(name = "last_updated_by")
-	private AUDITOR lastUpdatedBy;
+	@Column(name = "last_modified_by")
+	private AUDITOR lastModifiedBy;
 
 	@LastModifiedDate
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "last_update_date")
-	private Timestamp lastUpdateDate;
+	@Column(name = "last_modified_date")
+	private Timestamp lastModifiedDate;
 
 }

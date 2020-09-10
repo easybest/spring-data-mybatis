@@ -33,7 +33,7 @@ import org.springframework.data.mybatis.domain.Audit;
  * @since 2.0.0
  */
 @Entity
-@Table(name = "t_goods")
+@Table(name = "goods")
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor

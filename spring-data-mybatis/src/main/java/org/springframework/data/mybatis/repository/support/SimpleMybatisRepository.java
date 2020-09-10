@@ -255,6 +255,22 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 	}
 
 	@Override
+	@Transactional
+	public <S extends T> List<S> saveAll(S... entities) {
+		Assert.notNull(entities, "Entities must not be null.");
+
+		return Streamable.of(entities).stream().map(this::save).collect(Collectors.toList());
+	}
+
+	@Override
+	@Transactional
+	public <S extends T> List<S> saveSelectiveAll(S... entities) {
+		Assert.notNull(entities, "Entities must not be null.");
+
+		return Streamable.of(entities).stream().map(this::saveSelective).collect(Collectors.toList());
+	}
+
+	@Override
 	public Optional<T> findById(ID id) {
 		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
 
@@ -358,6 +374,15 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport
 		this.entityInformation.initVersion(entity);
 		this.insert(ResidentStatementName.INSERT_SELECTIVE, entity);
 		return entity;
+	}
+
+	@Override
+	@Transactional
+	public <S extends T> S insertCascade(S entity) {
+		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
+		this.entityInformation.initVersion(entity);
+
+		return null;
 	}
 
 	@Override

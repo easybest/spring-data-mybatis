@@ -50,7 +50,7 @@ import org.springframework.data.annotation.LastModifiedDate;
  * @author JARVIS SONG
  */
 @Entity
-@Table(name = "t_customer")
+@Table(name = "customer")
 @Data
 @NoArgsConstructor
 public class Customer implements Serializable {
@@ -94,7 +94,7 @@ public class Customer implements Serializable {
 
 	@OrderBy("name desc")
 	@ManyToMany(fetch = FetchType.EAGER)
-	@JoinTable(name = "t_customer_goods",
+	@JoinTable(name = "customer_goods",
 			joinColumns = { @JoinColumn(name = "customer_firstname", referencedColumnName = "firstname"),
 					@JoinColumn(name = "customer_lastname", referencedColumnName = "lastname") },
 			inverseJoinColumns = @JoinColumn(name = "goods_id", referencedColumnName = "id"))
