@@ -69,7 +69,6 @@ public class MybatisMappingContext extends
 
 	@Override
 	protected <T> MybatisPersistentEntityImpl<?> createPersistentEntity(TypeInformation<T> typeInformation) {
-
 		MybatisPersistentEntityImpl<T> entity = new MybatisPersistentEntityImpl<>(typeInformation);
 		this.processNamedQueries(entity);
 		return entity;
