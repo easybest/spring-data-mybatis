@@ -55,7 +55,7 @@ public abstract class Audit<AUDITOR extends Serializable, ID extends Serializabl
 	@CreatedDate
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "created_date")
-	private Timestamp creationDate;
+	private Timestamp createdDate;
 
 	@LastModifiedBy
 	@Column(name = "last_modified_by")

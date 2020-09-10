@@ -15,12 +15,9 @@
  */
 package org.springframework.data.mybatis.repository.support;
 
-import org.mybatis.spring.SqlSessionTemplate;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
 import org.springframework.data.querydsl.EntityPathResolver;
@@ -44,11 +41,7 @@ import org.springframework.util.Assert;
 public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 		extends TransactionalRepositoryFactoryBeanSupport<T, S, ID> {
 
-	private @Nullable SqlSessionTemplate sqlSessionTemplate;
-
 	private @Nullable MybatisMappingContext mappingContext;
-
-	private @Nullable Dialect dialect;
 
 	private EntityPathResolver entityPathResolver;
 
@@ -66,23 +59,19 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 	@Override
 	public void afterPropertiesSet() {
 		Assert.state(null != this.mappingContext, "MybatisMappingContext must not be null!");
-		Assert.state(null != this.sqlSessionTemplate, "SqlSessionTemplate must not be null!");
 
 		super.afterPropertiesSet();
 	}
 
 	@Override
 	protected RepositoryFactorySupport doCreateRepositoryFactory() {
-		return this.createRepositoryFactory(this.mappingContext, this.sqlSessionTemplate, this.dialect);
+		return this.createRepositoryFactory(this.mappingContext);
 	}
 
-	private RepositoryFactorySupport createRepositoryFactory(MybatisMappingContext mappingContext,
-			SqlSessionTemplate sqlSessionTemplate, Dialect dialect) {
+	private RepositoryFactorySupport createRepositoryFactory(MybatisMappingContext mappingContext) {
 		Assert.state(null != this.mappingContext, "MybatisMappingContext must not be null!");
-		Assert.state(null != this.sqlSessionTemplate, "SqlSessionTemplate must not be null!");
 
-		MybatisRepositoryFactory repositoryFactory = new MybatisRepositoryFactory(mappingContext, sqlSessionTemplate,
-				dialect);
+		MybatisRepositoryFactory repositoryFactory = new MybatisRepositoryFactory(mappingContext);
 		repositoryFactory.setEntityPathResolver(this.entityPathResolver);
 		repositoryFactory.setEscapeCharacter(this.escapeCharacter);
 		return repositoryFactory;
@@ -98,17 +87,9 @@ public class MybatisRepositoryFactoryBean<T extends Repository<S, ID>, S, ID>
 		this.escapeCharacter = EscapeCharacter.of(escapeCharacter);
 	}
 
-	public void setSqlSessionTemplate(@Nullable SqlSessionTemplate sqlSessionTemplate) {
-		this.sqlSessionTemplate = sqlSessionTemplate;
-	}
-
 	@Autowired
 	public void setEntityPathResolver(ObjectProvider<EntityPathResolver> resolver) {
 		this.entityPathResolver = resolver.getIfAvailable(() -> SimpleEntityPathResolver.INSTANCE);
-	}
-
-	public void setDialect(@Nullable Dialect dialect) {
-		this.dialect = dialect;
 	}
 
 }

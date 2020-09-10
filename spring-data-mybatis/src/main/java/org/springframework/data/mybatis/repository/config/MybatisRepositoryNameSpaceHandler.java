@@ -27,9 +27,9 @@ public class MybatisRepositoryNameSpaceHandler extends NamespaceHandlerSupport {
 
 	@Override
 	public void init() {
-		RepositoryBeanDefinitionParser repositoryBeanDefinitionParser = new RepositoryBeanDefinitionParser();
 
-		registerBeanDefinitionParser("repositories", repositoryBeanDefinitionParser);
+		registerBeanDefinitionParser("mapping", new MybatisMappingContextParser());
+		registerBeanDefinitionParser("repositories", new RepositoryBeanDefinitionParser());
 		registerBeanDefinitionParser("auditing",
 				new AuditingBeanDefinitionParser(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME));
 	}

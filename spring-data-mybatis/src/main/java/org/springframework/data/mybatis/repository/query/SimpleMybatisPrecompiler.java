@@ -45,7 +45,6 @@ import javax.persistence.SequenceGenerators;
 import com.samskivert.mustache.Mustache;
 import com.samskivert.mustache.Mustache.InvertibleLambda;
 import com.samskivert.mustache.Template.Fragment;
-import org.apache.ibatis.session.Configuration;
 
 import org.springframework.data.mapping.AssociationHandler;
 import org.springframework.data.mapping.MappingException;
@@ -53,7 +52,6 @@ import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mybatis.annotation.Condition;
 import org.springframework.data.mybatis.annotation.Conditions;
 import org.springframework.data.mybatis.annotation.Example;
-import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 import org.springframework.data.mybatis.dialect.pagination.SQLServer2005LimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.SQLServer2012LimitHandler;
@@ -81,9 +79,8 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 
 	static final String DEFAULT_SEQUENCE_NAME = "seq_spring_data_mybatis";
 
-	SimpleMybatisPrecompiler(MybatisMappingContext mappingContext, Configuration configuration, Dialect dialect,
-			RepositoryInformation repositoryInformation) {
-		super(mappingContext, configuration, dialect, repositoryInformation);
+	SimpleMybatisPrecompiler(MybatisMappingContext mappingContext, RepositoryInformation repositoryInformation) {
+		super(mappingContext, repositoryInformation);
 	}
 
 	@Override
@@ -380,7 +377,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 					if (StringUtils.hasText(orderBy.value())) {
 						collection.setOrder(orderBy.value());
 					}
-					else if (targetEntity.hasIdProperty() && !targetEntity.hasCompositeId()) {
+					else if (targetEntity.hasIdProperty() && !targetEntity.isCompositePrimaryKey()) {
 						collection.setOrder(
 								targetEntity.getIdProperty().getColumn().getName().render(this.dialect) + " ASC");
 					}
@@ -557,7 +554,7 @@ class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		boolean useGeneratedKeys = false;
 		boolean excludeId = false;
 
-		if (!this.persistentEntity.hasCompositeId() && null != idProperty) {
+		if (!this.persistentEntity.isCompositePrimaryKey() && null != idProperty) {
 			keyProperty = idProperty.getName();
 			keyColumn = idProperty.getColumn().getName().getText();
 			if (idProperty.isAnnotationPresent(GeneratedValue.class)) {

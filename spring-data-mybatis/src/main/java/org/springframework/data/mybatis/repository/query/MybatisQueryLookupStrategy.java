@@ -40,21 +40,21 @@ public final class MybatisQueryLookupStrategy {
 	private MybatisQueryLookupStrategy() {
 	}
 
-	public static QueryLookupStrategy create(SqlSessionTemplate sqlSessionTemplate,
-			MybatisMappingContext mappingContext, @Nullable QueryLookupStrategy.Key key,
-			QueryMethodEvaluationContextProvider evaluationContextProvider, EscapeCharacter escape) {
-		Assert.notNull(sqlSessionTemplate, "SqlSessionTemplate must not be null!");
+	public static QueryLookupStrategy create(MybatisMappingContext mappingContext,
+			@Nullable QueryLookupStrategy.Key key, QueryMethodEvaluationContextProvider evaluationContextProvider,
+			EscapeCharacter escape) {
+		Assert.notNull(mappingContext, "MybatisMappingContext must not be null!");
 		Assert.notNull(evaluationContextProvider, "EvaluationContextProvider must not be null!");
 		switch ((null != key) ? key : QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND) {
 
 		case CREATE:
-			return new CreateQueryLookupStrategy(sqlSessionTemplate, escape);
+			return new CreateQueryLookupStrategy(mappingContext.getSqlSessionTemplate(), escape);
 		case USE_DECLARED_QUERY:
-			return new DeclaredQueryLookupStrategy(sqlSessionTemplate, mappingContext, evaluationContextProvider);
+			return new DeclaredQueryLookupStrategy(mappingContext, evaluationContextProvider);
 		case CREATE_IF_NOT_FOUND:
-			return new CreateIfNotFoundQueryLookupStrategy(sqlSessionTemplate,
-					new CreateQueryLookupStrategy(sqlSessionTemplate, escape),
-					new DeclaredQueryLookupStrategy(sqlSessionTemplate, mappingContext, evaluationContextProvider));
+			return new CreateIfNotFoundQueryLookupStrategy(mappingContext.getSqlSessionTemplate(),
+					new CreateQueryLookupStrategy(mappingContext.getSqlSessionTemplate(), escape),
+					new DeclaredQueryLookupStrategy(mappingContext, evaluationContextProvider));
 		default:
 			throw new IllegalArgumentException(String.format("Unsupported query lookup strategy %s!", key));
 		}
@@ -104,9 +104,9 @@ public final class MybatisQueryLookupStrategy {
 
 		private final QueryMethodEvaluationContextProvider evaluationContextProvider;
 
-		protected DeclaredQueryLookupStrategy(SqlSessionTemplate sqlSessionTemplate,
-				MybatisMappingContext mappingContext, QueryMethodEvaluationContextProvider evaluationContextProvider) {
-			super(sqlSessionTemplate);
+		protected DeclaredQueryLookupStrategy(MybatisMappingContext mappingContext,
+				QueryMethodEvaluationContextProvider evaluationContextProvider) {
+			super(mappingContext.getSqlSessionTemplate());
 			this.mappingContext = mappingContext;
 			this.evaluationContextProvider = evaluationContextProvider;
 		}

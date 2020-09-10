@@ -11,6 +11,39 @@
 	<xsd:import namespace="http://www.springframework.org/schema/data/repository"
 				schemaLocation="https://www.springframework.org/schema/data/repository/spring-repository.xsd"/>
 
+
+	<xsd:element name="mapping">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[
+Defines a MybatisMappingContext for holding rich entity mapping information.
+			]]></xsd:documentation>
+			<xsd:appinfo>
+				<tool:exports
+						type="org.springframework.data.mybatis.mapping.MybatisMappingContext"/>
+			</xsd:appinfo>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:attribute name="id" type="xsd:ID">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+	The name of the mapping context; default is "mybatisMappingContext".
+					]]></xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="entity-base-packages" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[
+The comma-delimited base packages in which to scan for entities and their mapping information.
+					]]></xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="sql-session-template-ref"
+						   type="sqlSessionTemplateRef"/>
+			<xsd:attribute name="field-naming-strategy-ref"
+						   type="fieldNamingStrategyRef"/>
+		</xsd:complexType>
+	</xsd:element>
+
 	<xsd:element name="repositories">
 		<xsd:complexType>
 			<xsd:complexContent>
@@ -36,9 +69,7 @@
 			<xsd:appinfo>
 				<tool:annotation>
 					<tool:exports
-							type="org.springframework.data.mybatis.domain.support.AuditingEntityListener"/>
-					<tool:exports
-							type="org.springframework.data.mybatis.domain.support.MybatisAuditingHandler"/>
+							type="org.springframework.data.mybatis.auditing.MybatisAuditingHandler"/>
 				</tool:annotation>
 			</xsd:appinfo>
 		</xsd:annotation>
@@ -52,6 +83,18 @@
 			<xsd:appinfo>
 				<tool:annotation kind="ref">
 					<tool:assignable-to type="org.mybatis.spring.SqlSessionTemplate"/>
+				</tool:annotation>
+			</xsd:appinfo>
+		</xsd:annotation>
+		<xsd:union memberTypes="xsd:string"/>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="fieldNamingStrategyRef">
+		<xsd:annotation>
+			<xsd:appinfo>
+				<tool:annotation kind="ref">
+					<tool:assignable-to
+							type="org.springframework.data.mapping.model.FieldNamingStrategy"/>
 				</tool:annotation>
 			</xsd:appinfo>
 		</xsd:annotation>
