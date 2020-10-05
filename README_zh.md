@@ -171,7 +171,7 @@ public class UserRepositoryIntegrationTest {
    ```xml
    <dependency>
        <groupId>io.easybest</groupId>
-       <artifactId>spring-boot-starter-data-mybatis</artifactId>
+       <artifactId>spring-data-mybatis-boot-starter</artifactId>
        <version>2.0.1.RELEASE</version>
    </dependency>
    ```
