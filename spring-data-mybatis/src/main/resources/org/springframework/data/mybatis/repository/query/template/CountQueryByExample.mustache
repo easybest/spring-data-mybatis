@@ -1,4 +1,4 @@
 <select id="{{statementName}}" resultType="long">
-    select count(*) from {{table}}
+    SELECT COUNT(*) FROM {{domain.table}}
     <include refid="__query_by_example_where_clause"/>
 </select>
