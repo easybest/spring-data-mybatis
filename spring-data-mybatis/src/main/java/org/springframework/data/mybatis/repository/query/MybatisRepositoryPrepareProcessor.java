@@ -37,7 +37,8 @@ public class MybatisRepositoryPrepareProcessor implements RepositoryProxyPostPro
 
 	@Override
 	public void postProcess(ProxyFactory factory, RepositoryInformation repositoryInformation) {
-		new SimpleMybatisPrecompiler(this.mappingContext, repositoryInformation).precompile();
+		// new SimpleMybatisPrecompiler(this.mappingContext,
+		// repositoryInformation).precompile();
 	}
 
 }

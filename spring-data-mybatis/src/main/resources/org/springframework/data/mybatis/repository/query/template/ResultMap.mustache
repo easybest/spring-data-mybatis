@@ -1,30 +1,53 @@
-<resultMap id="{{statementName}}" type="{{entityType}}">
-    {{#results}}
-        <{{#primaryKey}}id{{/primaryKey}}{{^primaryKey}}result{{/primaryKey}} property="{{property}}" column="{{column}}" {{#javaType}}javaType="{{javaType}}"{{/javaType}} {{#jdbcType}}jdbcType="{{jdbcType}}"{{/jdbcType}} {{#typeHandler}} typeHandler="{{typeHandler}}"{{/typeHandler}} />
-    {{/results}}
-    {{#embeddedAssociations}}
-        <association property="{{property}}"{{#javaType}}
-                     javaType="{{javaType}}"{{/javaType}}>
-            {{#results}}
-                <{{#primaryKey}}id{{/primaryKey}}{{^primaryKey}}result{{/primaryKey}}
-                        property="{{property}}" column="{{column}}"
-                        {{#javaType}}javaType="{{javaType}}"{{/javaType}}
-                    {{#jdbcType}}jdbcType="{{jdbcType}}"{{/jdbcType}}
-                    {{#typeHandler}} typeHandler="{{typeHandler}}"{{/typeHandler}}
-                />
-            {{/results}}
-        </association>
-    {{/embeddedAssociations}}
-    {{#associations}}
-        <association property="{{property}}" javaType="{{javaType}}" fetchType="{{fetch}}"
-                     select="{{select}}" column="{ {{#joinColumns}}{{^-first}},{{/-first}}{{name}}={{name}}{{/joinColumns}} }"/>
-    {{/associations}}
-    {{#collections}}
-    <collection property="{{property}}"
-                ofType="{{ofType}}"
-                select="{{select}}"
-            column="{ {{^manyToMany}}{{#joinColumns}}{{^-first}},{{/-first}}{{referencedColumnName}}={{referencedColumnName}}{{/joinColumns}}{{/manyToMany}}{{#manyToMany}}{{#joinTable.joinColumns}}{{^-first}},{{/-first}}{{referencedColumnName}}={{referencedColumnName}}{{/joinTable.joinColumns}}{{/manyToMany}} }"
-        fetchType="{{fetch}}"></collection>
-    {{/collections}}
-</resultMap>
-
+{{#domain}}
+    <resultMap id='{{statementName}}' type='{{entity.type.name}}'>
+        {{#primaryKey}}
+            {{#columns}}
+            <id property='{{propertyName}}' column='{{columnAlias}}' {{#jdbcType}}jdbcType='{{jdbcType.name}}'{{/jdbcType}} {{#javaType}}javaType='{{javaTypeString}}'{{/javaType}} {{#typeHandler}}typeHandler='{{typeHandler.name}}'{{/typeHandler}} />
+            {{/columns}}
+        {{/primaryKey}}
+        {{#versionColumns}}
+            <result property='{{propertyName}}' column='{{columnAlias}}' {{#jdbcType}}jdbcType='{{jdbcType.name}}'{{/jdbcType}} {{#javaType}}javaType='{{javaTypeString}}'{{/javaType}} {{#typeHandler}}typeHandler='{{typeHandler.name}}'{{/typeHandler}} />
+        {{/versionColumns}}
+        {{#normalColumns}}
+            <result property='{{propertyName}}' column='{{columnAlias}}' {{#jdbcType}}jdbcType='{{jdbcType.name}}'{{/jdbcType}} {{#javaType}}javaType='{{javaTypeString}}'{{/javaType}} {{#typeHandler}}typeHandler='{{typeHandler.name}}'{{/typeHandler}} />
+        {{/normalColumns}}
+        {{#embeddings}}
+            <association property="{{property.name}}" javaType="{{property.type.name}}">
+                {{#primaryKey}}{{#columns}}
+                    <id property='{{property.name}}' column='{{columnAlias}}' {{#jdbcType}}jdbcType='{{jdbcType.name}}'{{/jdbcType}} {{#javaType}}javaType='{{javaTypeString}}'{{/javaType}} {{#typeHandler}}typeHandler='{{typeHandler.name}}'{{/typeHandler}} />
+                {{/columns}}{{/primaryKey}}
+                {{#normalColumns}}
+                    <result property='{{property.name}}' column='{{columnAlias}}' {{#jdbcType}}jdbcType='{{jdbcType.name}}'{{/jdbcType}} {{#javaType}}javaType='{{javaTypeString}}'{{/javaType}} {{#typeHandler}}typeHandler='{{typeHandler.name}}'{{/typeHandler}} />
+                {{/normalColumns}}
+            </association>
+        {{/embeddings}}
+        {{#manyToOneAssociations}}
+            {{#leftJoin}}
+            <association property='{{property.name}}' javaType='{{property.type.name}}' resultMap='{{property.type.name}}.{{statementName}}' columnPrefix='{{property.name}}.'>
+            </association>
+            {{/leftJoin}}
+            {{^leftJoin}}
+            <association property='{{property.name}}' javaType='{{property.type.name}}' fetchType='{{fetchType}}'>
+            </association>
+            {{/leftJoin}}
+        {{/manyToOneAssociations}}
+        {{#oneToOneAssociations}}
+            {{#leftJoin}}
+                <association property='{{property.name}}' javaType='{{property.type.name}}' resultMap='{{property.type.name}}.{{statementName}}' columnPrefix='{{property.name}}.'>
+                </association>
+            {{/leftJoin}}
+            {{^leftJoin}}
+                <association property='{{property.name}}' javaType='{{property.type.name}}' fetchType='{{fetchType}}'>
+                </association>
+            {{/leftJoin}}
+        {{/oneToOneAssociations}}
+        {{#oneToManyAssociations}}
+            <collection property='{{property.name}}' ofType='{{property.actualType.name}}' select='{{property.actualType.name}}.__association_{{domain.table}}_{{property.name}}' column='{ {{#joinColumns}}{{^-first}} , {{/-first}}{{foreign.name}}={{foreign.name}}{{/joinColumns}} }' fetchType='{{fetchType}}'>
+            </collection>
+        {{/oneToManyAssociations}}
+        {{#manyToManyAssociations}}
+            <collection property='{{property.name}}' ofType='{{property.actualType.name}}' select='{{property.actualType.name}}.__association_{{domain.table}}_{{property.name}}' column='{ {{#joinTable}}{{#joinColumns}}{{^-first}} , {{/-first}}{{foreign.name}}={{foreign.name}}{{/joinColumns}}{{/joinTable}} }' fetchType='{{fetchType}}'>
+            </collection>
+        {{/manyToManyAssociations}}
+    </resultMap>
+{{/domain}}

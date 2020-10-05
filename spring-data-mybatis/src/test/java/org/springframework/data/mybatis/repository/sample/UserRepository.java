@@ -25,6 +25,7 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public interface UserRepository extends MybatisRepository<User, Long>, QuerydslPredicateExecutor<User> {
+public interface UserRepository
+		extends MybatisRepository<User, Long>, UserRepositoryCustom, QuerydslPredicateExecutor<User> {
 
 }

@@ -1,7 +1,10 @@
-<select id="{{statementName}}" parameterType="{{parameterType}}"
-        resultMap="{{resultMap}}">
-    SELECT * FROM {{table}}
-    <where>
-        <include refid="__where_clause_by_id"/>
-    </where>
-</select>
+{{#domain}}
+    <select id="{{statementName}}"
+            parameterType="{{#primaryKey}}{{type.name}}{{/primaryKey}}"
+            resultMap="{{resultMap}}">
+        <include refid="__select"/>
+        <where>
+            <include refid="__where_clause_by_id"/>
+        </where>
+    </select>
+{{/domain}}

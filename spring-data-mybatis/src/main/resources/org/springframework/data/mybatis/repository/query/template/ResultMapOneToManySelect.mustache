@@ -1,0 +1,10 @@
+<select id="{{statementName}}" parameterType="map" resultMap="{{resultMap}}">
+    <include refid="__select"/>
+    {{#ass}}
+        WHERE
+        {{#joinColumns}}
+            {{^-first}} AND {{/-first}}
+            {{#quote}}{{targetModel.tableAlias}}{{/quote}}.{{local.name}} = #{ {{foreign.name}} }
+        {{/joinColumns}}
+    {{/ass}}
+</select>

@@ -1,1 +1,5 @@
-<select id="{{statementName}}" resultType="long">select count(*) from {{table}}</select>
+<select id="{{statementName}}" resultType="long">
+    {{#domain}}
+        SELECT COUNT(*) FROM {{table}}
+    {{/domain}}
+</select>

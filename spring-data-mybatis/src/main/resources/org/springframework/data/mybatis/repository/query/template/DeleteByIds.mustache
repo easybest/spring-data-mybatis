@@ -1,6 +1,33 @@
-<delete id="{{statementName}}">
-    DELETE FROM {{table}}
-    <where>
-        <include refid="__where_clause_by_ids"/>
-    </where>
-</delete>
+{{#domain}}
+    <delete id="{{statementName}}">
+        DELETE FROM {{table}}
+        <where>
+            <if test="__ids != null">
+                <trim prefixOverrides="AND |OR ">
+                    {{#primaryKey}}
+                        {{^composited}}
+                            {{#columns}}
+                                {{name}} IN
+                                <foreach collection="__ids" item="item" index="index"
+                                         open="("
+                                         separator=","
+                                         close=")">
+                                    #{item}
+                                </foreach>
+                            {{/columns}}
+                        {{/composited}}
+                        {{#composited}}
+                            <foreach collection="__ids" item="item" index="index" open="("
+                                     separator=") OR (" close=")">
+                                {{#columns}}
+                                    {{^-first}} AND {{/-first}}
+                                    {{name}} = #{ item.{{propertyName}} }
+                                {{/columns}}
+                            </foreach>
+                        {{/composited}}
+                    {{/primaryKey}}
+                </trim>
+            </if>
+        </where>
+    </delete>
+{{/domain}}

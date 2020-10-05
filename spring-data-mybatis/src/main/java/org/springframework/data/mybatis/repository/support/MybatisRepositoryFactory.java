@@ -28,8 +28,6 @@ import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
 import org.springframework.data.mybatis.repository.query.MybatisQueryLookupStrategy;
-import org.springframework.data.mybatis.repository.query.MybatisQueryPrepareProcessor;
-import org.springframework.data.mybatis.repository.query.MybatisRepositoryPrepareProcessor;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.querydsl.EntityPathResolver;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
@@ -71,8 +69,10 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 			}
 		});
 
-		this.addRepositoryProxyPostProcessor(new MybatisRepositoryPrepareProcessor(mappingContext));
-		this.addQueryCreationListener(new MybatisQueryPrepareProcessor(mappingContext));
+		// this.addRepositoryProxyPostProcessor(new
+		// MybatisRepositoryPrepareProcessor(mappingContext));
+		// this.addQueryCreationListener(new
+		// MybatisQueryPrepareProcessor(mappingContext));
 
 	}
 

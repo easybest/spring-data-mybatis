@@ -98,7 +98,7 @@ public class Identifier implements Comparable<Identifier> {
 		if (null != this.dialect) {
 			return this.render(this.dialect);
 		}
-		return this.isQuoted() ? ('`' + this.getText() + '`') : this.getText();
+		return this.isQuoted() ? ('"' + this.getText() + '"') : this.getText();
 	}
 
 	public String getCanonicalName() {

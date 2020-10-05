@@ -1,4 +1,5 @@
 <select id="{{statementName}}" resultType="long">
-    select count(*) from {{table}}
-    {{conditionQuery}}
+    {{#domain}}
+        SELECT COUNT(*) FROM {{table}}
+    {{/domain}}
 </select>

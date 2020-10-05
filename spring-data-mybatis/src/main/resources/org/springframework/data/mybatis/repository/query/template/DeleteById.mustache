@@ -1,6 +1,12 @@
-<delete id="{{statementName}}" parameterType="{{parameterType}}">
-    DELETE FROM {{table}}
-    <where>
-        <include refid="__where_clause_by_id"/>
-    </where>
-</delete>
+{{#domain}}{{#primaryKey}}
+    <delete id="{{statementName}}" parameterType="{{type.name}}">
+        DELETE FROM {{table}}
+        <where>
+            {{#columns}}
+                AND {{name}} = {{#composited}}#{ {{property.name}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} }{{/composited}}
+                {{^composited}}#{_parameter}{{/composited}}
+            {{/columns}}
+        </where>
+    </delete>
+{{/primaryKey}}
+{{/domain}}

@@ -1,37 +1,77 @@
-<update id="{{statementName}}">
-    UPDATE {{table}}
-    <set>
-        {{#properties}}
-            {{^value.primaryKey}}
-                {{^value.version}}
-                    {{#selective}}
-                    <if test="{{#testNotNull}} __entity.{{key}}{{/testNotNull}}">
-                    {{/selective}}
-                    {{value.name}} = #{ __entity.{{key}}{{#value.jdbcType}}
-                    ,jdbcType={{value.jdbcType}}{{/value.jdbcType}}{{#value.typeHandler}}
-                    ,typeHandler={{value.typeHandler.name}}{{/value.typeHandler}} },
-                    {{#selective}}</if>{{/selective}}
-                {{/value.version}}
-                {{#value.version}}
-                    {{value.name}} = {{value.name}} + 1,
-                {{/value.version}}
-            {{/value.primaryKey}}
-        {{/properties}}
-    </set>
-    <where>
-        {{#byId}}
-            <include refid="__where_clause_by_fixed_id"/>
-        {{/byId}}
-        {{^byId}}
-            <include refid="__where_clause_by_entity"/>
-        {{/byId}}
-        {{#properties}}
-            {{#value.version}}
-                AND
-                {{value.name}} = #{ __entity.{{key}}{{#value.jdbcType}}
-                ,jdbcType={{value.jdbcType}}{{/value.jdbcType}}{{#value.typeHandler}}
-                ,typeHandler={{value.typeHandler.name}}{{/value.typeHandler}} }
-            {{/value.version}}
-        {{/properties}}
-    </where>
-</update>
+{{#domain}}
+    <update id="{{statementName}}">
+        UPDATE {{table}}
+        <set>
+            {{#normalColumns}}
+                {{name}} = #{ __entity.{{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },
+            {{/normalColumns}}
+            {{#versionColumns}}
+                {{name}} = {{name}} + 1,
+            {{/versionColumns}}
+            {{#embeddings}}
+            <if test="{{#testNotNull}}__entity.{{property.name}}{{/testNotNull}}">
+                {{#primaryKey}}
+                    {{#columns}}
+                        {{name}} = #{ __entity.{{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },
+                    {{/columns}}
+                {{/primaryKey}}
+                {{#normalColumns}}
+                    {{name}} = #{ __entity.{{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },
+                {{/normalColumns}}
+                {{#versionColumns}}
+                    {{name}} = {{name}} + 1,
+                {{/versionColumns}}
+            </if>
+            {{/embeddings}}
+            {{#oneToOneAssociations}}
+            <if test="{{#testNotNull}}__entity.{{property.name}}{{/testNotNull}}">
+                {{#foreignKey}}
+                    {{#columns}}
+                        {{#local}}
+                            {{name}} = #{ __entity.{{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },
+                        {{/local}}
+                    {{/columns}}
+                {{/foreignKey}}
+            </if>
+            {{/oneToOneAssociations}}
+            {{#manyToOneAssociations}}
+            <if test="{{#testNotNull}}__entity.{{property.name}}{{/testNotNull}}">
+                {{#foreignKey}}
+                    {{#columns}}
+                        {{#local}}
+                            {{name}} = #{ __entity.{{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },
+                        {{/local}}
+                    {{/columns}}
+                {{/foreignKey}}
+            </if>
+            {{/manyToOneAssociations}}
+        </set>
+        <where>
+            {{^byId}}
+    {{#primaryKey}}
+        {{#columns}}
+            AND {{name}} = #{ __entity.{{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} }
+        {{/columns}}
+    {{/primaryKey}}
+            {{/byId}}
+            {{#byId}}
+                {{#primaryKey}}
+                    {{#columns}}
+                        AND {{name}} = {{#composited}}#{ __id.{{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} }{{/composited}}
+                        {{^composited}}#{__id}{{/composited}}
+                    {{/columns}}
+                {{/primaryKey}}
+            {{/byId}}
+            {{#versionColumns}}
+                AND {{name}} = #{ __entity.{{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} }
+            {{/versionColumns}}
+            {{#embeddings}}
+                <if test="{{#testNotNull}}__entity.{{property.name}}{{/testNotNull}}">
+                    {{#versionColumns}}
+                        AND {{name}} = #{ __entity.{{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} }
+                    {{/versionColumns}}
+                </if>
+            {{/embeddings}}
+        </where>
+    </update>
+{{/domain}}

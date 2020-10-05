@@ -29,6 +29,6 @@ import java.lang.annotation.Target;
 @Target({ ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE })
 public @interface JdbcType {
 
-	String value() default "";
+	String value();
 
 }

@@ -15,9 +15,12 @@
  */
 package org.springframework.data.mybatis.mapping;
 
+import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import javax.persistence.Entity;
 import javax.persistence.NamedNativeQueries;
 import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
@@ -25,6 +28,7 @@ import javax.persistence.NamedQueries;
 import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.context.AbstractMappingContext;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.mapping.model.FieldNamingStrategy;
@@ -35,6 +39,9 @@ import org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy;
 import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.internal.DatabaseMetaDataDialectResolutionInfoAdapter;
 import org.springframework.data.mybatis.dialect.internal.StandardDialectResolver;
+import org.springframework.data.mybatis.mapping.model.Domain;
+import org.springframework.data.mybatis.mapping.model.Model;
+import org.springframework.data.mybatis.precompiler.SimpleMybatisPrecompiler;
 import org.springframework.data.util.TypeInformation;
 
 /**
@@ -56,6 +63,8 @@ public class MybatisMappingContext extends
 
 	private Map<String, String> namedQueries = new HashMap<>();
 
+	private Map<Class<?>, Domain> domainCache = new HashMap<>();
+
 	public MybatisMappingContext(SqlSessionTemplate sqlSessionTemplate) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
 		this.dialect = StandardDialectResolver.INSTANCE.resolveDialect(new DatabaseMetaDataDialectResolutionInfoAdapter(
@@ -65,6 +74,41 @@ public class MybatisMappingContext extends
 	@Override
 	public void afterPropertiesSet() {
 		super.afterPropertiesSet();
+
+		if (null == this.fieldNamingStrategy) {
+			if (null != this.sqlSessionTemplate
+					&& this.sqlSessionTemplate.getConfiguration().isMapUnderscoreToCamelCase()) {
+				this.fieldNamingStrategy = SNAKE_CASE_FIELD_NAMING_STRATEGY;
+			}
+			else {
+				this.fieldNamingStrategy = PropertyNameFieldNamingStrategy.INSTANCE;
+			}
+		}
+
+		// initialize models
+		this.domainCache = this.getManagedTypes().stream().map(TypeInformation::getType)
+				.filter(clz -> clz.isAnnotationPresent(Entity.class)).collect(Collectors.toMap(clz -> clz,
+						clz -> new Domain(this, null, clz, Introspector.decapitalize(clz.getSimpleName()))));
+
+		this.domainCache.values().stream().forEach(Domain::initialize);
+
+		// generate mybatis mappers
+		this.domainCache.values().stream().forEach(domain -> new SimpleMybatisPrecompiler(this, domain).compile());
+	}
+
+	public Model getModel(Class<?> clz) {
+		return this.domainCache.get(clz);
+	}
+
+	public Model getRequiredModel(Class<?> type) throws MappingException {
+
+		Model model = getModel(type);
+
+		if (model != null) {
+			return model;
+		}
+
+		throw new MappingException(String.format("Couldn't find Model for type %s!", type));
 	}
 
 	@Override
@@ -77,20 +121,8 @@ public class MybatisMappingContext extends
 	@Override
 	protected MybatisPersistentProperty createPersistentProperty(Property property,
 			MybatisPersistentEntityImpl<?> owner, SimpleTypeHolder simpleTypeHolder) {
-		FieldNamingStrategy fns;
-		if (null != this.fieldNamingStrategy) {
-			fns = this.fieldNamingStrategy;
-		}
-		else {
-			if (null != this.sqlSessionTemplate
-					&& this.sqlSessionTemplate.getConfiguration().isMapUnderscoreToCamelCase()) {
-				fns = SNAKE_CASE_FIELD_NAMING_STRATEGY;
-			}
-			else {
-				fns = PropertyNameFieldNamingStrategy.INSTANCE;
-			}
-		}
-		return new MybatisPersistentPropertyImpl(property, owner, simpleTypeHolder, fns);
+
+		return new MybatisPersistentPropertyImpl(property, owner, simpleTypeHolder);
 	}
 
 	public String getNamedQuery(String name) {
@@ -131,6 +163,10 @@ public class MybatisMappingContext extends
 
 	public Dialect getDialect() {
 		return this.dialect;
+	}
+
+	public FieldNamingStrategy getFieldNamingStrategy() {
+		return this.fieldNamingStrategy;
 	}
 
 }

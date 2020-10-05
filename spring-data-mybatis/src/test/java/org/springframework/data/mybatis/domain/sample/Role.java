@@ -39,6 +39,9 @@ public class Role extends AbstractPersistable<Long> {
 
 	private String name;
 
+	// @ManyToMany(mappedBy = "roles", cascade = CascadeType.ALL)
+	// private List<User> users;
+
 	public Role(String name) {
 		this.name = name;
 	}

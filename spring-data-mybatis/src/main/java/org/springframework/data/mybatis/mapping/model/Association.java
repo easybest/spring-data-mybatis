@@ -15,63 +15,12 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import lombok.Data;
-import lombok.experimental.Accessors;
-
 /**
- * Association.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
-@Data
-@Accessors(chain = true)
-public class Association implements Serializable {
-
-	private static final long serialVersionUID = 3169794115053267639L;
-
-	private String property;
-
-	private String javaType;
-
-	private String select;
-
-	private String fetch;
-
-	private String targetTable;
-
-	private List<JoinColumn> joinColumns = new ArrayList<>();
-
-	private List<ColumnResult> results = new LinkedList<>();
-
-	public Association addResult(ColumnResult cr) {
-		this.results.add(cr);
-		return this;
-	}
-
-	public Association addJoinColumn(JoinColumn jc) {
-		this.joinColumns.add(jc);
-		return this;
-	}
-
-	@Data
-	@Accessors(chain = true)
-	public static class JoinColumn {
-
-		private String name;
-
-		private String referencedColumnName;
-
-		public JoinColumn(String name, String referencedColumnName) {
-			this.name = name;
-			this.referencedColumnName = referencedColumnName;
-		}
-
-	}
+public interface Association extends Model {
 
 }

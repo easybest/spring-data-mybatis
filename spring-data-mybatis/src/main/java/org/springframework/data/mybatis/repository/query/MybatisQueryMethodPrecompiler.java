@@ -15,12 +15,6 @@
  */
 package org.springframework.data.mybatis.repository.query;
 
-import java.util.regex.Pattern;
-
-import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mybatis.mapping.MybatisMappingContext;
-import org.springframework.data.mybatis.repository.support.ResidentStatementName;
-
 /**
  * .
  *
@@ -28,71 +22,79 @@ import org.springframework.data.mybatis.repository.support.ResidentStatementName
  */
 abstract class MybatisQueryMethodPrecompiler extends AbstractMybatisPrecompiler {
 
-	private static final Pattern SELECT_ALL_FROM = Pattern.compile("^\\s*select\\s+\\*\\s+from\\s+.*",
-			Pattern.CASE_INSENSITIVE);
-
-	protected final AbstractMybatisQuery query;
-
-	MybatisQueryMethodPrecompiler(MybatisMappingContext mappingContext, AbstractMybatisQuery query) {
-		super(mappingContext, query.getQueryMethod().getEntityInformation().getJavaType());
-
-		this.query = query;
-	}
-
-	@Override
-	protected String doPrecompile() {
-
-		if (this.configuration.hasStatement(this.query.getStatementId(), false)) {
-			return "";
-		}
-
-		switch (this.query.getSqlCommandType()) {
-
-		case INSERT:
-			return this.insert();
-		case UPDATE:
-			return this.update();
-		case DELETE:
-			return this.delete();
-		case SELECT:
-			return this.select();
-		default:
-			throw new MappingException("Unsupported SQL Command Type: " + this.query.getSqlCommandType().name());
-
-		}
-
-	}
-
-	protected String insert() {
-		return String.format("<insert id=\"%s\">%s</insert>", this.query.getStatementName(), this.mainQueryString());
-	}
-
-	protected String update() {
-		return String.format("<update id=\"%s\">%s</update>", this.query.getStatementName(), this.mainQueryString());
-	}
-
-	protected String delete() {
-		return String.format("<delete id=\"%s\">%s</delete>", this.query.getStatementName(), this.mainQueryString());
-	}
-
-	protected String select() {
-		String sql = this.mainQueryString();
-		return String.format("<select id=\"%s\" %s>%s</select>", this.query.getStatementName(),
-				this.resultMapOrType(sql), sql);
-	}
-
-	protected String resultMapOrType(String sql) {
-		MybatisQueryMethod method = this.query.getQueryMethod();
-
-		return String.format("%s=\"%s\"",
-				(null != method.getResultMap() || SELECT_ALL_FROM.matcher(sql.toLowerCase()).matches()) ? "resultMap"
-						: "resultType",
-				((null != method.getResultMap()) ? method.getResultMap() : //
-						(SELECT_ALL_FROM.matcher(sql).matches() ? //
-								ResidentStatementName.RESULT_MAP : //
-								method.getActualResultType())));
-	}
-
-	protected abstract String mainQueryString();
+	// private static final Pattern SELECT_ALL_FROM =
+	// Pattern.compile("^\\s*select\\s+\\*\\s+from\\s+.*",
+	// Pattern.CASE_INSENSITIVE);
+	//
+	// protected final AbstractMybatisQuery query;
+	//
+	// MybatisQueryMethodPrecompiler(MybatisMappingContext mappingContext,
+	// AbstractMybatisQuery query) {
+	// super(mappingContext, query.getQueryMethod().getEntityInformation().getJavaType());
+	//
+	// this.query = query;
+	// }
+	//
+	// @Override
+	// protected String doPrecompile() {
+	//
+	// if (this.configuration.hasStatement(this.query.getStatementId(), false)) {
+	// return "";
+	// }
+	//
+	// switch (this.query.getSqlCommandType()) {
+	//
+	// case INSERT:
+	// return this.insert();
+	// case UPDATE:
+	// return this.update();
+	// case DELETE:
+	// return this.delete();
+	// case SELECT:
+	// return this.select();
+	// default:
+	// throw new MappingException("Unsupported SQL Command Type: " +
+	// this.query.getSqlCommandType().name());
+	//
+	// }
+	//
+	// }
+	//
+	// protected String insert() {
+	// return String.format("<insert id=\"%s\">%s</insert>",
+	// this.query.getStatementName(), this.mainQueryString());
+	// }
+	//
+	// protected String update() {
+	// return String.format("<update id=\"%s\">%s</update>",
+	// this.query.getStatementName(), this.mainQueryString());
+	// }
+	//
+	// protected String delete() {
+	// return String.format("<delete id=\"%s\">%s</delete>",
+	// this.query.getStatementName(), this.mainQueryString());
+	// }
+	//
+	// protected String select() {
+	// String sql = this.mainQueryString();
+	// return String.format("<select id=\"%s\" %s>%s</select>",
+	// this.query.getStatementName(),
+	// this.resultMapOrType(sql), sql);
+	// }
+	//
+	// protected String resultMapOrType(String sql) {
+	// MybatisQueryMethod method = this.query.getQueryMethod();
+	//
+	// return String.format("%s=\"%s\"",
+	// (null != method.getResultMap() ||
+	// SELECT_ALL_FROM.matcher(sql.toLowerCase()).matches()) ? "resultMap"
+	// : "resultType",
+	// ((null != method.getResultMap()) ? method.getResultMap() : //
+	// (SELECT_ALL_FROM.matcher(sql).matches() ? //
+	// ResidentStatementName.RESULT_MAP : //
+	// method.getActualResultType())));
+	// }
+	//
+	// protected abstract String mainQueryString();
 
 }

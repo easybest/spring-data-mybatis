@@ -16,7 +16,6 @@
 package org.springframework.data.mybatis.mapping;
 
 import org.springframework.data.mapping.PersistentEntity;
-import org.springframework.data.mybatis.mapping.model.Table;
 
 /**
  * Interface for a MyBatis-specific entity.
@@ -32,8 +31,6 @@ public interface MybatisPersistentEntity<T> extends PersistentEntity<T, MybatisP
 	 * @return whether composite primary key
 	 */
 	boolean isCompositePrimaryKey();
-
-	Table getTable();
 
 	Class<?> getIdClass();
 

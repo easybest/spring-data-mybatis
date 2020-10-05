@@ -45,6 +45,9 @@ public class Person extends Audit<Long, Long> {
 	@Embedded
 	private Address address;
 
+	// @OneToMany(mappedBy = "person", cascade = CascadeType.ALL)
+	// private Set<User> users;
+
 	public Person(String firstname, String lastname, Address address) {
 		this.firstname = firstname;
 		this.lastname = lastname;
