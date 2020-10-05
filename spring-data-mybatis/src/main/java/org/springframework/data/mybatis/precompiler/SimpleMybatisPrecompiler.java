@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 import com.samskivert.mustache.Mustache.Lambda;
 
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
+import org.springframework.data.mybatis.dialect.pagination.SQLServer2005LimitHandler;
+import org.springframework.data.mybatis.dialect.pagination.SQLServer2012LimitHandler;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.model.ManyToManyAssociation;
 import org.springframework.data.mybatis.mapping.model.ManyToOneAssociation;
@@ -76,6 +78,8 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		statements.add(this.countAllStatement());
 		statements.add(this.countStatement());
 		statements.add(this.queryByExampleStatement());
+		statements.add(this.queryByExampleForPageStatement());
+		statements.add(this.countByExampleStatement());
 
 		this.resultMapOneToManySelectStatement();
 		this.resultMapManyToManySelectStatement();
@@ -403,6 +407,7 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.FIND);
 		scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
+		scopes.put("conditionQuery", ""); // TODO
 		return this.render("Find", scopes);
 	}
 
@@ -415,6 +420,11 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
 		scopes.put("limitHandler", (Lambda) (frag, out) -> out.write(
 				this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), new RowSelection(true))));
+		scopes.put("SQLServer2005",
+				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
+		scopes.put("SQLServer2012",
+				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
+		scopes.put("conditionQuery", ""); // TODO
 		return this.render("FindByPage", scopes);
 	}
 
@@ -444,6 +454,31 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.QUERY_BY_EXAMPLE);
 		scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
 		return this.render("QueryByExample", scopes);
+	}
+
+	private String queryByExampleForPageStatement() {
+		if (this.checkStatement(ResidentStatementName.QUERY_BY_EXAMPLE_FOR_PAGE)) {
+			return null;
+		}
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.QUERY_BY_EXAMPLE_FOR_PAGE);
+		scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
+		scopes.put("limitHandler", (Lambda) (frag, out) -> out.write(
+				this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), new RowSelection(true))));
+		scopes.put("SQLServer2005",
+				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
+		scopes.put("SQLServer2012",
+				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
+		return this.render("QueryByExampleForPage", scopes);
+	}
+
+	private String countByExampleStatement() {
+		if (this.checkStatement(ResidentStatementName.COUNT_QUERY_BY_EXAMPLE)) {
+			return null;
+		}
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.COUNT_QUERY_BY_EXAMPLE);
+		return this.render("CountQueryByExample", scopes);
 	}
 
 }
