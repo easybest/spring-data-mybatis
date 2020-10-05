@@ -1,0 +1,14 @@
+<delete id="{{statementName}}" parameterType="map">
+    {{#ass}}
+        {{#joinTable}}DELETE {{table}}
+            <where>
+                {{#joinColumns}}
+                    <if test="{{local.name}} != null">AND {{local.name}} = #{ {{local.name}} }</if>
+                {{/joinColumns}}
+                {{#inverseJoinColumns}}
+                    <if test="{{local.name}} != null">AND {{local.name}} = #{ {{local.name}} }</if>
+                {{/inverseJoinColumns}}
+            </where>
+        {{/joinTable}}
+    {{/ass}}
+</delete>

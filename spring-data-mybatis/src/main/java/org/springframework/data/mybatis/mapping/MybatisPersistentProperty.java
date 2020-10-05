@@ -16,7 +16,6 @@
 package org.springframework.data.mybatis.mapping;
 
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mybatis.mapping.model.Column;
 
 /**
  * Interface for a MyBatis-specific {@link PersistentProperty}.
@@ -31,8 +30,6 @@ public interface MybatisPersistentProperty extends PersistentProperty<MybatisPer
 	 * @return whether the property is embeddable
 	 */
 	boolean isEmbeddable();
-
-	Column getColumn();
 
 	boolean isEnumerated();
 

@@ -1,0 +1,32 @@
+{{#domain}}
+<resultMap id='{{statementName}}' type='{{entity.type.name}}'>
+{{#primaryKey}}{{#columns}}
+    <id property='{{propertyName}}' column='{{#quote}}{{alias}}{{/quote}}.{{name}}' {{#jdbcType}}jdbcType='{{jdbcType.name}}'{{/jdbcType}} {{#javaType}}javaType='{{javaTypeString}}'{{/javaType}} {{#typeHandler}}typeHandler='{{typeHandler.name}}'{{/typeHandler}} />
+{{/columns}}{{/primaryKey}}
+{{#columns}}
+    <result property='{{propertyName}}' column='{{#quote}}{{alias}}{{/quote}}.{{name}}' {{#jdbcType}}jdbcType='{{jdbcType.name}}'{{/jdbcType}} {{#javaType}}javaType='{{javaTypeString}}'{{/javaType}} {{#typeHandler}}typeHandler='{{typeHandler.name}}'{{/typeHandler}} />
+{{/columns}}
+{{#embeddedDomains}}
+    <association property="{{property.name}}" javaType="{{property.type.name}}">
+        {{#primaryKey}}
+        <id property='{{propertyName}}' column='{{#quote}}{{alias}}{{/quote}}.{{name}}' {{#jdbcType}}jdbcType='{{jdbcType.name}}'{{/jdbcType}} {{#javaType}}javaType='{{javaTypeString}}'{{/javaType}} {{#typeHandler}}typeHandler='{{typeHandler.name}}'{{/typeHandler}} />
+        {{/primaryKey}}
+        {{#columns}}
+        <result property='{{propertyName}}' column='{{#quote}}{{alias}}{{/quote}}.{{name}}' {{#jdbcType}}jdbcType='{{jdbcType.name}}'{{/jdbcType}} {{#javaType}}javaType='{{javaTypeString}}'{{/javaType}} {{#typeHandler}}typeHandler='{{typeHandler.name}}'{{/typeHandler}} />
+        {{/columns}}
+    </association>
+{{/embeddedDomains}}
+{{#manyToOneAssociations}}
+    <association property='{{property.name}}' javaType='{{property.type.name}}' resultMap='{{property.type.name}}.{{statementName}}' columnPrefix='{{#quote}}{{alias}}{{/quote}}.'>
+    </association>
+{{/manyToOneAssociations}}
+{{#oneToOneAssociations}}
+    <association property='{{property.name}}' javaType='{{property.type.name}}' resultMap='{{property.type.name}}.{{statementName}}' columnPrefix='{{#quote}}{{alias}}{{/quote}}.'>
+    </association>
+{{/oneToOneAssociations}}
+{{#oneToManyAssociations}}
+    <collection property='{{property.name}}' ofType='{{property.actualType.name}}' resultMap='{{property.actualType.name}}.{{statementName}}' columnPrefix='{{#quote}}{{alias}}{{/quote}}.'>
+    </collection>
+{{/oneToManyAssociations}}
+</resultMap>
+{{/domain}}

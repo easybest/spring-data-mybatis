@@ -1,0 +1,57 @@
+<select id="{{statementName}}" resultMap="{{resultMap}}">
+    {{#pageable}}
+        {{#SQLServer2005}}
+            WITH query AS (SELECT inner_query.*, ROW_NUMBER() OVER (
+            <if test="__sort != null">
+                <include refid="__standard_sort"/>
+            </if>
+            <if test="__sort == null">ORDER BY CURRENT_TIMESTAMP</if>
+            ) AS __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
+            <where>
+                <include refid="__where_clause_by_ids"/>
+                {{conditionQuery}}
+            </where>
+            ) inner_query ) SELECT * FROM query WHERE __mybatis_row_nr__ &gt; #{__offset}
+            AND __mybatis_row_nr__ &lt;= #{__offsetEnd}
+        {{/SQLServer2005}}
+        {{#SQLServer2012}}
+            <if test="__sort != null">
+                SELECT * FROM {{table}}
+                <where>
+                    <include refid="__where_clause_by_ids"/>
+                    {{conditionQuery}}
+                </where>
+                <include refid="__standard_sort"/>
+                OFFSET #{__offset} ROWS FETCH NEXT #{__pageSize} ROWS ONLY
+            </if>
+            <if test="__sort == null">
+                WITH query AS (SELECT inner_query.*, ROW_NUMBER() OVER (ORDER BY
+                CURRENT_TIMESTAMP ) AS __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
+                <where>
+                    <include refid="__where_clause_by_ids"/>
+                    {{conditionQuery}}
+                </where>
+                ) inner_query ) SELECT * FROM query WHERE __mybatis_row_nr__ &gt;
+                #{__offset} AND __mybatis_row_nr__ &lt;= #{__offsetEnd}
+            </if>
+        {{/SQLServer2012}}
+        {{^SQLServer2005}}{{^SQLServer2012}}
+            {{#limitHandler}}
+                SELECT * FROM {{table}}
+                <where>
+                    <include refid="__where_clause_by_ids"/>
+                    {{conditionQuery}}
+                </where>
+                <include refid="__standard_sort"/>
+            {{/limitHandler}}
+        {{/SQLServer2012}}{{/SQLServer2005}}
+    {{/pageable}}
+    {{^pageable}}
+        SELECT * FROM {{table}}
+        <where>
+            <include refid="__where_clause_by_ids"/>
+            {{conditionQuery}}
+        </where>
+        <include refid="__standard_sort"/>
+    {{/pageable}}
+</select>

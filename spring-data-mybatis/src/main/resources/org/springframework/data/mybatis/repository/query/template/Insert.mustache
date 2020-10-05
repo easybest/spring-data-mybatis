@@ -1,42 +1,74 @@
-<insert id="{{statementName}}" parameterType="{{parameterType}}"
-        keyProperty="{{keyProperty}}" keyColumn="{{keyColumn}}"
-        useGeneratedKeys="{{useGeneratedKeys}}">
-    {{#useGeneratedKeys}}
-        <selectKey keyProperty="{{keyProperty}}" keyColumn="{{keyColumn}}"
-                   order="{{order}}" resultType="{{keyType}}">{{keySql}}</selectKey>
-    {{/useGeneratedKeys}}
-    INSERT INTO {{table}}
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-        {{#properties}}
-            {{#selective}}
-            <if test="{{#testNotNull}}{{key}}{{/testNotNull}}">
-            {{/selective}}
-            {{^excludeId}}
-                {{value.name}},
-            {{/excludeId}}
-            {{#excludeId}}
-                {{^value.primaryKey}}{{value.name}},{{/value.primaryKey}}
-            {{/excludeId}}
-            {{#selective}}</if>{{/selective}}
-        {{/properties}}
-    </trim>
-    <trim prefix="values(" suffix=")" suffixOverrides=",">
-        {{#properties}}
-            {{#selective}}
-            <if test="{{#testNotNull}}{{key}}{{/testNotNull}}">
-            {{/selective}}
-            {{^excludeId}}
-                #{ {{key}}{{#value.jdbcType}}
-                ,jdbcType={{value.jdbcType}}{{/value.jdbcType}}{{#value.typeHandler}}
-                ,typeHandler={{value.typeHandler.name}}{{/value.typeHandler}} },
-            {{/excludeId}}
-            {{#excludeId}}
-                {{^value.primaryKey}}#{ {{key}}{{#value.jdbcType}}
-                    ,jdbcType={{value.jdbcType}}{{/value.jdbcType}}{{#value.typeHandler}}
-                    ,typeHandler={{value.typeHandler.name}}{{/value.typeHandler}}
-                    },{{/value.primaryKey}}
-            {{/excludeId}}
-            {{#selective}}</if>{{/selective}}
-        {{/properties}}
-    </trim>
-</insert>
+{{#domain}}
+    <insert id="{{statementName}}" parameterType="{{entity.type.name}}">
+        {{#primaryKey}}
+            {{#generatedKeys}}
+                {{#columns}}
+                    <selectKey keyProperty="{{property.name}}" keyColumn="{{name}}"
+                               order="{{executeOrder}}"
+                               resultType="{{javaTypeString}}">{{keySql}}</selectKey>
+                {{/columns}}
+            {{/generatedKeys}}
+        {{/primaryKey}}
+        INSERT INTO {{table}}
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            {{#primaryKey}}
+                {{^excludeInsertId}}
+                    {{#columns}}{{name}},{{/columns}}
+                {{/excludeInsertId}}
+            {{/primaryKey}}
+            {{#normalColumns}}{{name}},{{/normalColumns}}
+            {{#versionColumns}}{{name}},{{/versionColumns}}
+            {{#embeddings}}
+            <if test="{{#testNotNull}}{{property.name}}{{/testNotNull}}">
+                {{#primaryKey}}{{#columns}}{{name}},{{/columns}}{{/primaryKey}}
+                {{#normalColumns}}{{name}},{{/normalColumns}}
+                {{#verionColumns}}{{name}},{{/verionColumns}}
+            </if>
+            {{/embeddings}}
+            {{#oneToOneAssociations}}
+                <if test="{{#testNotNull}}{{property.name}}{{/testNotNull}}">
+                    {{#foreignKey}}
+                        {{#columns}}{{#local}}{{name}},{{/local}}{{/columns}}
+                    {{/foreignKey}}
+                </if>
+            {{/oneToOneAssociations}}
+            {{#manyToOneAssociations}}
+            <if test="{{#testNotNull}}{{property.name}}{{/testNotNull}}">
+                {{#foreignKey}}
+                    {{#columns}}{{#local}}{{name}},{{/local}}{{/columns}}
+                {{/foreignKey}}
+            </if>
+            {{/manyToOneAssociations}}
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            {{#primaryKey}}
+                {{^excludeInsertId}}
+                    {{#columns}}#{ {{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },{{/columns}}
+                {{/excludeInsertId}}
+            {{/primaryKey}}
+            {{#normalColumns}}#{ {{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },{{/normalColumns}}
+            {{#versionColumns}}#{ {{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },{{/versionColumns}}
+            {{#embeddings}}
+            <if test="{{#testNotNull}}{{property.name}}{{/testNotNull}}">
+                {{#primaryKey}}{{#columns}}#{ {{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },{{/columns}}{{/primaryKey}}
+                {{#normalColumns}}#{ {{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },{{/normalColumns}}
+                {{#versionColumns}}#{ {{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },{{/versionColumns}}
+            </if>
+            {{/embeddings}}
+            {{#oneToOneAssociations}}
+                <if test="{{#testNotNull}}{{property.name}}{{/testNotNull}}">
+                    {{#foreignKey}}
+                        {{#columns}}{{#foreign}}#{ {{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },{{/foreign}}{{/columns}}
+                    {{/foreignKey}}
+                </if>
+            {{/oneToOneAssociations}}
+            {{#manyToOneAssociations}}
+            <if test="{{#testNotNull}}{{property.name}}{{/testNotNull}}">
+                {{#foreignKey}}
+                    {{#columns}}{{#foreign}}#{ {{propertyName}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} },{{/foreign}}{{/columns}}
+                {{/foreignKey}}
+            </if>
+            {{/manyToOneAssociations}}
+        </trim>
+    </insert>
+{{/domain}}

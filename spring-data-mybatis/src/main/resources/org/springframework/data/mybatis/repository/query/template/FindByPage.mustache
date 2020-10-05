@@ -1,0 +1,9 @@
+<select id="{{statementName}}" resultMap="{{resultMap}}">
+    {{#limitHandler}}
+        <include refid="__select"/>
+        <where>
+            <include refid="__where_clause_by_ids"/>
+        </where>
+        <include refid="__standard_sort"/>
+    {{/limitHandler}}
+</select>

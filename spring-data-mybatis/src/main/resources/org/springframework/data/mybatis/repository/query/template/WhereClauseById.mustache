@@ -1,15 +1,10 @@
 <sql id="{{ statementName }}">
-    {{#embedded}}
-        {{#properties}}
-            AND {{column.name}} = #{ {{name}} }
-        {{/properties}}
-    {{/embedded}}
-    {{^embedded}}
-        {{#properties}}
-            {{#isIdProperty}}
-                AND {{column.name}} = #{ {{name}} }
-            {{/isIdProperty}}
-        {{/properties}}
-    {{/embedded}}
+    {{#domain}}
+        {{#primaryKey}}
+            {{#columns}}
+                AND {{#quote}}{{alias}}{{/quote}}.{{name}} = {{#composited}}#{ {{property.name}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}} }{{/composited}}
+                {{^composited}}#{_parameter}{{/composited}}
+            {{/columns}}
+        {{/primaryKey}}
+    {{/domain}}
 </sql>
-

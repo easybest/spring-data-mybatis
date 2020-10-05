@@ -109,6 +109,21 @@ public class UserRepositoryTest {
 		this.fourth.addRoles(this.grape);
 
 		this.repository.saveSelectiveAll(this.first, this.second, this.third, this.fourth);
+		this.repository.insertUserRole(this.first.getId(), this.apple.getId());
+		this.repository.insertUserRole(this.first.getId(), this.orange.getId());
+		this.repository.insertUserRole(this.first.getId(), this.banana.getId());
+		this.repository.insertUserRole(this.second.getId(), this.orange.getId());
+		this.repository.insertUserRole(this.second.getId(), this.banana.getId());
+		this.repository.insertUserRole(this.third.getId(), this.banana.getId());
+		this.repository.insertUserRole(this.third.getId(), this.grape.getId());
+		this.repository.insertUserRole(this.fourth.getId(), this.grape.getId());
+	}
+
+	@Test
+	public void testGetById() {
+		this.flushUsers();
+		User user = this.repository.getById(this.first.getId());
+		assertThat(user).isEqualTo(this.first);
 	}
 
 	@Test

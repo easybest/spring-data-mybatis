@@ -15,23 +15,25 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
+import java.io.Serializable;
+
 import lombok.Getter;
+import lombok.experimental.Accessors;
 
 /**
- * Table model.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
-public class Table {
+@Getter
+@Accessors(chain = true)
+public class Table implements Serializable {
 
-	@Getter
 	private Identifier schema;
 
-	@Getter
 	private Identifier catalog;
 
-	@Getter
 	private Identifier name;
 
 	public Table(String schema, String catalog, String name) {
@@ -44,7 +46,8 @@ public class Table {
 		this.name = Identifier.toIdentifier(name);
 	}
 
-	public String getFullName() {
+	@Override
+	public String toString() {
 		return ((null != this.schema) ? (this.schema.getCanonicalName() + '.') : "") + //
 				((null != this.catalog) ? (this.catalog.getCanonicalName() + '.') : "") + //
 				this.name.getCanonicalName();

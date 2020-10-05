@@ -19,36 +19,4 @@
 		</where>
 	</select>
 
-	<!-- will be used instead of automatic generated result map from spring data mybatis -->
-	<resultMap id="__result_map" type="org.springframework.data.mybatis.domain.sample.Shop">
-		<id property="id" column="id" javaType="long" jdbcType="BIGINT" />
-		<result property="version" column="version" javaType="int" jdbcType="INTEGER"  />
-		<result property="name" column="name" javaType="string" jdbcType="VARCHAR"  />
-		<result property="introduce" column="introduce" javaType="string" jdbcType="VARCHAR"  />
-		<result property="emailAddress" column="email_address" javaType="string" jdbcType="VARCHAR"  />
-		<result property="active" column="active" javaType="boolean" jdbcType="BIT"  />
-		<result property="duration" column="duration" javaType="int" jdbcType="INTEGER"  />
-		<result property="openingTime" column="openingTime" javaType="java.util.Date" jdbcType="BIGINT"  typeHandler="org.springframework.data.mybatis.mapping.handler.DateUnixTimestampTypeHandler" />
-		<result property="brandEstablishmentTime" column="brand_time" javaType="long" jdbcType="TIMESTAMP"  typeHandler="org.springframework.data.mybatis.mapping.handler.UnixTimestampDateTypeHandler" />
-
-		<result property="createdBy" column="created_by" javaType="long" jdbcType="BIGINT"  />
-		<result property="creationDate" column="creation_date" javaType="java.sql.Timestamp" jdbcType="TIMESTAMP"  />
-		<result property="lastUpdatedBy" column="last_updated_by" javaType="long" jdbcType="BIGINT"  />
-		<result property="lastUpdateDate" column="last_update_date" javaType="java.sql.Timestamp" jdbcType="TIMESTAMP"  />
-
-		<!-- embedded -->
-		<association property="address" javaType="org.springframework.data.mybatis.domain.sample.Address">
-			<result property="country" column="country" javaType="string" jdbcType="VARCHAR"  />
-			<result property="city" column="city" javaType="string" jdbcType="VARCHAR"  />
-			<result property="streetName" column="street_name" javaType="string" jdbcType="VARCHAR"  />
-			<result property="streetNo" column="street_number" javaType="string" jdbcType="VARCHAR"  />
-		</association>
-
-		<collection property="goods"
-					ofType="org.springframework.data.mybatis.domain.sample.Goods"
-					select="org.springframework.data.mybatis.domain.sample.Goods.__association_one_to_many_goods"
-					column="{ id=id }"
-					fetchType="eager"></collection>
-	</resultMap>
-
 </mapper>

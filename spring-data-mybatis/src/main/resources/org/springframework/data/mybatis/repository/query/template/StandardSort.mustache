@@ -1,15 +1,14 @@
 <sql id="{{statementName}}">
     <if test="__sort != null">
-        <bind name="__columnsMap" value='#{ {{columnsMap}} }'/>
+        {{#domain}}
+            <bind name="__columnsMap"
+                  value='#{ "____":""{{#primaryKey}}{{#columns}},"{{propertyName}}":"{{#escapeQuotes}}{{#quote}}{{tableAlias}}{{/quote}}{{/escapeQuotes}}.{{name}}"{{/columns}}{{/primaryKey}}{{#normalColumns}},"{{propertyName}}":"{{#escapeQuotes}}{{#quote}}{{tableAlias}}{{/quote}}{{/escapeQuotes}}.{{name}}"{{/normalColumns}}{{#versionColumns}},"{{propertyName}}":"{{#escapeQuotes}}{{#quote}}{{tableAlias}}{{/quote}}{{/escapeQuotes}}.{{name}}"{{/versionColumns}}{{#embeddings}}{{#primaryKey}}{{#columns}},"{{propertyName}}":"{{#escapeQuotes}}{{#quote}}{{tableAlias}}{{/quote}}{{/escapeQuotes}}.{{name}}"{{/columns}}{{/primaryKey}}{{#normalColumns}},"{{propertyName}}":"{{#escapeQuotes}}{{#quote}}{{tableAlias}}{{/quote}}{{/escapeQuotes}}.{{name}}"{{/normalColumns}}{{#versionColumns}},"{{propertyName}}":"{{#escapeQuotes}}{{#quote}}{{tableAlias}}{{/quote}}{{/escapeQuotes}}.{{name}}"{{/versionColumns}}{{/embeddings}} }'/>
+        {{/domain}}
         ORDER BY
         <foreach collection="__sort" item="item" index="idx" open="" close=""
                  separator=",">
             <if test="item.ignoreCase">{{lowercaseFunction}}(</if>
             ${__columnsMap[item.property]}
-            <!--            <if test="__columnsMap[item.property] != null">-->
-            <!--                ${__columnsMap[item.property]}-->
-            <!--            </if>-->
-            <!--            <if test="__columnsMap[item.property] == null">{{!SQL inject problem}}${item.property}</if>-->
             <if test="item.ignoreCase">)</if>
             ${item.direction.name()}
         </foreach>

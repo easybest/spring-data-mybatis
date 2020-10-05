@@ -15,29 +15,36 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
-import java.io.Serializable;
-
-import lombok.Data;
-
 /**
  * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
-@Data
-public class ColumnResult implements Serializable {
+public class JoinColumn implements Component {
 
-	private boolean primaryKey;
+	private static final long serialVersionUID = -8697900456930913224L;
 
-	private String property;
+	protected final Column local;
 
-	private String column;
+	protected final Column foreign;
 
-	private String javaType;
+	public JoinColumn(Column local, Column foreign) {
+		this.local = local;
+		this.foreign = foreign;
+	}
 
-	private String jdbcType;
+	@Override
+	public Model getModel() {
+		return null;
+	}
 
-	private String typeHandler;
+	public Column getLocal() {
+		return this.local;
+	}
+
+	public Column getForeign() {
+		return this.foreign;
+	}
 
 }

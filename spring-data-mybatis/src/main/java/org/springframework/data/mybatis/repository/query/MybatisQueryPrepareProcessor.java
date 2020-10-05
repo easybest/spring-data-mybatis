@@ -37,11 +37,13 @@ public class MybatisQueryPrepareProcessor implements QueryCreationListener<Repos
 	public void onCreation(RepositoryQuery query) {
 
 		if (query instanceof SimpleMybatisQuery) {
-			new SimpleMybatisQueryPrecompiler(this.mappingContext, (SimpleMybatisQuery) query).precompile();
+			// new SimpleMybatisQueryPrecompiler(this.mappingContext, (SimpleMybatisQuery)
+			// query).precompile();
 			return;
 		}
 		if (query instanceof PartTreeMybatisQuery) {
-			new PartTreeMyBatisQueryPrecompiler(this.mappingContext, (PartTreeMybatisQuery) query).precompile();
+			// new PartTreeMyBatisQueryPrecompiler(this.mappingContext,
+			// (PartTreeMybatisQuery) query).precompile();
 			return;
 		}
 
