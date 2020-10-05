@@ -1,5 +1,3 @@
 <select id="{{statementName}}" resultType="long">
-    {{#domain}}
-        SELECT COUNT(*) FROM {{table}}
-    {{/domain}}
+    SELECT COUNT(*) FROM <include refid="__from"/>
 </select>
