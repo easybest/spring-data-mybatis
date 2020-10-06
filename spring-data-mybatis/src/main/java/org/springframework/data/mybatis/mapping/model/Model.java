@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
+import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 
@@ -56,7 +57,11 @@ public interface Model extends Serializable {
 
 	Collection<Association> getManyToManyAssociations();
 
-	Column findColumn(String name);
+	Column findColumn(String columnName);
+
+	Column findColumn(PropertyPath propertyPath);
+
+	Column findColumnByPropertyName(String propertyName);
 
 	List<Column> findColumnByTypeHandler(Class<?> typeHandlerClass);
 

@@ -27,6 +27,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
+import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.util.StreamUtils;
@@ -211,6 +212,38 @@ public class Domain implements Model {
 		}
 
 		return null;
+	}
+
+	@Override
+	public Column findColumnByPropertyName(String propertyName) {
+		Column column = null;
+		if (null != this.primaryKey) {
+			column = this.primaryKey.getColumns().stream().filter(c -> c.getPropertyName().equals(propertyName))
+					.findFirst().orElse(null);
+		}
+		if (null == column && !CollectionUtils.isEmpty(this.normalColumns)) {
+			column = this.normalColumns.values().stream().filter(c -> c.getPropertyName().equals(propertyName))
+					.findFirst().orElse(null);
+		}
+		if (null == column && !CollectionUtils.isEmpty(this.versionColumns)) {
+			column = this.versionColumns.values().stream().filter(c -> c.getPropertyName().equals(propertyName))
+					.findFirst().orElse(null);
+		}
+		if (null == column && !CollectionUtils.isEmpty(this.embeddings)) {
+			column = this.embeddings.stream()
+					.map(embeddedDomain -> embeddedDomain.findColumnByPropertyName(propertyName)).filter(c -> null != c)
+					.findFirst().orElse(null);
+		}
+		return column;
+	}
+
+	@Override
+	public Column findColumn(PropertyPath propertyPath) {
+		if (null == propertyPath) {
+			return null;
+		}
+		String path = propertyPath.toDotPath();
+		return this.findColumnByPropertyName(path);
 	}
 
 	@Override

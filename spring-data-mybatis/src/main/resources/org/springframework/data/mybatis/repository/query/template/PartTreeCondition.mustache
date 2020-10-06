@@ -1,12 +1,12 @@
 {{#tree}}
     {{^-first}} OR {{/-first}}
     (
-    {{#parts}}
+    {{#this}}
         {{^-first}} AND {{/-first}}
         {{^opIn}}
             {{^opNotIn}}
-                {{#ignoreCase}}{{lowercaseFunction}}({{column.name}}){{/ignoreCase}}
-                {{^ignoreCase}}{{column.name}}{{/ignoreCase}}
+                {{#ignoreCase}}{{lowercaseFunction}}({{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}){{/ignoreCase}}
+                {{^ignoreCase}}{{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}{{/ignoreCase}}
             {{/opNotIn}}
         {{/opIn}}
         {{#opBetween}}
@@ -48,18 +48,17 @@
         {{#opIn}}
             <choose>
                 <when test="{{#arguments}}{{.}}{{/arguments}} != null and {{#arguments}}{{.}}{{/arguments}}.{{#arrayParameter}}length{{/arrayParameter}}{{^arrayParameter}}size(){{/arrayParameter}} > 0">
-                    {{#ignoreCase}}{{lowercaseFunction}}({{column.name}}){{/ignoreCase}}
-                    {{^ignoreCase}}{{column.name}}{{/ignoreCase}}
+                    {{#ignoreCase}}{{lowercaseFunction}}({{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}){{/ignoreCase}}
+                    {{^ignoreCase}}{{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}{{/ignoreCase}}
                     IN
                     <foreach item="__item" index="__index"
                              collection="{{#arguments}}{{.}}{{/arguments}}" open="("
                              separator="," close=")">#{__item
-                        {{#column.hasJavaType}}
-                            ,javaType={{column.javaTypeString}}
-                        {{/column.hasJavaType}}
-                        {{#column.hasTypeHandler}}
-                            ,typeHandler={{column.typeHandlerString}}
-                        {{/column.hasTypeHandler}} }
+                        {{#column}}{{#javaType}}
+                            ,javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}}
+                            ,jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}}
+                            ,typeHandler={{typeHandler.name}}{{/typeHandler}}{{/column}}
+                        }
                     </foreach>
                 </when>
                 <otherwise>0=1</otherwise>
@@ -68,18 +67,17 @@
         {{#opNotIn}}
             <choose>
                 <when test="{{#arguments}}{{.}}{{/arguments}} != null and {{#arguments}}{{.}}{{/arguments}}.{{#arrayParameter}}length{{/arrayParameter}}{{^arrayParameter}}size(){{/arrayParameter}} > 0">
-                    {{#ignoreCase}}{{lowercaseFunction}}({{column.name}}){{/ignoreCase}}
-                    {{^ignoreCase}}{{column.name}}{{/ignoreCase}}
+                    {{#ignoreCase}}{{lowercaseFunction}}({{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}){{/ignoreCase}}
+                    {{^ignoreCase}}{{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}{{/ignoreCase}}
                     NOT IN
                     <foreach item="__item" index="__index"
                              collection="{{#arguments}}{{.}}{{/arguments}}" open="("
                              separator="," close=")">#{__item
-                        {{#column.hasJavaType}}
-                            ,javaType={{column.javaTypeString}}
-                        {{/column.hasJavaType}}
-                        {{#column.hasTypeHandler}}
-                            ,typeHandler={{column.typeHandlerString}}
-                        {{/column.hasTypeHandler}} }
+                        {{#column}}{{#javaType}}
+                            ,javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}}
+                            ,jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}}
+                            ,typeHandler={{typeHandler.name}}{{/typeHandler}}{{/column}}
+                        }
                     </foreach>
                 </when>
                 <otherwise>0=1</otherwise>
@@ -102,14 +100,10 @@
             {{/ignoreCase}}
             {{^ignoreCase}}
                 #{ {{#arguments}}{{.}}{{/arguments}}
-                {{#column.hasJavaType}}
-                    ,javaType={{column.javaTypeString}}
-                {{/column.hasJavaType}}
-                {{#column.hasTypeHandler}}
-                    ,typeHandler={{column.typeHandlerString}}
-                {{/column.hasTypeHandler}} }
+                {{#column}}{{#javaType}},javaType={{javaTypeString}}{{/javaType}}{{#jdbcType}},jdbcType={{jdbcType.name}}{{/jdbcType}}{{#typeHandler}},typeHandler={{typeHandler.name}}{{/typeHandler}}{{/column}}
+                }
             {{/ignoreCase}}
         {{/opDefault}}
-    {{/parts}}
+    {{/this}}
     )
 {{/tree}}
