@@ -25,6 +25,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.precompiler.MybatisQueryPrepareProcessor;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
 import org.springframework.data.mybatis.repository.query.MybatisQueryLookupStrategy;
@@ -69,11 +70,7 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 			}
 		});
 
-		// this.addRepositoryProxyPostProcessor(new
-		// MybatisRepositoryPrepareProcessor(mappingContext));
-		// this.addQueryCreationListener(new
-		// MybatisQueryPrepareProcessor(mappingContext));
-
+		this.addQueryCreationListener(new MybatisQueryPrepareProcessor(mappingContext));
 	}
 
 	private static boolean hasMethodReturningStream(Class<?> repositoryClass) {

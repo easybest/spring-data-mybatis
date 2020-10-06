@@ -8,7 +8,7 @@
                 <include refid="__standard_sort"/>
             </if>
             <if test="__sort == null">ORDER BY CURRENT_TIMESTAMP</if>
-            ) AS __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
+            ) AS __mybatis_row_nr__ FROM ( SELECT * FROM <include refid="__from"/>
             <where>
                 {{>PartTreeCondition}}
             </where>
@@ -27,7 +27,7 @@
             <if test="__sort == null">
                 WITH query AS (
                 SELECT inner_query.*, ROW_NUMBER() OVER (ORDER BY CURRENT_TIMESTAMP ) AS
-                __mybatis_row_nr__ FROM ( SELECT * FROM {{table}}
+                __mybatis_row_nr__ FROM ( SELECT * FROM <include refid="__from"/>
                 <where>
                     {{>PartTreeCondition}}
                 </where>
@@ -37,14 +37,14 @@
         {{/SQLServer2012}}
         {{^SQLServer2005}}{{^SQLServer2012}}
             {{#limitHandler}}
-                SELECT {{columns}} FROM {{table}}
+                SELECT {{columns}} FROM <include refid="__from"/>
                 <where>{{>PartTreeCondition}}</where>
             {{/limitHandler}}
         {{/SQLServer2012}}{{/SQLServer2005}}
         ) __a
     {{/limiting}}
     {{^limiting}}
-        SELECT {{columns}} FROM {{table}}
+        SELECT {{columns}} FROM <include refid="__from"/>
         <where>{{>PartTreeCondition}}</where>
     {{/limiting}}
 </select>

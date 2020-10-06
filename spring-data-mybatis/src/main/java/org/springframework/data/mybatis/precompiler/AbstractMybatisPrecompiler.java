@@ -33,6 +33,7 @@ import com.samskivert.mustache.Mustache.Lambda;
 import com.samskivert.mustache.Template.Fragment;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
+import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.Configuration;
 
 import org.springframework.core.io.ClassPathResource;
@@ -148,19 +149,27 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 		statements.stream().forEach(s -> builder.append(s).append(LINE_BREAKS));
 		builder.append("</mapper>");
 		if (log.isDebugEnabled()) {
-			log.debug("\n------------------------\n" + "Generated Mapper XML ("
-					+ (dir + "/" + namespace.replace('.', '/') + this.getResourceSuffix())
+			log.debug("\n------------------------\n" + "Generated Mapper XML (" + this.getResource(dir, namespace)
 					+ ")\n------------------------\n" + builder.toString());
 		}
 		Configuration configuration = this.mappingContext.getSqlSessionTemplate().getConfiguration();
 		try (InputStream is = new ByteArrayInputStream(builder.toString().getBytes(StandardCharsets.UTF_8))) {
-			new XMLMapperBuilder(is, configuration, dir + "/" + namespace.replace('.', '/') + this.getResourceSuffix(),
-					configuration.getSqlFragments()).parse();
+
+			XMLMapperBuilder xmlMapperBuilder = new XMLMapperBuilder(is, configuration,
+					this.getResource(dir, namespace), configuration.getSqlFragments());
+			xmlMapperBuilder.parse();
 		}
 		catch (Exception ex) {
 			log.error(ex.getMessage(), ex);
 			throw new MappingException(ex.getMessage(), ex);
 		}
+		finally {
+			ErrorContext.instance().reset();
+		}
+	}
+
+	protected String getResource(String dir, String namespace) {
+		return dir + '/' + namespace.replace('.', '/') + ".xml";
 	}
 
 	protected boolean checkSqlFragment(String name) {
@@ -183,7 +192,7 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 	}
 
 	protected String getResourceSuffix() {
-		return ".precompiler";
+		return ".xml";
 	}
 
 	protected String getTemplatePath(String name) {

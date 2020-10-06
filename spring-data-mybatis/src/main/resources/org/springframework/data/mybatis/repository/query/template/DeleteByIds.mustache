@@ -21,7 +21,7 @@
                                      separator=") OR (" close=")">
                                 {{#columns}}
                                     {{^-first}} AND {{/-first}}
-                                    {{name}} = #{ item.{{propertyName}} }
+                                    {{name}} = #{ item.{{property.name}} }
                                 {{/columns}}
                             </foreach>
                         {{/composited}}
