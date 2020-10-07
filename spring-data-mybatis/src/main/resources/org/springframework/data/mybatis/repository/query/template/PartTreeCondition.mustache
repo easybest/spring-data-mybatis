@@ -5,8 +5,8 @@
         {{^-first}} AND {{/-first}}
         {{^opIn}}
             {{^opNotIn}}
-                {{#ignoreCase}}{{lowercaseFunction}}({{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}){{/ignoreCase}}
-                {{^ignoreCase}}{{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}{{/ignoreCase}}
+                {{#ignoreCase}}{{lowercaseFunction}}({{#column}}{{#includeAlias}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{/includeAlias}}{{name}}{{/column}}){{/ignoreCase}}
+                {{^ignoreCase}}{{#column}}{{#includeAlias}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{/includeAlias}}{{name}}{{/column}}{{/ignoreCase}}
             {{/opNotIn}}
         {{/opIn}}
         {{#opBetween}}
@@ -48,8 +48,8 @@
         {{#opIn}}
             <choose>
                 <when test="{{#arguments}}{{.}}{{/arguments}} != null and {{#arguments}}{{.}}{{/arguments}}.{{#arrayParameter}}length{{/arrayParameter}}{{^arrayParameter}}size(){{/arrayParameter}} > 0">
-                    {{#ignoreCase}}{{lowercaseFunction}}({{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}){{/ignoreCase}}
-                    {{^ignoreCase}}{{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}{{/ignoreCase}}
+                    {{#ignoreCase}}{{lowercaseFunction}}({{#column}}{{#includeAlias}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{/includeAlias}}{{name}}{{/column}}){{/ignoreCase}}
+                    {{^ignoreCase}}{{#column}}{{#includeAlias}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{/includeAlias}}{{name}}{{/column}}{{/ignoreCase}}
                     IN
                     <foreach item="__item" index="__index"
                              collection="{{#arguments}}{{.}}{{/arguments}}" open="("
@@ -67,8 +67,8 @@
         {{#opNotIn}}
             <choose>
                 <when test="{{#arguments}}{{.}}{{/arguments}} != null and {{#arguments}}{{.}}{{/arguments}}.{{#arrayParameter}}length{{/arrayParameter}}{{^arrayParameter}}size(){{/arrayParameter}} > 0">
-                    {{#ignoreCase}}{{lowercaseFunction}}({{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}){{/ignoreCase}}
-                    {{^ignoreCase}}{{#column}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{name}}{{/column}}{{/ignoreCase}}
+                    {{#ignoreCase}}{{lowercaseFunction}}({{#column}}{{#includeAlias}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{/includeAlias}}{{name}}{{/column}}){{/ignoreCase}}
+                    {{^ignoreCase}}{{#column}}{{#includeAlias}}{{#quote}}{{model.tableAlias}}{{/quote}}.{{/includeAlias}}{{name}}{{/column}}{{/ignoreCase}}
                     NOT IN
                     <foreach item="__item" index="__index"
                              collection="{{#arguments}}{{.}}{{/arguments}}" open="("

@@ -31,8 +31,6 @@ import lombok.Getter;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
-import org.springframework.data.mybatis.dialect.pagination.SQLServer2005LimitHandler;
-import org.springframework.data.mybatis.dialect.pagination.SQLServer2012LimitHandler;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.model.Column;
 import org.springframework.data.mybatis.repository.query.MybatisParameters;
@@ -57,7 +55,7 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 	private final AtomicInteger argumentCounter = new AtomicInteger(0);
 
-	public PartTreeMybatisQueryPrecompiler(MybatisMappingContext mappingContext, PartTreeMybatisQuery query) {
+	PartTreeMybatisQueryPrecompiler(MybatisMappingContext mappingContext, PartTreeMybatisQuery query) {
 		super(mappingContext,
 				mappingContext.getRequiredModel(query.getQueryMethod().getEntityInformation().getJavaType()));
 		this.query = query;
@@ -67,15 +65,12 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 	protected Collection<String> prepareStatements() {
 
 		String statement = this.doPrepareStatement();
-		if (StringUtils.isEmpty(statement)) {
-			return Collections.emptyList();
-		}
-		return Collections.singletonList(statement);
+		return StringUtils.isEmpty(statement) ? Collections.emptyList() : Collections.singletonList(statement);
 	}
 
 	@Override
 	protected String getResource(String dir, String namespace) {
-		return "tree/" + this.query.getStatementId() + ".xml";
+		return "tree/" + this.query.getStatementId().replace('.', '/');
 	}
 
 	private String doPrepareStatement() {
@@ -100,31 +95,23 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 			return this.collectionQueryStatement();
 		}
 		if (method.isQueryForEntity()) {
-			return this.selectQueryStatement(false);
+			return this.selectQueryStatement();
 		}
 		return null;
 	}
 
 	private String deleteStatement() {
-		return this.render("PartTreeDelete", null);
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put("tree", this.convert(this.query.getTree(), false));
+		if (this.query.getQueryMethod().isCollectionQuery()) {
+			return this.render("PartTreeDelete", scopes) + this.render("PartTreeInnerSelect", this
+					.innerSelectQueryScopes(ResidentStatementName.QUERY_PREFIX + this.query.getStatementName(), false));
+		}
+		return this.render("PartTreeDelete", scopes);
 	}
 
 	private String countProjectionStatement() {
-		PartTree tree = this.query.getTree();
-		Map<String, Object> scopes = new HashMap<>();
-		scopes.put("limiting", tree.isLimiting());
-		scopes.put("columns", tree.isLimiting() ? "1" : "COUNT(*)");
-		if (tree.isLimiting()) {
-			RowSelection selection = new RowSelection(0, tree.getMaxResults());
-			scopes.put("limitHandler", (Lambda) (frag, out) -> {
-				out.write(this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), selection));
-			});
-			scopes.put("SQLServer2005",
-					this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
-			scopes.put("SQLServer2012",
-					this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
-		}
-		return this.render("PartTreeCount", scopes);
+		return this.render("PartTreeInnerCount", this.innerCountQueryScopes(this.query.getStatementName()));
 	}
 
 	private String existsProjectionStatement() {
@@ -132,26 +119,35 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String pageQueryStatement() {
-		Map<String, Object> scopes = new HashMap<>();
-		return this.render("PartTreePage", scopes);
+		return this.render("PartTreeInnerSelect", this.innerSelectQueryScopes(this.query.getStatementName(), true))
+				+ this.render("PartTreeInnerSelect",
+						this.innerSelectQueryScopes(
+								ResidentStatementName.UNPAGED_PREFIX + this.query.getStatementName(), false))
+				+ this.render("PartTreeInnerCount", this.innerCountQueryScopes(this.query.getCountStatementName()));
 	}
 
 	private String sliceQueryStatement() {
-		Map<String, Object> scopes = new HashMap<>();
-		return this.render("PartTreeSlice", scopes);
+		return this.render("PartTreeInnerSelect", this.innerSelectQueryScopes(this.query.getStatementName(), true))
+				+ this.render("PartTreeInnerSelect", this.innerSelectQueryScopes(
+						ResidentStatementName.UNPAGED_PREFIX + this.query.getStatementName(), false));
 	}
 
 	private String collectionQueryStatement() {
-		// Map<String, Object> scopes = new HashMap<>();
-		// return this.render("PartTreeCollection", scopes);
-		return this.selectQueryStatement(this.query.getQueryMethod().getParameters().hasPageableParameter());
+		return this.render("PartTreeInnerSelect", this.innerSelectQueryScopes(this.query.getStatementName(),
+				this.query.getQueryMethod().getParameters().hasPageableParameter()));
 	}
 
-	private String selectQueryStatement(boolean pageable) {
+	private String selectQueryStatement() {
+		return this.render("PartTreeInnerSelect", this.innerSelectQueryScopes(this.query.getStatementName(), false));
+	}
+
+	private Map<String, Object> innerSelectQueryScopes(String statementName, boolean pageable) {
 		PartTree tree = this.query.getTree();
 		MybatisQueryMethod method = this.query.getQueryMethod();
 		Map<String, Object> scopes = new HashMap<>();
-		String columns = "<include refid=\"__column_list\"/>";
+		scopes.put("innerStatementName", statementName);
+
+		String columns = "<include refid='__column_list'/>";
 		if (StringUtils.hasText(method.getSelectColumns())) {
 			String[] selectedColumns = method.getSelectColumns().split(",");
 			columns = Arrays.stream(selectedColumns).map(String::trim).filter(StringUtils::hasText).map(
@@ -197,14 +193,24 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 			RowSelection rowSelection = selection;
 			scopes.put("limitHandler", (Lambda) (frag, out) -> out.write(
 					this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), rowSelection)));
-			scopes.put("SQLServer2005",
-					this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
-			scopes.put("SQLServer2012",
-					this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
 		}
 		scopes.put("pageable", pageable);
+		return scopes;
+	}
 
-		return this.render("PartTreeSelect", scopes);
+	private Map<String, Object> innerCountQueryScopes(String statementName) {
+		PartTree tree = this.query.getTree();
+		MybatisQueryMethod method = this.query.getQueryMethod();
+		Map<String, Object> scopes = new HashMap<>();
+		scopes.put("innerStatementName", statementName);
+		scopes.put("limiting", tree.isLimiting());
+		scopes.put("columns", tree.isLimiting() ? "1" : "COUNT(*)");
+		if (tree.isLimiting()) {
+			RowSelection selection = new RowSelection(0, tree.getMaxResults());
+			scopes.put("limitHandler", (Lambda) (frag, out) -> out
+					.write(this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), selection)));
+		}
+		return scopes;
 	}
 
 	@Override
@@ -213,22 +219,36 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 			scopes = new HashMap<>();
 		}
 		scopes.putIfAbsent(SCOPE_STATEMENT_NAME, this.query.getStatementName());
-		scopes.put("tree", this.convert(this.query.getTree()));
-		scopes.put("lowercaseFunction", this.mappingContext.getDialect().getLowercaseFunction());
+		scopes.putIfAbsent("tree", this.convert(this.query.getTree(), true));
 		return super.render(name, scopes);
 	}
 
-	private List<OrPart> convert(PartTree tree) {
+	private Tree convert(PartTree tree, boolean includeAlias) {
 		this.argumentCounter.set(0); // reset the argument counter
-		return tree.stream().map(orPart -> new OrPart(orPart)).collect(Collectors.toList());
+		return new Tree(tree, includeAlias);
+	}
+
+	public class Tree implements Streamable<OrPart> {
+
+		private final List<OrPart> orParts;
+
+		Tree(PartTree tree, boolean includeAlias) {
+			this.orParts = tree.stream().map(orPart -> new OrPart(orPart, includeAlias)).collect(Collectors.toList());
+		}
+
+		@Override
+		public Iterator<OrPart> iterator() {
+			return this.orParts.iterator();
+		}
+
 	}
 
 	public class OrPart implements Streamable<AndPart> {
 
 		private final List<AndPart> andParts;
 
-		public OrPart(PartTree.OrPart orPart) {
-			this.andParts = orPart.stream().map(part -> new AndPart(part)).collect(Collectors.toList());
+		OrPart(PartTree.OrPart orPart, boolean includeAlias) {
+			this.andParts = orPart.stream().map(part -> new AndPart(part, includeAlias)).collect(Collectors.toList());
 		}
 
 		@Override
@@ -240,6 +260,8 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 	@Getter
 	public class AndPart {
+
+		private final boolean includeAlias;
 
 		private final Column column;
 
@@ -301,7 +323,8 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 		private boolean arrayParameter;
 
-		public AndPart(Part part) {
+		AndPart(Part part, boolean includeAlias) {
+			this.includeAlias = includeAlias;
 			PropertyPath propertyPath = part.getProperty();
 			this.column = PartTreeMybatisQueryPrecompiler.this.domain.findColumn(propertyPath);
 			if (null == this.column) {

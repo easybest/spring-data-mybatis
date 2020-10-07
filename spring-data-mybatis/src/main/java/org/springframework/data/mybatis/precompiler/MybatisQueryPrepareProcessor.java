@@ -17,6 +17,7 @@ package org.springframework.data.mybatis.precompiler;
 
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.repository.query.PartTreeMybatisQuery;
+import org.springframework.data.mybatis.repository.query.SimpleMybatisQuery;
 import org.springframework.data.repository.core.support.QueryCreationListener;
 import org.springframework.data.repository.query.RepositoryQuery;
 
@@ -38,8 +39,14 @@ public class MybatisQueryPrepareProcessor implements QueryCreationListener<Repos
 	@Override
 	public void onCreation(RepositoryQuery query) {
 
+		if (query instanceof SimpleMybatisQuery) {
+			new SimpleMybatisQueryPrecompiler(this.mappingContext, (SimpleMybatisQuery) query).compile();
+			return;
+		}
+
 		if (query instanceof PartTreeMybatisQuery) {
 			new PartTreeMybatisQueryPrecompiler(this.mappingContext, (PartTreeMybatisQuery) query).compile();
+			return;
 		}
 	}
 

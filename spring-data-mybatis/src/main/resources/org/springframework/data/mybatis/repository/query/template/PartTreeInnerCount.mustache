@@ -1,4 +1,4 @@
-<select id="{{statementName}}" resultType="long">
+<select id="{{innerStatementName}}" resultType="long">
     {{#limiting}}
         SELECT COUNT(*) FROM (
 
@@ -17,7 +17,7 @@
         {{/SQLServer2005}}
         {{#SQLServer2012}}
             <if test="__sort != null">
-                SELECT * FROM {{table}}
+                SELECT * FROM <include refid="__from"/>
                 <where>
                     {{>PartTreeCondition}}
                 </where>
