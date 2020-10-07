@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 import com.samskivert.mustache.Mustache.Lambda;
 
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
-import org.springframework.data.mybatis.dialect.pagination.SQLServer2005LimitHandler;
-import org.springframework.data.mybatis.dialect.pagination.SQLServer2012LimitHandler;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.model.ManyToManyAssociation;
 import org.springframework.data.mybatis.mapping.model.ManyToOneAssociation;
@@ -39,7 +37,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * .
+ * Simple mybatis mapper precompiler.
  *
  * @author JARVIS SONG
  * @since 2.0.2
@@ -106,7 +104,8 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			scopes.put(SCOPE_STATEMENT_NAME, statementName);
 			scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
 			scopes.put("ass", ass);
-			this.compileMapper("select", ass.getMappingEntity().getName(),
+			String ns = ass.getMappingEntity().getName();
+			this.compileMapper("select/" + ns.replace('.', '/') + "/" + statementName, ns,
 					Collections.singletonList(this.render("ResultMapOneToManySelect", scopes)));
 		});
 	}
@@ -126,7 +125,7 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			scopes.put(SCOPE_STATEMENT_NAME, statementName);
 			scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
 			scopes.put("ass", ass);
-			this.compileMapper("select", ns,
+			this.compileMapper("select/" + ns.replace('.', '/') + "/" + statementName, ns,
 					Collections.singletonList(this.render("ResultMapManyToManySelect", scopes)));
 		});
 	}
@@ -144,13 +143,13 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 			scopes.put("ass", ass);
 
 			scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.INSERT);
-			this.compileMapper("associative", namespace,
+			this.compileMapper("associative/" + namespace.replace('.', '/') + "/insert", namespace,
 					Collections.singletonList(this.render("AssociativeInsert", scopes)));
 			scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.UPDATE);
-			this.compileMapper("associative", namespace,
+			this.compileMapper("associative/" + namespace.replace('.', '/') + "/update", namespace,
 					Collections.singletonList(this.render("AssociativeUpdate", scopes)));
 			scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.DELETE);
-			this.compileMapper("associative", namespace,
+			this.compileMapper("associative/" + namespace.replace('.', '/') + "/delete", namespace,
 					Collections.singletonList(this.render("AssociativeDelete", scopes)));
 		});
 
@@ -225,7 +224,6 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		}
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.STANDARD_SORT);
-		scopes.put("lowercaseFunction", this.mappingContext.getDialect().getLowercaseFunction());
 		return this.render("StandardSort", scopes);
 	}
 
@@ -235,7 +233,6 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		}
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.QUERY_BY_EXAMPLE_WHERE_CLAUSE);
-		scopes.put("lowercaseFunction", this.mappingContext.getDialect().getLowercaseFunction());
 		scopes.put("replaceDotToUnderline", (Lambda) (frag, out) -> out.write(frag.execute().trim().replace('.', '_')));
 
 		List columns = new LinkedList<>();
@@ -420,10 +417,6 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
 		scopes.put("limitHandler", (Lambda) (frag, out) -> out.write(
 				this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), new RowSelection(true))));
-		scopes.put("SQLServer2005",
-				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
-		scopes.put("SQLServer2012",
-				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
 		scopes.put("conditionQuery", ""); // TODO
 		return this.render("FindByPage", scopes);
 	}
@@ -465,10 +458,6 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
 		scopes.put("limitHandler", (Lambda) (frag, out) -> out.write(
 				this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), new RowSelection(true))));
-		scopes.put("SQLServer2005",
-				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
-		scopes.put("SQLServer2012",
-				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
 		return this.render("QueryByExampleForPage", scopes);
 	}
 

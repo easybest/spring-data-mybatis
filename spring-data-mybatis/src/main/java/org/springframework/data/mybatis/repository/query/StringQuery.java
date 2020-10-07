@@ -39,8 +39,9 @@ import org.springframework.util.StringUtils;
  * replacing SpEL expressions with synthetic bind parameters.
  *
  * @author JARVIS SONG
+ * @since 2.0.0
  */
-class StringQuery implements DeclaredQuery {
+public class StringQuery implements DeclaredQuery {
 
 	private final String query;
 
@@ -54,7 +55,7 @@ class StringQuery implements DeclaredQuery {
 
 	private final boolean usesJdbcStyleParameters;
 
-	StringQuery(String query) {
+	public StringQuery(String query) {
 
 		Assert.hasText(query, "Query must not be null or empty!");
 
@@ -395,7 +396,7 @@ class StringQuery implements DeclaredQuery {
 
 	}
 
-	static class ParameterBinding {
+	public static class ParameterBinding {
 
 		private final @Nullable String name;
 
@@ -435,7 +436,7 @@ class StringQuery implements DeclaredQuery {
 			return this.name;
 		}
 
-		String getRequiredName() throws IllegalStateException {
+		public String getRequiredName() throws IllegalStateException {
 
 			String name = this.getName();
 
@@ -447,11 +448,11 @@ class StringQuery implements DeclaredQuery {
 		}
 
 		@Nullable
-		Integer getPosition() {
+		public Integer getPosition() {
 			return this.position;
 		}
 
-		int getRequiredPosition() throws IllegalStateException {
+		public int getRequiredPosition() throws IllegalStateException {
 
 			Integer position = this.getPosition();
 
@@ -510,7 +511,7 @@ class StringQuery implements DeclaredQuery {
 
 	}
 
-	static class InParameterBinding extends ParameterBinding {
+	public static class InParameterBinding extends ParameterBinding {
 
 		InParameterBinding(String name, @Nullable String expression) {
 			super(name, null, expression);
@@ -539,7 +540,7 @@ class StringQuery implements DeclaredQuery {
 
 	}
 
-	static class LikeParameterBinding extends ParameterBinding {
+	public static class LikeParameterBinding extends ParameterBinding {
 
 		private static final List<Part.Type> SUPPORTED_TYPES = Arrays.asList(Part.Type.CONTAINING,
 				Part.Type.STARTING_WITH, Part.Type.ENDING_WITH, Part.Type.LIKE);

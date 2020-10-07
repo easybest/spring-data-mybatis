@@ -1,4 +1,4 @@
-<select id="{{statementName}}"
+<select id="{{innerStatementName}}"
         {{#isResultMap}}resultMap="{{result}}"{{/isResultMap}}{{^isResultMap}}resultType="{{result}}"{{/isResultMap}}>
 
     {{#pageable}}
@@ -46,7 +46,7 @@
         {{/SQLServer2012}}{{/SQLServer2005}}
     {{/pageable}}
     {{^pageable}}
-        SELECT {{#distinct}} DISTINCT {{/distinct}} {{columns}} FROM <include refid="__from"/>
+        SELECT {{#distinct}}DISTINCT{{/distinct}} {{columns}} FROM <include refid="__from"/>
         <where>{{>PartTreeCondition}}</where>
         {{#sortable}}
             <include refid="__standard_sort"/>

@@ -3,7 +3,7 @@
 		"https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.springframework.data.mybatis.domain.sample.Shop">
 	<select id="custom" resultMap="__result_map">
-		SELECT * FROM t_shop
+		SELECT * FROM shop
 		<where>
 			(
 			<choose>
