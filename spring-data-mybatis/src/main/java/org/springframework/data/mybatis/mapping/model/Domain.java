@@ -56,7 +56,7 @@ public class Domain implements Model {
 
 	protected PrimaryKey primaryKey;
 
-	protected Map<String, Column> normalColumns; // columnName -> column
+	protected Map<String, Column> normalColumns; // CanonicalColumnName -> column
 
 	protected Map<String, VersionColumn> versionColumns;
 
@@ -341,6 +341,11 @@ public class Domain implements Model {
 
 	public String getTableAlias() {
 		return this.alias;
+	}
+
+	@Override
+	public String toString() {
+		return "Domain{" + "entity=" + this.entity.getName() + ", table=" + this.table + '}';
 	}
 
 }

@@ -124,7 +124,7 @@ public class SinglePrimaryKey implements PrimaryKey {
 
 	@Override
 	public Column findColumn(String name) {
-		return name.equals(this.column.getName().getCanonicalName()) ? this.column : null;
+		return name.equals(this.column.getName().getText()) ? this.column : null;
 	}
 
 	@Override

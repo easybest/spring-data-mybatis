@@ -93,7 +93,8 @@ public class OneToManyAssociation extends Domain implements Association {
 				: primaryKey.getColumns().iterator().next().getName().getCanonicalName();
 		Column referencedColumn = targetModel.findColumn(referencedColumnName);
 		if (null == referencedColumn) {
-			throw new MappingException("Could not find referenced column by " + referencedColumnName);
+			throw new MappingException(
+					"Could not find referenced column by " + referencedColumnName + " in " + targetModel);
 		}
 
 		Column foreign = new Column(targetModel, referencedColumn.getProperty());
