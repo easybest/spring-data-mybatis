@@ -328,7 +328,8 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 			PropertyPath propertyPath = part.getProperty();
 			this.column = PartTreeMybatisQueryPrecompiler.this.domain.findColumn(propertyPath);
 			if (null == this.column) {
-				throw new MappingException("Could not find column for " + propertyPath);
+				throw new MappingException("Could not find column for " + propertyPath.toDotPath() + " in "
+						+ PartTreeMybatisQueryPrecompiler.this.domain);
 			}
 
 			if (part.shouldIgnoreCase() == IgnoreCaseType.ALWAYS

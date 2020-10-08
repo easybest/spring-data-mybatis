@@ -78,7 +78,8 @@ public class ForeignKey implements Component {
 				: primaryKey.getColumns().iterator().next().getName().getCanonicalName();
 		Column referencedColumn = targetModel.findColumn(referencedColumnName);
 		if (null == referencedColumn) {
-			throw new MappingException("Could not find referenced column by " + referencedColumnName);
+			throw new MappingException(
+					"Could not find referenced column by " + referencedColumnName + " in " + property);
 		}
 
 		Column foreign = new Column(this.assModel, referencedColumn.getProperty());

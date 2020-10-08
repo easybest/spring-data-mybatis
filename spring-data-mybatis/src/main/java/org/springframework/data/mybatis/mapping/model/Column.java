@@ -321,4 +321,9 @@ public class Column implements Component, Cloneable {
 		return this.property;
 	}
 
+	@Override
+	public String toString() {
+		return "Column{" + "name=" + this.name + ", propertyName='" + this.propertyName + '\'' + '}';
+	}
+
 }
