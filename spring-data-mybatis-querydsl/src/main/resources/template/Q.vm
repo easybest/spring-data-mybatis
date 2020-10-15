@@ -1,0 +1,110 @@
+/*
+* Copyright 2012-2019 the original author or authors.
+*
+* Generate by Spring Data MyBatis (https://github.com/easybest/spring-data-mybatis).
+*/
+package ${entity.packageName};
+
+import static com.querydsl.core.types.PathMetadataFactory.*;
+import static com.querydsl.core.types.Projections.*;
+
+import java.sql.Types;
+import java.util.*;
+
+import com.querydsl.core.types.*;
+import com.querydsl.core.types.dsl.*;
+import com.querydsl.sql.ColumnMetadata;
+
+public class ${entity.queryClassName} extends org.springframework.data.mybatis.querydsl.MybatisRelationalPathBase<${entity.queryClassName}, ${entity.className}> {
+
+    private static final long serialVersionUID = ${entity.serialVersion}L;
+
+    public static final ${entity.queryClassName} ${entity.instanceName} = new ${entity.queryClassName}("${entity.instanceName}");
+
+    public ${entity.queryClassName}(String variable) {
+        super(${entity.queryClassName}.class, forVariable(variable), #if($entity.hasSchema)"${entity.schema}"#{else}null#end, "${entity.tableName}");
+        addMetadata();
+    }
+
+    public ${entity.queryClassName}(String variable, String schema, String table) {
+        super(${entity.queryClassName}.class, forVariable(variable), schema, table);
+        addMetadata();
+    }
+
+    public ${entity.queryClassName}(String variable, String schema) {
+        super(${entity.queryClassName}.class, forVariable(variable), schema, "${entity.tableName}");
+        addMetadata();
+    }
+
+    public ${entity.queryClassName}(Path<? extends ${entity.queryClassName}> path) {
+        super(path.getType(), path.getMetadata(), #if($entity.hasSchema)"${entity.schema}"#{else}null#end, "${entity.tableName}");
+        addMetadata();
+    }
+
+    public ${entity.queryClassName}(PathMetadata metadata) {
+        super(${entity.queryClassName}.class, metadata, #if($entity.hasSchema)"${entity.schema}"#{else}null#end, "${entity.tableName}");
+        addMetadata();
+    }
+
+    #foreach($prop in $entity.properties)
+        #if($prop.path)
+            #if(!$prop.embedded)
+                public final ${prop.pathType}#if($prop.needPattern)<${prop.javaType}>#end ${prop.name} = create${prop.pathFactory}("${prop.name}"#if($prop.needPattern), ${prop.javaType}.class#end);
+            #end
+        #end
+        #if($prop.embedded)
+            public final ${prop.queryJavaType} ${prop.name} = new ${prop.queryJavaType}("${entity.instanceName}");
+        #end
+        #if($prop.toOne)
+            #set($association = $prop.association)
+            #foreach($local in $association.locals)
+                public final ${local.pathType}#if($local.needPattern)<${local.javaType}>#end ${local.name} = create${local.pathFactory}("${local.name}"#if($local.needPattern), ${local.javaType}.class#end);
+            #end
+            public final com.querydsl.sql.ForeignKey<${association.property.queryJavaType}> ${association.property.name}FK = createForeignKey(Arrays.asList(#foreach($local in $association.locals)#if(!$foreach.first), #end${local.name}#end),Arrays.asList(#foreach($foreign in $association.foreigns)#if(!$foreach.first), #end"${foreign.columnName}"#end));
+            public final ${association.property.queryJavaType} ${association.property.name} = new ${association.property.queryJavaType}("${association.property.name}");
+        #end
+    #end
+
+    public void addMetadata() {
+        #foreach($prop in $entity.properties)
+            #if($prop.path)
+            addMetadata(${prop.name}, ColumnMetadata.named("${prop.columnName}").withIndex(${foreach.index}).ofType(Types.${prop.jdbcType}));
+            #end
+        #end
+    }
+
+    @Override
+    protected Class<${entity.className}> domainClass() {
+        return ${entity.className}.class;
+    }
+
+    @Override
+    public FactoryExpression<${entity.className}> projections() {
+        List<Expression<?>> paths = new LinkedList<>();
+        paths.addAll(Arrays.asList(all()));
+        #foreach($prop in $entity.properties)
+            #if($prop.embedded)
+                paths.add(bean(${prop.javaType}.class, ${prop.name}.all()).as("${prop.name}"));
+            #end
+            #if($prop.toOne)
+                #set($association = $prop.association)
+                paths.add(bean(${association.property.javaType}.class, ${association.property.name}.all()).as("${association.property.name}"));
+            #end
+        #end
+        Expression[] expressions = paths.toArray(new Expression[paths.size()]);
+        return bean(${entity.className}.class, expressions);
+    }
+
+    @Override
+    public org.springframework.data.mybatis.querydsl.MybatisSQLQuery<${entity.className}> handleQuery(org.springframework.data.mybatis.querydsl.MybatisSQLQuery<${entity.className}> query) {
+        return query
+        #foreach($prop in $entity.properties)
+            #if($prop.toOne)
+                #set($association = $prop.association)
+                .leftJoin(${association.property.name}FK, ${association.property.name})
+            #end
+        #end
+        ;
+    }
+
+}

@@ -15,10 +15,7 @@
  */
 package org.springframework.data.mybatis.querydsl;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,9 +68,10 @@ import com.mysema.codegen.model.TypeCategory;
 import com.mysema.codegen.model.Types;
 import com.querydsl.codegen.TypeFactory;
 import com.querydsl.sql.types.Type;
-import com.samskivert.mustache.Mustache;
-import com.samskivert.mustache.Mustache.Compiler;
-import com.samskivert.mustache.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
 import org.springframework.data.mybatis.annotation.JdbcType;
 import org.springframework.data.mybatis.querydsl.Property.Association;
@@ -107,6 +105,14 @@ public class MappingContext {
 
 	private final JavaTypeMapping javaTypeMapping = new JavaTypeMapping();
 
+	protected static VelocityEngine velocityEngine;
+	static {
+		velocityEngine = new VelocityEngine();
+		velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "class");
+		velocityEngine.setProperty("resource.loader.class.class", ClasspathResourceLoader.class.getName());
+		velocityEngine.init();
+	}
+
 	public MappingContext(ProcessingEnvironment processingEnv) {
 
 		this.processingEnv = processingEnv;
@@ -121,24 +127,21 @@ public class MappingContext {
 		this.initialEntitySet.values().stream().forEach(entity -> entity.getProperties().stream()
 				.filter(p -> p.isToOne()).forEach(p -> this.processAssociationToOne(entity, p.getMember(), p)));
 
-		Compiler mustache = Mustache.compiler().escapeHTML(false);
 		Filer filer = this.processingEnv.getFiler();
-		this.initialEntitySet.values().stream().forEach(entity -> this.render(mustache, filer, entity));
-		this.embeddableEntitySet.values().stream().forEach(entity -> this.render(mustache, filer, entity));
+		this.initialEntitySet.values().stream().forEach(entity -> this.render(filer, entity));
+		this.embeddableEntitySet.values().stream().forEach(entity -> this.render(filer, entity));
 	}
 
-	private void render(Compiler mustache, Filer filer, Entity entity) {
+	private void render(Filer filer, Entity entity) {
 		try {
-			ClassLoader classLoader = MybatisAnnotationProcessor.class.getClassLoader();
-			Map<String, Object> scopes = new HashMap<>();
-			scopes.put("entity", entity);
 			JavaFileObject javaFileObject = filer
 					.createSourceFile(entity.getPackageName() + '.' + entity.getQueryClassName(), entity.getElement());
-			InputStream is = classLoader.getResourceAsStream("template/Q.mustache");
-			try (InputStreamReader in = new InputStreamReader(is, StandardCharsets.UTF_8);
-					Writer writer = javaFileObject.openWriter()) {
-				Template template = mustache.compile(in);
-				template.execute(scopes, writer);
+
+			try (Writer writer = javaFileObject.openWriter()) {
+				org.apache.velocity.Template template = velocityEngine.getTemplate("template/Q.vm", "UTF-8");
+				VelocityContext context = new VelocityContext();
+				context.put("entity", entity);
+				template.merge(context, writer);
 			}
 		}
 		catch (Exception ex) {
