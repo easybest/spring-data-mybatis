@@ -56,7 +56,7 @@ import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.handler.DateUnixTimestampTypeHandler;
 import org.springframework.data.mybatis.mapping.handler.UnixTimestampDateTypeHandler;
 import org.springframework.data.mybatis.mapping.model.Column;
-import org.springframework.data.mybatis.mapping.model.Model;
+import org.springframework.data.mybatis.mapping.model.Domain;
 import org.springframework.data.mybatis.querydsl.MybatisSQLQuery;
 import org.springframework.data.mybatis.querydsl.type.DateAsLongType;
 import org.springframework.data.mybatis.querydsl.type.LongAsDateType;
@@ -121,7 +121,7 @@ public class Querydsl<Q, T> {
 		}
 		this.configuration = new Configuration(sqlTemplates);
 
-		Model model = mappingContext.getRequiredModel(entityInformation.getJavaType());
+		Domain model = mappingContext.getRequiredDomain(entityInformation.getJavaType());
 		List<Column> columns = model.findColumnByTypeHandler(DateUnixTimestampTypeHandler.class);
 		if (!CollectionUtils.isEmpty(columns)) {
 			DateAsLongType dateAsLongType = new DateAsLongType();

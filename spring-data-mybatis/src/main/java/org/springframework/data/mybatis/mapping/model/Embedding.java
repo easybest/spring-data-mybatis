@@ -15,12 +15,20 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
+import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+
 /**
  * .
  *
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public interface Embedding extends Model {
+public class Embedding extends Association {
+
+	private static final long serialVersionUID = 6300615269922822952L;
+
+	public Embedding(MybatisPersistentProperty sourceProperty, Domain self, Domain target) {
+		super(sourceProperty, self, target);
+	}
 
 }

@@ -18,7 +18,7 @@ package org.springframework.data.mybatis.repository.support;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
-import org.springframework.data.mybatis.mapping.model.Model;
+import org.springframework.data.mybatis.mapping.model.Domain;
 import org.springframework.util.Assert;
 
 /**
@@ -35,15 +35,15 @@ public class MybatisMappingContextEntityInformation<T, ID> extends MybatisEntity
 
 	private final MybatisPersistentEntity<?> entity;
 
-	private final Model model;
+	private final Domain model;
 
 	public MybatisMappingContextEntityInformation(Class<T> domainClass, MybatisMappingContext mappingContext) {
 		super(domainClass);
 		Assert.notNull(mappingContext, "MappingContext must not be null.");
 
 		// this.entity = mappingContext.getRequiredPersistentEntity(domainClass);
-		this.model = mappingContext.getRequiredModel(domainClass);
-		this.entity = this.model.getMappingEntity();
+		this.model = mappingContext.getRequiredDomain(domainClass);
+		this.entity = this.model.getEntity();
 
 	}
 

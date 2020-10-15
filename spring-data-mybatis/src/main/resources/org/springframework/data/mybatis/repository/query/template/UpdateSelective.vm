@@ -1,0 +1,66 @@
+<update id="${statementName}">
+    update ${domain.table}
+    <set>
+        #foreach($entry in $domain.normalColumns.entrySet())
+            #set($column = $entry.value)
+            #if($column.version)
+                ${entry.key.render($dialect)} = ${entry.key.render($dialect)} + 1,
+            #else
+                #set($pname = '__entity.' + $column.property.name)
+                <if test="${util.testNotNull($pname)}">
+                ${entry.key.render($dialect)} = #{ ${pname} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+                </if>
+            #end
+        #end
+        #foreach($embeddingEntry in ${domain.associations.entrySet()})
+            #if($embeddingEntry.value.embedding)
+            #set($embedding = $embeddingEntry.value)
+            #foreach($entry in ${embedding.target.normalColumns.entrySet()})
+                #set($column = ${entry.value})
+                #set($pname = '__entity.' + $embeddingEntry.key.name + '.' + $column.property.name)
+                <if test="${util.testNotNull($pname)}">
+                ${entry.key.render($dialect)} = #{ ${pname} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+                </if>
+            #end
+            #end
+        #end
+        #foreach($entry in ${domain.associations.entrySet()})
+            #set($association = $entry.value)
+            #if($association.toOne)
+                <if test="__entity.${util.testNotNull($entry.key.name)}">
+                    #foreach($joinColumn in $association.foreignKey.joinColumns)
+                        #set($column = ${joinColumn.foreign})
+                        #set($pname = '__entity.' + $entry.key.name + '.' + $column.property.name)
+                        <if test="${util.testNotNull($pname)}">
+                        ${joinColumn.local.name.render($dialect)} = #{ ${pname} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end }
+                        </if>
+                    #end
+                </if>
+            #end
+        #end
+    </set>
+    <where>
+        #if($byId)
+            #foreach($entry in $domain.primaryKey.columns.entrySet())
+                #set($column = $entry.value)
+                and ${entry.key.render($dialect)} =
+                #if($domain.primaryKey.composited)
+                    #{ __id.${column.property.name} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end }
+                #else
+                    #{ __id }
+                #end
+            #end
+        #else
+            #foreach($entry in $domain.primaryKey.columns.entrySet())
+                #set($column = $entry.value)
+                and ${entry.key.render($dialect)} = #{ __entity.${column.propertyName} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end }
+            #end
+        #end
+        #foreach($entry in $domain.normalColumns.entrySet())
+            #set($column = $entry.value)
+            #if($column.version)
+                and ${entry.key.render($dialect)} = #{ __entity.${column.property.name} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end }
+            #end
+        #end
+    </where>
+</update>

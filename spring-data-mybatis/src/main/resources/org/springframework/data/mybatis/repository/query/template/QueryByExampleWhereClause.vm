@@ -1,0 +1,138 @@
+#macro(ExampleQueryColumnClause $column $pnamePrefix $tableAliasSuffix)
+    #if($pnamePrefix)
+        #set($pname = "${pnamePrefix}.${column.propertyName}")
+    #else
+        #set($pname = $column.propertyName)
+    #end
+    #set($paramName = "__entity.${pname}")
+    #if($tableAliasSuffix)
+        #set($fullTableAlias = "${domain.tableAlias}.${tableAliasSuffix}")
+        #set($fullColumnName = "${util.quote($fullTableAlias)}.${column.name.render($dialect)}")
+    #else
+        #set($fullColumnName = "${util.quote($domain.tableAlias)}.${column.name.render($dialect)}")
+    #end
+    <if test="!__accessor.isIgnoredPath('${pname}')">
+        <if test="${util.testNotNull($paramName)}">
+            <if test="__matcher.isAnyMatching()">or</if>
+            <if test="__matcher.isAllMatching()">and</if>
+            <choose>
+                <when test="__accessor.getStringMatcherForPath('${pname}').name() != 'REGEX'">
+                    <choose>
+                        <when test="__accessor.isIgnoreCaseForPath('${pname}')">
+                            ${dialect.lowercaseFunction}(${fullColumnName})
+                        </when>
+                        <otherwise>${fullColumnName}</otherwise>
+                    </choose>
+                </when>
+            </choose>
+            #if($column.string)
+                #set($underlinePropertyName = ${util.replaceDotToUnderline($pname)})
+                <bind name="__string_${underlinePropertyName}"
+                      value="__accessor.getStringMatcherForPath('${pname}').name()"/>
+
+                <choose>
+                    <when test="__string_${underlinePropertyName}.equals('DEFAULT') or __string_${underlinePropertyName}.equals('EXACT')">
+                        =
+                        <choose>
+                            <when test="__accessor.isIgnoreCaseForPath('${pname}')">
+                                ${dialect.lowercaseFunction}(#{ ${paramName} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end })
+                            </when>
+                            <otherwise>
+                                #{ ${paramName} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end }
+                            </otherwise>
+                        </choose>
+                    </when>
+                    <when test="__string_${underlinePropertyName}.equals('STARTING')">
+                        like
+                        <bind name="__starting_${underlinePropertyName}" value="${paramName} + '%'"/>
+                        <choose>
+                            <when test="__accessor.isIgnoreCaseForPath('${pname}')">
+                                ${dialect.lowercaseFunction}(#{ __starting_${underlinePropertyName} })
+                            </when>
+                            <otherwise>#{ __starting_${underlinePropertyName} }</otherwise>
+                        </choose>
+                    </when>
+                    <when test="__string_${underlinePropertyName}.equals('ENDING')">
+                        like
+                        <bind name="__ending_${underlinePropertyName}" value="'%' + ${paramName}"/>
+                        <choose>
+                            <when test="__accessor.isIgnoreCaseForPath('${pname}')">
+                                ${dialect.lowercaseFunction}(#{ __ending_${underlinePropertyName} })
+                            </when>
+                            <otherwise>#{ __ending_${underlinePropertyName} }</otherwise>
+                        </choose>
+                    </when>
+                    <when test="__string_${underlinePropertyName}.equals('CONTAINING')">
+                        like
+                        <bind name="__containing_${underlinePropertyName}" value="'%' + ${paramName} + '%'"/>
+                        <choose>
+                            <when test="__accessor.isIgnoreCaseForPath('${pname}')">
+                                ${dialect.lowercaseFunction}(#{ __containing_${underlinePropertyName} })
+                            </when>
+                            <otherwise>#{ __containing_${underlinePropertyName} }</otherwise>
+                        </choose>
+                    </when>
+                    <when test="__string_${underlinePropertyName}.equals('REGEX')">
+                        {{#regexLike}}
+                        {{value.name}};;;#{ __entity.{{propertyName}} }
+                        {{/regexLike}}
+                    </when>
+                </choose>
+
+            #else
+                =
+                <choose>
+                    <when test="__accessor.isIgnoreCaseForPath('${pname}')">
+                        ${dialect.lowercaseFunction}(#{ ${paramName} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end })
+                    </when>
+                    <otherwise>#{ ${paramName} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end }</otherwise>
+                </choose>
+            #end
+        </if>
+    </if>
+#end
+
+<sql id="${statementName}">
+    <where>
+        #foreach($entry in $domain.primaryKey.columns.entrySet())
+            #set($column = $entry.value)
+            #ExampleQueryColumnClause($column)
+        #end
+        #foreach($entry in $domain.normalColumns.entrySet())
+            #set($column = $entry.value)
+            #ExampleQueryColumnClause($column)
+        #end
+        #foreach($embeddingEntry in ${domain.associations.entrySet()})
+            #if($embeddingEntry.value.embedding)
+                #set($embedding = $embeddingEntry.value)
+                #foreach($entry in ${embedding.target.normalColumns.entrySet()})
+                    #set($column = ${entry.value})
+                    #ExampleQueryColumnClause($column ${embeddingEntry.key.name})
+                #end
+            #end
+        #end
+        #foreach($associationEntry in ${domain.associations.entrySet()})
+            #set($association = $associationEntry.value)
+            #if($association.toOne)
+                #foreach($entry in $association.target.primaryKey.columns.entrySet())
+                    #set($column = $entry.value)
+                    #ExampleQueryColumnClause($column ${associationEntry.key.name} ${associationEntry.key.name})
+                #end
+                #foreach($entry in $association.target.normalColumns.entrySet())
+                    #set($column = $entry.value)
+                    #ExampleQueryColumnClause($column ${associationEntry.key.name} ${associationEntry.key.name})
+                #end
+                #foreach($embeddingEntry in ${association.target.associations.entrySet()})
+                    #if($embeddingEntry.value.embedding)
+                    #set($embedding = $embeddingEntry.value)
+                    #foreach($entry in ${embedding.target.normalColumns.entrySet()})
+                        #set($column = ${entry.value})
+                        #set($pnamePrefix = "${associationEntry.key.name}.${embeddingEntry.key.name}")
+                        #ExampleQueryColumnClause($column $pnamePrefix  ${associationEntry.key.name})
+                    #end
+                    #end
+                #end
+            #end
+        #end
+    </where>
+</sql>

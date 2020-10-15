@@ -35,9 +35,9 @@ public class MySQLDialect extends Dialect {
 		public String processSql(String sql, RowSelection selection) {
 			final boolean hasOffset = LimitHelper.hasFirstRow(selection);
 			if (hasOffset) {
-				return sql + " LIMIT " + LimitHelper.getFirstRow(selection) + "," + selection.getMaxRows();
+				return sql + " limit " + LimitHelper.getFirstRow(selection) + "," + selection.getMaxRows();
 			}
-			return sql + " LIMIT " + selection.getMaxRows();
+			return sql + " limit " + selection.getMaxRows();
 		}
 
 		@Override

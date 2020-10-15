@@ -64,10 +64,13 @@ class MybatisAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	protected void registerAuditListenerBeanDefinition(BeanDefinition auditingHandlerDefinition,
 			BeanDefinitionRegistry registry) {
 
-//		if (!registry.containsBeanDefinition(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME)) {
-//			registry.registerBeanDefinition(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME, //
-//					new RootBeanDefinition(MybatisMappingContext.class));
-//		}
+		// if
+		// (!registry.containsBeanDefinition(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME))
+		// {
+		// registry.registerBeanDefinition(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME,
+		// //
+		// new RootBeanDefinition(MybatisMappingContext.class));
+		// }
 	}
 
 	@Override

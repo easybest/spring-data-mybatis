@@ -15,11 +15,13 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.JoinColumns;
 
@@ -33,77 +35,89 @@ import org.springframework.util.StringUtils;
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public class ForeignKey implements Component {
+public class ForeignKey implements Serializable {
 
-	private static final long serialVersionUID = 2476229243396329609L;
+	private static final long serialVersionUID = -2443525149024712909L;
 
-	private final List<JoinColumn> columns = new LinkedList<>();
+	private final MybatisPersistentProperty property;
 
-	private final Model model;
+	private final Domain local;
 
-	private final ManyToOneAssociation assModel;
+	private final Domain foreign;
 
-	public ForeignKey(Model model, ManyToOneAssociation assModel, MybatisPersistentProperty property) {
-		this.model = model;
-		this.assModel = assModel;
+	private final List<JoinColumn> joinColumns = new LinkedList<>();
 
-		Set<javax.persistence.JoinColumn> joinColumnAnns = new HashSet<>();
+	public ForeignKey(MybatisPersistentProperty property, Domain local, Domain foreign) {
+		this.property = property;
+		this.local = local;
+		this.foreign = foreign;
+
+		Set<javax.persistence.JoinColumn> joinColumnAnnotations = new HashSet<>();
 		JoinColumns joinColumnsAnn = property.findAnnotation(JoinColumns.class);
 		if (null != joinColumnsAnn && joinColumnsAnn.value().length > 0) {
-			joinColumnAnns.addAll(Arrays.asList(joinColumnsAnn.value()));
+			joinColumnAnnotations.addAll(Arrays.asList(joinColumnsAnn.value()));
 		}
 		javax.persistence.JoinColumn joinColumnAnn = property.findAnnotation(javax.persistence.JoinColumn.class);
 		if (null != joinColumnAnn) {
-			joinColumnAnns.add(joinColumnAnn);
+			joinColumnAnnotations.add(joinColumnAnn);
 		}
 
-		if (!joinColumnAnns.isEmpty()) {
-			joinColumnAnns.stream().map(jc -> this.processJoinColumn(property, jc.name(), jc.referencedColumnName()))
-					.forEach(jc -> this.columns.add(jc));
+		if (!joinColumnAnnotations.isEmpty()) {
+			this.joinColumns.addAll(joinColumnAnnotations.stream()
+					.map(joinColumn -> this.processJoinColumn(joinColumn.name(), joinColumn.referencedColumnName()))
+					.collect(Collectors.toList()));
 		}
 		else {
-			this.columns.add(this.processJoinColumn(property, null, null));
+			this.joinColumns.add(this.processJoinColumn(null, null));
 		}
 	}
 
-	private JoinColumn processJoinColumn(MybatisPersistentProperty property, String columnName,
-			String referencedColumnName) {
-		Model targetModel = this.model.getMappingContext().getRequiredModel(property.getActualType());
-		PrimaryKey primaryKey = this.model.getPrimaryKey();
-		if (StringUtils.isEmpty(referencedColumnName) && !(primaryKey instanceof SinglePrimaryKey)) {
-			throw new MappingException("Could not find referenced column name for: " + property);
+	private JoinColumn processJoinColumn(String localColumnName, String foreignColumnName) {
+		Column local;
+		Column foreign;
+		if (StringUtils.isEmpty(foreignColumnName)) {
+			PrimaryKey foreignPrimaryKey = this.foreign.getPrimaryKey();
+			if (null == foreignPrimaryKey || foreignPrimaryKey.isComposited()) {
+				throw new MappingException("Could not find referenced column in " + this.property);
+			}
+			foreign = foreignPrimaryKey.getColumns().values().stream().findFirst().get();
+		}
+		else {
+			foreign = this.foreign.findColumn(Identifier.toIdentifier(foreignColumnName));
 		}
 
-		referencedColumnName = StringUtils.hasText(referencedColumnName) ? referencedColumnName
-				: primaryKey.getColumns().iterator().next().getName().getCanonicalName();
-		Column referencedColumn = targetModel.findColumn(referencedColumnName);
-		if (null == referencedColumn) {
-			throw new MappingException(
-					"Could not find referenced column by " + referencedColumnName + " in " + property);
+		if (null == foreign) {
+			throw new MappingException("Count not find referenced column in " + this.property);
 		}
 
-		Column foreign = new Column(this.assModel, referencedColumn.getProperty());
-		foreign.setName(referencedColumn.getName());
-		foreign.setJavaType(referencedColumn.getJavaType());
-		foreign.setJdbcType(referencedColumn.getJdbcType());
-		foreign.setTypeHandler(referencedColumn.getTypeHandler());
-		Column local = new Column(this.model, property);
-		local.setName(Identifier.toIdentifier(
-				StringUtils.hasText(columnName) ? columnName : property.getName() + '_' + foreign.getName().getText()));
-		local.setJavaType(foreign.getJavaType());
-		local.setJdbcType(foreign.getJdbcType());
-		local.setTypeHandler(foreign.getTypeHandler());
+		if (StringUtils.isEmpty(localColumnName)) {
+			localColumnName = this.property.getName() + '_' + foreign.getName().getText();
+		}
+		Identifier localIdentifier = Identifier.toIdentifier(localColumnName);
+		local = this.local.findColumn(localIdentifier);
+		if (null == local) {
+			local = new Column(this.local, foreign.getProperty(),
+					this.property.getName() + '.' + foreign.getProperty().getName());
+			local.setName(localIdentifier);
+		}
 
 		return new JoinColumn(local, foreign);
 	}
 
-	@Override
-	public Model getModel() {
-		return this.model;
+	public List<JoinColumn> getJoinColumns() {
+		return this.joinColumns;
 	}
 
-	public List<JoinColumn> getColumns() {
-		return this.columns;
+	public MybatisPersistentProperty getProperty() {
+		return this.property;
+	}
+
+	public Domain getLocal() {
+		return this.local;
+	}
+
+	public Domain getForeign() {
+		return this.foreign;
 	}
 
 }

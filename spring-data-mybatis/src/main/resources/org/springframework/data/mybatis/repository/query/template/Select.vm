@@ -1,0 +1,3 @@
+<sql id="${statementName}">
+    select <include refid="__column_list"/> from <include refid="__from"/>
+</sql>

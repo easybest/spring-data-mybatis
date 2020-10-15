@@ -17,6 +17,7 @@ package org.springframework.data.mybatis.mapping.model;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
@@ -30,12 +31,10 @@ import java.time.Year;
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.time.chrono.JapaneseDate;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.persistence.Enumerated;
 import javax.persistence.Lob;
@@ -58,9 +57,9 @@ import org.springframework.util.StringUtils;
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public class Column implements Component, Cloneable {
+public class Column implements Serializable {
 
-	private static final long serialVersionUID = 6881902687485454726L;
+	private static final long serialVersionUID = 5583514805023963549L;
 
 	protected static Map<Class<?>, String> TYPE_ALIAS = new HashMap<>();
 
@@ -112,26 +111,30 @@ public class Column implements Component, Cloneable {
 		map.put(JapaneseDate.class, JdbcType.TIMESTAMP);
 		JAVA_TYPE_MAPPING = Collections.unmodifiableMap(map);
 	}
-
-	protected final Model model;
+	private final Domain owner;
 
 	private final MybatisPersistentProperty property;
 
-	protected final String columnAlias;
+	private final String propertyName;
 
-	protected Identifier name;
+	private Identifier name;
 
-	protected String propertyName;
-
-	protected JdbcType jdbcType;
+	private final JdbcType jdbcType;
 
 	protected Class<?> javaType;
 
 	protected Class<?> typeHandler;
 
-	public Column(Model model, MybatisPersistentProperty property) {
-		this.model = model;
+	private boolean primaryKey = false;
+
+	public Column(Domain domain, MybatisPersistentProperty property) {
+		this(domain, property, property.getName());
+	}
+
+	public Column(Domain owner, MybatisPersistentProperty property, String propertyName) {
+		this.owner = owner;
 		this.property = property;
+		this.propertyName = propertyName;
 
 		javax.persistence.Column columnAnn = property.findAnnotation(javax.persistence.Column.class);
 		if (null != columnAnn && StringUtils.hasText(columnAnn.name())) {
@@ -139,39 +142,19 @@ public class Column implements Component, Cloneable {
 		}
 		else {
 			this.name = Identifier
-					.toIdentifier(model.getMappingContext().getFieldNamingStrategy().getFieldName(property));
+					.toIdentifier(owner.getMappingContext().getFieldNamingStrategy().getFieldName(property));
 		}
 		this.javaType = property.getType();
 		this.jdbcType = this.processJdbcType(property);
 		this.typeHandler = this.processTypeHandler(property);
+	}
 
-		String[] aliasArray = model.getAlias().split("\\.");
-		int pos = 1;
-		if (aliasArray.length == pos) {
-			this.columnAlias = this.name.getText();
-			this.propertyName = property.getName();
-		}
-		else {
-			String[] aa = new String[aliasArray.length - pos];
-			System.arraycopy(aliasArray, pos, aa, 0, aa.length);
-			String pre = Arrays.stream(aa).collect(Collectors.joining("."));
-			this.propertyName = pre + '.' + property.getName();
+	public String getOwnerTableAlias() {
+		return this.owner.getTableAlias();
+	}
 
-			if (model instanceof Embedding) {
-				if (aa.length == 1) {
-					this.columnAlias = this.name.getText();
-				}
-				else {
-					String[] bb = new String[aa.length - 1];
-					System.arraycopy(aa, 0, bb, 0, bb.length);
-					this.columnAlias = Arrays.stream(bb).collect(Collectors.joining(".")) + '.' + this.name.getText();
-				}
-			}
-			else {
-				this.columnAlias = pre + '.' + this.name.getText();
-			}
-
-		}
+	public boolean isVersion() {
+		return this.property.isVersionProperty();
 	}
 
 	private JdbcType processJdbcType(MybatisPersistentProperty property) {
@@ -244,60 +227,6 @@ public class Column implements Component, Cloneable {
 		return null;
 	}
 
-	@Override
-	public Model getModel() {
-		return this.model;
-	}
-
-	public String getColumnAlias() {
-		return this.columnAlias;
-	}
-
-	public Identifier getName() {
-		return this.name;
-	}
-
-	public void setName(Identifier name) {
-		this.name = name;
-	}
-
-	public String getPropertyName() {
-		return this.propertyName;
-	}
-
-	public void setPropertyName(String propertyName) {
-		this.propertyName = propertyName;
-	}
-
-	public JdbcType getJdbcType() {
-		return this.jdbcType;
-	}
-
-	public void setJdbcType(JdbcType jdbcType) {
-		this.jdbcType = jdbcType;
-	}
-
-	public Class<?> getJavaType() {
-		return this.javaType;
-	}
-
-	public void setJavaType(Class<?> javaType) {
-		this.javaType = javaType;
-	}
-
-	public Class<?> getTypeHandler() {
-		return this.typeHandler;
-	}
-
-	public void setTypeHandler(Class<?> typeHandler) {
-		this.typeHandler = typeHandler;
-	}
-
-	@Override
-	protected Column clone() throws CloneNotSupportedException {
-		return (Column) super.clone();
-	}
-
 	public String getJavaTypeString() {
 		if (null == this.javaType) {
 			return null;
@@ -317,13 +246,49 @@ public class Column implements Component, Cloneable {
 				|| jdbcType == JdbcType.LONGVARCHAR;
 	}
 
+	public Domain getOwner() {
+		return this.owner;
+	}
+
 	public MybatisPersistentProperty getProperty() {
 		return this.property;
 	}
 
+	public String getPropertyName() {
+		return this.propertyName;
+	}
+
+	public Identifier getName() {
+		return this.name;
+	}
+
+	public void setName(Identifier name) {
+		this.name = name;
+	}
+
+	public JdbcType getJdbcType() {
+		return this.jdbcType;
+	}
+
+	public Class<?> getJavaType() {
+		return this.javaType;
+	}
+
+	public Class<?> getTypeHandler() {
+		return this.typeHandler;
+	}
+
+	public boolean isPrimaryKey() {
+		return this.primaryKey;
+	}
+
+	public void setPrimaryKey(boolean primaryKey) {
+		this.primaryKey = primaryKey;
+	}
+
 	@Override
 	public String toString() {
-		return "Column{" + "name=" + this.name + ", propertyName='" + this.propertyName + '\'' + '}';
+		return "Column{" + "propertyName='" + this.propertyName + '\'' + ", name=" + this.name + '}';
 	}
 
 }

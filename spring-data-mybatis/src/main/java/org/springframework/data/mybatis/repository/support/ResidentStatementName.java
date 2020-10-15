@@ -79,7 +79,7 @@ public final class ResidentStatementName {
 	/**
 	 * For <code>__delete</code>.
 	 */
-	public static final Object DELETE = PREFIX + "delete";
+	public static final String DELETE = PREFIX + "delete";
 
 	/**
 	 * For <code>__delete_by_id</code>.

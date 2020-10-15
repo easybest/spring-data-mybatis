@@ -1,0 +1,5 @@
+<select id="${statementName}" resultMap="${resultMap}">
+    <include refid="__select"/>
+    <include refid="__query_by_example_where_clause"/>
+    <include refid="__standard_sort"/>
+</select>

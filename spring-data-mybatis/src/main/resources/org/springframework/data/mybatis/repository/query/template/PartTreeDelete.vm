@@ -1,0 +1,4 @@
+<delete id="${statementName}">
+    delete from ${domain.table}
+    <where>#parse("org/springframework/data/mybatis/repository/query/template/PartTreeCondition.vm")</where>
+</delete>

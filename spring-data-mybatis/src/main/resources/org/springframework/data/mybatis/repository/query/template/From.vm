@@ -1,0 +1,15 @@
+<sql id="${statementName}">
+${domain.table} ${util.quote(${domain.tableAlias})}
+#foreach($entry in ${domain.associations.entrySet()})
+    #set($association = $entry.value)
+    #if($association.toOne && $association.join)
+        #set($associationTableAlias = ${domain.tableAlias} + '.' + ${association.property.name})
+        left outer join ${association.target.table} ${util.quote($associationTableAlias)} on
+        #foreach($joinColumn in $association.foreignKey.joinColumns)
+            #if(!$foreach.first) and #end
+            ${util.quote(${domain.tableAlias})}.${joinColumn.local.name.render($dialect)}
+            = ${util.quote($associationTableAlias)}.${joinColumn.foreign.name.render($dialect)}
+        #end
+    #end
+#end
+</sql>

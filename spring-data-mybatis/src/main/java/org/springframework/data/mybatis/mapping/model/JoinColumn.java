@@ -15,28 +15,25 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
+import java.io.Serializable;
+
 /**
  * .
  *
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public class JoinColumn implements Component {
+public class JoinColumn implements Serializable {
 
-	private static final long serialVersionUID = -8697900456930913224L;
+	private static final long serialVersionUID = -4358082857103242140L;
 
-	protected final Column local;
+	private final Column local;
 
-	protected final Column foreign;
+	private final Column foreign;
 
 	public JoinColumn(Column local, Column foreign) {
 		this.local = local;
 		this.foreign = foreign;
-	}
-
-	@Override
-	public Model getModel() {
-		return null;
 	}
 
 	public Column getLocal() {

@@ -1,0 +1,23 @@
+<delete id="${statementName}">
+    delete from ${domain.table}
+    <where>
+        <if test="__ids != null">
+            <trim prefixOverrides="and |or ">
+                #if($domain.primaryKey.composited)
+                    <foreach collection="__ids" item="item" index="index" open="(" separator=") or (" close=")">
+                        #foreach($entry in $domain.primaryKey.columns.entrySet())
+                            #set($column = $entry.value)
+                            #if(!$foreach.first) and #end
+                            ${entry.key.render($dialect)} = #{ item.${column.property.name} }
+                        #end
+                    </foreach>
+                #else
+                    #foreach($entry in $domain.primaryKey.columns.entrySet())
+                        ${entry.key.render($dialect)} in
+                        <foreach collection="__ids" item="item" index="index" open="(" separator="," close=")">#{ item }</foreach>
+                    #end
+                #end
+            </trim>
+        </if>
+    </where>
+</delete>

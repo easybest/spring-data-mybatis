@@ -16,6 +16,7 @@
 package org.springframework.data.mybatis.domain.sample;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -53,7 +54,7 @@ public class Goods extends Audit<Long, Long> {
 	private Category category;
 
 	@Fetch(FetchMode.SELECT)
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "shop_id", referencedColumnName = "id")
 	private Shop shop;
 
