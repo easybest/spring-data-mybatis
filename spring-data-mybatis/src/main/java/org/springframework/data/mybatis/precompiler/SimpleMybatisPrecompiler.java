@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.samskivert.mustache.Mustache.Lambda;
-
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.model.Domain;
@@ -255,8 +253,6 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		}
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.QUERY_BY_EXAMPLE_WHERE_CLAUSE);
-		scopes.put("replaceDotToUnderline", (Lambda) (frag, out) -> out.write(frag.execute().trim().replace('.', '_')));
-
 		return this.render("QueryByExampleWhereClause", scopes);
 	}
 

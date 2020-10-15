@@ -178,10 +178,10 @@ public class Property implements Serializable {
 	public String toString() {
 		return "Property{" + "member=" + this.member + ", name='" + this.name + '\'' + ", columnName='"
 				+ this.columnName + '\'' + ", javaType='" + this.javaType + '\'' + ", jdbcType=" + this.jdbcType
-				+ ", pathType='" + this.pathType + '\'' + ", association=" + this.association + '}';
+				+ ", pathType='" + this.pathType + '\'' + '}';
 	}
 
-	static class Association {
+	public static class Association {
 
 		private final List<Property> locals = new ArrayList<>();
 
@@ -209,7 +209,8 @@ public class Property implements Serializable {
 
 		@Override
 		public String toString() {
-			return "Association{" + "locals=" + this.locals + ", foreigns=" + this.foreigns + '}';
+			return "Association{" + "locals=" + this.locals + ", foreigns=" + this.foreigns + ", property="
+					+ this.property + '}';
 		}
 
 	}
