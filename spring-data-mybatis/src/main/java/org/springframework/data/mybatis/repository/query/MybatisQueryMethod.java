@@ -161,23 +161,23 @@ public class MybatisQueryMethod extends QueryMethod {
 		return this.getAnnotationValue("name", super.getNamedQueryName());
 	}
 
-	String getNamedCountQueryName() {
+	public String getNamedCountQueryName() {
 		return this.getAnnotationValue("countName", this.getNamedQueryName() + ".count");
 	}
 
 	@Nullable
-	String getAnnotatedQuery() {
+	public String getAnnotatedQuery() {
 		String query = this.getAnnotationValue("value", String.class);
 		return StringUtils.hasText(query) ? query : null;
 	}
 
 	@Nullable
-	String getAnnotatedCountQuery() {
+	public String getAnnotatedCountQuery() {
 		String query = this.getAnnotationValue("countQuery", String.class);
 		return StringUtils.hasText(query) ? query : null;
 	}
 
-	String getRequiredAnnotatedQuery() throws IllegalStateException {
+	public String getRequiredAnnotatedQuery() throws IllegalStateException {
 		String query = this.getAnnotatedQuery();
 
 		if (query != null) {
@@ -186,7 +186,7 @@ public class MybatisQueryMethod extends QueryMethod {
 		throw new IllegalStateException(String.format("No annotated query found for query method %s!", this.getName()));
 	}
 
-	String getResultMap() {
+	public String getResultMap() {
 		ResultMap resultMap = AnnotationUtils.findAnnotation(this.method, ResultMap.class);
 		return (null != resultMap && StringUtils.hasText(resultMap.value())) ? resultMap.value() : null;
 	}
@@ -232,11 +232,11 @@ public class MybatisQueryMethod extends QueryMethod {
 
 	////////
 
-	Class<?> getReturnType() {
+	public Class<?> getReturnType() {
 		return this.method.getReturnType();
 	}
 
-	String getActualResultType() {
+	public String getActualResultType() {
 		Class<?> type = this.getReturnType();
 		if (type == Map.class) {
 			return "map";

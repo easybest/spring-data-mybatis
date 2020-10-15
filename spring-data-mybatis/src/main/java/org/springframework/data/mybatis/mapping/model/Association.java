@@ -16,62 +16,114 @@
 package org.springframework.data.mybatis.mapping.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-import lombok.Data;
-import lombok.experimental.Accessors;
+import javax.persistence.ElementCollection;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.data.mybatis.annotation.Fetch;
+import org.springframework.data.mybatis.annotation.FetchMode;
+import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 
 /**
- * Association.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
-@Data
-@Accessors(chain = true)
-public class Association implements Serializable {
+public abstract class Association implements Serializable {
 
-	private static final long serialVersionUID = 3169794115053267639L;
+	private static final long serialVersionUID = 2263465833694781795L;
 
-	private String property;
+	private static final Collection<Class<? extends Annotation>> ASSOCIATION_ANNOTATIONS;
 
-	private String javaType;
+	static {
 
-	private String select;
+		Set<Class<? extends Annotation>> annotations = new HashSet<>();
+		annotations.add(OneToMany.class);
+		annotations.add(OneToOne.class);
+		annotations.add(ManyToMany.class);
+		annotations.add(ManyToOne.class);
+		annotations.add(ElementCollection.class);
 
-	private String fetch;
+		ASSOCIATION_ANNOTATIONS = Collections.unmodifiableSet(annotations);
 
-	private String targetTable;
+	}
+	protected final MybatisPersistentProperty property;
 
-	private List<JoinColumn> joinColumns = new ArrayList<>();
+	protected final Domain self;
 
-	private List<ColumnResult> results = new LinkedList<>();
+	protected final Domain target;
 
-	public Association addResult(ColumnResult cr) {
-		this.results.add(cr);
-		return this;
+	public Association(MybatisPersistentProperty sourceProperty, Domain self, Domain target) {
+		this.property = sourceProperty;
+		this.self = self;
+		this.target = target;
 	}
 
-	public Association addJoinColumn(JoinColumn jc) {
-		this.joinColumns.add(jc);
-		return this;
-	}
-
-	@Data
-	@Accessors(chain = true)
-	public static class JoinColumn {
-
-		private String name;
-
-		private String referencedColumnName;
-
-		public JoinColumn(String name, String referencedColumnName) {
-			this.name = name;
-			this.referencedColumnName = referencedColumnName;
+	public boolean isJoin() {
+		Fetch fetch = this.property.findAnnotation(Fetch.class);
+		if (null == fetch || fetch.value() != FetchMode.JOIN) {
+			return false;
 		}
+		return this.getFetchType() == FetchType.EAGER;
+	}
 
+	public FetchType getFetchType() {
+		for (Class<? extends Annotation> annotationType : ASSOCIATION_ANNOTATIONS) {
+			Annotation annotation = this.property.findAnnotation(annotationType);
+			if (null == annotation) {
+				continue;
+			}
+			FetchType fetchType = (FetchType) AnnotationUtils.getValue(annotation, "fetch");
+			return fetchType;
+		}
+		return FetchType.LAZY;
+	}
+
+	public boolean isOneToOne() {
+		return this.getClass() == OneToOneAssociation.class;
+	}
+
+	public boolean isManyToOne() {
+		return this.getClass() == ManyToOneAssociation.class;
+	}
+
+	public boolean isToOne() {
+		return this.isOneToOne() || this.isManyToOne();
+	}
+
+	public boolean isOneToMany() {
+		return this.getClass() == OneToManyAssociation.class;
+	}
+
+	public boolean isManyToMany() {
+		return this.getClass() == ManyToManyAssociation.class;
+	}
+
+	public boolean isEmbedding() {
+		return this.getClass() == Embedding.class;
+	}
+
+	public MybatisPersistentProperty getProperty() {
+		return this.property;
+	}
+
+	public Domain getSelf() {
+		return this.self;
+	}
+
+	public Domain getTarget() {
+		return this.target;
 	}
 
 }

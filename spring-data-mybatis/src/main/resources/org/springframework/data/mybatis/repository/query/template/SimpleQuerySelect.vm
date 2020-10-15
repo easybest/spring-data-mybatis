@@ -1,0 +1,38 @@
+#if($hasConstructor)
+<resultMap id="${result}" type="${resultMapType}">
+    <constructor>
+        #foreach($param in $constructorParameters)
+            <arg column="${param.column}" javaType="${param.javaType}"/>
+        #end
+    </constructor>
+</resultMap>
+#end
+
+#if($isPageQuery)
+<select id="${countStatementName}" resultType="long">
+    ${countQuery}
+</select>
+#end
+
+#if($isUnpagedQuery)
+<select id="${unpagedStatementName}" #if($isResultMap)resultMap="${result}"#{else}resultType="${result}"#end>
+${unpagedQuery}
+#if($hasSort)<include refid="__standard_sort"/>#end
+</select>
+#end
+
+<select id="${statementName}" #if($isResultMap)resultMap="${result}"#{else}resultType="${result}"#end>
+#if($pageable)
+    #LimitHandler($rowSelection)
+        ${query}
+        #if($hasSort)
+            <include refid="__standard_sort"/>
+        #end
+    #end
+    #else
+        ${query}
+        #if($hasSort)
+            <include refid="__standard_sort"/>
+        #end
+#end
+</select>

@@ -10,7 +10,7 @@
 		<property name="mapperLocations" value="classpath*:/mapper/**.xml"/>
 		<property name="configuration">
 			<bean class="org.apache.ibatis.session.Configuration">
-				<property name="returnInstanceForEmptyRow" value="true"/>
+<!--				<property name="returnInstanceForEmptyRow" value="true"/>-->
 				<property name="callSettersOnNulls" value="true"/>
 				<property name="mapUnderscoreToCamelCase" value="true"/>
 			</bean>

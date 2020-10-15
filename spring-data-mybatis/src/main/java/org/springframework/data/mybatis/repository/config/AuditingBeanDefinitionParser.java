@@ -21,7 +21,7 @@ import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.xml.BeanDefinitionParser;
 import org.springframework.data.auditing.config.AuditingHandlerBeanDefinitionParser;
 import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.data.mybatis.domain.support.MybatisAuditingHandler;
+import org.springframework.data.mybatis.auditing.MybatisAuditingHandler;
 import org.springframework.util.StringUtils;
 
 /**

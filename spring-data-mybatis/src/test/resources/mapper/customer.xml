@@ -4,11 +4,11 @@
 <mapper namespace="org.springframework.data.mybatis.domain.sample.Customer">
 	<select id="findByNameFirstnameLikeInMapper" resultMap="__result_map">
 		<bind name="__firstname" value="'%' + firstname + '%'"/>
-		select * from t_customer where firstname like #{__firstname}
+		select * from customer where firstname like #{__firstname}
 	</select>
 
 	<select id="specifyFindByFirstnameLike" resultMap="__result_map">
 		<bind name="__firstname" value="'%' + firstname + '%'"/>
-		select * from t_customer where firstname like #{__firstname}
+		select * from customer where firstname like #{__firstname}
 	</select>
 </mapper>

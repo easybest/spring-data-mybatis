@@ -1,0 +1,6 @@
+<select id="${statementName}" parameterType="${domain.primaryKey.type.name}" resultMap="${resultMap}">
+    <include refid="__select"/>
+    <where>
+        <include refid="__where_clause_by_id"/>
+    </where>
+</select>

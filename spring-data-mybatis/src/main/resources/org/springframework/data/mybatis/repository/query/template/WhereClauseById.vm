@@ -1,0 +1,13 @@
+#if($domain.primaryKey)
+<sql id="${statementName}">
+#foreach($entry in ${domain.primaryKey.columns.entrySet()})
+    #set($column = $entry.value)
+    and ${util.quote(${domain.tableAlias})}.${entry.key.render($dialect)} =
+    #if($domain.primaryKey.composited)
+        #{ ${column.property.name}#if(${column.javaType}),javaType=${column.javaTypeString}#end#if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end#if($column.typeHandler),typeHandler=${column.typeHandler}#end }
+    #else
+        #{_parameter}
+    #end
+#end
+</sql>
+#end

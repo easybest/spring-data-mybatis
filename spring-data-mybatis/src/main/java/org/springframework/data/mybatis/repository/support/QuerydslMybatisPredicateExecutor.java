@@ -24,13 +24,11 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.sql.AbstractSQLQuery;
-import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.querydsl.MybatisRelationalPathBase;
 import org.springframework.data.mybatis.querydsl.MybatisSQLQuery;
@@ -57,10 +55,10 @@ public class QuerydslMybatisPredicateExecutor<Q, T> implements QuerydslPredicate
 	private FactoryExpression<T> bean;
 
 	public QuerydslMybatisPredicateExecutor(MybatisEntityInformation<T, ?> entityInformation,
-			EntityPathResolver resolver, MybatisMappingContext mappingContext, SqlSessionTemplate sqlSessionTemplate,
-			Dialect dialect) {
+			EntityPathResolver resolver, MybatisMappingContext mappingContext) {
 		this.path = (MybatisRelationalPathBase<Q, T>) resolver.createPath(entityInformation.getJavaType());
-		this.querydsl = new Querydsl<>(sqlSessionTemplate, mappingContext, dialect, entityInformation,
+		this.querydsl = new Querydsl<>(mappingContext.getSqlSessionTemplate(), mappingContext,
+				mappingContext.getDialect(), entityInformation,
 				new PathBuilder<>(this.path.getType(), this.path.getMetadata()));
 		this.bean = this.path.projections();
 	}

@@ -1,0 +1,61 @@
+#macro(ColumnList $domain $upstage $property)
+    #if($property)
+        #set($tableAlias = ${upstage.tableAlias} + '.' + $property)
+    #else
+        #set($tableAlias = ${upstage.tableAlias})
+    #end
+    #if(${domain.primaryKey})
+        #foreach($entry in ${domain.primaryKey.columns.entrySet()})
+            #set($column = $entry.value)
+            #if($property)
+                #set($as = $property + '.' + ${column.name.text})
+                #set($as = ${util.quote($as)})
+            #else
+                #set($as = ${column.name.render($dialect)})
+            #end
+            ${util.quote(${tableAlias})}.${column.name.render($dialect)} as ${as},
+        #end
+    #end
+    #foreach($entry in ${domain.normalColumns.entrySet()})
+        #set($column = $entry.value)
+        #if($property)
+            #set($as = $property + '.' + ${column.name.text})
+            #set($as = ${util.quote($as)})
+        #else
+            #set($as = ${column.name.render($dialect)})
+        #end
+        ${util.quote(${tableAlias})}.${column.name.render($dialect)} as ${as},
+    #end
+    #foreach($entry in ${domain.associations.entrySet()})
+        #if($entry.value.embedding)
+        #set($embedding = $entry.value)
+        #foreach($embeddingEntry in ${embedding.target.normalColumns.entrySet()})
+            #set($column = ${embeddingEntry.value})
+            #if($property)
+                #set($as = $property + '.' + ${column.name.text})
+                #set($as = ${util.quote($as)})
+            #else
+                #set($as = ${column.name.render($dialect)})
+            #end
+            ${util.quote(${tableAlias})}.${column.name.render($dialect)} as ${as},
+        #end
+        #end
+    #end
+    #foreach($association in ${domain.associations})
+        #if($association.toOne)
+            #foreach($joinColumn in $association.foreignKey.joinColumns)
+                ${util.quote(${tableAlias})}.${joinColumn.local.name.render($dialect)} as ${joinColumn.local.name.render($dialect)},
+            #end
+        #end
+    #end
+#end
+<sql id="${statementName}">
+    <trim suffixOverrides=",">
+        #ColumnList($domain $domain)
+        #foreach($association in ${domain.associations})
+            #if($association.toOne && $association.join)
+                #ColumnList(${association.target} $domain ${association.property.name})
+            #end
+        #end
+    </trim>
+</sql>

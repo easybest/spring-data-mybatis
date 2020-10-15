@@ -1,0 +1,95 @@
+<insert id="${statementName}" parameterType="${domain.entity.type.name}">
+    #if($domain.primaryKey.generatedKeys)
+        #foreach($entry in $domain.primaryKey.columns.entrySet())
+            #set($column = $entry.value)
+            <selectKey keyProperty="${column.property.name}"
+                       keyColumn='${column.name.text}'
+                       order="${domain.primaryKey.executeOrder}"
+                       resultType="${column.javaTypeString}">
+                ${domain.primaryKey.keySql}
+            </selectKey>
+        #end
+
+    #end
+    insert into ${domain.table}
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+        #if($domain.primaryKey && !$domain.primaryKey.generatedKeys)
+            #foreach($entry in $domain.primaryKey.columns.entrySet())
+                #set($column = ${entry.value})
+                <if test="${util.testNotNull($column.propertyName)}">
+                    ${entry.value.name.render($dialect)},
+                </if>
+            #end
+        #end
+        #foreach($entry in $domain.normalColumns.entrySet())
+            #set($column = ${entry.value})
+            <if test="${util.testNotNull($column.property.name)}">
+                ${column.name.render($dialect)},
+            </if>
+        #end
+        #foreach($entry in ${domain.associations.entrySet()})
+            #if($entry.value.embedding)
+            #set($embedding = $entry.value)
+            #foreach($embeddingEntry in ${embedding.target.normalColumns.entrySet()})
+                #set($column = ${embeddingEntry.value})
+                #set($pname = $entry.key.name + '.' + $column.property.name)
+                <if test="${util.testNotNull($pname)}">
+                    ${column.name.render($dialect)},
+                </if>
+            #end
+            #end
+        #end
+        #foreach($entry in ${domain.associations.entrySet()})
+            #set($association = $entry.value)
+            #if($association.toOne)
+                #foreach($joinColumn in $association.foreignKey.joinColumns)
+                    #set($column = ${joinColumn.foreign})
+                    #set($pname = $entry.key.name + '.' + $column.property.name)
+                    <if test="${util.testNotNull($pname)}">
+                        ${joinColumn.local.name.render($dialect)},
+                    </if>
+                #end
+            #end
+        #end
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+        #if($domain.primaryKey && !$domain.primaryKey.generatedKeys)
+            #foreach($entry in $domain.primaryKey.columns.entrySet())
+                #set($column = ${entry.value})
+                <if test="${util.testNotNull($column.propertyName)}">
+                    #{ ${column.propertyName} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+                </if>
+            #end
+        #end
+        #foreach($entry in $domain.normalColumns.entrySet())
+            #set($column = ${entry.value})
+            <if test="${util.testNotNull($column.property.name)}">
+                #{ ${column.property.name} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+            </if>
+        #end
+        #foreach($entry in ${domain.associations.entrySet()})
+            #if($entry.value.embedding)
+            #set($embedding = $entry.value)
+            #foreach($embeddingEntry in ${embedding.target.normalColumns.entrySet()})
+                #set($column = ${embeddingEntry.value})
+                #set($pname = $entry.key.name + '.' + $column.property.name)
+                <if test="${util.testNotNull($pname)}">
+                    #{ ${entry.key.name}.${column.propertyName} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+                </if>
+            #end
+            #end
+        #end
+        #foreach($entry in ${domain.associations.entrySet()})
+            #set($association = $entry.value)
+            #if($association.toOne)
+                #foreach($joinColumn in $association.foreignKey.joinColumns)
+                    #set($column = ${joinColumn.local})
+                    #set($pname = $entry.key.name + '.' + $column.property.name)
+                    <if test="${util.testNotNull($pname)}">
+                        #{ ${entry.key.name}.${column.property.name} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+                    </if>
+                #end
+            #end
+        #end
+    </trim>
+</insert>

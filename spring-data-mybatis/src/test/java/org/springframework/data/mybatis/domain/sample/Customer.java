@@ -16,8 +16,8 @@
 package org.springframework.data.mybatis.domain.sample;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -80,17 +80,17 @@ public class Customer implements Serializable {
 
 	@CreatedDate
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "creation_date")
-	private Date creationDate;
+	@Column(name = "created_date")
+	private Timestamp createdDate;
 
 	@LastModifiedBy
-	@Column(name = "last_updated_by")
-	private Long lastUpdatedBy;
+	@Column(name = "last_modified_by")
+	private Long lastModifiedBy;
 
 	@LastModifiedDate
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "last_update_date")
-	private Date lastUpdateDate;
+	@Column(name = "last_modified_date")
+	private Timestamp lastModifiedDate;
 
 	@OrderBy("name desc")
 	@ManyToMany(fetch = FetchType.EAGER)

@@ -18,14 +18,10 @@ package org.springframework.data.mybatis.mapping;
 import java.util.Comparator;
 
 import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
 import javax.persistence.IdClass;
 
 import org.springframework.data.mapping.model.BasicPersistentEntity;
-import org.springframework.data.mybatis.mapping.model.Table;
-import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
-import org.springframework.util.StringUtils;
 
 /**
  * Implementation of {@link MybatisPersistentEntity}.
@@ -36,68 +32,29 @@ import org.springframework.util.StringUtils;
 class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, MybatisPersistentProperty>
 		implements MybatisPersistentEntity<T> {
 
-	private Lazy<Table> table;
-
 	MybatisPersistentEntityImpl(TypeInformation<T> information) {
-		this(information, null);
+		this(information, (o1, o2) -> o1.isIdProperty() ? -1 : 1);
 	}
 
 	MybatisPersistentEntityImpl(TypeInformation<T> information, Comparator<MybatisPersistentProperty> comparator) {
 		super(information, comparator);
 
-		this.table = Lazy.of(() -> {
-
-			String schema = null;
-			String catalog = null;
-			String name = null;
-			if (this.isAnnotationPresent(javax.persistence.Table.class)) {
-				javax.persistence.Table t = this.getRequiredAnnotation(javax.persistence.Table.class);
-				schema = t.schema();
-				catalog = t.catalog();
-				name = t.name();
-			}
-			if (StringUtils.isEmpty(name)) {
-				Entity entity = this.findAnnotation(Entity.class);
-				name = ((null != entity) && StringUtils.hasText(entity.name())) ? entity.name()
-						: this.getType().getSimpleName();
-			}
-			Table table = new Table(schema, catalog, name);
-			return table;
-		});
 	}
 
 	@Override
-	public Table getTable() {
-		return this.table.get();
-	}
-
-	@Override
-	public String getName() {
-		Entity entity = this.findAnnotation(Entity.class);
-		return ((null != entity) && StringUtils.hasText(entity.name())) ? entity.name() : super.getName();
-	}
-
-	@Override
-	public boolean hasCompositeId() {
+	public boolean isCompositePrimaryKey() {
 		if (this.isAnnotationPresent(IdClass.class)) {
 			return true;
 		}
-		if (this.hasIdProperty()) {
-			return this.getRequiredIdProperty().isAnnotationPresent(EmbeddedId.class);
-		}
-		return false;
+
+		return this.hasIdProperty() ? this.getRequiredIdProperty().isAnnotationPresent(EmbeddedId.class) : false;
 	}
 
 	@Override
 	public Class<?> getIdClass() {
-		if (this.isAnnotationPresent(IdClass.class)) {
-			IdClass idClass = this.getRequiredAnnotation(IdClass.class);
-			return idClass.value();
-		}
-		if (this.hasIdProperty()) {
-			return this.getRequiredIdProperty().getActualType();
-		}
-		return null;
+
+		return this.isAnnotationPresent(IdClass.class) ? this.getRequiredAnnotation(IdClass.class).value()
+				: (this.hasIdProperty() ? this.getRequiredIdProperty().getActualType() : null);
 	}
 
 	@Override

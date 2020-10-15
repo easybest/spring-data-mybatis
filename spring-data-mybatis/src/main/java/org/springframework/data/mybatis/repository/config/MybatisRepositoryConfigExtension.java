@@ -20,9 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
@@ -31,22 +29,14 @@ import javax.persistence.MappedSuperclass;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mybatis.dialect.DialectFactoryBean;
 import org.springframework.data.mybatis.repository.MybatisRepository;
 import org.springframework.data.mybatis.repository.support.MybatisRepositoryFactoryBean;
 import org.springframework.data.repository.config.AnnotationRepositoryConfigurationSource;
-import org.springframework.data.repository.config.RepositoryConfiguration;
 import org.springframework.data.repository.config.RepositoryConfigurationExtensionSupport;
 import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.config.XmlRepositoryConfigurationSource;
-import org.springframework.data.repository.core.support.AbstractRepositoryMetadata;
 import org.springframework.data.repository.util.TxUtils;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 
 /**
@@ -61,17 +51,9 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 
 	private static final String DEFAULT_TRANSACTION_MANAGER_BEAN_NAME = TxUtils.DEFAULT_TRANSACTION_MANAGER;
 
-	private static final String DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME = "sqlSessionTemplate";
-
 	private static final String ENABLE_DEFAULT_TRANSACTIONS_ATTRIBUTE = "enableDefaultTransactions";
 
 	private static final String ESCAPE_CHARACTER_PROPERTY = "escapeCharacter";
-
-	private final ResourceLoader resourceLoader;
-
-	public MybatisRepositoryConfigExtension(ResourceLoader resourceLoader) {
-		this.resourceLoader = resourceLoader;
-	}
 
 	@Override
 	public String getModuleName() {
@@ -99,37 +81,13 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 	}
 
 	@Override
-	public void registerBeansForRoot(BeanDefinitionRegistry registry, RepositoryConfigurationSource config) {
-		super.registerBeansForRoot(registry, config);
-
-		Object source = config.getSource();
-		Optional<String> sqlSessionTemplateRef = config.getAttribute("sqlSessionTemplateRef");
-
-		registerIfNotAlreadyRegistered(() -> BeanDefinitionBuilder.rootBeanDefinition(DialectFactoryBean.class)
-				.addConstructorArgReference(sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME))
-				.getBeanDefinition(), registry, BeanDefinitionNames.DIALECT_BEAN_NAME, source);
-
-		registerIfNotAlreadyRegistered(
-				() -> BeanDefinitionBuilder.rootBeanDefinition(MybatisMappingContextFactoryBean.class)
-						.addConstructorArgValue(this.scanDomains(config))
-						.addConstructorArgReference(
-								sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME))
-						.getBeanDefinition(),
-				registry, BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME, source);
-	}
-
-	@Override
 	public void postProcess(BeanDefinitionBuilder builder, RepositoryConfigurationSource source) {
 		Optional<String> transactionManagerRef = source.getAttribute("transactionManagerRef");
 		builder.addPropertyValue("transactionManager",
 				transactionManagerRef.orElse(DEFAULT_TRANSACTION_MANAGER_BEAN_NAME));
 
-		Optional<String> sqlSessionTemplateRef = source.getAttribute("sqlSessionTemplateRef");
-		builder.addPropertyReference("sqlSessionTemplate",
-				sqlSessionTemplateRef.orElse(DEFAULT_SQL_SESSION_TEMPLATE_BEAN_NAME));
 		builder.addPropertyValue(ESCAPE_CHARACTER_PROPERTY, getEscapeCharacter(source).orElse('\\'));
 		builder.addPropertyReference("mappingContext", BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME);
-		builder.addPropertyReference("dialect", BeanDefinitionNames.DIALECT_BEAN_NAME);
 	}
 
 	@Override
@@ -147,55 +105,11 @@ public class MybatisRepositoryConfigExtension extends RepositoryConfigurationExt
 		}
 	}
 
-	private Map<? extends Class<?>, ? extends Class<?>> scanDomains(RepositoryConfigurationSource source) {
-		StopWatch watch = new StopWatch();
-
-		if (log.isDebugEnabled()) {
-			log.debug("Scanning domains for repositories in packages {}.",
-					source.getBasePackages().stream().collect(Collectors.joining(", ")));
-		}
-		watch.start();
-
-		Collection<RepositoryConfiguration<RepositoryConfigurationSource>> repositoryConfigurations = getRepositoryConfigurations(
-				source, this.resourceLoader, false);
-
-		if (CollectionUtils.isEmpty(repositoryConfigurations)) {
-			return Collections.emptyMap();
-		}
-
-		Map<? extends Class<?>, ? extends Class<?>> mapping = repositoryConfigurations.stream()
-				.collect(Collectors.toMap(configuration -> {
-					try {
-						return Class.forName(configuration.getRepositoryInterface());
-					}
-					catch (ClassNotFoundException ex) {
-						throw new MappingException(ex.getMessage(), ex);
-					}
-				}, configuration -> {
-					try {
-						Class<?> repositoryClass = Class.forName(configuration.getRepositoryInterface());
-						return AbstractRepositoryMetadata.getMetadata(repositoryClass).getDomainType();
-					}
-					catch (ClassNotFoundException ex) {
-						throw new MappingException(ex.getMessage(), ex);
-					}
-				}));
-
-		watch.stop();
-
-		if (log.isInfoEnabled()) {
-			log.info("Finished Domains scanning in {}ms. Found {} domains.", //
-					watch.getLastTaskTimeMillis(), mapping.size());
-		}
-
-		return mapping;
-	}
-
 	private static Optional<Character> getEscapeCharacter(RepositoryConfigurationSource source) {
 		try {
 			return source.getAttribute(ESCAPE_CHARACTER_PROPERTY, Character.class);
 		}
-		catch (IllegalArgumentException ___) {
+		catch (IllegalArgumentException ex) {
 			return Optional.empty();
 		}
 	}

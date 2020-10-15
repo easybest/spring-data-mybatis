@@ -21,6 +21,7 @@ import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
@@ -32,6 +33,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.mybatis.annotation.Fetch;
+import org.springframework.data.mybatis.annotation.FetchMode;
 import org.springframework.data.mybatis.domain.AbstractPersistable;
 
 /**
@@ -51,11 +54,12 @@ public class User extends AbstractPersistable<Long> {
 
 	private String email;
 
+	@Fetch(FetchMode.JOIN)
 	@ManyToOne(cascade = CascadeType.ALL)
 	private Person person;
 
 	@OrderBy
-	@ManyToMany(cascade = CascadeType.ALL)
+	@ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
 	private Set<Role> roles;

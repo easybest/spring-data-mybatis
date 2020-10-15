@@ -54,7 +54,7 @@ public class MybatisParameters extends Parameters<MybatisParameters, MybatisPara
 		return new MybatisParameters(parameters);
 	}
 
-	static class MybatisParameter extends Parameter {
+	public static class MybatisParameter extends Parameter {
 
 		private final @Nullable Temporal annotation;
 

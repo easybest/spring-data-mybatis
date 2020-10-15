@@ -20,7 +20,6 @@
 			</bean>
 		</property>
 		<property name="mappingContext" ref="mappingContext"/>
-		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 		<property name="namedQueries">
 			<bean class="org.springframework.data.repository.core.support.PropertiesBasedNamedQueries">
 				<constructor-arg>
@@ -31,7 +30,6 @@
 		</property>
 		<property name="evaluationContextProvider"
 				  ref="expressionEvaluationContextProvider"/>
-		<property name="dialect" ref="dialect"/>
 	</bean>
 
 	<bean id="goodsRepository"
@@ -39,10 +37,8 @@
 		<constructor-arg
 				value="org.springframework.data.mybatis.repository.sample.GoodsRepository"/>
 		<property name="mappingContext" ref="mappingContext"/>
-		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 		<property name="evaluationContextProvider"
 				  ref="expressionEvaluationContextProvider"/>
-		<property name="dialect" ref="dialect"/>
 	</bean>
 
 	<bean id="categoryRepository"
@@ -50,10 +46,8 @@
 		<constructor-arg
 				value="org.springframework.data.mybatis.repository.sample.CategoryRepository"/>
 		<property name="mappingContext" ref="mappingContext"/>
-		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 		<property name="evaluationContextProvider"
 				  ref="expressionEvaluationContextProvider"/>
-		<property name="dialect" ref="dialect"/>
 	</bean>
 
 	<bean id="customerRepository"
@@ -61,7 +55,6 @@
 		<constructor-arg
 				value="org.springframework.data.mybatis.repository.sample.CustomerRepository"/>
 		<property name="mappingContext" ref="mappingContext"/>
-		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 		<property name="evaluationContextProvider"
 				  ref="expressionEvaluationContextProvider"/>
 		<property name="namedQueries">
@@ -72,28 +65,19 @@
 				</constructor-arg>
 			</bean>
 		</property>
-		<property name="dialect" ref="dialect"/>
 	</bean>
 
 	<bean id="mappingContext"
-		  class="org.springframework.data.mybatis.repository.config.MybatisMappingContextFactoryBean">
-		<constructor-arg>
-			<util:map>
-				<entry key="org.springframework.data.mybatis.repository.sample.CategoryRepository"
-					   value="org.springframework.data.mybatis.domain.sample.Category"></entry>
-				<entry key="org.springframework.data.mybatis.repository.sample.GoodsRepository"
-					   value="org.springframework.data.mybatis.domain.sample.Goods"></entry>
-				<entry key="org.springframework.data.mybatis.repository.sample.ShopRepository"
-					   value="org.springframework.data.mybatis.domain.sample.Shop"></entry>
-				<entry key="org.springframework.data.mybatis.repository.sample.CustomerRepository"
-					   value="org.springframework.data.mybatis.domain.sample.Customer"></entry>
-			</util:map>
-		</constructor-arg>
-	</bean>
-
-	<bean id="dialect"
-		  class="org.springframework.data.mybatis.dialect.DialectFactoryBean">
+		  class="org.springframework.data.mybatis.mapping.MybatisMappingContext">
 		<constructor-arg ref="sqlSessionTemplate"/>
+		<property name="initialEntitySet">
+			<util:set>
+				<value>org.springframework.data.mybatis.domain.sample.Category</value>
+				<value>org.springframework.data.mybatis.domain.sample.Goods</value>
+				<value>org.springframework.data.mybatis.domain.sample.Customer</value>
+				<value>org.springframework.data.mybatis.domain.sample.Shop</value>
+			</util:set>
+		</property>
 	</bean>
 
 	<bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor"/>
@@ -105,7 +89,7 @@
 	<bean id="auditorAware"
 		  class="org.springframework.data.mybatis.audit.TestAuditorAware"/>
 	<bean id="mybatisAuditingHandler"
-		  class="org.springframework.data.mybatis.domain.support.MybatisAuditingHandler">
+		  class="org.springframework.data.mybatis.auditing.MybatisAuditingHandler">
 		<constructor-arg ref="mappingContext"/>
 		<property name="auditorAware" ref="auditorAware"/>
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>

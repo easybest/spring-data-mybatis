@@ -1,0 +1,7 @@
+<select id="${statementName}" parameterType="map" resultMap="${resultMap}">
+    <include refid="__select"/> where
+    #foreach($joinColumn in $association.foreignKey.joinColumns)
+        #if(!$foreach.first) and #end
+        ${util.quote($association.foreignKey.foreign.tableAlias)}.${joinColumn.local.name.render($dialect)} = #{ ${joinColumn.foreign.name.text} }
+    #end
+</select>

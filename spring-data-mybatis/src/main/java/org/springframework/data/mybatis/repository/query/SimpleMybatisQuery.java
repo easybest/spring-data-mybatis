@@ -30,8 +30,9 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
  * MyBatis {@link Query} from it.
  *
  * @author JARVIS SONG
+ * @since 2.0.0
  */
-final class SimpleMybatisQuery extends AbstractStringBasedMybatisQuery {
+public class SimpleMybatisQuery extends AbstractStringBasedMybatisQuery {
 
 	SimpleMybatisQuery(SqlSessionTemplate sqlSessionTemplate, MybatisQueryMethod method, String queryString,
 			String countQueryString, QueryMethodEvaluationContextProvider evaluationContextProvider,
