@@ -102,11 +102,6 @@ public class Identifier implements Comparable<Identifier> {
 	}
 
 	@Override
-	public String toString() {
-		return this.render();
-	}
-
-	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof Identifier)) {
 			return false;
@@ -119,6 +114,11 @@ public class Identifier implements Comparable<Identifier> {
 	@Override
 	public int hashCode() {
 		return this.isQuoted ? this.text.hashCode() : this.text.toLowerCase(Locale.ENGLISH).hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return this.render();
 	}
 
 	public static boolean areEqual(Identifier id1, Identifier id2) {

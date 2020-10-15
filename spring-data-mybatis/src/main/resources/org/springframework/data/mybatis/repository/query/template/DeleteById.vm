@@ -1,0 +1,14 @@
+<delete id="${statementName}" parameterType="${domain.primaryKey.type.name}">
+    delete from ${domain.table}
+    <where>
+        #foreach($entry in $domain.primaryKey.columns.entrySet())
+            #set($column = $entry.value)
+            and ${entry.key.render($dialect)} =
+            #if($domain.primaryKey.composited)
+                #{ ${column.property.name} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end }
+            #else
+                #{ _parameter }
+            #end
+        #end
+    </where>
+</delete>

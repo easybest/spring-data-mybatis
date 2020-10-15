@@ -1,0 +1,18 @@
+<update id="${statementName}" parameterType="map">
+    update ${association.joinTable.table} set
+    #foreach($joinColumn in $association.joinTable.localJoinColumns)
+        #if(!$foreach.first),#end
+        ${joinColumn.local.name.render($dialect)} = #{ ${joinColumn.local.name.text} }
+    #end
+    #foreach($joinColumn in $association.joinTable.foreignJoinColumns)
+        ,${joinColumn.local.name.render($dialect)} = #{ ${joinColumn.local.name.text} }
+    #end
+    <where>
+        #foreach($joinColumn in $association.joinTable.localJoinColumns)
+            <if test="${joinColumn.local.name.text} != null"> and ${joinColumn.local.name.render($dialect)} = #{ ${joinColumn.local.name.text} }</if>
+        #end
+        #foreach($joinColumn in $association.joinTable.foreignJoinColumns)
+            <if test="${joinColumn.local.name.text} != null"> and ${joinColumn.local.name.render($dialect)} = #{ ${joinColumn.local.name.text} }</if>
+        #end
+    </where>
+</update>

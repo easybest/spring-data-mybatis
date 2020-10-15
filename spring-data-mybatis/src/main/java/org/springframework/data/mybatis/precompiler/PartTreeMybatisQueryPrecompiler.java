@@ -15,24 +15,21 @@
  */
 package org.springframework.data.mybatis.precompiler;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.samskivert.mustache.Mustache.Lambda;
-import lombok.Getter;
-
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
-import org.springframework.data.mybatis.mapping.model.Column;
+import org.springframework.data.mybatis.mapping.model.ColumnResult;
 import org.springframework.data.mybatis.repository.query.MybatisParameters;
 import org.springframework.data.mybatis.repository.query.MybatisParameters.MybatisParameter;
 import org.springframework.data.mybatis.repository.query.MybatisQueryMethod;
@@ -57,7 +54,7 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 	PartTreeMybatisQueryPrecompiler(MybatisMappingContext mappingContext, PartTreeMybatisQuery query) {
 		super(mappingContext,
-				mappingContext.getRequiredModel(query.getQueryMethod().getEntityInformation().getJavaType()));
+				mappingContext.getRequiredDomain(query.getQueryMethod().getEntityInformation().getJavaType()));
 		this.query = query;
 	}
 
@@ -148,12 +145,14 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 		scopes.put("innerStatementName", statementName);
 
 		String columns = "<include refid='__column_list'/>";
-		if (StringUtils.hasText(method.getSelectColumns())) {
-			String[] selectedColumns = method.getSelectColumns().split(",");
-			columns = Arrays.stream(selectedColumns).map(String::trim).filter(StringUtils::hasText).map(
-					sc -> this.domain.findColumnByPropertyName(sc).getName().render(this.mappingContext.getDialect()))
-					.collect(Collectors.joining(","));
-		}
+		// if (StringUtils.hasText(method.getSelectColumns())) {
+		// String[] selectedColumns = method.getSelectColumns().split(",");
+		// columns =
+		// Arrays.stream(selectedColumns).map(String::trim).filter(StringUtils::hasText).map(
+		// sc ->
+		// this.domain.findColumnByPropertyName(sc).getName().render(this.mappingContext.getDialect()))
+		// .collect(Collectors.joining(","));
+		// }
 		scopes.put("columns", columns);
 		if (null != tree.getSort() || method.getParameters().hasSortParameter()) {
 			scopes.put("sortable", true);
@@ -191,8 +190,7 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 				selection = new RowSelection(true);
 			}
 			RowSelection rowSelection = selection;
-			scopes.put("limitHandler", (Lambda) (frag, out) -> out.write(
-					this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), rowSelection)));
+			scopes.put("rowSelection", rowSelection);
 		}
 		scopes.put("pageable", pageable);
 		return scopes;
@@ -200,15 +198,13 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 	private Map<String, Object> innerCountQueryScopes(String statementName) {
 		PartTree tree = this.query.getTree();
-		MybatisQueryMethod method = this.query.getQueryMethod();
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put("innerStatementName", statementName);
 		scopes.put("limiting", tree.isLimiting());
 		scopes.put("columns", tree.isLimiting() ? "1" : "COUNT(*)");
 		if (tree.isLimiting()) {
 			RowSelection selection = new RowSelection(0, tree.getMaxResults());
-			scopes.put("limitHandler", (Lambda) (frag, out) -> out
-					.write(this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), selection)));
+			scopes.put("rowSelection", selection);
 		}
 		return scopes;
 	}
@@ -258,188 +254,73 @@ class PartTreeMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 	}
 
-	@Getter
 	public class AndPart {
+
+		private final Part part;
 
 		private final boolean includeAlias;
 
-		private final Column column;
+		private final ColumnResult columnResult;
 
-		private final String[] arguments;
+		private final List<String> arguments;
 
 		private boolean ignoreCase;
-
-		private boolean opBetween;
-
-		private boolean opNotNull;
-
-		private boolean opNull;
-
-		private boolean opRlike;
-
-		private boolean opLlike;
-
-		private boolean opLike;
-
-		private boolean opIn;
-
-		private boolean opNotIn;
-
-		private boolean opTrue;
-
-		private boolean opFalse;
-
-		private boolean opDefault;
-
-		private boolean opLessThan;
-
-		private boolean opLessThanEqual;
-
-		private boolean opGreaterThan;
-
-		private boolean opGreaterThanEqual;
-
-		private boolean opBefore;
-
-		private boolean opAfter;
-
-		private boolean opNotLike;
-
-		private boolean opIsEmpty;
-
-		private boolean opIsNotEmpty;
-
-		private boolean opNear;
-
-		private boolean opWithin;
-
-		private boolean opRegex;
-
-		private boolean opExists;
-
-		private boolean opNegatingSimpleProperty;
-
-		private boolean opSimpleProperty;
 
 		private boolean arrayParameter;
 
 		AndPart(Part part, boolean includeAlias) {
+			this.part = part;
 			this.includeAlias = includeAlias;
 			PropertyPath propertyPath = part.getProperty();
-			this.column = PartTreeMybatisQueryPrecompiler.this.domain.findColumn(propertyPath);
-			if (null == this.column) {
+			this.columnResult = PartTreeMybatisQueryPrecompiler.this.domain
+					.findColumnByPropertyName(propertyPath.toDotPath());
+			if (null == this.columnResult) {
 				throw new MappingException("Could not find column for " + propertyPath.toDotPath() + " in "
 						+ PartTreeMybatisQueryPrecompiler.this.domain);
 			}
 
 			if (part.shouldIgnoreCase() == IgnoreCaseType.ALWAYS
-					|| (part.shouldIgnoreCase() == IgnoreCaseType.WHEN_POSSIBLE && this.column.isString())) {
+					|| (part.shouldIgnoreCase() == IgnoreCaseType.WHEN_POSSIBLE
+							&& this.columnResult.getColumn().isString())) {
 				this.ignoreCase = true;
 			}
 
-			this.arguments = new String[part.getNumberOfArguments()];
+			this.arguments = new LinkedList<>();
 			if (part.getNumberOfArguments() > 0) {
 				MybatisParameters parameters = PartTreeMybatisQueryPrecompiler.this.query.getQueryMethod()
 						.getParameters();
 				for (int i = 0; i < part.getNumberOfArguments(); i++) {
 					int counter = PartTreeMybatisQueryPrecompiler.this.argumentCounter.getAndIncrement();
 					MybatisParameter bindableParameter = parameters.getBindableParameter(counter);
-					this.arguments[i] = bindableParameter.getName().orElse("__p" + (bindableParameter.getIndex() + 1));
+					this.arguments.add(bindableParameter.getName().orElse("__p" + (bindableParameter.getIndex() + 1)));
 					this.arrayParameter = bindableParameter.getType().isArray();
 				}
 			}
 
-			switch (part.getType()) {
-			case BETWEEN:
-				this.opBetween = true;
-				break;
-			case IS_NOT_NULL:
-				this.opNotNull = true;
-				break;
-			case IS_NULL:
-				this.opNull = true;
-				break;
-			case STARTING_WITH:
-				this.opRlike = true;
-				break;
-			case ENDING_WITH:
-				this.opLlike = true;
-				break;
-			case LESS_THAN:
-				this.opDefault = true;
-				this.opLessThan = true;
-				break;
-			case LESS_THAN_EQUAL:
-				this.opDefault = true;
-				this.opLessThanEqual = true;
-				break;
-			case GREATER_THAN:
-				this.opDefault = true;
-				this.opGreaterThan = true;
-				break;
-			case GREATER_THAN_EQUAL:
-				this.opDefault = true;
-				this.opGreaterThanEqual = true;
-				break;
-			case BEFORE:
-				this.opDefault = true;
-				this.opBefore = true;
-				break;
-			case AFTER:
-				this.opDefault = true;
-				this.opAfter = true;
-				break;
-			case NOT_LIKE:
-			case NOT_CONTAINING:
-				this.opLike = true;
-				this.opNotLike = true;
-				break;
-			case CONTAINING:
-			case LIKE:
-				this.opLike = true;
-				break;
-			case NOT_IN:
-				this.opNotIn = true;
-				break;
-			case IN:
-				this.opIn = true;
-				break;
-			case TRUE:
-				this.opTrue = true;
-				break;
-			case FALSE:
-				this.opFalse = true;
-				break;
-			case IS_NOT_EMPTY:
-				this.opIsNotEmpty = true;
-				break;
-			case IS_EMPTY:
-				this.opIsEmpty = true;
-				break;
-			case NEAR:
-				this.opNear = true;
-				break;
-			case WITHIN:
-				this.opWithin = true;
-				break;
-			case REGEX:
-				this.opRegex = true;
-				break;
-			case EXISTS:
-				this.opExists = true;
-				break;
-			case NEGATING_SIMPLE_PROPERTY:
-				this.opDefault = true;
-				this.opNegatingSimpleProperty = true;
-				break;
-			case SIMPLE_PROPERTY:
-				this.opSimpleProperty = true;
-				this.opDefault = true;
-				break;
-			default:
-				this.opDefault = true;
-				break;
-			}
+		}
+
+		public Part getPart() {
+			return this.part;
+		}
+
+		public boolean isIncludeAlias() {
+			return this.includeAlias;
+		}
+
+		public ColumnResult getColumnResult() {
+			return this.columnResult;
+		}
+
+		public List<String> getArguments() {
+			return this.arguments;
+		}
+
+		public boolean isIgnoreCase() {
+			return this.ignoreCase;
+		}
+
+		public boolean isArrayParameter() {
+			return this.arrayParameter;
 		}
 
 	}

@@ -1,0 +1,80 @@
+<insert id="${statementName}" parameterType="${domain.entity.type.name}">
+    #if($domain.primaryKey.generatedKeys)
+        #foreach($entry in $domain.primaryKey.columns.entrySet())
+            #set($column = $entry.value)
+            <selectKey keyProperty="${column.property.name}"
+                       keyColumn='${column.name.text}'
+                       order="${domain.primaryKey.executeOrder}"
+                       resultType="${column.javaTypeString}">
+                ${domain.primaryKey.keySql}
+            </selectKey>
+        #end
+
+    #end
+    insert into ${domain.table}
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+        #if($domain.primaryKey && !$domain.primaryKey.generatedKeys)
+            #foreach($entry in $domain.primaryKey.columns.entrySet())
+                ${entry.value.name.render($dialect)},
+            #end
+        #end
+        #foreach($entry in $domain.normalColumns.entrySet())
+            ${entry.value.name.render($dialect)},
+        #end
+        #foreach($entry in ${domain.associations.entrySet()})
+            #if($entry.value.embedding)
+            #set($embedding = $entry.value)
+            <if test="${util.testNotNull($entry.key.name)}">
+            #foreach($embeddingEntry in ${embedding.target.normalColumns.entrySet()})
+                #set($column = ${embeddingEntry.value})
+                ${column.name.render($dialect)},
+            #end
+            </if>
+            #end
+        #end
+        #foreach($entry in ${domain.associations.entrySet()})
+            #set($association = $entry.value)
+            #if($association.toOne)
+                <if test="${util.testNotNull($entry.key.name)}">
+                    #foreach($joinColumn in $association.foreignKey.joinColumns)
+                    ${joinColumn.local.name.render($dialect)},
+                    #end
+                </if>
+            #end
+        #end
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+        #if($domain.primaryKey && !$domain.primaryKey.generatedKeys)
+            #foreach($entry in $domain.primaryKey.columns.entrySet())
+                #set($column = ${entry.value})
+                #{ ${column.propertyName} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+            #end
+        #end
+        #foreach($entry in $domain.normalColumns.entrySet())
+            #set($column = ${entry.value})
+            #{ ${column.property.name} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+        #end
+        #foreach($entry in ${domain.associations.entrySet()})
+            #if($entry.value.embedding)
+            #set($embedding = $entry.value)
+            <if test="${util.testNotNull($entry.key.name)}">
+                #foreach($embeddingEntry in ${embedding.target.normalColumns.entrySet()})
+                    #set($column = ${embeddingEntry.value})
+                    #{ ${entry.key.name}.${column.propertyName} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+                #end
+            </if>
+        #end
+        #end
+        #foreach($entry in ${domain.associations.entrySet()})
+            #set($association = $entry.value)
+            #if($association.toOne)
+                <if test="${util.testNotNull($entry.key.name)}">
+                    #foreach($joinColumn in $association.foreignKey.joinColumns)
+                        #set($column = ${joinColumn.foreign})
+                        #{ ${entry.key.name}.${column.property.name} #if($column.javaType),javaType=${column.javaTypeString}#end #if($column.jdbcType),jdbcType=${column.jdbcType.name()}#end #if($column.typeHandler),typeHandler=${column.typeHandler.name}#end },
+                    #end
+                </if>
+            #end
+        #end
+    </trim>
+</insert>

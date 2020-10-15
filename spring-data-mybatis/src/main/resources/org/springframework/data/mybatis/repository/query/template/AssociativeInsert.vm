@@ -1,0 +1,19 @@
+<insert id="${statementName}" parameterType="map">
+    insert into ${association.joinTable.table} (
+    #foreach($joinColumn in $association.joinTable.localJoinColumns)
+        #if(!$foreach.first),#end
+        ${joinColumn.local.name.render($dialect)}
+    #end
+    #foreach($joinColumn in $association.joinTable.foreignJoinColumns)
+        ,${joinColumn.local.name.render($dialect)}
+    #end
+    ) values (
+    #foreach($joinColumn in $association.joinTable.localJoinColumns)
+        #if(!$foreach.first),#end
+        #{ ${joinColumn.local.name.text} }
+    #end
+    #foreach($joinColumn in $association.joinTable.foreignJoinColumns)
+        ,#{ ${joinColumn.local.name.text} }
+    #end
+    )
+</insert>

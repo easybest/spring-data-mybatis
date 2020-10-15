@@ -15,7 +15,6 @@
  */
 package org.springframework.data.mybatis.mapping;
 
-import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,7 +39,6 @@ import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.internal.DatabaseMetaDataDialectResolutionInfoAdapter;
 import org.springframework.data.mybatis.dialect.internal.StandardDialectResolver;
 import org.springframework.data.mybatis.mapping.model.Domain;
-import org.springframework.data.mybatis.mapping.model.Model;
 import org.springframework.data.mybatis.precompiler.SimpleMybatisPrecompiler;
 import org.springframework.data.util.TypeInformation;
 
@@ -63,7 +61,7 @@ public class MybatisMappingContext extends
 
 	private Map<String, String> namedQueries = new HashMap<>();
 
-	private Map<Class<?>, Domain> domainCache = new HashMap<>();
+	private Map<Class<?>, Domain> domains = new HashMap<>();
 
 	public MybatisMappingContext(SqlSessionTemplate sqlSessionTemplate) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
@@ -85,30 +83,26 @@ public class MybatisMappingContext extends
 			}
 		}
 
-		// initialize models
-		this.domainCache = this.getManagedTypes().stream().map(TypeInformation::getType)
-				.filter(clz -> clz.isAnnotationPresent(Entity.class)).collect(Collectors.toMap(clz -> clz,
-						clz -> new Domain(this, null, clz, Introspector.decapitalize(clz.getSimpleName()))));
+		this.domains = this.getManagedTypes().stream().map(TypeInformation::getType)
+				.filter(clz -> clz.isAnnotationPresent(Entity.class))
+				.collect(Collectors.toMap(clz -> clz, clz -> new Domain(this, clz)));
 
-		this.domainCache.values().stream().forEach(Domain::initialize);
+		this.domains.values().stream().forEach(Domain::initialize);
 
 		// generate mybatis mappers
-		this.domainCache.values().stream().forEach(domain -> new SimpleMybatisPrecompiler(this, domain).compile());
+		this.domains.values().stream().forEach(domain -> new SimpleMybatisPrecompiler(this, domain).compile());
 	}
 
-	public Model getModel(Class<?> clz) {
-		return this.domainCache.get(clz);
+	public Domain getDomain(Class<?> entityClass) {
+		return this.domains.get(entityClass);
 	}
 
-	public Model getRequiredModel(Class<?> type) throws MappingException {
-
-		Model model = getModel(type);
-
-		if (model != null) {
-			return model;
+	public Domain getRequiredDomain(Class<?> entityClass) {
+		Domain domain = this.getDomain(entityClass);
+		if (null == domain) {
+			throw new MappingException("Could not find Domain for type: " + entityClass);
 		}
-
-		throw new MappingException(String.format("Couldn't find Model for type %s!", type));
+		return domain;
 	}
 
 	@Override

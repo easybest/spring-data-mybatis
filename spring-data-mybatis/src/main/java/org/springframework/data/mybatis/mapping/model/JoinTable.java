@@ -15,6 +15,7 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -28,120 +29,119 @@ import org.springframework.util.StringUtils;
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public class JoinTable implements Component {
+public class JoinTable implements Serializable {
 
-	private final Model model;
+	private final MybatisPersistentProperty property;
 
-	private final Model targetModel;
+	private final Domain localDomain;
 
-	private final ManyToManyAssociation assModel;
+	private final Domain foreignDomain;
 
-	private Table table;
+	private final Table table;
 
-	private final List<JoinColumn> joinColumns = new LinkedList<>();
+	private final List<JoinColumn> localJoinColumns = new LinkedList<>();
 
-	private final List<JoinColumn> inverseJoinColumns = new LinkedList<>();
+	private final List<JoinColumn> foreignJoinColumns = new LinkedList<>();
 
-	public JoinTable(Model model, ManyToManyAssociation assModel, MybatisPersistentProperty property) {
-		this.model = model;
-		this.assModel = assModel;
-		this.targetModel = model.getMappingContext().getRequiredModel(property.getActualType());
-		this.initialize(property);
-	}
+	public JoinTable(MybatisPersistentProperty property, Domain localDomain, Domain foreignDomain) {
+		this.property = property;
+		this.localDomain = localDomain;
+		this.foreignDomain = foreignDomain;
 
-	private void initialize(MybatisPersistentProperty property) {
 		String schema = null;
 		String catalog = null;
 		String name = null;
 		if (property.isAnnotationPresent(javax.persistence.JoinTable.class)) {
-			javax.persistence.JoinTable tableAnn = property.getRequiredAnnotation(javax.persistence.JoinTable.class);
-			schema = tableAnn.schema();
-			catalog = tableAnn.catalog();
-			name = tableAnn.name();
-		}
-		if (StringUtils.isEmpty(name)) {
-			name = this.model.getTable().getName().getText() + '_' + this.assModel.getTable().getName().getText();
-		}
-		this.table = new Table(schema, catalog, name);
+			javax.persistence.JoinTable joinTableAnn = property
+					.getRequiredAnnotation(javax.persistence.JoinTable.class);
+			schema = joinTableAnn.schema();
+			catalog = joinTableAnn.catalog();
+			name = joinTableAnn.name();
 
-		if (property.isAnnotationPresent(javax.persistence.JoinTable.class)) {
-			javax.persistence.JoinTable tableAnn = property.getRequiredAnnotation(javax.persistence.JoinTable.class);
-			if (null != tableAnn.joinColumns() && tableAnn.joinColumns().length > 0) {
-				if (tableAnn.joinColumns().length > 0) {
-					for (javax.persistence.JoinColumn joinColumn : tableAnn.joinColumns()) {
-						this.joinColumns.add(this.processJoinColumn(this.model, joinColumn.name(),
-								joinColumn.referencedColumnName()));
-					}
+			if (null != joinTableAnn.joinColumns() && joinTableAnn.joinColumns().length > 0) {
+				for (javax.persistence.JoinColumn joinColumn : joinTableAnn.joinColumns()) {
+					this.localJoinColumns
+							.add(this.processJoinColumn(false, joinColumn.name(), joinColumn.referencedColumnName()));
 				}
-				if (null != tableAnn.inverseJoinColumns() && tableAnn.inverseJoinColumns().length > 0) {
-					for (javax.persistence.JoinColumn inverseJoinColumn : tableAnn.inverseJoinColumns()) {
-						this.inverseJoinColumns.add(this.processJoinColumn(this.assModel, inverseJoinColumn.name(),
-								inverseJoinColumn.referencedColumnName()));
-					}
-
+			}
+			if (null != joinTableAnn.inverseJoinColumns() && joinTableAnn.inverseJoinColumns().length > 0) {
+				for (javax.persistence.JoinColumn joinColumn : joinTableAnn.inverseJoinColumns()) {
+					this.foreignJoinColumns
+							.add(this.processJoinColumn(true, joinColumn.name(), joinColumn.referencedColumnName()));
 				}
 			}
 		}
 
-		if (this.joinColumns.isEmpty()) {
-			this.joinColumns.add(this.processJoinColumn(this.model, null, null));
+		if (this.localJoinColumns.isEmpty()) {
+			this.localJoinColumns.add(this.processJoinColumn(false, null, null));
 		}
-		if (this.inverseJoinColumns.isEmpty()) {
-			this.inverseJoinColumns.add(this.processJoinColumn(this.assModel, null, null));
+
+		if (this.foreignJoinColumns.isEmpty()) {
+			this.foreignJoinColumns.add(this.processJoinColumn(true, null, null));
 		}
+
+		if (StringUtils.isEmpty(name)) {
+			name = localDomain.getTable().getName().getText() + '_' + foreignDomain.getTable().getName().getText();
+		}
+		this.table = new Table(schema, catalog, name);
 
 	}
 
-	private JoinColumn processJoinColumn(Model targetModel, String name, String referencedColumnName) {
-		PrimaryKey primaryKey = targetModel.getPrimaryKey();
-		if (StringUtils.isEmpty(referencedColumnName) && !(primaryKey instanceof SinglePrimaryKey)) {
-			throw new MappingException("Could not find referenced column name for: " + targetModel.getAlias());
+	public String getTableAlias() {
+		return this.table.getName().getText() + '_' + this.property.getName();
+	}
+
+	private JoinColumn processJoinColumn(boolean referenced, String localColumnName, String foreignColumnName) {
+		Domain domain = referenced ? this.foreignDomain : this.localDomain;
+		Column local;
+		Column foreign;
+		if (StringUtils.isEmpty(foreignColumnName)) {
+			PrimaryKey foreignPrimaryKey = domain.getPrimaryKey();
+			if (null == foreignPrimaryKey || foreignPrimaryKey.isComposited()) {
+				throw new MappingException("Could not find referenced column in " + this.property);
+			}
+			foreign = foreignPrimaryKey.getColumns().values().stream().findFirst().get();
 		}
-		referencedColumnName = StringUtils.hasText(referencedColumnName) ? referencedColumnName
-				: primaryKey.getColumns().iterator().next().getName().getCanonicalName();
-		Column referencedColumn = targetModel.findColumn(referencedColumnName);
-		if (null == referencedColumn) {
-			throw new MappingException("Could not find referenced column by " + referencedColumnName);
+		else {
+			foreign = domain.findColumn(Identifier.toIdentifier(foreignColumnName));
 		}
 
-		Column foreign = new Column(targetModel, referencedColumn.getProperty());
-		foreign.setName(referencedColumn.getName());
-		foreign.setJavaType(referencedColumn.getJavaType());
-		foreign.setJdbcType(referencedColumn.getJdbcType());
-		foreign.setTypeHandler(referencedColumn.getTypeHandler());
+		if (null == foreign) {
+			throw new MappingException("Count not find referenced column in " + this.property);
+		}
 
-		Column local = new Column(targetModel, referencedColumn.getProperty());
-		local.setName(Identifier.toIdentifier(StringUtils.hasText(name) ? name
-				: targetModel.getTable().getName().getText() + '_' + foreign.getName().getText()));
-		local.setJavaType(foreign.getJavaType());
-		local.setJdbcType(foreign.getJdbcType());
-		local.setTypeHandler(foreign.getTypeHandler());
+		if (StringUtils.isEmpty(localColumnName)) {
+			localColumnName = domain.getTable().getName().getText() + '_' + foreign.getName().getText();
+		}
+		Identifier localIdentifier = Identifier.toIdentifier(localColumnName);
+
+		local = new Column(domain, foreign.getProperty());
+		local.setName(localIdentifier);
 		return new JoinColumn(local, foreign);
 	}
 
-	@Override
-	public Model getModel() {
-		return this.model;
+	public MybatisPersistentProperty getProperty() {
+		return this.property;
+	}
+
+	public Domain getLocalDomain() {
+		return this.localDomain;
+	}
+
+	public Domain getForeignDomain() {
+		return this.foreignDomain;
 	}
 
 	public Table getTable() {
 		return this.table;
 	}
 
-	public List<JoinColumn> getJoinColumns() {
-		return this.joinColumns;
+	public List<JoinColumn> getLocalJoinColumns() {
+		return this.localJoinColumns;
 	}
 
-	public List<JoinColumn> getInverseJoinColumns() {
-		return this.inverseJoinColumns;
-	}
-
-	public Model getTargetModel() {
-		return this.targetModel;
-	}
-
-	public String getTableAlias() {
-		return "ass_" + this.assModel.getTableAlias();
+	public List<JoinColumn> getForeignJoinColumns() {
+		return this.foreignJoinColumns;
 	}
 
 }

@@ -15,11 +15,8 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
-import java.lang.annotation.Annotation;
+import java.io.Serializable;
 
-import javax.persistence.OneToOne;
-
-import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 
 /**
@@ -28,18 +25,12 @@ import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public class OneToOneAssociation extends ManyToOneAssociation {
+public class OneToOneAssociation extends ManyToOneAssociation implements Serializable {
 
-	private static final long serialVersionUID = 240806944716674713L;
+	private static final long serialVersionUID = 4730040714416090697L;
 
-	public OneToOneAssociation(MybatisMappingContext mappingContext, Model owner, MybatisPersistentProperty property,
-			String alias) {
-		super(mappingContext, owner, property, alias);
-	}
-
-	@Override
-	protected Class<? extends Annotation> getAnnotation() {
-		return OneToOne.class;
+	public OneToOneAssociation(MybatisPersistentProperty property, Domain self, Domain target) {
+		super(property, self, target);
 	}
 
 }

@@ -15,10 +15,14 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
+import java.beans.Introspector;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.persistence.Entity;
@@ -27,140 +31,221 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
-import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
+import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.util.StreamUtils;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * .
+ * Only basic columns.
  *
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public class Domain implements Model {
+public class Domain implements Serializable {
 
-	private static final long serialVersionUID = 4850421315538416089L;
+	private static final long serialVersionUID = -5603024534312929025L;
 
-	protected final MybatisMappingContext mappingContext;
+	private final MybatisMappingContext mappingContext;
 
-	protected final MybatisPersistentEntity<?> entity;
+	private final MybatisPersistentEntity<?> entity;
 
-	protected final String alias;
+	private Table table;
 
-	protected Table table;
+	private PrimaryKey primaryKey;
 
-	protected Model owner;
+	private final Map<Identifier, Column> normalColumns = new LinkedHashMap<>();
 
-	protected PrimaryKey primaryKey;
+	private final Map<MybatisPersistentProperty, Association> associations = new LinkedHashMap<>();
 
-	protected Map<String, Column> normalColumns; // CanonicalColumnName -> column
-
-	protected Map<String, VersionColumn> versionColumns;
-
-	protected List<EmbeddedDomain> embeddings;
-
-	protected List<OneToOneAssociation> oneToOneAssociations;
-
-	protected List<ManyToOneAssociation> manyToOneAssociations;
-
-	protected List<OneToManyAssociation> oneToManyAssociations;
-
-	protected List<ManyToManyAssociation> manyToManyAssociations;
-
-	public Domain(MybatisMappingContext mappingContext, Model owner, Class<?> entityClass, String alias) {
+	public Domain(MybatisMappingContext mappingContext, Class<?> entityClass) {
 		this.mappingContext = mappingContext;
-		this.owner = owner;
 		this.entity = mappingContext.getRequiredPersistentEntity(entityClass);
-		if (null != owner) {
-			this.alias = owner.getAlias() + '.' + alias;
-		}
-		else {
-			this.alias = alias;
-		}
-
 		this.internalInitialize();
-	}
-
-	public void initialize() {
-		if (null != this.owner) {
-			return;
-		}
-
-		this.initializeOneToOneAssociations();
-		this.initializeManyToOneAssociations();
-		this.initializeOneToManyAssociations();
-		this.initializeManyToManyAssociations();
 	}
 
 	private void internalInitialize() {
 		this.initializeTable();
 		this.initializePrimaryKey();
 		this.initializeNormalColumns();
-		this.initializeVersionColumns();
-		this.initializeEmbeddedDomains();
+		this.initializeEmbeddings();
+
 	}
 
-	private void initializeManyToManyAssociations() {
-		this.manyToManyAssociations = StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> p.isAnnotationPresent(ManyToMany.class))
-				.map(p -> new ManyToManyAssociation(this.mappingContext, this, p, p.getName()))
-				.collect(Collectors.toList());
+	public void initialize() {
+
+		this.initializeAssociations();
+
+		//
 	}
 
-	private void initializeOneToManyAssociations() {
-		this.oneToManyAssociations = StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> p.isAnnotationPresent(OneToMany.class))
-				.map(p -> new OneToManyAssociation(this.mappingContext, this, p, p.getName()))
-				.collect(Collectors.toList());
+	public ColumnResult findColumnByPropertyName(String propertyName) {
+
+		if (StringUtils.isEmpty(propertyName)) {
+			return null;
+		}
+
+		String[] properties = propertyName.split("\\.");
+		if (properties.length == 1) {
+			if (null != this.primaryKey) {
+				Optional<Column> column = this.primaryKey.getColumns().values().stream()
+						.filter(c -> c.getPropertyName().equals(propertyName)).findFirst();
+				if (column.isPresent()) {
+					return new ColumnResult(this, column.get());
+				}
+			}
+
+			Optional<Column> column = this.normalColumns.values().stream()
+					.filter(c -> c.getPropertyName().equals(propertyName)).findFirst();
+			if (column.isPresent()) {
+				return new ColumnResult(this, column.get());
+			}
+			return null;
+		}
+
+		if (properties.length == 2) {
+			if (null != this.primaryKey) {
+				Optional<Column> column = this.primaryKey.getColumns().values().stream()
+						.filter(c -> c.getPropertyName().equals(propertyName)).findFirst();
+				if (column.isPresent()) {
+					return new ColumnResult(this, column.get());
+				}
+			}
+			return this.findColumnByPropertyName(properties);
+		}
+
+		return this.findColumnByPropertyName(properties);
 	}
 
-	private void initializeOneToOneAssociations() {
-		this.oneToOneAssociations = StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> p.isAnnotationPresent(OneToOne.class))
-				.map(p -> new OneToOneAssociation(this.mappingContext, this, p, p.getName()))
-				.collect(Collectors.toList());
+	private ColumnResult findColumnByPropertyName(String[] properties) {
+
+		List<Association> associations = new LinkedList<>();
+		Domain domain = this;
+		for (int i = 0; i < properties.length - 1; i++) {
+			domain = this.findAssociationByPropertyName(associations, domain, properties[i]);
+		}
+		if (associations.size() != properties.length - 1) {
+			return null;
+		}
+
+		Association last = associations.get(associations.size() - 1);
+		if (null != last.getTarget().getPrimaryKey()) {
+			Optional<Column> column = last.getTarget().getPrimaryKey().getColumns().values().stream()
+					.filter(c -> c.getPropertyName().equals(properties[properties.length - 1])).findFirst();
+			if (column.isPresent()) {
+				ColumnResult cr = new ColumnResult(this, column.get());
+				cr.setAssociations(associations);
+				return cr;
+			}
+
+			last.getTarget().getNormalColumns().values().stream()
+					.filter(c -> c.getPropertyName().equals(properties[properties.length - 1])).findFirst();
+			if (column.isPresent()) {
+				ColumnResult cr = new ColumnResult(this, column.get());
+				cr.setAssociations(associations);
+				return cr;
+			}
+
+		}
+
+		return null;
 	}
 
-	private void initializeManyToOneAssociations() {
-		this.manyToOneAssociations = StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> p.isAnnotationPresent(ManyToOne.class))
-				.map(p -> new ManyToOneAssociation(this.mappingContext, this, p, p.getName()))
-				.collect(Collectors.toList());
+	private Domain findAssociationByPropertyName(List<Association> associations, Domain domain, String propertyName) {
+		Optional<Association> association = domain.getAssociations().entrySet().stream()
+				.filter(entry -> entry.getValue().isToOne())
+				.filter(entry -> propertyName.equals(entry.getKey().getName())).map(entry -> entry.getValue())
+				.findFirst();
+		if (!association.isPresent()) {
+			return null;
+		}
+
+		Association ass = association.get();
+		associations.add(ass);
+
+		return ass.getTarget();
 	}
 
-	private void initializeEmbeddedDomains() {
-		this.embeddings = StreamUtils.createStreamFromIterator(this.entity.iterator())
+	public Column findColumn(Identifier columnName) {
+		if (null != this.primaryKey) {
+			Column column = this.primaryKey.getColumns().get(columnName);
+			if (null != column) {
+				return column;
+			}
+		}
+
+		Column column = this.normalColumns.get(columnName);
+		return column;
+	}
+
+	public List<Column> findColumnByTypeHandler(Class<?> typeHandler) {
+
+		List<Column> columns = new ArrayList<>();
+		if (null != this.primaryKey) {
+			columns.addAll(this.primaryKey.getColumns().values().stream().filter(c -> typeHandler == c.getTypeHandler())
+					.collect(Collectors.toList()));
+		}
+		columns.addAll(this.normalColumns.values().stream().filter(c -> typeHandler == c.getTypeHandler())
+				.collect(Collectors.toList()));
+
+		this.associations.values().stream().filter(a -> a.isEmbedding()).forEach(a -> {
+			columns.addAll(a.getTarget().getNormalColumns().values().stream()
+					.filter(c -> typeHandler == c.getTypeHandler()).collect(Collectors.toList()));
+		});
+		return columns;
+	}
+
+	public String getTableAlias() {
+		return Introspector.decapitalize(this.entity.getType().getSimpleName());
+	}
+
+	private void initializeEmbeddings() {
+		this.associations.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
 				.filter(p -> !p.isIdProperty() && !p.isAssociation() && p.isEmbeddable())
-				.map(p -> new EmbeddedDomain(this.mappingContext, this, p, p.getName())).collect(Collectors.toList());
+				.collect(Collectors.toMap(p -> p, p -> {
+					Domain domain = new Domain(this.mappingContext, p.getType());
+					return new Embedding(p, this, domain);
+				})));
 	}
 
-	private void initializeVersionColumns() {
-		this.versionColumns = StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> p.isVersionProperty()).map(p -> new VersionColumn(this, p))
-				.collect(Collectors.toMap(c -> c.getName().getCanonicalName(), c -> c));
+	private void initializeAssociations() {
 
+		this.associations.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
+				.filter(p -> p.isAnnotationPresent(OneToOne.class))
+				.collect(Collectors.toMap(p -> p, p -> new OneToOneAssociation(p, this,
+						this.mappingContext.getRequiredDomain(p.getActualType())))));
+
+		this.associations.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
+				.filter(p -> p.isAnnotationPresent(ManyToOne.class))
+				.collect(Collectors.toMap(p -> p, p -> new ManyToOneAssociation(p, this,
+						this.mappingContext.getRequiredDomain(p.getActualType())))));
+
+		this.associations.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
+				.filter(p -> p.isAnnotationPresent(OneToMany.class))
+				.collect(Collectors.toMap(p -> p, p -> new OneToManyAssociation(p, this,
+						this.mappingContext.getRequiredDomain(p.getActualType())))));
+
+		this.associations.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
+				.filter(p -> p.isAnnotationPresent(ManyToMany.class))
+				.collect(Collectors.toMap(p -> p, p -> new ManyToManyAssociation(p, this,
+						this.mappingContext.getRequiredDomain(p.getActualType())))));
 	}
 
 	private void initializeNormalColumns() {
-		this.normalColumns = StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> !p.isIdProperty() && !p.isAssociation() && !p.isEmbeddable() && !p.isVersionProperty())
-				.map(p -> new Column(this, p)).collect(Collectors.toMap(c -> c.getName().getCanonicalName(), c -> c));
+		this.normalColumns.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
+				.filter(p -> !p.isIdProperty() && !p.isAssociation() && !p.isEmbeddable()).map(p -> {
+					Column column = new Column(this, p);
+					return column;
+				}).collect(Collectors.toMap(Column::getName, c -> c)));
+
 	}
 
 	private void initializePrimaryKey() {
 		if (!this.entity.hasIdProperty()) {
 			return;
 		}
-		if (!this.entity.isCompositePrimaryKey()) {
-			this.primaryKey = new SinglePrimaryKey(this, this.entity.getRequiredIdProperty());
-			return;
-		}
-
-		// composited primary key
-		this.primaryKey = new CompositePrimaryKey(this, this.entity);
+		this.primaryKey = new PrimaryKey(this);
 	}
 
 	private void initializeTable() {
@@ -181,171 +266,28 @@ public class Domain implements Model {
 		this.table = new Table(schema, catalog, name);
 	}
 
-	@Override
-	public Column findColumn(String name) {
-		if (null != this.primaryKey) {
-			Column column = this.primaryKey.findColumn(name);
-			if (null != column) {
-				return column;
-			}
-		}
-		if (!CollectionUtils.isEmpty(this.normalColumns)) {
-			Column column = this.normalColumns.get(name);
-			if (null != column) {
-				return column;
-			}
-		}
-		if (!CollectionUtils.isEmpty(this.versionColumns)) {
-			Column column = this.versionColumns.get(name);
-			if (null != column) {
-				return column;
-			}
-		}
-		if (!CollectionUtils.isEmpty(this.embeddings)) {
-			for (EmbeddedDomain embeddedDomain : this.embeddings) {
-				Column c = embeddedDomain.findColumn(name);
-				if (null != c) {
-					return c;
-				}
-			}
-
-		}
-
-		return null;
+	public MybatisPersistentEntity<?> getEntity() {
+		return this.entity;
 	}
 
-	@Override
-	public Column findColumnByPropertyName(String propertyName) {
-		Column column = null;
-		if (null != this.primaryKey) {
-			column = this.primaryKey.getColumns().stream().filter(c -> c.getPropertyName().equals(propertyName))
-					.findFirst().orElse(null);
-		}
-		if (null == column && !CollectionUtils.isEmpty(this.normalColumns)) {
-			column = this.normalColumns.values().stream().filter(c -> c.getPropertyName().equals(propertyName))
-					.findFirst().orElse(null);
-		}
-		if (null == column && !CollectionUtils.isEmpty(this.versionColumns)) {
-			column = this.versionColumns.values().stream().filter(c -> c.getPropertyName().equals(propertyName))
-					.findFirst().orElse(null);
-		}
-		if (null == column && !CollectionUtils.isEmpty(this.embeddings)) {
-			column = this.embeddings.stream()
-					.map(embeddedDomain -> embeddedDomain.findColumnByPropertyName(propertyName)).filter(c -> null != c)
-					.findFirst().orElse(null);
-		}
-		return column;
-	}
-
-	@Override
-	public Column findColumn(PropertyPath propertyPath) {
-		if (null == propertyPath) {
-			return null;
-		}
-		String path = propertyPath.toDotPath();
-		return this.findColumnByPropertyName(path);
-	}
-
-	@Override
-	public List<Column> findColumnByTypeHandler(Class<?> typeHandlerClass) {
-		List<Column> columns = new ArrayList<>();
-		if (null != this.primaryKey) {
-			columns.addAll(this.primaryKey.getColumns().stream().filter(c -> c.getTypeHandler() == typeHandlerClass)
-					.collect(Collectors.toList()));
-		}
-
-		if (null != this.normalColumns) {
-			columns.addAll(this.normalColumns.values().stream().filter(c -> c.getTypeHandler() == typeHandlerClass)
-					.collect(Collectors.toList()));
-		}
-
-		if (null != this.versionColumns) {
-			columns.addAll(this.versionColumns.values().stream().filter(c -> c.getTypeHandler() == typeHandlerClass)
-					.collect(Collectors.toList()));
-		}
-
-		if (!CollectionUtils.isEmpty(this.embeddings)) {
-			for (EmbeddedDomain embeddedDomain : this.embeddings) {
-				columns.addAll(embeddedDomain.findColumnByTypeHandler(typeHandlerClass));
-			}
-
-		}
-
-		return columns;
-	}
-
-	@Override
 	public MybatisMappingContext getMappingContext() {
 		return this.mappingContext;
 	}
 
-	@Override
-	public String getAlias() {
-		return this.alias;
-	}
-
-	@Override
-	public Model getOwner() {
-		return this.owner;
-	}
-
-	@Override
 	public Table getTable() {
 		return this.table;
 	}
 
-	@Override
-	public MybatisPersistentEntity<?> getMappingEntity() {
-		return this.entity;
-	}
-
-	@Override
 	public PrimaryKey getPrimaryKey() {
 		return this.primaryKey;
 	}
 
-	@Override
-	public Collection<Component> getNormalColumns() {
-		return (Collection) this.normalColumns.values();
+	public Map<Identifier, Column> getNormalColumns() {
+		return this.normalColumns;
 	}
 
-	@Override
-	public Collection<Component> getVersionColumns() {
-		return (Collection) this.versionColumns.values();
-	}
-
-	@Override
-	public Collection<Embedding> getEmbeddings() {
-		return (Collection) this.embeddings;
-	}
-
-	@Override
-	public Collection<Association> getOneToOneAssociations() {
-		return (Collection) this.oneToOneAssociations;
-	}
-
-	@Override
-	public Collection<Association> getManyToOneAssociations() {
-		return (Collection) this.manyToOneAssociations;
-	}
-
-	@Override
-	public Collection<Association> getOneToManyAssociations() {
-		return (Collection) this.oneToManyAssociations;
-	}
-
-	@Override
-	public Collection<Association> getManyToManyAssociations() {
-		return (Collection) this.manyToManyAssociations;
-	}
-
-	public String getTableAlias() {
-		return this.alias;
-	}
-
-	@Override
-	public String toString() {
-		return "Domain{" + "entity=" + this.entity.getName() + ", table=" + this.table + '}';
+	public Map<MybatisPersistentProperty, Association> getAssociations() {
+		return this.associations;
 	}
 
 }

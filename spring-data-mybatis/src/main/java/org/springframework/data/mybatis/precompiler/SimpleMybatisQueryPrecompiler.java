@@ -28,7 +28,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.samskivert.mustache.Mustache.Lambda;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -69,7 +68,7 @@ class SimpleMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 
 	SimpleMybatisQueryPrecompiler(MybatisMappingContext mappingContext, SimpleMybatisQuery query) {
 		super(mappingContext,
-				mappingContext.getRequiredModel(query.getQueryMethod().getEntityInformation().getJavaType()));
+				mappingContext.getRequiredDomain(query.getQueryMethod().getEntityInformation().getJavaType()));
 		this.query = query;
 	}
 
@@ -160,9 +159,7 @@ class SimpleMybatisQueryPrecompiler extends AbstractMybatisPrecompiler {
 			scopes.put("unpagedQuery", sql);
 
 			RowSelection rowSelection = new RowSelection(true);
-			scopes.put("limitHandler", (Lambda) (frag, out) -> out.write(
-					this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), rowSelection)));
-
+			scopes.put("rowSelection", rowSelection);
 		}
 
 		if (null != method.getResultMap() || SELECT_ALL_FROM.matcher(sql.toLowerCase()).matches()) {

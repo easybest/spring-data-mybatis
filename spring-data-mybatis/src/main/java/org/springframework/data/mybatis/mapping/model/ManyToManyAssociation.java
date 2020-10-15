@@ -15,13 +15,8 @@
  */
 package org.springframework.data.mybatis.mapping.model;
 
-import javax.persistence.FetchType;
-import javax.persistence.ManyToMany;
+import java.io.Serializable;
 
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.data.mybatis.annotation.Fetch;
-import org.springframework.data.mybatis.annotation.FetchMode;
-import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 
 /**
@@ -30,46 +25,15 @@ import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
  * @author JARVIS SONG
  * @since 2.0.2
  */
-public class ManyToManyAssociation extends Domain implements Association {
+public class ManyToManyAssociation extends Association implements Serializable {
 
-	private static final long serialVersionUID = -4694636482266575894L;
+	private static final long serialVersionUID = 4730040714416090697L;
 
-	private final MybatisPersistentProperty property;
+	private final JoinTable joinTable;
 
-	protected FetchType fetchType;
-
-	protected FetchMode fetchMode;
-
-	protected final JoinTable joinTable;
-
-	public ManyToManyAssociation(MybatisMappingContext mappingContext, Model owner, MybatisPersistentProperty property,
-			String alias) {
-		super(mappingContext, owner, property.getActualType(), alias);
-		this.property = property;
-		this.fetchType = (FetchType) AnnotationUtils.getValue(property.findAnnotation(ManyToMany.class), "fetch");
-		Fetch fetch = property.findAnnotation(Fetch.class);
-		if (null != fetch) {
-			this.fetchMode = fetch.value();
-		}
-		else {
-			this.fetchMode = FetchMode.SELECT; // default
-		}
-		this.joinTable = new JoinTable(owner, this, property);
-	}
-
-	public MybatisPersistentProperty getProperty() {
-		return this.property;
-	}
-
-	public String getFetchType() {
-		if (null == this.fetchType) {
-			return null;
-		}
-		return this.fetchType.name().toLowerCase();
-	}
-
-	public FetchMode getFetchMode() {
-		return this.fetchMode;
+	public ManyToManyAssociation(MybatisPersistentProperty property, Domain self, Domain target) {
+		super(property, self, target);
+		this.joinTable = new JoinTable(property, self, target);
 	}
 
 	public JoinTable getJoinTable() {

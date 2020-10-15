@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,12 +27,9 @@ import com.samskivert.mustache.Mustache.Lambda;
 
 import org.springframework.data.mybatis.dialect.pagination.RowSelection;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.mapping.model.Domain;
 import org.springframework.data.mybatis.mapping.model.ManyToManyAssociation;
-import org.springframework.data.mybatis.mapping.model.ManyToOneAssociation;
-import org.springframework.data.mybatis.mapping.model.Model;
-import org.springframework.data.mybatis.mapping.model.OneToManyAssociation;
 import org.springframework.data.mybatis.repository.support.ResidentStatementName;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -44,7 +40,7 @@ import org.springframework.util.StringUtils;
  */
 public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 
-	public SimpleMybatisPrecompiler(MybatisMappingContext mappingContext, Model domain) {
+	public SimpleMybatisPrecompiler(MybatisMappingContext mappingContext, Domain domain) {
 		super(mappingContext, domain);
 	}
 
@@ -58,9 +54,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		statements.add(this.whereClauseByIdsFragment());
 		statements.add(this.standardSortFragment());
 		statements.add(this.queryByExampleWhereClauseFragment());
-
+		//
 		statements.add(this.resultMap());
-
+		//
 		statements.add(this.insertStatement());
 		statements.add(this.insertSelectiveStatement());
 		statements.add(this.updateStatement());
@@ -78,80 +74,100 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		statements.add(this.queryByExampleStatement());
 		statements.add(this.queryByExampleForPageStatement());
 		statements.add(this.countByExampleStatement());
-
+		//
+		this.resultMapToOneSelectStatement();
 		this.resultMapOneToManySelectStatement();
 		this.resultMapManyToManySelectStatement();
 		this.associativeTableStatement();
 
-		// Basic
-		// statements.add(this.basicColumnListFragment());
-		// statements.add(this.basicResultMap());
-
 		return statements.stream().filter(StringUtils::hasText).collect(Collectors.toList());
 	}
 
+	private void resultMapToOneSelectStatement() {
+		this.domain.getAssociations().entrySet().stream()
+				.filter(entry -> entry.getValue().isManyToOne() || entry.getValue().isOneToOne()).forEach(entry -> {
+					String statementName = "__association_" + this.domain.getTable().toString().replace('.', '_') + '_'
+							+ entry.getKey().getName();
+					if (this.checkStatement(entry.getValue().getTarget().getEntity().getName(), statementName)) {
+						return;
+					}
+					Map<String, Object> scopes = new HashMap<>();
+					scopes.put(SCOPE_STATEMENT_NAME, statementName);
+					scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
+					scopes.put("association", entry.getValue());
+					String ns = entry.getValue().getTarget().getEntity().getName();
+
+					this.compileMapper("select/" + ns.replace('.', '/') + "/" + statementName, ns,
+							Collections.singletonList(this.render("ResultMapToOneSelect", scopes)));
+				});
+	}
+
 	private void resultMapOneToManySelectStatement() {
-		if (CollectionUtils.isEmpty(this.domain.getOneToManyAssociations())) {
-			return;
-		}
-		this.domain.getOneToManyAssociations().forEach(ass -> {
-			String statementName = "__association_" + this.domain.getTable() + '_'
-					+ ((OneToManyAssociation) ass).getProperty().getName();
-			if (this.checkStatement(ass.getMappingEntity().getName(), statementName)) {
-				return;
-			}
-			Map<String, Object> scopes = new HashMap<>();
-			scopes.put(SCOPE_STATEMENT_NAME, statementName);
-			scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
-			scopes.put("ass", ass);
-			String ns = ass.getMappingEntity().getName();
-			this.compileMapper("select/" + ns.replace('.', '/') + "/" + statementName, ns,
-					Collections.singletonList(this.render("ResultMapOneToManySelect", scopes)));
-		});
+
+		this.domain.getAssociations().entrySet().stream().filter(entry -> entry.getValue().isOneToMany())
+				.forEach(entry -> {
+					String statementName = "__association_" + this.domain.getTable().toString().replace('.', '_') + '_'
+							+ entry.getKey().getName();
+					if (this.checkStatement(entry.getValue().getTarget().getEntity().getName(), statementName)) {
+						return;
+					}
+					Map<String, Object> scopes = new HashMap<>();
+					scopes.put(SCOPE_STATEMENT_NAME, statementName);
+					scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
+					scopes.put("association", entry.getValue());
+					String ns = entry.getValue().getTarget().getEntity().getName();
+
+					this.compileMapper("select/" + ns.replace('.', '/') + "/" + statementName, ns,
+							Collections.singletonList(this.render("ResultMapOneToManySelect", scopes)));
+				});
 	}
 
 	private void resultMapManyToManySelectStatement() {
-		if (CollectionUtils.isEmpty(this.domain.getManyToManyAssociations())) {
-			return;
-		}
-		this.domain.getManyToManyAssociations().forEach(ass -> {
-			String statementName = "__association_" + this.domain.getTable() + '_'
-					+ ((ManyToManyAssociation) ass).getProperty().getName();
-			String ns = ass.getMappingEntity().getName();
-			if (this.checkStatement(ns, statementName)) {
-				return;
-			}
-			Map<String, Object> scopes = new HashMap<>();
-			scopes.put(SCOPE_STATEMENT_NAME, statementName);
-			scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
-			scopes.put("ass", ass);
-			this.compileMapper("select/" + ns.replace('.', '/') + "/" + statementName, ns,
-					Collections.singletonList(this.render("ResultMapManyToManySelect", scopes)));
-		});
+
+		this.domain.getAssociations().entrySet().stream().filter(entry -> entry.getValue().isManyToMany())
+				.forEach(entry -> {
+					String statementName = "__association_" + this.domain.getTable().toString().replace('.', '_') + '_'
+							+ entry.getKey().getName();
+					if (this.checkStatement(entry.getValue().getTarget().getEntity().getName(), statementName)) {
+						return;
+					}
+					Map<String, Object> scopes = new HashMap<>();
+					scopes.put(SCOPE_STATEMENT_NAME, statementName);
+					scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
+					scopes.put("association", entry.getValue());
+					String ns = entry.getValue().getTarget().getEntity().getName();
+
+					this.compileMapper("select/" + ns.replace('.', '/') + "/" + statementName, ns,
+							Collections.singletonList(this.render("ResultMapManyToManySelect", scopes)));
+				});
+
 	}
 
 	private void associativeTableStatement() {
-		if (CollectionUtils.isEmpty(this.domain.getManyToManyAssociations())) {
-			return;
-		}
-		this.domain.getManyToManyAssociations().forEach(ass -> {
-			String namespace = "associative." + ((ManyToManyAssociation) ass).getJoinTable().getTable().toString();
-			if (this.checkStatement(namespace, ResidentStatementName.INSERT)) {
-				return;
-			}
-			Map<String, Object> scopes = new HashMap<>();
-			scopes.put("ass", ass);
 
-			scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.INSERT);
-			this.compileMapper("associative/" + namespace.replace('.', '/') + "/insert", namespace,
-					Collections.singletonList(this.render("AssociativeInsert", scopes)));
-			scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.UPDATE);
-			this.compileMapper("associative/" + namespace.replace('.', '/') + "/update", namespace,
-					Collections.singletonList(this.render("AssociativeUpdate", scopes)));
-			scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.DELETE);
-			this.compileMapper("associative/" + namespace.replace('.', '/') + "/delete", namespace,
-					Collections.singletonList(this.render("AssociativeDelete", scopes)));
-		});
+		this.domain.getAssociations().entrySet().stream().filter(entry -> entry.getValue().isManyToMany())
+				.forEach(entry -> {
+					ManyToManyAssociation association = (ManyToManyAssociation) entry.getValue();
+					String namespace = "associative." + association.getJoinTable().getTable().toString();
+					Map<String, Object> scopes = new HashMap<>();
+					scopes.put("association", association);
+					if (!this.checkStatement(namespace, ResidentStatementName.INSERT)) {
+						scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.INSERT);
+						this.compileMapper("associative/" + namespace.replace('.', '/') + "/insert", namespace,
+								Collections.singletonList(this.render("AssociativeInsert", scopes)));
+					}
+
+					if (!this.checkStatement(namespace, ResidentStatementName.UPDATE)) {
+						scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.UPDATE);
+						this.compileMapper("associative/" + namespace.replace('.', '/') + "/update", namespace,
+								Collections.singletonList(this.render("AssociativeUpdate", scopes)));
+					}
+					if (!this.checkStatement(namespace, ResidentStatementName.DELETE)) {
+						scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.DELETE);
+						this.compileMapper("associative/" + namespace.replace('.', '/') + "/delete", namespace,
+								Collections.singletonList(this.render("AssociativeDelete", scopes)));
+					}
+				});
 
 	}
 
@@ -201,6 +217,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String whereClauseByIdFragment() {
+		if (null == this.domain.getPrimaryKey()) {
+			return null;
+		}
 		if (this.checkSqlFragment(ResidentStatementName.WHERE_BY_ID_CLAUSE)) {
 			return null;
 		}
@@ -210,6 +229,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String whereClauseByIdsFragment() {
+		if (null == this.domain.getPrimaryKey()) {
+			return null;
+		}
 		if (this.checkSqlFragment(ResidentStatementName.WHERE_BY_IDS_CLAUSE)) {
 			return null;
 		}
@@ -234,51 +256,6 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.QUERY_BY_EXAMPLE_WHERE_CLAUSE);
 		scopes.put("replaceDotToUnderline", (Lambda) (frag, out) -> out.write(frag.execute().trim().replace('.', '_')));
-
-		List columns = new LinkedList<>();
-		if (null != this.domain.getPrimaryKey()) {
-			columns.addAll(this.domain.getPrimaryKey().getColumns());
-		}
-		if (!CollectionUtils.isEmpty(this.domain.getNormalColumns())) {
-			columns.addAll(this.domain.getNormalColumns());
-		}
-		if (!CollectionUtils.isEmpty(this.domain.getVersionColumns())) {
-			columns.addAll(this.domain.getVersionColumns());
-		}
-		if (!CollectionUtils.isEmpty(this.domain.getEmbeddings())) {
-			this.domain.getEmbeddings().stream().forEach(embedding -> {
-				if (null != embedding.getPrimaryKey()) {
-					columns.addAll(embedding.getPrimaryKey().getColumns());
-				}
-				if (!CollectionUtils.isEmpty(embedding.getNormalColumns())) {
-					columns.addAll(embedding.getNormalColumns());
-				}
-				if (!CollectionUtils.isEmpty(embedding.getVersionColumns())) {
-					columns.addAll(embedding.getVersionColumns());
-				}
-			});
-		}
-		if (!CollectionUtils.isEmpty(this.domain.getManyToOneAssociations())) {
-			this.domain.getManyToOneAssociations().stream().forEach(association -> {
-				ManyToOneAssociation ass = (ManyToOneAssociation) association;
-				if (!ass.isLeftJoin()) {
-					return;
-				}
-
-				if (null != ass.getPrimaryKey()) {
-					columns.addAll(ass.getPrimaryKey().getColumns());
-				}
-				if (!CollectionUtils.isEmpty(ass.getNormalColumns())) {
-					columns.addAll(ass.getNormalColumns());
-				}
-				if (!CollectionUtils.isEmpty(ass.getVersionColumns())) {
-					columns.addAll(ass.getVersionColumns());
-				}
-
-			});
-		}
-
-		scopes.put("combinedColumns", columns);
 
 		return this.render("QueryByExampleWhereClause", scopes);
 	}
@@ -320,6 +297,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String updateStatement() {
+		if (null == this.domain.getPrimaryKey()) {
+			return null;
+		}
 		if (this.checkStatement(ResidentStatementName.UPDATE)) {
 			return null;
 		}
@@ -330,6 +310,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String updateByIdStatement() {
+		if (null == this.domain.getPrimaryKey()) {
+			return null;
+		}
 		if (this.checkStatement(ResidentStatementName.UPDATE_BY_ID)) {
 			return null;
 		}
@@ -340,6 +323,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String updateSelectiveStatement() {
+		if (null == this.domain.getPrimaryKey()) {
+			return null;
+		}
 		if (this.checkStatement(ResidentStatementName.UPDATE_SELECTIVE)) {
 			return null;
 		}
@@ -350,6 +336,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String updateSelectiveByIdStatement() {
+		if (null == this.domain.getPrimaryKey()) {
+			return null;
+		}
 		if (this.checkStatement(ResidentStatementName.UPDATE_SELECTIVE_BY_ID)) {
 			return null;
 		}
@@ -360,6 +349,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String deleteByIdStatement() {
+		if (null == this.domain.getPrimaryKey()) {
+			return null;
+		}
 		if (this.checkStatement(ResidentStatementName.DELETE_BY_ID)) {
 			return null;
 		}
@@ -369,6 +361,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String deleteByIdsStatement() {
+		if (null == this.domain.getPrimaryKey()) {
+			return null;
+		}
 		if (this.checkStatement(ResidentStatementName.DELETE_BY_IDS)) {
 			return null;
 		}
@@ -388,6 +383,9 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 	}
 
 	private String getByIdStatement() {
+		if (null == this.domain.getPrimaryKey()) {
+			return null;
+		}
 		if (this.checkStatement(ResidentStatementName.GET_BY_ID)) {
 			return null;
 		}
@@ -415,8 +413,7 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.FIND_BY_PAGER);
 		scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
-		scopes.put("limitHandler", (Lambda) (frag, out) -> out.write(
-				this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), new RowSelection(true))));
+		scopes.put("rowSelection", new RowSelection(true));
 		scopes.put("conditionQuery", ""); // TODO
 		return this.render("FindByPage", scopes);
 	}
@@ -456,8 +453,7 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 		Map<String, Object> scopes = new HashMap<>();
 		scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.QUERY_BY_EXAMPLE_FOR_PAGE);
 		scopes.put(SCOPE_RESULT_MAP, ResidentStatementName.RESULT_MAP);
-		scopes.put("limitHandler", (Lambda) (frag, out) -> out.write(
-				this.mappingContext.getDialect().getLimitHandler().processSql(frag.execute(), new RowSelection(true))));
+		scopes.put("rowSelection", new RowSelection(true));
 		return this.render("QueryByExampleForPage", scopes);
 	}
 

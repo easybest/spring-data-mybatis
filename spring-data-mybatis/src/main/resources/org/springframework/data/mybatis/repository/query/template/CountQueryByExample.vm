@@ -1,0 +1,4 @@
+<select id="${statementName}" resultType="long">
+    select count(*) from <include refid="__from"/>
+    <include refid="__query_by_example_where_clause"/>
+</select>

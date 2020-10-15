@@ -1,0 +1,21 @@
+#if($domain.primaryKey)
+<sql id="${statementName}">
+    <if test="__ids != null">
+        <trim prefixOverrides="and |or ">
+            #if($domain.primaryKey.composited)
+            <foreach collection="__ids" item="item" index="index" open="(" separator=") or (" close=")">
+                #foreach($entry in $domain.primaryKey.columns.entrySet())
+                #if(!$foreach.first) and #end
+                    ${util.quote(${domain.tableAlias})}.${entry.key.render($dialect)} = #{ item.${entry.value.property.name} }
+                #end
+            </foreach>
+            #else
+                #foreach($entry in $domain.primaryKey.columns.entrySet())
+                    ${entry.key.render($dialect)} in
+                    <foreach collection="__ids" item="item" index="index" open="(" separator="," close=")">#{item}</foreach>
+                #end
+            #end
+        </trim>
+    </if>
+</sql>
+#end

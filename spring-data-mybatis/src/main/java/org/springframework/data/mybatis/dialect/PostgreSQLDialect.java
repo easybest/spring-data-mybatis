@@ -35,9 +35,9 @@ public class PostgreSQLDialect extends Dialect {
 		public String processSql(String sql, RowSelection selection) {
 			final boolean hasOffset = LimitHelper.hasFirstRow(selection);
 			if (hasOffset) {
-				return sql + " LIMIT " + selection.getMaxRows() + " OFFSET " + LimitHelper.getFirstRow(selection);
+				return sql + " limit " + selection.getMaxRows() + " offset " + LimitHelper.getFirstRow(selection);
 			}
-			return sql + " LIMIT " + selection.getMaxRows();
+			return sql + " limit " + selection.getMaxRows();
 		}
 
 		@Override

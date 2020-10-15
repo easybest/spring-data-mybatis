@@ -16,10 +16,8 @@
 package org.springframework.data.mybatis.precompiler;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Writer;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,23 +25,22 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.samskivert.mustache.Mustache;
-import com.samskivert.mustache.Mustache.InvertibleLambda;
-import com.samskivert.mustache.Mustache.Lambda;
-import com.samskivert.mustache.Template.Fragment;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.session.Configuration;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mybatis.dialect.pagination.SQLServer2005LimitHandler;
 import org.springframework.data.mybatis.dialect.pagination.SQLServer2012LimitHandler;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.mapping.model.Domain;
 import org.springframework.data.mybatis.mapping.model.Identifier;
-import org.springframework.data.mybatis.mapping.model.Model;
-import org.springframework.data.mybatis.repository.query.DefaultCollector;
 import org.springframework.data.mybatis.repository.support.SqlSessionRepositorySupport;
 import org.springframework.util.CollectionUtils;
 
@@ -61,22 +58,25 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	protected final MybatisMappingContext mappingContext;
 
-	protected final Model domain;
+	protected final Domain domain;
 
-	protected final Mustache.Compiler mustache;
+	protected static VelocityEngine velocityEngine;
+	static {
+		velocityEngine = new VelocityEngine();
+		velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "class");
+		velocityEngine.setProperty("resource.loader.class.class", ClasspathResourceLoader.class.getName());
+		velocityEngine.setProperty(RuntimeConstants.CUSTOM_DIRECTIVES, LimitHandlerDirective.class.getName());
+		velocityEngine.init();
+	}
 
-	protected AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Model domain) {
+	protected AbstractMybatisPrecompiler(MybatisMappingContext mappingContext, Domain domain) {
 		this.mappingContext = mappingContext;
 		this.domain = domain;
-		this.mustache = Mustache.compiler().withLoader(name -> {
-			InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(this.getTemplatePath(name));
-			return new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-		}).escapeHTML(false).withCollector(new DefaultCollector());
 	}
 
 	@Override
 	public void compile() {
-		this.compileMapper(this.domain.getMappingEntity().getName(), this.prepareStatements());
+		this.compileMapper(this.domain.getEntity().getName(), this.prepareStatements());
 	}
 
 	protected abstract Collection<String> prepareStatements();
@@ -86,21 +86,19 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 			scopes = new HashMap<>();
 		}
 		scopes.put("domain", this.domain);
-		scopes.put("quote", (Lambda) (frag, out) -> out.write(this.quote(frag.execute())));
-		scopes.put("testNotNull", this.lambdaTestNotNull());
-		scopes.put("escapeQuotes", (Lambda) (frag, out) -> out.write(frag.execute().replace("\"", "\\\"")));
-		scopes.put("lowercaseFunction", this.mappingContext.getDialect().getLowercaseFunction());
+		scopes.put("util", new Util(this.mappingContext));
+		scopes.put("dialect", this.mappingContext.getDialect());
+
 		scopes.put("SQLServer2005",
 				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2005LimitHandler.class);
 		scopes.put("SQLServer2012",
 				this.mappingContext.getDialect().getLimitHandler().getClass() == SQLServer2012LimitHandler.class);
-		try (InputStream is = new ClassPathResource(this.getTemplatePath(name)).getInputStream();
-				InputStreamReader source = new InputStreamReader(is, StandardCharsets.UTF_8)) {
-			return this.mustache.compile(source).execute(scopes);
-		}
-		catch (IOException ex) {
-			throw new MappingException("Could not render the statement: " + name, ex);
-		}
+
+		Template template = velocityEngine.getTemplate(this.getTemplatePath(name), "UTF-8");
+		VelocityContext context = new VelocityContext(scopes);
+		StringWriter sw = new StringWriter();
+		template.merge(context, sw);
+		return sw.toString();
 	}
 
 	protected void compileMapper(String namespace, Collection<String> statements) {
@@ -136,16 +134,16 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 
 	protected boolean checkSqlFragment(String name) {
 		return this.mappingContext.getSqlSessionTemplate().getConfiguration().getSqlFragments()
-				.containsKey(this.domain.getMappingEntity().getName() + SqlSessionRepositorySupport.DOT + name);
+				.containsKey(this.domain.getEntity().getName() + SqlSessionRepositorySupport.DOT + name);
 	}
 
 	protected boolean checkResultMap(String name) {
 		return this.mappingContext.getSqlSessionTemplate().getConfiguration()
-				.hasResultMap(this.domain.getMappingEntity().getName() + SqlSessionRepositorySupport.DOT + name);
+				.hasResultMap(this.domain.getEntity().getName() + SqlSessionRepositorySupport.DOT + name);
 	}
 
 	protected boolean checkStatement(String name) {
-		return this.checkStatement(this.domain.getMappingEntity().getName(), name);
+		return this.checkStatement(this.domain.getEntity().getName(), name);
 	}
 
 	protected boolean checkStatement(String namespace, String name) {
@@ -162,38 +160,50 @@ abstract class AbstractMybatisPrecompiler implements MybatisPrecompiler {
 	}
 
 	protected String getTemplatePath(String name) {
-		return "org/springframework/data/mybatis/repository/query/template/" + name + ".mustache";
+		return "org/springframework/data/mybatis/repository/query/template/" + name + ".vm";
 	}
 
-	protected String quote(String name) {
-		return Identifier.toIdentifier(name, true).render(this.mappingContext.getDialect());
-	}
+	public static class Util {
 
-	Mustache.InvertibleLambda lambdaTestNotNull() {
-		return new InvertibleLambda() {
-			@Override
-			public void execute(Fragment frag, Writer out) throws IOException {
-				out.write(this.testClause(frag.execute().trim(), true, true));
-			}
+		private final MybatisMappingContext mappingContext;
 
-			@Override
-			public void executeInverse(Fragment frag, Writer out) throws IOException {
-				out.write(this.testClause(frag.execute().trim(), false, false));
-			}
+		Util(MybatisMappingContext mappingContext) {
 
-			protected String testClause(String propertyName, boolean and, boolean not) {
-				String[] parts = propertyName.split("\\.");
-				String[] conditions = new String[parts.length];
-				String prev = null;
-				for (int i = 0; i < parts.length; i++) {
-					conditions[i] = ((null != prev) ? (prev + ".") : "") + parts[i];
-					prev = conditions[i];
-				}
-				String test = Stream.of(conditions).map(c -> c.trim() + (not ? " !" : " =") + "= null")
-						.collect(Collectors.joining(and ? " and " : " or "));
-				return test;
+			this.mappingContext = mappingContext;
+		}
+
+		public String testNotNull(String propertyName) {
+			String[] parts = propertyName.split("\\.");
+			String[] conditions = new String[parts.length];
+			String prev = null;
+			for (int i = 0; i < parts.length; i++) {
+				conditions[i] = ((null != prev) ? (prev + ".") : "") + parts[i];
+				prev = conditions[i];
 			}
-		};
+			String test = Stream.of(conditions).map(c -> c.trim() + (" !") + "= null")
+					.collect(Collectors.joining(" and "));
+			return test;
+		}
+
+		public String quote(String name) {
+			if (null == name) {
+				return null;
+			}
+			return Identifier.toIdentifier(name, true).render(this.mappingContext.getDialect());
+		}
+
+		public String identifier(String name) {
+			return Identifier.toIdentifier(name).render(this.mappingContext.getDialect());
+		}
+
+		public String escapeQuotes(String name) {
+			return name.replace("\"", "\\\"");
+		}
+
+		public String replaceDotToUnderline(String content) {
+			return content.replace('.', '_');
+		}
+
 	}
 
 }
