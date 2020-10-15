@@ -21,7 +21,6 @@ import java.util.Locale;
 import org.springframework.boot.autoconfigure.data.AbstractRepositoryConfigurationSourceSupport;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.mybatis.repository.config.EnableMybatisRepositories;
 import org.springframework.data.mybatis.repository.config.MybatisRepositoryConfigExtension;
 import org.springframework.data.repository.config.BootstrapMode;
@@ -38,8 +37,6 @@ class MybatisRepositoriesAutoConfigureRegistrar extends AbstractRepositoryConfig
 
 	private BootstrapMode bootstrapMode = null;
 
-	private ResourceLoader resourceLoader;
-
 	@Override
 	protected Class<? extends Annotation> getAnnotation() {
 		return EnableMybatisRepositories.class;
@@ -52,7 +49,7 @@ class MybatisRepositoriesAutoConfigureRegistrar extends AbstractRepositoryConfig
 
 	@Override
 	protected RepositoryConfigurationExtension getRepositoryConfigurationExtension() {
-		return new MybatisRepositoryConfigExtension(this.resourceLoader);
+		return new MybatisRepositoryConfigExtension();
 	}
 
 	@Override
@@ -71,12 +68,6 @@ class MybatisRepositoriesAutoConfigureRegistrar extends AbstractRepositoryConfig
 		if (StringUtils.hasText(property)) {
 			this.bootstrapMode = BootstrapMode.valueOf(property.toUpperCase(Locale.ENGLISH));
 		}
-	}
-
-	@Override
-	public void setResourceLoader(ResourceLoader resourceLoader) {
-		this.resourceLoader = resourceLoader;
-		super.setResourceLoader(resourceLoader);
 	}
 
 	@EnableMybatisRepositories

@@ -43,7 +43,6 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.data.mapping.PropertyHandler;
 import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.dialect.H2Dialect;
@@ -54,16 +53,16 @@ import org.springframework.data.mybatis.dialect.SQLServer2012Dialect;
 import org.springframework.data.mybatis.dialect.SQLServerDialect;
 import org.springframework.data.mybatis.dialect.SQLiteDialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
-import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
-import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
 import org.springframework.data.mybatis.mapping.handler.DateUnixTimestampTypeHandler;
 import org.springframework.data.mybatis.mapping.handler.UnixTimestampDateTypeHandler;
 import org.springframework.data.mybatis.mapping.model.Column;
+import org.springframework.data.mybatis.mapping.model.Domain;
 import org.springframework.data.mybatis.querydsl.MybatisSQLQuery;
 import org.springframework.data.mybatis.querydsl.type.DateAsLongType;
 import org.springframework.data.mybatis.querydsl.type.LongAsDateType;
 import org.springframework.data.querydsl.QSort;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 /**
  * .
@@ -122,21 +121,20 @@ public class Querydsl<Q, T> {
 		}
 		this.configuration = new Configuration(sqlTemplates);
 
-		MybatisPersistentEntity<?> entity = mappingContext.getRequiredPersistentEntity(entityInformation.getJavaType());
-		entity.doWithProperties((PropertyHandler<MybatisPersistentProperty>) property -> {
-			Column column = property.getColumn();
-			if (null == column.getTypeHandler()) {
-				return;
-			}
-			if (column.getTypeHandler() == DateUnixTimestampTypeHandler.class) {
-				this.configuration.register(entity.getTable().getName().getText(), column.getName().getText(),
-						new DateAsLongType());
-			}
-			if (column.getTypeHandler() == UnixTimestampDateTypeHandler.class) {
-				this.configuration.register(entity.getTable().getName().getText(), column.getName().getText(),
-						new LongAsDateType());
-			}
-		});
+		Domain model = mappingContext.getRequiredDomain(entityInformation.getJavaType());
+		List<Column> columns = model.findColumnByTypeHandler(DateUnixTimestampTypeHandler.class);
+		if (!CollectionUtils.isEmpty(columns)) {
+			DateAsLongType dateAsLongType = new DateAsLongType();
+			columns.stream().forEach(c -> this.configuration.register(model.getTable().getName().getText(),
+					c.getName().getText(), dateAsLongType));
+		}
+		columns = model.findColumnByTypeHandler(UnixTimestampDateTypeHandler.class);
+		if (!CollectionUtils.isEmpty(columns)) {
+			LongAsDateType longAsDateType = new LongAsDateType();
+			columns.stream().forEach(c -> this.configuration.register(model.getTable().getName().getText(),
+					c.getName().getText(), longAsDateType));
+		}
+
 	}
 
 	public AbstractSQLQuery<T, MybatisSQLQuery<T>> createQuery() {

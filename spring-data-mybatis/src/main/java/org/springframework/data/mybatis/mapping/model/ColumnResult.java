@@ -16,28 +16,73 @@
 package org.springframework.data.mybatis.mapping.model;
 
 import java.io.Serializable;
-
-import lombok.Data;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
-@Data
 public class ColumnResult implements Serializable {
 
-	private boolean primaryKey;
+	private static final long serialVersionUID = -6530771390280831066L;
 
-	private String property;
+	private Domain upstage;
 
-	private String column;
+	private List<Association> associations = new LinkedList<>();
 
-	private String javaType;
+	private Column column;
 
-	private String jdbcType;
+	public ColumnResult(Domain upstage, Column column) {
+		this.upstage = upstage;
+		this.column = column;
+	}
 
-	private String typeHandler;
+	public String getTableAlias() {
+
+		StringBuilder builder = new StringBuilder();
+		builder.append(this.upstage.getTableAlias());
+
+		if (this.associations.isEmpty()) {
+			return builder.toString();
+		}
+
+		for (Association association : this.associations) {
+			if (association.isEmbedding()) {
+				continue;
+			}
+
+			builder.append('.').append(association.getProperty().getName());
+		}
+
+		return builder.toString();
+
+	}
+
+	public Domain getUpstage() {
+		return this.upstage;
+	}
+
+	public void setUpstage(Domain upstage) {
+		this.upstage = upstage;
+	}
+
+	public List<Association> getAssociations() {
+		return this.associations;
+	}
+
+	public void setAssociations(List<Association> associations) {
+		this.associations = associations;
+	}
+
+	public Column getColumn() {
+		return this.column;
+	}
+
+	public void setColumn(Column column) {
+		this.column = column;
+	}
 
 }

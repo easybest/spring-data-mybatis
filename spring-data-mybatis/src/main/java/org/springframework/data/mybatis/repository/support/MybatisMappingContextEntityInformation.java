@@ -18,6 +18,7 @@ package org.springframework.data.mybatis.repository.support;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
 import org.springframework.data.mybatis.mapping.MybatisPersistentEntity;
 import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+import org.springframework.data.mybatis.mapping.model.Domain;
 import org.springframework.util.Assert;
 
 /**
@@ -34,11 +35,15 @@ public class MybatisMappingContextEntityInformation<T, ID> extends MybatisEntity
 
 	private final MybatisPersistentEntity<?> entity;
 
+	private final Domain model;
+
 	public MybatisMappingContextEntityInformation(Class<T> domainClass, MybatisMappingContext mappingContext) {
 		super(domainClass);
 		Assert.notNull(mappingContext, "MappingContext must not be null.");
 
-		this.entity = mappingContext.getRequiredPersistentEntity(domainClass);
+		// this.entity = mappingContext.getRequiredPersistentEntity(domainClass);
+		this.model = mappingContext.getRequiredDomain(domainClass);
+		this.entity = this.model.getEntity();
 
 	}
 
@@ -48,7 +53,7 @@ public class MybatisMappingContextEntityInformation<T, ID> extends MybatisEntity
 
 	@Override
 	public boolean hasCompositeId() {
-		return this.entity.hasCompositeId();
+		return this.entity.isCompositePrimaryKey();
 	}
 
 	@Override
@@ -74,7 +79,7 @@ public class MybatisMappingContextEntityInformation<T, ID> extends MybatisEntity
 
 	@Override
 	public String getTableName() {
-		return this.entity.getTable().getFullName();
+		return this.model.getTable().toString();
 	}
 
 	@Override
@@ -93,10 +98,7 @@ public class MybatisMappingContextEntityInformation<T, ID> extends MybatisEntity
 			return super.isNew(entity);
 		}
 		Object version = this.entity.getPropertyAccessor(entity).getProperty(this.entity.getRequiredVersionProperty());
-		if (null == version) {
-			return true;
-		}
-		return false;
+		return null == version;
 	}
 
 }

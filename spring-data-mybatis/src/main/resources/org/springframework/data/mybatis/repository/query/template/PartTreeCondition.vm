@@ -1,0 +1,108 @@
+#foreach($orPart in $tree)
+    #if(!$foreach.first) or #end
+    #foreach($andPart in $orPart)
+        #if(!$foreach.first) and #end
+        #set($part = $andPart.part)
+        #set($type = $part.type.name())
+        #set($cr = $andPart.columnResult)
+        #set($arguments = $andPart.arguments)
+
+        #if($arguments.size() > 0)
+            #if($andPart.ignoreCase)
+                #set($singleArgument = "${dialect.lowercaseFunction}(#{ ${arguments[0]}#if($cr.column.javaType),javaType=${cr.column.javaTypeString}#end #if($cr.column.jdbcType),jdbcType=${cr.column.jdbcType.name()}#end #if($cr.column.typeHandler),typeHandler=${cr.column.typeHandler.name}#end })")
+            #else
+                #set($singleArgument = "#{ ${arguments[0]}#if($cr.column.javaType),javaType=${cr.column.javaTypeString}#end #if($cr.column.jdbcType),jdbcType=${cr.column.jdbcType.name()}#end #if($cr.column.typeHandler),typeHandler=${cr.column.typeHandler.name}#end }")
+            #end
+
+            #set($singleArg = $arguments[0])
+        #end
+
+        #if($type != 'IN' && $type != 'NOT_IN')
+            #if($andPart.ignoreCase)
+                ${dialect.lowercaseFunction}(#if($andPart.includeAlias)${util.quote($cr.tableAlias)}.#end${cr.column.name.render($dialect)})
+            #else
+                #if($andPart.includeAlias)${util.quote($cr.tableAlias)}.#end${cr.column.name.render($dialect)}
+            #end
+        #end
+
+
+        #if($type == 'IS_NOT_NULL')
+            is not null
+        #end
+        #if($type == 'IS_NULL')
+            is null
+        #end
+        #if($type == 'BETWEEN')
+            between #foreach($arg in $arguments)#if(!$foreach.first) and #end ${arg} #end
+        #end
+        #if($type == 'LESS_THAN')
+            &lt; ${singleArgument}
+        #end
+        #if($type == 'LESS_THAN_EQUAL')
+            &lt;= ${singleArgument}
+        #end
+        #if($type == 'GREATER_THAN')
+            &gt; ${singleArgument}
+        #end
+        #if($type == 'GREATER_THAN_EQUAL')
+            &gt;= ${singleArgument}
+        #end
+        #if($type == 'BEFORE')
+            &lt; ${singleArgument}
+        #end
+        #if($type == 'AFTER')
+            &gt; ${singleArgument}
+        #end
+        #if($type == 'NOT_LIKE' || $type == 'LIKE' || $type == 'NOT_CONTAINING' || $type == 'CONTAINING')
+            #if($type == 'NOT_LIKE' || $type == 'NOT_CONTAINING') not #end like
+            <bind name="__bind_${singleArg}" value="'%' + ${singleArg} + '%'"/>
+            #if($andPart.ignoreCase)${dialect.lowercaseFunction}(#{ __bind_${singleArg}#if($cr.column.javaType),javaType=${cr.column.javaTypeString}#end #if($cr.column.jdbcType),jdbcType=${cr.column.jdbcType.name()}#end #if($cr.column.typeHandler),typeHandler=${cr.column.typeHandler.name}#end })#else#{ __bind_${singleArg}#if($cr.column.javaType),javaType=${cr.column.javaTypeString}#end #if($cr.column.jdbcType),jdbcType=${cr.column.jdbcType.name()}#end #if($cr.column.typeHandler),typeHandler=${cr.column.typeHandler.name}#end }#end
+        #end
+        #if($type == 'STARTING_WITH' || $type == 'ENDING_WITH')
+            like
+        <bind name="__bind_${singleArg}" value="#if($type == 'ENDING_WITH')'%' + #end${singleArg}#if($type == 'STARTING_WITH') + '%'#end"/>
+            #if($andPart.ignoreCase)${dialect.lowercaseFunction}(#{ __bind_${singleArg} })#else#{ __bind_${singleArg} }#end
+        #end
+        #if($type == 'IS_NOT_EMPTY')
+        #end
+        #if($type == 'IS_EMPTY')
+        #end
+        #if($type == 'NOT_IN' || $type == 'IN')
+            <choose>
+                <when test="${singleArg} != null and ${singleArg}.#if($andPart.arrayParameter)length#{else}size()#end > 0">
+                    #if($andPart.ignoreCase)
+                        ${dialect.lowercaseFunction}(#if($andPart.includeAlias)${util.quote($cr.tableAlias)}.#end${cr.column.name.render($dialect)})
+                    #else
+                        #if($andPart.includeAlias)${util.quote($cr.tableAlias)}.#end${cr.column.name.render($dialect)}
+                    #end
+                    #if($type == 'NOT_IN') not #end in
+                    <foreach item="__item" index="__index" collection="${singleArg}" open="(" separator="," close=")">
+                        #{ __item #if($cr.column.javaType),javaType=${cr.column.javaTypeString}#end #if($cr.column.jdbcType),jdbcType=${cr.column.jdbcType.name()}#end #if($cr.column.typeHandler),typeHandler=${cr.column.typeHandler.name}#end }
+                    </foreach>
+                </when>
+                <otherwise>0 = 1</otherwise>
+            </choose>
+        #end
+        #if($type == 'NEAR')
+        #end
+        #if($type == 'WITHIN')
+        #end
+        #if($type == 'REGEX')
+        #end
+        #if($type == 'EXISTS')
+        #end
+        #if($type == 'TRUE')
+            = 1
+        #end
+        #if($type == 'FALSE')
+            = 0
+        #end
+        #if($type == 'NEGATING_SIMPLE_PROPERTY')
+            &lt;&gt; ${singleArgument}
+        #end
+        #if($type == 'SIMPLE_PROPERTY')
+            = ${singleArgument}
+        #end
+
+    #end
+#end

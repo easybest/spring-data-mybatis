@@ -20,12 +20,11 @@ import java.lang.annotation.Annotation;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.auditing.config.AuditingBeanDefinitionRegistrarSupport;
 import org.springframework.data.auditing.config.AuditingConfiguration;
-import org.springframework.data.mybatis.domain.support.MybatisAuditingHandler;
+import org.springframework.data.mybatis.auditing.MybatisAuditingHandler;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -43,6 +42,20 @@ class MybatisAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	}
 
 	@Override
+	protected String getAuditingHandlerBeanName() {
+		return "mybatisAuditingHandler";
+	}
+
+	@Override
+	public void registerBeanDefinitions(AnnotationMetadata annotationMetadata, BeanDefinitionRegistry registry) {
+
+		Assert.notNull(annotationMetadata, "AnnotationMetadata must not be null!");
+		Assert.notNull(registry, "BeanDefinitionRegistry must not be null!");
+
+		super.registerBeanDefinitions(annotationMetadata, registry);
+	}
+
+	@Override
 	protected MybatisAuditingConfiguration getConfiguration(AnnotationMetadata annotationMetadata) {
 		return new MybatisAnnotationAuditingConfiguration(annotationMetadata, this.getAnnotation());
 	}
@@ -50,15 +63,14 @@ class MybatisAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	@Override
 	protected void registerAuditListenerBeanDefinition(BeanDefinition auditingHandlerDefinition,
 			BeanDefinitionRegistry registry) {
-		if (!registry.containsBeanDefinition(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME)) {
-			registry.registerBeanDefinition(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME, //
-					new RootBeanDefinition(MybatisMappingContextFactoryBean.class));
-		}
-	}
 
-	@Override
-	protected String getAuditingHandlerBeanName() {
-		return "mybatisAuditingHandler";
+		// if
+		// (!registry.containsBeanDefinition(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME))
+		// {
+		// registry.registerBeanDefinition(BeanDefinitionNames.MYBATIS_MAPPING_CONTEXT_BEAN_NAME,
+		// //
+		// new RootBeanDefinition(MybatisMappingContext.class));
+		// }
 	}
 
 	@Override
@@ -73,6 +85,7 @@ class MybatisAuditingRegistrar extends AuditingBeanDefinitionRegistrarSupport {
 	@Override
 	protected BeanDefinitionBuilder configureDefaultAuditHandlerAttributes(AuditingConfiguration configuration,
 			BeanDefinitionBuilder builder) {
+
 		BeanDefinitionBuilder beanDefinitionBuilder = super.configureDefaultAuditHandlerAttributes(configuration,
 				builder);
 

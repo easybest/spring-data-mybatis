@@ -37,9 +37,9 @@ public class HSQLDialect extends Dialect {
 
 			final boolean hasOffset = LimitHelper.hasFirstRow(selection);
 			if (hasOffset) {
-				return sql + " OFFSET " + LimitHelper.getFirstRow(selection) + " LIMIT " + selection.getMaxRows();
+				return sql + " offset " + LimitHelper.getFirstRow(selection) + " limit " + selection.getMaxRows();
 			}
-			return sql + " LIMIT " + selection.getMaxRows();
+			return sql + " limit " + selection.getMaxRows();
 		}
 
 		@Override
@@ -66,7 +66,7 @@ public class HSQLDialect extends Dialect {
 
 	@Override
 	public String getRegexLikeFunction(String column, String parameter) {
-		return "REGEXP_MATCHES(" + column + ",'" + parameter + "')";
+		return "regexp_matches(" + column + ",'" + parameter + "')";
 	}
 
 }

@@ -1,0 +1,63 @@
+#macro(ResultMapInner $domain)
+    #if($domain.primaryKey)
+        #foreach($entry in $domain.primaryKey.columns.entrySet())
+            #set($column = $entry.value)
+        <id property="${column.propertyName}" column="${column.name.text}" #if($column.jdbcType) jdbcType="${column.jdbcType.name()}"#end #if($column.javaType) javaType="${column.javaTypeString}"#end #if($column.typeHandler) typeHandler="${column.typeHandler.name}"#end/>
+        #end
+    #end
+    #foreach($entry in $domain.normalColumns.entrySet())
+        #set($column = $entry.value)
+        <result property="${column.propertyName}" column="${column.name.text}" #if($column.jdbcType) jdbcType="${column.jdbcType.name()}"#end #if($column.javaType) javaType="${column.javaTypeString}"#end #if($column.typeHandler) typeHandler="${column.typeHandler.name}"#end/>
+    #end
+    #foreach($entry in ${domain.associations.entrySet()})
+        #if($entry.value.embedding)
+        #set($embedding = $entry.value)
+    <association property='${embedding.property.name}' javaType='${embedding.property.type.name}'>
+        #foreach($embeddingEntry in ${embedding.target.normalColumns.entrySet()})
+            #set($column = ${embeddingEntry.value})
+            <result property="${column.propertyName}" column="${column.name.text}" #if($column.jdbcType) jdbcType="${column.jdbcType.name()}"#end #if($column.javaType) javaType="${column.javaTypeString}"#end #if($column.typeHandler) typeHandler="${column.typeHandler.name}"#end/>
+        #end
+    </association>
+        #end
+    #end
+#end
+<resultMap id="${statementName}" type="${domain.entity.type.name}">
+    #ResultMapInner($domain)
+    #foreach($association in ${domain.associations})
+        #if($association.toOne)
+            #if($association.join)
+                <association property='${association.property.name}'
+                             javaType='${association.property.type.name}'
+                             resultMap='${association.property.type.name}.${statementName}_lazy'
+                             columnPrefix='${association.property.name}.'></association>
+            #else
+                <association property='${association.property.name}'
+                             javaType='${association.property.type.name}'
+                             fetchType='${association.fetchType.name().toLowerCase()}'
+                             select='${association.property.type.name}.__association_${domain.table}_${association.property.name}'
+                             column='{ #foreach($joinColumn in $association.foreignKey.joinColumns)#if(!$foreach.first),#end${joinColumn.foreign.name.text}=${joinColumn.local.name.text}#end }'></association>
+            #end
+        #elseif($association.oneToMany)
+        <collection property='${association.property.name}' ofType='${association.property.actualType.name}' select='${association.property.actualType.name}.__association_${domain.table}_${association.property.name}'
+                    column='{ #foreach($joinColumn in $association.foreignKey.joinColumns)#if(!$foreach.first),#end${joinColumn.foreign.name.text}=${joinColumn.foreign.name.text}#end }' fetchType='${association.fetchType.name().toLowerCase()}'>
+        </collection>
+        #elseif($association.manyToMany)
+            <collection property='${association.property.name}' ofType='${association.property.actualType.name}' select='${association.property.actualType.name}.__association_${domain.table}_${association.property.name}'
+                        column='{ #foreach($joinColumn in $association.joinTable.localJoinColumns)#if(!$foreach.first),#end${joinColumn.foreign.name.text}=${joinColumn.foreign.name.text}#end }' fetchType='${association.fetchType.name().toLowerCase()}'>
+            </collection>
+        #end
+    #end
+</resultMap>
+
+<resultMap id="${statementName}_lazy" type="${domain.entity.type.name}">
+    #ResultMapInner($domain)
+    #foreach($association in ${domain.associations})
+        #if($association.toOne)
+            <association property='${association.property.name}'
+                         javaType='${association.property.type.name}'
+                         fetchType='lazy'
+                         select='${association.property.type.name}.__association_${domain.table}_${association.property.name}'
+                         column='{ #foreach($joinColumn in $association.foreignKey.joinColumns)#if(!$foreach.first),#end${joinColumn.foreign.name.text}=${joinColumn.local.name.text}#end }'></association>
+        #end
+    #end
+</resultMap>

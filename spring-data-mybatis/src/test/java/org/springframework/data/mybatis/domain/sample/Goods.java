@@ -16,6 +16,7 @@
 package org.springframework.data.mybatis.domain.sample;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -24,6 +25,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.mybatis.annotation.Fetch;
+import org.springframework.data.mybatis.annotation.FetchMode;
 import org.springframework.data.mybatis.domain.Audit;
 
 /**
@@ -45,11 +48,13 @@ public class Goods extends Audit<Long, Long> {
 
 	private String brand;
 
+	@Fetch(FetchMode.JOIN)
 	@ManyToOne
 	@JoinColumn(name = "category_id", referencedColumnName = "id")
 	private Category category;
 
-	@ManyToOne
+	@Fetch(FetchMode.SELECT)
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "shop_id", referencedColumnName = "id")
 	private Shop shop;
 

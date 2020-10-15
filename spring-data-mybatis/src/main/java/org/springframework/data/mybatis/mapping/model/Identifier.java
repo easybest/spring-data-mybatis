@@ -17,9 +17,6 @@ package org.springframework.data.mybatis.mapping.model;
 
 import java.util.Locale;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.util.StringUtils;
 
@@ -31,31 +28,36 @@ import org.springframework.util.StringUtils;
  */
 public class Identifier implements Comparable<Identifier> {
 
-	@Getter
 	private final String text;
 
-	@Getter
-	private final boolean quoted;
-
-	@Getter
-	@Setter
-	private Dialect dialect;
+	private final boolean isQuoted;
 
 	public static Identifier toIdentifier(String text) {
-		return toIdentifier(text, false);
+		if (StringUtils.isEmpty(text)) {
+			return null;
+		}
+		final String trimmedText = text.trim();
+		if (isQuoted(trimmedText)) {
+			final String bareName = trimmedText.substring(1, trimmedText.length() - 1);
+			return new Identifier(bareName, true);
+		}
+		else {
+			return new Identifier(trimmedText, false);
+		}
 	}
 
 	public static Identifier toIdentifier(String text, boolean quote) {
 		if (StringUtils.isEmpty(text)) {
 			return null;
 		}
-
 		final String trimmedText = text.trim();
 		if (isQuoted(trimmedText)) {
 			final String bareName = trimmedText.substring(1, trimmedText.length() - 1);
 			return new Identifier(bareName, true);
 		}
-		return new Identifier(trimmedText, quote);
+		else {
+			return new Identifier(trimmedText, quote);
+		}
 	}
 
 	public static boolean isQuoted(String name) {
@@ -63,51 +65,40 @@ public class Identifier implements Comparable<Identifier> {
 				|| (name.startsWith("\"") && name.endsWith("\""));
 	}
 
-	public static boolean areEqual(Identifier id1, Identifier id2) {
-		if (null == id1) {
-			return null == id2;
-		}
-		return id1.equals(id2);
-	}
-
-	public static Identifier quote(Identifier identifier) {
-		return identifier.isQuoted() ? identifier : Identifier.toIdentifier(identifier.getText(), true);
-	}
-
 	public Identifier(String text, boolean quoted) {
 		if (StringUtils.isEmpty(text)) {
-			throw new IllegalIdentifierException("Identifier text cannot be null.");
+			throw new IllegalIdentifierException("Identifier text cannot be null");
 		}
 		if (isQuoted(text)) {
-			throw new IllegalIdentifierException("Identifier text should not contain quote makers (` or \")");
+			throw new IllegalIdentifierException("Identifier text should not contain quote markers (` or \")");
 		}
 		this.text = text;
-		this.quoted = quoted;
+		this.isQuoted = quoted;
 	}
 
 	protected Identifier(String text) {
 		this.text = text;
-		this.quoted = false;
+		this.isQuoted = false;
+	}
+
+	public String getText() {
+		return this.text;
+	}
+
+	public boolean isQuoted() {
+		return this.isQuoted;
 	}
 
 	public String render(Dialect dialect) {
-		return this.isQuoted() ? (dialect.openQuote() + this.getText() + dialect.closeQuote()) : this.getText();
+		return this.isQuoted ? dialect.openQuote() + this.getText() + dialect.closeQuote() : this.getText();
 	}
 
 	public String render() {
-		if (null != this.dialect) {
-			return this.render(this.dialect);
-		}
-		return this.isQuoted() ? ('`' + this.getText() + '`') : this.getText();
+		return this.isQuoted ? '`' + this.getText() + '`' : this.getText();
 	}
 
 	public String getCanonicalName() {
-		return this.isQuoted() ? this.getText() : this.getText().toLowerCase(Locale.ENGLISH);
-	}
-
-	@Override
-	public int compareTo(Identifier o) {
-		return this.getCanonicalName().compareTo(o.getCanonicalName());
+		return this.isQuoted ? this.text : this.text.toLowerCase(Locale.ENGLISH);
 	}
 
 	@Override
@@ -122,12 +113,30 @@ public class Identifier implements Comparable<Identifier> {
 
 	@Override
 	public int hashCode() {
-		return this.isQuoted() ? this.text.hashCode() : this.text.toLowerCase(Locale.ENGLISH).hashCode();
+		return this.isQuoted ? this.text.hashCode() : this.text.toLowerCase(Locale.ENGLISH).hashCode();
 	}
 
 	@Override
 	public String toString() {
 		return this.render();
+	}
+
+	public static boolean areEqual(Identifier id1, Identifier id2) {
+		if (id1 == null) {
+			return id2 == null;
+		}
+		else {
+			return id1.equals(id2);
+		}
+	}
+
+	public static Identifier quote(Identifier identifier) {
+		return identifier.isQuoted() ? identifier : Identifier.toIdentifier(identifier.getText(), true);
+	}
+
+	@Override
+	public int compareTo(Identifier o) {
+		return this.getCanonicalName().compareTo(o.getCanonicalName());
 	}
 
 }

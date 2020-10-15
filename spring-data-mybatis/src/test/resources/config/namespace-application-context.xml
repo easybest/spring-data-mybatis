@@ -7,14 +7,20 @@
 
 	<import resource="../infrastructure.xml"/>
 
+	<mybatis:mapping
+			entity-base-packages="org.springframework.data.mybatis.domain.sample"
+			sql-session-template-ref="sqlSessionTemplate"/>
 	<mybatis:repositories
 			base-package="org.springframework.data.mybatis.repository.sample"/>
 	<mybatis:auditing auditor-aware-ref="auditorAware"
 					  sql-session-template-ref="sqlSessionTemplate"/>
+
 	<bean id="auditorAware"
 		  class="org.springframework.data.mybatis.audit.TestAuditorAware"/>
-	<!-- Register custom DAO implementation explicitly -->
-	<bean id="userRepositoryImpl"
-		  class="org.springframework.data.mybatis.repository.sample.ShopRepositoryImpl"/>
 
+	<!-- Register custom DAO implementation explicitly -->
+	<bean id="shopRepositoryImpl"
+		  class="org.springframework.data.mybatis.repository.sample.ShopRepositoryImpl"/>
+	<bean id="userRepositoryImpl"
+		  class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl"/>
 </beans>

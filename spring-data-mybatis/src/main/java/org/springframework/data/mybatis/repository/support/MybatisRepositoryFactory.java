@@ -24,13 +24,11 @@ import org.mybatis.spring.SqlSessionTemplate;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.mybatis.dialect.Dialect;
 import org.springframework.data.mybatis.mapping.MybatisMappingContext;
+import org.springframework.data.mybatis.precompiler.MybatisQueryPrepareProcessor;
 import org.springframework.data.mybatis.repository.MybatisExampleRepository;
 import org.springframework.data.mybatis.repository.query.EscapeCharacter;
 import org.springframework.data.mybatis.repository.query.MybatisQueryLookupStrategy;
-import org.springframework.data.mybatis.repository.query.MybatisQueryPrepareProcessor;
-import org.springframework.data.mybatis.repository.query.MybatisRepositoryPrepareProcessor;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.querydsl.EntityPathResolver;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
@@ -58,19 +56,12 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
 	private final MybatisMappingContext mappingContext;
 
-	private final SqlSessionTemplate sqlSessionTemplate;
-
-	private final Dialect dialect;
-
 	private EntityPathResolver entityPathResolver;
 
 	private EscapeCharacter escapeCharacter = EscapeCharacter.DEFAULT;
 
-	public MybatisRepositoryFactory(MybatisMappingContext mappingContext, SqlSessionTemplate sqlSessionTemplate,
-			Dialect dialect) {
+	public MybatisRepositoryFactory(MybatisMappingContext mappingContext) {
 		this.mappingContext = mappingContext;
-		this.sqlSessionTemplate = sqlSessionTemplate;
-		this.dialect = dialect;
 		this.entityPathResolver = SimpleEntityPathResolver.INSTANCE;
 
 		this.addRepositoryProxyPostProcessor((factory, repositoryInformation) -> {
@@ -79,11 +70,7 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 			}
 		});
 
-		this.addRepositoryProxyPostProcessor(
-				new MybatisRepositoryPrepareProcessor(mappingContext, sqlSessionTemplate.getConfiguration(), dialect));
-		this.addQueryCreationListener(
-				new MybatisQueryPrepareProcessor(mappingContext, sqlSessionTemplate.getConfiguration(), dialect));
-
+		this.addQueryCreationListener(new MybatisQueryPrepareProcessor(mappingContext));
 	}
 
 	private static boolean hasMethodReturningStream(Class<?> repositoryClass) {
@@ -107,7 +94,8 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 
 	@Override
 	protected final MybatisRepositoryImplementation<?, ?> getTargetRepository(RepositoryInformation metadata) {
-		MybatisRepositoryImplementation<?, ?> repository = this.getTargetRepository(metadata, this.sqlSessionTemplate);
+		MybatisRepositoryImplementation<?, ?> repository = this.getTargetRepository(metadata,
+				this.mappingContext.getSqlSessionTemplate());
 		repository.setEscapeCharacter(this.escapeCharacter);
 		return repository;
 	}
@@ -138,8 +126,8 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable QueryLookupStrategy.Key key,
 			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		return Optional.of(MybatisQueryLookupStrategy.create(this.sqlSessionTemplate, this.mappingContext, key,
-				evaluationContextProvider, this.escapeCharacter));
+		return Optional.of(MybatisQueryLookupStrategy.create(this.mappingContext, key, evaluationContextProvider,
+				this.escapeCharacter));
 	}
 
 	@Override
@@ -160,8 +148,7 @@ public class MybatisRepositoryFactory extends RepositoryFactorySupport {
 					.getEntityInformation(metadata.getDomainType());
 
 			Object querydslFragment = this.getTargetRepositoryViaReflection(QuerydslMybatisPredicateExecutor.class,
-					entityInformation, this.entityPathResolver, this.mappingContext, this.sqlSessionTemplate,
-					this.dialect);
+					entityInformation, this.entityPathResolver, this.mappingContext);
 
 			fragments = fragments.append(RepositoryFragment.implemented(querydslFragment));
 		}

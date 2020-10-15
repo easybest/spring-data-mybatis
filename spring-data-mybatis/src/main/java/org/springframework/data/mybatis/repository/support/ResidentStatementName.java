@@ -37,9 +37,29 @@ public final class ResidentStatementName {
 	public static final String RESULT_MAP = PREFIX + "result_map";
 
 	/**
+	 * For <code>__basic_result_map</code>.
+	 */
+	public static final String BASIC_RESULT_MAP = PREFIX + "basic_result_map";
+
+	/**
 	 * For <code>__result_map_</code>.
 	 */
-	public static final String RESULT_MAP_PREFIX = PREFIX + "__result_map_";
+	public static final String RESULT_MAP_PREFIX = PREFIX + "result_map_";
+
+	/**
+	 * For <code>__basic_column_list</code>.
+	 */
+	public static final String BASIC_COLUMN_LIST = PREFIX + "basic_column_list";
+
+	/**
+	 * For <code>__from</code>.
+	 */
+	public static final String FROM = PREFIX + "from";
+
+	/**
+	 * For <code>__select</code>.
+	 */
+	public static final String SELECT = PREFIX + "select";
 
 	/**
 	 * For <code>__get_by_id</code>.
@@ -55,6 +75,11 @@ public final class ResidentStatementName {
 	 * For <code>__count_all</code>.
 	 */
 	public static final String COUNT_ALL = PREFIX + "count_all";
+
+	/**
+	 * For <code>__delete</code>.
+	 */
+	public static final String DELETE = PREFIX + "delete";
 
 	/**
 	 * For <code>__delete_by_id</code>.
@@ -190,6 +215,16 @@ public final class ResidentStatementName {
 	 * For <code>__base_column_list</code>.
 	 */
 	public static final String BASE_COLUMN_LIST = PREFIX + "base_column_list";
+
+	/**
+	 * For <code>__all_column_list</code>.
+	 */
+	public static final String ALL_COLUMN_LIST = PREFIX + "all_column_list";
+
+	/**
+	 * For <code>__column_list</code>.
+	 */
+	public static final String COLUMN_LIST = PREFIX + "column_list";
 
 	public static String statementName(String namespace, String statement) {
 		return namespace + '.' + statement;

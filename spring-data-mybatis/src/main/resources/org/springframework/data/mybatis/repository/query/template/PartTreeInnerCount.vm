@@ -1,0 +1,42 @@
+<select id="${innerStatementName}" resultType="long">
+    #if($limiting)
+        select count(*) from (
+        #if($SQLServer2005)
+            with query as (select inner_query.*, row_number() over (
+            <if test="__sort != null">
+                <include refid="__standard_sort"/>
+            </if>
+            <if test="__sort == null">order by current_timestamp</if>
+            ) as __mybatis_row_nr__ from ( select * from <include refid="__from"/>
+            <where>
+                #parse("org/springframework/data/mybatis/repository/query/template/PartTreeCondition.vm")
+            </where>
+            ) inner_query ) select * from query where __mybatis_row_nr__ &gt; #{ __offset } and __mybatis_row_nr__ &lt;= #{ __offsetEnd }
+        #elseif($SQLServer2012)
+            <if test="__sort != null">
+                select * from <include refid="__from"/>
+                <where>
+                    #parse("org/springframework/data/mybatis/repository/query/template/PartTreeCondition.vm")
+                </where>
+                <include refid="__standard_sort"/>
+                offset #{__offset} rows fetch next #{__pageSize} rows only
+            </if>
+            <if test="__sort == null">
+                with query as ( select inner_query.*, row_number() over (order by current_timestamp ) as __mybatis_row_nr__ from ( select * from <include refid="__from"/>
+                <where>
+                    #parse("org/springframework/data/mybatis/repository/query/template/PartTreeCondition.vm")
+                </where>
+                ) inner_query ) select * from query where __mybatis_row_nr__ &gt; #{ __offset } and __mybatis_row_nr__ &lt;= #{ __offsetEnd }
+            </if>
+        #else
+            #LimitHandler($rowSelection)
+                select ${columns} from <include refid="__from"/>
+                <where>#parse("org/springframework/data/mybatis/repository/query/template/PartTreeCondition.vm")</where>
+            #end
+        ) __a
+        #end
+    #else
+        select ${columns} from <include refid="__from"/>
+        <where>#parse("org/springframework/data/mybatis/repository/query/template/PartTreeCondition.vm")</where>
+    #end
+</select>

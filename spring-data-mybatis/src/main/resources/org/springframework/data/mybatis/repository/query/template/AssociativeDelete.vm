@@ -1,0 +1,11 @@
+<delete id="${statementName}" parameterType="map">
+    delete ${association.joinTable.table}
+    <where>
+        #foreach($joinColumn in $association.joinTable.localJoinColumns)
+            <if test="${joinColumn.local.name.text} != null"> and ${joinColumn.local.name.render($dialect)} = #{ ${joinColumn.local.name.text} }</if>
+        #end
+        #foreach($joinColumn in $association.joinTable.foreignJoinColumns)
+            <if test="${joinColumn.local.name.text} != null"> and ${joinColumn.local.name.render($dialect)} = #{ ${joinColumn.local.name.text} }</if>
+        #end
+    </where>
+</delete>

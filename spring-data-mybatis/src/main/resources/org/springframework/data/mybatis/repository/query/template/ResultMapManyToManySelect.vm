@@ -1,0 +1,15 @@
+<select id="${statementName}" parameterType="map" resultMap="${resultMap}">
+    <include refid="__select"/>
+    left outer join ${association.joinTable.table} ${util.quote($association.joinTable.tableAlias)} on
+    #foreach($joinColumn in $association.joinTable.foreignJoinColumns)
+        #if(!$foreach.first) and #end
+        ${util.quote($association.joinTable.tableAlias)}.${joinColumn.local.name.render($dialect)}
+        = ${util.quote($association.joinTable.foreignDomain.tableAlias)}.${joinColumn.foreign.name.render($dialect)}
+    #end
+    where
+    #foreach($joinColumn in $association.joinTable.localJoinColumns)
+        #if(!$foreach.first) and #end
+        ${util.quote($association.joinTable.tableAlias)}.${joinColumn.local.name.render($dialect)}
+        = #{ ${joinColumn.foreign.name.text} }
+    #end
+</select>

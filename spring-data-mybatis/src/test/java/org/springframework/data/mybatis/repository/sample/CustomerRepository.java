@@ -60,7 +60,7 @@ public interface CustomerRepository extends MybatisRepository<Customer, Name> {
 
 	boolean existsByNameLastname(String lastname);
 
-	@Query("select firstname from t_customer where lastname = ?1")
+	@Query("select firstname from customer where lastname = ?1")
 	List<String> findFirstnamesByLastname(String lastname);
 
 	List<Customer> findAllByOrderByNameLastnameAsc();
