@@ -17,20 +17,17 @@ package org.springframework.data.mybatis.domain.sample;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
-import javax.persistence.OrderBy;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -43,6 +40,8 @@ import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mybatis.annotation.Fetch;
+import org.springframework.data.mybatis.annotation.FetchMode;
 
 /**
  * .
@@ -50,10 +49,10 @@ import org.springframework.data.annotation.LastModifiedDate;
  * @author JARVIS SONG
  */
 @Entity
-@Table(name = "customer")
+@Table(name = "employee")
 @Data
 @NoArgsConstructor
-public class Customer implements Serializable {
+public class Employee implements Serializable {
 
 	@EmbeddedId
 	private Name name;
@@ -70,6 +69,9 @@ public class Customer implements Serializable {
 
 	@Lob
 	private byte[] binaryData;
+
+	@Embedded
+	private Address address;
 
 	@Version
 	private Long version;
@@ -92,21 +94,16 @@ public class Customer implements Serializable {
 	@Column(name = "last_modified_date")
 	private Timestamp lastModifiedDate;
 
-	@OrderBy("name desc")
-	@ManyToMany(fetch = FetchType.EAGER)
-	@JoinTable(name = "customer_goods",
-			joinColumns = { @JoinColumn(name = "customer_firstname", referencedColumnName = "firstname"),
-					@JoinColumn(name = "customer_lastname", referencedColumnName = "lastname") },
-			inverseJoinColumns = @JoinColumn(name = "goods_id", referencedColumnName = "id"))
-	private List<Goods> goods = Collections.emptyList();
+	@ManyToOne
+	@JoinColumn(name = "dept_id")
+	private Department department;
 
-	public Customer(String firstname, String lastname) {
-		this.name = new Name(firstname, lastname);
-	}
+	@Fetch(FetchMode.JOIN)
+	@OneToOne(mappedBy = "employee")
+	private User user;
 
-	public Customer(String firstname, String lastname, String emailAddress) {
+	public Employee(String firstname, String lastname) {
 		this.name = new Name(firstname, lastname);
-		this.emailAddress = emailAddress;
 	}
 
 	public enum Gender {

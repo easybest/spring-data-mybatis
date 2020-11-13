@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.repository.sample;
+package org.springframework.data.mybatis.mapping.model;
 
-import org.springframework.data.mybatis.domain.sample.Category;
-import org.springframework.data.mybatis.repository.MybatisRepository;
+import java.io.Serializable;
 
 /**
- * Repository interface for {@code Category}.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
+ * @since 2.0.2
  */
-public interface CategoryRepository extends MybatisRepository<Category, Long> {
+public abstract class Connector implements Serializable {
 
 }

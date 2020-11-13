@@ -36,7 +36,7 @@ import org.springframework.lang.Nullable;
  * @since 2.0.1
  */
 @MappedSuperclass
-public abstract class AbstractPersistable<PK extends Serializable> implements Persistable<PK> {
+public abstract class AbstractPersistable<PK extends Serializable> implements Persistable<PK>, Serializable {
 
 	private static final long serialVersionUID = -6431424829764207156L;
 

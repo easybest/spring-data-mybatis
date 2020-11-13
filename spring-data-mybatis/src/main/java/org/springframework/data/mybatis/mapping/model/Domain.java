@@ -205,31 +205,19 @@ public class Domain implements Serializable {
 				.filter(p -> !p.isIdProperty() && !p.isAssociation() && p.isEmbeddable())
 				.collect(Collectors.toMap(p -> p, p -> {
 					Domain domain = new Domain(this.mappingContext, p.getType());
-					return new Embedding(p, this, domain);
+					// return new Embedding(p, this, domain);
+					return new Association(p, this, domain);
 				})));
 	}
 
 	private void initializeAssociations() {
 
 		this.associations.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> p.isAnnotationPresent(OneToOne.class))
-				.collect(Collectors.toMap(p -> p, p -> new OneToOneAssociation(p, this,
-						this.mappingContext.getRequiredDomain(p.getActualType())))));
+				.filter(p -> p.isAnnotationPresent(OneToOne.class) || p.isAnnotationPresent(ManyToOne.class)
+						|| p.isAnnotationPresent(OneToMany.class) || p.isAnnotationPresent(ManyToMany.class))
+				.collect(Collectors.toMap(p -> p,
+						p -> new Association(p, this, this.mappingContext.getRequiredDomain(p.getActualType())))));
 
-		this.associations.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> p.isAnnotationPresent(ManyToOne.class))
-				.collect(Collectors.toMap(p -> p, p -> new ManyToOneAssociation(p, this,
-						this.mappingContext.getRequiredDomain(p.getActualType())))));
-
-		this.associations.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> p.isAnnotationPresent(OneToMany.class))
-				.collect(Collectors.toMap(p -> p, p -> new OneToManyAssociation(p, this,
-						this.mappingContext.getRequiredDomain(p.getActualType())))));
-
-		this.associations.putAll(StreamUtils.createStreamFromIterator(this.entity.iterator())
-				.filter(p -> p.isAnnotationPresent(ManyToMany.class))
-				.collect(Collectors.toMap(p -> p, p -> new ManyToManyAssociation(p, this,
-						this.mappingContext.getRequiredDomain(p.getActualType())))));
 	}
 
 	private void initializeNormalColumns() {

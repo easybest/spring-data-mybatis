@@ -22,44 +22,29 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import org.springframework.data.mybatis.annotation.Fetch;
-import org.springframework.data.mybatis.annotation.FetchMode;
-import org.springframework.data.mybatis.domain.Audit;
+import org.springframework.data.mybatis.domain.AbstractPersistable;
 
 /**
- * Goods, for test case use.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
  */
 @Entity
-@Table(name = "goods")
+@Table(name = "department")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Goods extends Audit<Long, Long> {
+public class Department extends AbstractPersistable<Long> {
 
 	private String name;
 
-	private Integer inventory;
-
-	private String brand;
-
-	@Fetch(FetchMode.JOIN)
 	@ManyToOne
-	@JoinColumn(name = "category_id", referencedColumnName = "id")
-	private Category category;
+	@JoinColumn(name = "company_id")
+	private Company company;
 
-	@Fetch(FetchMode.SELECT)
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "shop_id", referencedColumnName = "id")
-	private Shop shop;
-
-	public Goods(String name) {
-		this.name = name;
-	}
+	@JoinColumn(name = "superior_id")
+	private Department superior;
 
 }

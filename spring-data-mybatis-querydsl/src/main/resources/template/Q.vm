@@ -57,11 +57,13 @@ public class ${entity.queryClassName} extends org.springframework.data.mybatis.q
         #end
         #if($prop.toOne)
             #set($association = $prop.association)
-            #foreach($local in $association.locals)
-                public final ${local.pathType}#if($local.needPattern)<${local.javaType}>#end ${local.name} = create${local.pathFactory}("${local.name}"#if($local.needPattern), ${local.javaType}.class#end);
+            #if($association && $association.property)
+                #foreach($local in $association.locals)
+                    public final ${local.pathType}#if($local.needPattern)<${local.javaType}>#end ${local.name} = create${local.pathFactory}("${local.name}"#if($local.needPattern), ${local.javaType}.class#end);
+                #end
+                public final com.querydsl.sql.ForeignKey<${association.property.queryJavaType}> ${association.property.name}FK = createForeignKey(Arrays.asList(#foreach($local in $association.locals)#if(!$foreach.first), #end${local.name}#end),Arrays.asList(#foreach($foreign in $association.foreigns)#if(!$foreach.first), #end"${foreign.columnName}"#end));
+                public final ${association.property.queryJavaType} ${association.property.name} = new ${association.property.queryJavaType}("${association.property.name}");
             #end
-            public final com.querydsl.sql.ForeignKey<${association.property.queryJavaType}> ${association.property.name}FK = createForeignKey(Arrays.asList(#foreach($local in $association.locals)#if(!$foreach.first), #end${local.name}#end),Arrays.asList(#foreach($foreign in $association.foreigns)#if(!$foreach.first), #end"${foreign.columnName}"#end));
-            public final ${association.property.queryJavaType} ${association.property.name} = new ${association.property.queryJavaType}("${association.property.name}");
         #end
     #end
 
@@ -88,7 +90,9 @@ public class ${entity.queryClassName} extends org.springframework.data.mybatis.q
             #end
             #if($prop.toOne)
                 #set($association = $prop.association)
-                paths.add(bean(${association.property.javaType}.class, ${association.property.name}.all()).as("${association.property.name}"));
+                #if($association && $association.property)
+                    paths.add(bean(${association.property.javaType}.class, ${association.property.name}.all()).as("${association.property.name}"));
+                #end
             #end
         #end
         Expression[] expressions = paths.toArray(new Expression[paths.size()]);
@@ -101,7 +105,9 @@ public class ${entity.queryClassName} extends org.springframework.data.mybatis.q
         #foreach($prop in $entity.properties)
             #if($prop.toOne)
                 #set($association = $prop.association)
-                .leftJoin(${association.property.name}FK, ${association.property.name})
+                #if($association && $association.property)
+                    .leftJoin(${association.property.name}FK, ${association.property.name})
+                #end
             #end
         #end
         ;

@@ -19,8 +19,8 @@
 		  class="org.springframework.data.mybatis.audit.TestAuditorAware"/>
 
 	<!-- Register custom DAO implementation explicitly -->
-	<bean id="shopRepositoryImpl"
-		  class="org.springframework.data.mybatis.repository.sample.ShopRepositoryImpl"/>
-	<bean id="userRepositoryImpl"
-		  class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl"/>
+<!--	<bean id="shopRepositoryImpl"-->
+<!--		  class="org.springframework.data.mybatis.repository.sample.ShopRepositoryImpl"/>-->
+<!--	<bean id="userRepositoryImpl"-->
+<!--		  class="org.springframework.data.mybatis.repository.sample.UserRepositoryImpl"/>-->
 </beans>

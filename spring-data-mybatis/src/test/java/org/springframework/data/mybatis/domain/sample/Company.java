@@ -15,32 +15,44 @@
  */
 package org.springframework.data.mybatis.domain.sample;
 
+import java.io.Serializable;
+import java.util.Collection;
+
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
+import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import org.springframework.data.mybatis.domain.Audit;
-
 /**
- * Goods category, for test case use.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
  */
 @Entity
-@Table(name = "category")
+@Table(name = "company")
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class Category extends Audit<Long, Long> {
+public class Company implements Serializable {
 
+	private static final long serialVersionUID = 1882706253211351778L;
+
+	@Id
 	private String name;
 
-	public Category(String name) {
-		this.name = name;
-	}
+	@Embedded
+	@AttributeOverrides({ @AttributeOverride(name = "streetNo", column = @Column(name = "street_num")) })
+	private Address address;
+
+	@OrderBy("name asc")
+	@OneToMany(mappedBy = "company", targetEntity = Department.class)
+	private Collection<Department> departments;
 
 }

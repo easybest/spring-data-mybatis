@@ -44,7 +44,7 @@
 		<revision>2.0.2.BUILD-SNAPSHOT</revision>
 		<disable.checks>false</disable.checks>
 		<main.basedir>${basedir}</main.basedir>
-		<spring-javaformat.version>0.0.24</spring-javaformat.version>
+		<spring-javaformat.version>0.0.25</spring-javaformat.version>
 		<nohttp-checkstyle.version>0.0.5.RELEASE</nohttp-checkstyle.version>
 
 		<build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>

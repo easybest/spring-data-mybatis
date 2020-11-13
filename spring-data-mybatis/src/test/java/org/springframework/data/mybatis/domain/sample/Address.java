@@ -18,12 +18,14 @@ package org.springframework.data.mybatis.domain.sample;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Embeddable
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class Address {
 
 	private String country;
@@ -34,12 +36,5 @@ public class Address {
 
 	@Column(name = "street_number")
 	private String streetNo;
-
-	public Address(String country, String city, String streetName, String streetNo) {
-		this.country = country;
-		this.city = city;
-		this.streetName = streetName;
-		this.streetNo = streetNo;
-	}
 
 }

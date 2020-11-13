@@ -91,7 +91,9 @@ public class PrimaryKey implements Serializable {
 			Column column = new Column(domain, idProperty);
 			column.setPrimaryKey(true);
 			this.columns.put(column.getName(), column);
-			this.processGeneratedPrimaryKey(mappingContext, idProperty, domain.getTable(), column);
+			if (this.isGeneratedKeys()) {
+				this.processGeneratedPrimaryKey(mappingContext, idProperty, domain.getTable(), column);
+			}
 		}
 	}
 
@@ -114,6 +116,9 @@ public class PrimaryKey implements Serializable {
 	private void processGeneratedPrimaryKey(MybatisMappingContext mappingContext, MybatisPersistentProperty property,
 			Table table, Column column) {
 		GeneratedValue gv = property.findAnnotation(GeneratedValue.class);
+		if (null == gv) {
+			return;
+		}
 		Dialect dialect = mappingContext.getDialect();
 		if (gv.strategy() == GenerationType.IDENTITY || (gv.strategy() == GenerationType.AUTO
 				&& "identity".equals(dialect.getNativeIdentifierGeneratorStrategy()))) {
