@@ -22,7 +22,6 @@ import org.springframework.data.mybatis.repository.MybatisRepository;
  * .
  *
  * @author JARVIS SONG
- * @since 2.0.2
  */
 public interface RoleRepository extends MybatisRepository<Role, Long> {
 

@@ -15,11 +15,12 @@
  */
 package org.springframework.data.mybatis.domain.sample;
 
+import java.util.List;
+
 import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.ManyToMany;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import org.springframework.data.mybatis.domain.AbstractPersistable;
@@ -28,22 +29,16 @@ import org.springframework.data.mybatis.domain.AbstractPersistable;
  * .
  *
  * @author JARVIS SONG
- * @since 2.0.2
  */
 @Entity
-@Table(name = "role")
+//@Table(name = "role")
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 public class Role extends AbstractPersistable<Long> {
 
 	private String name;
 
-	// @ManyToMany(mappedBy = "roles", cascade = CascadeType.ALL)
-	// private List<User> users;
-
-	public Role(String name) {
-		this.name = name;
-	}
+	@ManyToMany(mappedBy = "roles")
+	private List<User> users;
 
 }

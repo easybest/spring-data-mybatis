@@ -15,18 +15,15 @@
  */
 package org.springframework.data.mybatis.repository.sample;
 
-import java.util.List;
-
-import org.springframework.data.mybatis.domain.sample.Shop;
+import org.springframework.data.mybatis.domain.sample.Employee;
+import org.springframework.data.mybatis.domain.sample.Name;
+import org.springframework.data.mybatis.repository.MybatisRepository;
 
 /**
- * Simple interface for custom methods on the repository for {@code User}s.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.0
  */
-public interface ShopRepositoryCustom {
-
-	List<Shop> findByCustom(Long... ids);
+public interface EmployeeRepository extends MybatisRepository<Employee, Name> {
 
 }

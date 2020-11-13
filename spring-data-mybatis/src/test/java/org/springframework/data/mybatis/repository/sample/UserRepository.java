@@ -17,15 +17,12 @@ package org.springframework.data.mybatis.repository.sample;
 
 import org.springframework.data.mybatis.domain.sample.User;
 import org.springframework.data.mybatis.repository.MybatisRepository;
-import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 
 /**
  * .
  *
  * @author JARVIS SONG
- * @since 2.0.2
  */
-public interface UserRepository
-		extends MybatisRepository<User, Long>, UserRepositoryCustom, QuerydslPredicateExecutor<User> {
+public interface UserRepository extends MybatisRepository<User, Long> {
 
 }

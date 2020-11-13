@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.mapping.model;
+package org.springframework.data.mybatis.repository.sample;
 
-import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+import org.springframework.data.mybatis.domain.sample.Department;
+import org.springframework.data.mybatis.repository.MybatisRepository;
 
 /**
  * .
  *
  * @author JARVIS SONG
- * @since 2.0.2
  */
-public class Embedding extends Association {
-
-	private static final long serialVersionUID = 6300615269922822952L;
-
-	public Embedding(MybatisPersistentProperty sourceProperty, Domain self, Domain target) {
-		super(sourceProperty, self, target);
-	}
+public interface DepartmentRepository extends MybatisRepository<Department, Long> {
 
 }

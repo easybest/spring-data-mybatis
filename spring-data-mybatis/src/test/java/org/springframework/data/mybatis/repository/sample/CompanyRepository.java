@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.data.mybatis.mapping.model;
+package org.springframework.data.mybatis.repository.sample;
 
-import java.io.Serializable;
-
-import org.springframework.data.mybatis.mapping.MybatisPersistentProperty;
+import org.springframework.data.mybatis.domain.sample.Company;
+import org.springframework.data.mybatis.repository.MybatisRepository;
 
 /**
  * .
  *
  * @author JARVIS SONG
- * @since 2.0.2
  */
-public class OneToOneAssociation extends ManyToOneAssociation implements Serializable {
-
-	private static final long serialVersionUID = 4730040714416090697L;
-
-	public OneToOneAssociation(MybatisPersistentProperty property, Domain self, Domain target) {
-		super(property, self, target);
-	}
+public interface CompanyRepository extends MybatisRepository<Company, String> {
 
 }

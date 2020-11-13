@@ -51,11 +51,34 @@
 #end
 <sql id="${statementName}">
     <trim suffixOverrides=",">
-        #ColumnList($domain $domain)
-        #foreach($association in ${domain.associations})
-            #if($association.toOne && $association.join)
-                #ColumnList(${association.target} $domain ${association.property.name})
+        ## primary key
+        #if($domain.primaryKey)
+            #foreach($entry in $domain.primaryKey.columns.entrySet())
+                #set($column = $entry.value)
+                ${util.quote($domain.tableAlias)}.${column.name.render($dialect)} as ${column.name.render($dialect)},
             #end
         #end
+        ## normal columns
+        #foreach($entry in $domain.normalColumns.entrySet())
+            #set($column = $entry.value)
+            ${util.quote($domain.tableAlias)}.${column.name.render($dialect)} as ${column.name.render($dialect)},
+        #end
+        ## embedding columns
+        #foreach($entry in $domain.associations.entrySet())
+            #set($association = $entry.value)
+            #if($association.embedding)
+                #foreach($embeddingEntry in $association.target.normalColumns.entrySet())
+                    #set($column = $embeddingEntry.value)
+                    #set($columnName = $association.getEmbeddingOverrideColumn($column.name).render($dialect))
+                    ${util.quote($domain.tableAlias)}.$columnName as $columnName,
+                #end
+            #end
+        #end
+##        #ColumnList($domain $domain)
+##        #foreach($association in ${domain.associations})
+##            #if($association.toOne && $association.join)
+##                #ColumnList(${association.target} $domain ${association.property.name})
+##            #end
+##        #end
     </trim>
 </sql>

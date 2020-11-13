@@ -15,68 +15,47 @@
  */
 package org.springframework.data.mybatis.domain.sample;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import org.springframework.data.mybatis.annotation.Fetch;
-import org.springframework.data.mybatis.annotation.FetchMode;
 import org.springframework.data.mybatis.domain.AbstractPersistable;
 
 /**
- * Sample for User.
+ * .
  *
  * @author JARVIS SONG
- * @since 2.0.1
  */
 @Entity
 @Table(name = "user")
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 public class User extends AbstractPersistable<Long> {
 
-	private String username;
+	private String name;
 
-	private String email;
+	private String password;
 
-	@Fetch(FetchMode.JOIN)
-	@ManyToOne(cascade = CascadeType.ALL)
-	private Person person;
+	@OneToOne
+	@JoinColumns({ @JoinColumn(name = "employee_firstname", referencedColumnName = "firstname"),
+			@JoinColumn(name = "employee_lastname", referencedColumnName = "lastname") })
+	private Employee employee;
 
-	@OrderBy
-	@ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@OrderBy("name asc")
+	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
 	private Set<Role> roles;
-
-	public User(String username, String email) {
-		this.username = username;
-		this.email = email;
-	}
-
-	public void addRoles(Role... roles) {
-		if (null == roles || roles.length == 0) {
-			return;
-		}
-		if (null == this.roles) {
-			this.roles = new HashSet<>();
-		}
-		this.roles.addAll(Arrays.asList(roles));
-	}
 
 }

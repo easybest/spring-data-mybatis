@@ -113,19 +113,24 @@ public class Column implements Serializable {
 	}
 	private final Domain owner;
 
-	private final MybatisPersistentProperty property;
+	private MybatisPersistentProperty property;
 
-	private final String propertyName;
+	private String propertyName;
 
 	private Identifier name;
 
-	private final JdbcType jdbcType;
+	private JdbcType jdbcType;
 
 	protected Class<?> javaType;
 
 	protected Class<?> typeHandler;
 
 	private boolean primaryKey = false;
+
+	public Column(Domain domain, Identifier name) {
+		this.owner = domain;
+		this.name = name;
+	}
 
 	public Column(Domain domain, MybatisPersistentProperty property) {
 		this(domain, property, property.getName());
@@ -284,6 +289,26 @@ public class Column implements Serializable {
 
 	public void setPrimaryKey(boolean primaryKey) {
 		this.primaryKey = primaryKey;
+	}
+
+	public void setProperty(MybatisPersistentProperty property) {
+		this.property = property;
+	}
+
+	public void setPropertyName(String propertyName) {
+		this.propertyName = propertyName;
+	}
+
+	public void setJdbcType(JdbcType jdbcType) {
+		this.jdbcType = jdbcType;
+	}
+
+	public void setJavaType(Class<?> javaType) {
+		this.javaType = javaType;
+	}
+
+	public void setTypeHandler(Class<?> typeHandler) {
+		this.typeHandler = typeHandler;
 	}
 
 	@Override
