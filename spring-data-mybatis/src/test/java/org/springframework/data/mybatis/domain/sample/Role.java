@@ -31,7 +31,7 @@ import org.springframework.data.mybatis.domain.AbstractPersistable;
  * @author JARVIS SONG
  */
 @Entity
-//@Table(name = "role")
+// @Table(name = "role")
 @Data
 @NoArgsConstructor
 public class Role extends AbstractPersistable<Long> {

@@ -142,29 +142,34 @@ public class SimpleMybatisPrecompiler extends AbstractMybatisPrecompiler {
 
 	private void associativeTableStatement() {
 
-//		this.domain.getAssociations().entrySet().stream().filter(entry -> entry.getValue().isManyToMany())
-//				.forEach(entry -> {
-//					ManyToManyAssociation association = (ManyToManyAssociation) entry.getValue();
-//					String namespace = "associative." + association.getJoinTable().getTable().toString();
-//					Map<String, Object> scopes = new HashMap<>();
-//					scopes.put("association", association);
-//					if (!this.checkStatement(namespace, ResidentStatementName.INSERT)) {
-//						scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.INSERT);
-//						this.compileMapper("associative/" + namespace.replace('.', '/') + "/insert", namespace,
-//								Collections.singletonList(this.render("AssociativeInsert", scopes)));
-//					}
-//
-//					if (!this.checkStatement(namespace, ResidentStatementName.UPDATE)) {
-//						scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.UPDATE);
-//						this.compileMapper("associative/" + namespace.replace('.', '/') + "/update", namespace,
-//								Collections.singletonList(this.render("AssociativeUpdate", scopes)));
-//					}
-//					if (!this.checkStatement(namespace, ResidentStatementName.DELETE)) {
-//						scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.DELETE);
-//						this.compileMapper("associative/" + namespace.replace('.', '/') + "/delete", namespace,
-//								Collections.singletonList(this.render("AssociativeDelete", scopes)));
-//					}
-//				});
+		// this.domain.getAssociations().entrySet().stream().filter(entry ->
+		// entry.getValue().isManyToMany())
+		// .forEach(entry -> {
+		// ManyToManyAssociation association = (ManyToManyAssociation) entry.getValue();
+		// String namespace = "associative." +
+		// association.getJoinTable().getTable().toString();
+		// Map<String, Object> scopes = new HashMap<>();
+		// scopes.put("association", association);
+		// if (!this.checkStatement(namespace, ResidentStatementName.INSERT)) {
+		// scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.INSERT);
+		// this.compileMapper("associative/" + namespace.replace('.', '/') + "/insert",
+		// namespace,
+		// Collections.singletonList(this.render("AssociativeInsert", scopes)));
+		// }
+		//
+		// if (!this.checkStatement(namespace, ResidentStatementName.UPDATE)) {
+		// scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.UPDATE);
+		// this.compileMapper("associative/" + namespace.replace('.', '/') + "/update",
+		// namespace,
+		// Collections.singletonList(this.render("AssociativeUpdate", scopes)));
+		// }
+		// if (!this.checkStatement(namespace, ResidentStatementName.DELETE)) {
+		// scopes.put(SCOPE_STATEMENT_NAME, ResidentStatementName.DELETE);
+		// this.compileMapper("associative/" + namespace.replace('.', '/') + "/delete",
+		// namespace,
+		// Collections.singletonList(this.render("AssociativeDelete", scopes)));
+		// }
+		// });
 
 	}
 
