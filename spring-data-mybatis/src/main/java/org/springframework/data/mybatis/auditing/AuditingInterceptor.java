@@ -15,7 +15,9 @@
  */
 package org.springframework.data.mybatis.auditing;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.Entity;
 
@@ -26,8 +28,6 @@ import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.plugin.Intercepts;
 import org.apache.ibatis.plugin.Invocation;
 import org.apache.ibatis.plugin.Signature;
-
-import org.springframework.data.mybatis.repository.support.ResidentParameterName;
 
 /**
  * Mybatis interceptor of auditing.
@@ -52,17 +52,40 @@ public class AuditingInterceptor implements Interceptor {
 
 		MappedStatement mappedStatement = (MappedStatement) invocation.getArgs()[0];
 		SqlCommandType sqlCommandType = mappedStatement.getSqlCommandType();
-		Object parameter = invocation.getArgs()[1];
-		Object entity;
-		if (parameter instanceof Map) {
-			entity = ((Map) parameter).get(ResidentParameterName.ENTITY);
+		Object rawParameter = invocation.getArgs()[1];
+		if (rawParameter instanceof Map) {
+			Set<Object> auditedEntities = new HashSet<>();
+			Map<?, ?> rawParameterMap = (Map<?, ?>) rawParameter;
+			for (Map.Entry<?, ?> entry : rawParameterMap.entrySet()) {
+				Object parameter = entry.getValue();
+				if (parameter instanceof Iterable) {
+					((Iterable<?>) parameter).forEach(entity -> {
+						if (auditedEntities.contains(entity)) {
+							return;
+						}
+						auditEntity(entity, sqlCommandType);
+						auditedEntities.add(entity);
+					});
+				}
+				else {
+					if (auditedEntities.contains(parameter)) {
+						continue;
+					}
+					auditEntity(parameter, sqlCommandType);
+					auditedEntities.add(parameter);
+				}
+			}
 		}
 		else {
-			entity = parameter;
+			auditEntity(rawParameter, sqlCommandType);
 		}
 
+		return invocation.proceed();
+	}
+
+	private void auditEntity(Object entity, SqlCommandType sqlCommandType) {
 		if (null == entity || !entity.getClass().isAnnotationPresent(Entity.class)) {
-			return invocation.proceed();
+			return;
 		}
 
 		if (sqlCommandType == SqlCommandType.INSERT) {
@@ -71,8 +94,6 @@ public class AuditingInterceptor implements Interceptor {
 		else if (sqlCommandType == SqlCommandType.UPDATE) {
 			this.handler.markModified(entity);
 		}
-
-		return invocation.proceed();
 	}
 
 }
