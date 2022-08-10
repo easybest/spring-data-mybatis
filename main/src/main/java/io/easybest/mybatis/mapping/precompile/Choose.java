@@ -16,15 +16,15 @@
 
 package io.easybest.mybatis.mapping.precompile;
 
+import java.util.List;
+
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Choose extends AbstractSegment {
 
@@ -43,6 +43,53 @@ public class Choose extends AbstractSegment {
 
 		return "<choose>" + "<when test=\"" + this.test + "\">" + this.when + "</when>" + "<otherwise>" + this.otherwise
 				+ "</otherwise>" + "</choose>";
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		protected List<? extends Segment> contents;
+
+		private String test;
+
+		private Segment when;
+
+		private Segment otherwise;
+
+		public Choose build() {
+
+			Choose instance = new Choose();
+			instance.contents = this.contents;
+			instance.test = this.test;
+			instance.when = this.when;
+			instance.otherwise = this.otherwise;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder test(final String test) {
+			this.test = test;
+			return this;
+		}
+
+		public Builder when(final Segment when) {
+			this.when = when;
+			return this;
+		}
+
+		public Builder otherwise(final Segment otherwise) {
+			this.otherwise = otherwise;
+			return this;
+		}
+
 	}
 
 }

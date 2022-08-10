@@ -19,7 +19,6 @@ package io.easybest.mybatis.mapping.precompile;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
@@ -27,7 +26,6 @@ import lombok.experimental.SuperBuilder;
  * @author Jarvis Song
  * @param <T> type
  */
-@SuperBuilder
 @Getter
 @NoArgsConstructor
 @ToString

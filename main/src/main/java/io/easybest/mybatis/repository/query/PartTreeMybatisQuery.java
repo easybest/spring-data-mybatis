@@ -156,7 +156,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 		SQL sql = SQL.of(query.toString());
 
-		Select.SelectBuilder<?, ?> builder = Select.builder().id(this.method.getStatementName());
+		Select.Builder builder = Select.builder().id(this.method.getStatementName());
 		this.resultMapOrType(builder);
 
 		builder.contents(Collections.singletonList(sql));
@@ -170,14 +170,14 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 		SQL sql = SQL.of(query.toString());
 
-		Select.SelectBuilder<?, ?> builder = Select.builder().id(this.method.getStatementName());
+		Select.Builder builder = Select.builder().id(this.method.getStatementName());
 		this.resultMapOrType(builder);
 
 		builder.contents(Collections.singletonList(
 
 				Page.of(this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(), sql)));
 
-		Select.SelectBuilder<?, ?> unpagedBuilder = Select.builder()
+		Select.Builder unpagedBuilder = Select.builder()
 				.id(ResidentStatementName.UNPAGED_PREFIX + this.method.getStatementName())
 				.contents(Collections.singletonList(sql));
 		this.resultMapOrType(unpagedBuilder);
@@ -194,7 +194,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 		SQL sql = SQL.of(query.toString());
 
-		Select.SelectBuilder<?, ?> builder = Select.builder().id(this.method.getStatementName());
+		Select.Builder builder = Select.builder().id(this.method.getStatementName());
 		this.resultMapOrType(builder);
 
 		builder.contents(Collections.singletonList(
@@ -204,7 +204,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 		Select count = Select.builder().id(this.method.getCountStatementName()).resultType("long")
 				.contents(Collections.singletonList(SQL.of(query.toString(COUNT)))).build();
 
-		Select.SelectBuilder<?, ?> unpagedBuilder = Select.builder()
+		Select.Builder unpagedBuilder = Select.builder()
 				.id(ResidentStatementName.UNPAGED_PREFIX + this.method.getStatementName())
 				.contents(Collections.singletonList(sql));
 		this.resultMapOrType(unpagedBuilder);
@@ -214,7 +214,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 		return builder.build();
 	}
 
-	private void resultMapOrType(Select.SelectBuilder<?, ?> builder) {
+	private void resultMapOrType(Select.Builder builder) {
 
 		if (this.method.getResultMap().isPresent()) {
 			builder.resultMap(this.method.getResultMap().orElse(ResidentStatementName.RESULT_MAP));
@@ -276,14 +276,13 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 		MybatisQueryCreator creator = this.createCreator();
 
-		Delete.DeleteBuilder<?, ?> builder = Delete.builder().id(this.method.getStatementName());
+		Delete.Builder builder = Delete.builder().id(this.method.getStatementName());
 
 		CriteriaQuery cq = creator.createQuery();
 
 		if (this.method.isCollectionQuery()) {
 
-			Select.SelectBuilder<?, ?> selectBuilder = Select.builder()
-					.id(QUERY_PREFIX + this.method.getStatementName());
+			Select.Builder selectBuilder = Select.builder().id(QUERY_PREFIX + this.method.getStatementName());
 
 			this.resultMapOrType(selectBuilder);
 
@@ -298,7 +297,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	private SqlDefinition selectOne() {
 
-		Select.SelectBuilder<?, ?> builder = Select.builder().id(this.method.getStatementName());
+		Select.Builder builder = Select.builder().id(this.method.getStatementName());
 		this.resultMapOrType(builder);
 
 		MybatisQueryCreator creator = this.createCreator();
@@ -336,6 +335,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 		int argCount = 0;
 
+		@SuppressWarnings({ "rawtypes" })
 		Iterable<Part> parts = () -> tree.stream().flatMap(Streamable::stream).iterator();
 
 		for (Part part : parts) {

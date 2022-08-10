@@ -18,14 +18,12 @@ package io.easybest.mybatis.mapping.precompile;
 
 import io.easybest.mybatis.dialect.Dialect;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Escape implements Segment {
 
@@ -40,6 +38,29 @@ public class Escape implements Segment {
 	public String toString() {
 
 		return this.dialect.escape(Parameter.of("entityManager.escapeCharacter.escapeCharacter").toString());
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		private Dialect dialect;
+
+		public Escape build() {
+
+			Escape instance = new Escape();
+			instance.dialect = this.dialect;
+
+			return instance;
+		}
+
+		public Builder dialect(final Dialect dialect) {
+			this.dialect = dialect;
+			return this;
+		}
+
 	}
 
 }

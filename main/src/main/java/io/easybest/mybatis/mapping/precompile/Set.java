@@ -17,18 +17,21 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import java.util.Arrays;
+import java.util.List;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Set extends AbstractSegment {
+
+	public static Builder builder() {
+		return new Builder();
+	}
 
 	public static Set of(Segment... segments) {
 		return Set.builder().contents(Arrays.asList(segments)).build();
@@ -38,6 +41,25 @@ public class Set extends AbstractSegment {
 	public String toString() {
 
 		return "<set>" + this.content() + "</set>";
+	}
+
+	public static class Builder {
+
+		private List<? extends Segment> contents;
+
+		public Set build() {
+
+			Set instance = new Set();
+			instance.contents = this.contents;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
 	}
 
 }

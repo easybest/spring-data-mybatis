@@ -40,7 +40,6 @@ import javax.persistence.Version;
 
 import io.easybest.mybatis.annotation.DatabaseDefault;
 
-import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.annotation.PersistenceCreator;
 
 /**
@@ -111,7 +110,6 @@ public class User {
 	/**
 	 * Creates a new empty instance of {@code User}.
 	 */
-	@PersistenceConstructor
 	@PersistenceCreator
 	public User() {
 		this(null, null, null);

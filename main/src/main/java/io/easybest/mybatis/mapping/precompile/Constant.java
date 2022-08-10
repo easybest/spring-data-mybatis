@@ -17,18 +17,16 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Constant implements Segment {
 
-	private String value;
+	private final String value;
 
 	public static Constant of(String value) {
 		return new Constant(value);
@@ -51,6 +49,26 @@ public class Constant implements Segment {
 	@Override
 	public String toString() {
 		return this.value;
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		private String value;
+
+		public Constant build() {
+
+			return new Constant(this.value);
+		}
+
+		public Builder value(final String value) {
+			this.value = value;
+			return this;
+		}
+
 	}
 
 }

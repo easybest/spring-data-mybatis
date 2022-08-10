@@ -16,8 +16,9 @@
 
 package io.easybest.mybatis.mapping.precompile;
 
+import java.util.List;
+
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import org.springframework.util.StringUtils;
 
@@ -26,7 +27,6 @@ import org.springframework.util.StringUtils;
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Trim extends AbstractSegment {
 
@@ -37,6 +37,10 @@ public class Trim extends AbstractSegment {
 	private String suffix;
 
 	private String suffixOverrides;
+
+	public static Builder builder() {
+		return new Builder();
+	}
 
 	@Override
 	public String toString() {
@@ -60,6 +64,56 @@ public class Trim extends AbstractSegment {
 		builder.append("</trim>");
 
 		return builder.toString();
+	}
+
+	public static class Builder {
+
+		private List<? extends Segment> contents;
+
+		private String prefix;
+
+		private String prefixOverrides;
+
+		private String suffix;
+
+		private String suffixOverrides;
+
+		public Trim build() {
+
+			Trim instance = new Trim();
+			instance.contents = this.contents;
+			instance.prefix = this.prefix;
+			instance.prefixOverrides = this.prefixOverrides;
+			instance.suffix = this.suffix;
+			instance.suffixOverrides = this.suffixOverrides;
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder prefix(final String prefix) {
+			this.prefix = prefix;
+			return this;
+		}
+
+		public Builder prefixOverrides(final String prefixOverrides) {
+			this.prefixOverrides = prefixOverrides;
+			return this;
+		}
+
+		public Builder suffix(final String suffix) {
+			this.suffix = suffix;
+			return this;
+		}
+
+		public Builder suffixOverrides(final String suffixOverrides) {
+			this.suffixOverrides = suffixOverrides;
+			return this;
+		}
+
 	}
 
 }

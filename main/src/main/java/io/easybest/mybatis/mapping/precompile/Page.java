@@ -17,17 +17,16 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import java.util.Arrays;
+import java.util.List;
 
 import io.easybest.mybatis.dialect.Dialect;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Page extends AbstractSegment {
 
@@ -50,6 +49,61 @@ public class Page extends AbstractSegment {
 		String sql = this.content();
 
 		return this.dialect.getLimitHandler().processSql(sql, this.offset, this.fetchSize, this.offsetEnd);
+
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		protected List<? extends Segment> contents;
+
+		private Segment offset;
+
+		private Segment fetchSize;
+
+		private Segment offsetEnd;
+
+		private Dialect dialect;
+
+		public Page build() {
+
+			Page instance = new Page();
+			instance.contents = this.contents;
+			instance.offset = this.offset;
+			instance.fetchSize = this.fetchSize;
+			instance.offsetEnd = this.offsetEnd;
+			instance.dialect = this.dialect;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder offset(final Segment offset) {
+			this.offset = offset;
+			return this;
+		}
+
+		public Builder fetchSize(final Segment fetchSize) {
+			this.fetchSize = fetchSize;
+			return this;
+		}
+
+		public Builder offsetEnd(final Segment offsetEnd) {
+			this.offsetEnd = offsetEnd;
+			return this;
+		}
+
+		public Builder dialect(final Dialect dialect) {
+			this.dialect = dialect;
+			return this;
+		}
 
 	}
 

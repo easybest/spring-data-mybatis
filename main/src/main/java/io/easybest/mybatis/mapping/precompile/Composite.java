@@ -17,16 +17,15 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import java.util.Arrays;
+import java.util.List;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Composite extends AbstractSegment {
 
@@ -37,6 +36,29 @@ public class Composite extends AbstractSegment {
 	@Override
 	public String toString() {
 		return this.content();
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		protected List<? extends Segment> contents;
+
+		public Composite build() {
+
+			Composite instance = new Composite();
+			instance.contents = this.contents;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
 	}
 
 }

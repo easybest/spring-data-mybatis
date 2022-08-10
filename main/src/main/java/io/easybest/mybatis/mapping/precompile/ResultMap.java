@@ -18,8 +18,8 @@ package io.easybest.mybatis.mapping.precompile;
 
 import java.util.List;
 
+import io.easybest.mybatis.repository.support.MybatisContext;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 import org.apache.ibatis.mapping.ResultFlag;
 import org.apache.ibatis.type.JdbcType;
 
@@ -31,7 +31,6 @@ import org.springframework.util.StringUtils;
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class ResultMap extends SqlDefinition {
 
@@ -44,6 +43,10 @@ public class ResultMap extends SqlDefinition {
 	private List<Association> associations;
 
 	private List<Collection> collections;
+
+	public static Builder builder() {
+		return new Builder();
+	}
 
 	@Override
 	public String toString() {
@@ -68,8 +71,8 @@ public class ResultMap extends SqlDefinition {
 		return String.format("<resultMap id=\"%s\" type=\"%s\">%s</resultMap>", this.getId(), this.getType(), builder);
 	}
 
-	@SuperBuilder
 	@Getter
+	@lombok.Builder
 	public static class Association {
 
 		private String property;
@@ -124,8 +127,8 @@ public class ResultMap extends SqlDefinition {
 
 	}
 
-	@SuperBuilder
 	@Getter
+	@lombok.Builder
 	public static class Collection {
 
 		private String property;
@@ -164,8 +167,8 @@ public class ResultMap extends SqlDefinition {
 
 	}
 
-	@SuperBuilder
 	@Getter
+	@lombok.Builder
 	public static class ResultMapping {
 
 		private String property;
@@ -206,6 +209,97 @@ public class ResultMap extends SqlDefinition {
 			}
 			builder.append("/>");
 			return builder.toString();
+		}
+
+	}
+
+	public static class Builder {
+
+		private List<? extends Segment> contents;
+
+		protected String id;
+
+		protected String databaseId;
+
+		protected List<? extends Segment> derived;
+
+		protected String parameterType = MybatisContext.class.getSimpleName();
+
+		private String type;
+
+		private String extend;
+
+		private List<ResultMapping> resultMappings;
+
+		private List<Association> associations;
+
+		private List<Collection> collections;
+
+		public ResultMap build() {
+
+			ResultMap instance = new ResultMap();
+			instance.contents = this.contents;
+			instance.id = this.id;
+			instance.databaseId = this.databaseId;
+			instance.derived = this.derived;
+			instance.parameterType = this.parameterType;
+			instance.type = this.type;
+			instance.extend = this.extend;
+			instance.resultMappings = this.resultMappings;
+			instance.associations = this.associations;
+			instance.collections = this.collections;
+
+			return instance;
+		}
+
+		public Builder type(final String type) {
+			this.type = type;
+			return this;
+		}
+
+		public Builder extend(final String extend) {
+			this.extend = extend;
+			return this;
+		}
+
+		public Builder resultMappings(final List<ResultMapping> resultMappings) {
+			this.resultMappings = resultMappings;
+			return this;
+		}
+
+		public Builder associations(final List<Association> associations) {
+			this.associations = associations;
+			return this;
+		}
+
+		public Builder collections(final List<Collection> collections) {
+			this.collections = collections;
+			return this;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder id(final String id) {
+			this.id = id;
+			return this;
+		}
+
+		public Builder databaseId(final String databaseId) {
+			this.databaseId = databaseId;
+			return this;
+		}
+
+		public Builder derived(final List<? extends Segment> derived) {
+			this.derived = derived;
+			return this;
+		}
+
+		public Builder parameterType(final String parameterType) {
+			this.parameterType = parameterType;
+			return this;
 		}
 
 	}

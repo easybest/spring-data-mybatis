@@ -16,9 +16,9 @@
 
 package io.easybest.mybatis.mapping.precompile;
 
-import lombok.Builder;
+import java.util.List;
+
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import org.springframework.util.StringUtils;
 
@@ -27,25 +27,19 @@ import org.springframework.util.StringUtils;
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Foreach extends AbstractSegment {
 
 	private String collection;
 
-	@Builder.Default
 	private String item = "item";
 
-	@Builder.Default
 	private String index = "index";
 
-	@Builder.Default
 	private String open = "(";
 
-	@Builder.Default
 	private String close = ")";
 
-	@Builder.Default
 	private String separator = ",";
 
 	@Override
@@ -74,6 +68,77 @@ public class Foreach extends AbstractSegment {
 		builder.append(this.content());
 		builder.append("</foreach>");
 		return builder.toString();
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		protected List<? extends Segment> contents;
+
+		private String collection;
+
+		private String item = "item";
+
+		private String index = "index";
+
+		private String open = "(";
+
+		private String close = ")";
+
+		private String separator = ",";
+
+		public Foreach build() {
+
+			Foreach instance = new Foreach();
+			instance.contents = this.contents;
+			instance.collection = this.collection;
+			instance.item = this.item;
+			instance.index = this.index;
+			instance.open = this.open;
+			instance.close = this.close;
+			instance.separator = this.separator;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder collection(final String collection) {
+			this.collection = collection;
+			return this;
+		}
+
+		public Builder item(final String item) {
+			this.item = item;
+			return this;
+		}
+
+		public Builder index(final String index) {
+			this.index = index;
+			return this;
+		}
+
+		public Builder open(final String open) {
+			this.open = open;
+			return this;
+		}
+
+		public Builder close(final String close) {
+			this.close = close;
+			return this;
+		}
+
+		public Builder separator(final String separator) {
+			this.separator = separator;
+			return this;
+		}
+
 	}
 
 }

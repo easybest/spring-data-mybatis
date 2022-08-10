@@ -17,6 +17,7 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import io.easybest.mybatis.auxiliary.Syntax;
@@ -25,7 +26,6 @@ import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
@@ -36,7 +36,6 @@ import org.springframework.util.CollectionUtils;
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Sorting extends AbstractSegment {
 
@@ -45,6 +44,10 @@ public class Sorting extends AbstractSegment {
 	private Set<String> connectors;
 
 	private Set<String> orders;
+
+	public static Builder builder() {
+		return new Builder();
+	}
 
 	public static Sorting of(Sort sort) {
 		return Sorting.builder().sort(sort).build();
@@ -131,6 +134,48 @@ public class Sorting extends AbstractSegment {
 		}
 
 		return builder.toString();
+	}
+
+	public static class Builder {
+
+		private List<? extends Segment> contents;
+
+		private Sort sort;
+
+		private Set<String> connectors;
+
+		private Set<String> orders;
+
+		public Sorting build() {
+
+			Sorting instance = new Sorting();
+			instance.contents = this.contents;
+			instance.sort = this.sort;
+			instance.connectors = this.connectors;
+			instance.orders = this.orders;
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder sort(final Sort sort) {
+			this.sort = sort;
+			return this;
+		}
+
+		public Builder connectors(final Set<String> connectors) {
+			this.connectors = connectors;
+			return this;
+		}
+
+		public Builder orders(final Set<String> orders) {
+			this.orders = orders;
+			return this;
+		}
+
 	}
 
 }

@@ -374,7 +374,7 @@ public abstract class QueryUtils {
 	}
 
 	@Nullable
-	@Deprecated
+	// @Deprecated
 	public static String detectAlias(String query) {
 
 		String alias = null;
@@ -488,7 +488,7 @@ public abstract class QueryUtils {
 	 * @return guaranteed to be not {@literal null}.
 	 * @deprecated use {@link DeclaredQuery#deriveCountQuery(String, String)} instead.
 	 */
-	@Deprecated
+	// @Deprecated
 	public static String createCountQueryFor(String originalQuery) {
 		return createCountQueryFor(originalQuery, null);
 	}
@@ -499,10 +499,8 @@ public abstract class QueryUtils {
 	 * @param countProjection may be {@literal null}.
 	 * @return a query String to be used a count query for pagination. Guaranteed to be
 	 * not {@literal null}.
-	 * @since 1.6
-	 * @deprecated use {@link DeclaredQuery#deriveCountQuery(String, String)} instead.
 	 */
-	@Deprecated
+	// @Deprecated
 	public static String createCountQueryFor(String originalQuery, @Nullable String countProjection) {
 
 		Assert.hasText(originalQuery, "OriginalQuery must not be null or empty!");
@@ -798,6 +796,7 @@ public abstract class QueryUtils {
 	}
 
 	@Nullable
+	@SuppressWarnings({ "unchecked" })
 	private static <T> T getAnnotationProperty(Attribute<?, ?> attribute, String propertyName, T defaultValue) {
 
 		Class<? extends Annotation> associationAnnotation = ASSOCIATION_TYPES
@@ -814,6 +813,7 @@ public abstract class QueryUtils {
 		}
 
 		Annotation annotation = AnnotationUtils.getAnnotation((AnnotatedElement) member, associationAnnotation);
+
 		return annotation == null ? defaultValue : (T) AnnotationUtils.getValue(annotation, propertyName);
 	}
 

@@ -18,6 +18,7 @@ package io.easybest.mybatis.mapping.precompile;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,6 @@ import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PropertyPath;
@@ -40,7 +40,6 @@ import static javax.persistence.criteria.Predicate.BooleanOperator.OR;
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Predicate extends AbstractSegment {
 
@@ -135,6 +134,53 @@ public class Predicate extends AbstractSegment {
 		}
 
 		return builder.toString();
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		protected List<? extends Segment> contents;
+
+		private BooleanOperator operator;
+
+		private Predicate restriction;
+
+		private Set<String> connectors;
+
+		public Predicate build() {
+
+			Predicate instance = new Predicate();
+			instance.contents = this.contents;
+			instance.operator = this.operator;
+			instance.restriction = this.restriction;
+			instance.connectors = this.connectors;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder operator(final BooleanOperator operator) {
+			this.operator = operator;
+			return this;
+		}
+
+		public Builder restriction(final Predicate restriction) {
+			this.restriction = restriction;
+			return this;
+		}
+
+		public Builder connectors(final Set<String> connectors) {
+			this.connectors = connectors;
+			return this;
+		}
+
 	}
 
 }

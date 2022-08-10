@@ -20,14 +20,12 @@ import io.easybest.mybatis.repository.support.ResidentStatementName;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
