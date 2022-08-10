@@ -17,16 +17,15 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import java.util.Arrays;
+import java.util.List;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Where extends AbstractSegment {
 
@@ -34,10 +33,33 @@ public class Where extends AbstractSegment {
 		return Where.builder().contents(Arrays.asList(segments)).build();
 	}
 
+	public static Builder builder() {
+		return new Builder();
+	}
+
 	@Override
 	public String toString() {
 
 		return "<where>" + this.content() + "</where>";
+	}
+
+	public static class Builder {
+
+		private List<? extends Segment> contents;
+
+		public Where build() {
+
+			Where where = new Where();
+			where.contents = this.contents;
+			return where;
+
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
 	}
 
 }

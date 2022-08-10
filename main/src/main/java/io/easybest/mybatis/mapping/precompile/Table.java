@@ -17,7 +17,6 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import org.springframework.util.StringUtils;
 
@@ -28,13 +27,16 @@ import static io.easybest.mybatis.mapping.precompile.SQL.ROOT_ALIAS;
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Table implements Segment {
 
 	private String alias;
 
-	private String name;
+	private final String name;
+
+	public static Builder builder() {
+		return new Builder();
+	}
 
 	public static Table of(String name) {
 		return new Table(name);
@@ -64,6 +66,31 @@ public class Table implements Segment {
 		}
 
 		return this.name;
+	}
+
+	public static class Builder {
+
+		private String alias;
+
+		private String name;
+
+		public Table build() {
+
+			Table bind = new Table(this.name);
+			bind.alias = this.alias;
+			return bind;
+		}
+
+		public Builder name(final String name) {
+			this.name = name;
+			return this;
+		}
+
+		public Builder alias(final String alias) {
+			this.alias = alias;
+			return this;
+		}
+
 	}
 
 }

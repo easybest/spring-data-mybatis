@@ -16,15 +16,15 @@
 
 package io.easybest.mybatis.mapping.precompile;
 
+import java.util.List;
+
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Interpolation extends AbstractSegment {
 
@@ -42,6 +42,37 @@ public class Interpolation extends AbstractSegment {
 	public String toString() {
 
 		return "${" + this.property + "}";
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		protected List<? extends Segment> contents;
+
+		private String property;
+
+		public Interpolation build() {
+
+			Interpolation instance = new Interpolation();
+			instance.contents = this.contents;
+			instance.property = this.property;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder property(final String property) {
+			this.property = property;
+			return this;
+		}
+
 	}
 
 }

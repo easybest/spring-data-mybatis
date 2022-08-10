@@ -189,7 +189,7 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 
 		Segment settled = this.settle(this.query);
 		String queryString = settled.toString();
-		Select.SelectBuilder<?, ?> builder = Select.builder().id(this.method.getStatementName());
+		Select.Builder builder = Select.builder().id(this.method.getStatementName());
 
 		if (this.method.getResultMap().isPresent() || SELECT_ALL_FROM.matcher(queryString.toLowerCase()).matches()) {
 			builder.resultMap(this.method.getResultMap().orElse(ResidentStatementName.RESULT_MAP));
@@ -355,7 +355,7 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 				continue;
 			}
 
-			Parameter.ParameterBuilder<?, ?> parameterBuilder = Parameter.builder()
+			Parameter.Builder parameterBuilder = Parameter.builder()
 					.property(PARAM_ADDITIONAL_VALUES_PREFIX + replacedParameter);
 			if (null != bindableParameter) {
 				parameterBuilder.javaType(bindableParameter.getType().getName())

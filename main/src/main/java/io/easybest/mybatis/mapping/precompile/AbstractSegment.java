@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import org.springframework.util.CollectionUtils;
 
@@ -31,7 +30,6 @@ import org.springframework.util.CollectionUtils;
  * @author Jarvis Song
  */
 @Getter
-@SuperBuilder
 public abstract class AbstractSegment implements Segment {
 
 	private static final String BLANK = "";

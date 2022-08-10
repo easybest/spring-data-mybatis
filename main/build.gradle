@@ -43,6 +43,10 @@ dependencies {
 	testImplementation('com.microsoft.sqlserver:mssql-jdbc:10.2.1.jre8')
 	testImplementation('com.oracle.database.jdbc:ojdbc10:19.15.0.0.1')
 	testImplementation('org.xerial:sqlite-jdbc:3.36.0.3')
+
+
+		compileOnly("com.google.code.findbugs:jsr305:3.0.2")
+	compileOnly("com.google.code.findbugs:annotations:3.0.1")
 }
 
 

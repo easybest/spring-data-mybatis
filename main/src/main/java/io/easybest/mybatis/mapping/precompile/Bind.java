@@ -16,21 +16,25 @@
 
 package io.easybest.mybatis.mapping.precompile;
 
+import java.util.List;
+
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Bind extends AbstractSegment {
 
 	private String name;
 
 	private String value;
+
+	public static Builder builder() {
+		return new Builder();
+	}
 
 	public static Bind of(String name, String value) {
 		return Bind.builder().name(name).value(value).build();
@@ -44,6 +48,40 @@ public class Bind extends AbstractSegment {
 	public String toString() {
 
 		return "<bind" + " name=\"" + this.name + "\"" + " value=\"" + this.value + "\"" + "/>";
+	}
+
+	public static class Builder {
+
+		private List<? extends Segment> contents;
+
+		private String name;
+
+		private String value;
+
+		public Bind build() {
+
+			Bind bind = new Bind();
+			bind.contents = this.contents;
+			bind.name = this.name;
+			bind.value = this.value;
+			return bind;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder name(final String name) {
+			this.name = name;
+			return this;
+		}
+
+		public Builder value(final String value) {
+			this.value = value;
+			return this;
+		}
+
 	}
 
 }

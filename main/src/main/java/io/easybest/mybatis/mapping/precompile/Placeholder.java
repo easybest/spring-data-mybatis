@@ -16,8 +16,10 @@
 
 package io.easybest.mybatis.mapping.precompile;
 
+import java.util.List;
+
+import io.easybest.mybatis.repository.support.MybatisContext;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import org.springframework.util.StringUtils;
 
@@ -27,7 +29,6 @@ import org.springframework.util.StringUtils;
  * @author Jarvis Song
  */
 @Getter
-@SuperBuilder
 public class Placeholder extends SqlDefinition {
 
 	private String message;
@@ -39,6 +40,69 @@ public class Placeholder extends SqlDefinition {
 	@Override
 	public String toString() {
 		return "<!-- " + (StringUtils.hasText(this.message) ? this.message : "UNSUPPORTED") + " -->";
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		private List<? extends Segment> contents;
+
+		protected String id;
+
+		protected String databaseId;
+
+		protected List<? extends Segment> derived;
+
+		protected String parameterType = MybatisContext.class.getSimpleName();
+
+		private String message;
+
+		public Placeholder build() {
+
+			Placeholder instance = new Placeholder();
+			instance.contents = this.contents;
+			instance.id = this.id;
+			instance.databaseId = this.databaseId;
+			instance.derived = this.derived;
+			instance.parameterType = this.parameterType;
+			instance.message = this.message;
+
+			return instance;
+		}
+
+		public Builder message(final String message) {
+			this.message = message;
+			return this;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder id(final String id) {
+			this.id = id;
+			return this;
+		}
+
+		public Builder databaseId(final String databaseId) {
+			this.databaseId = databaseId;
+			return this;
+		}
+
+		public Builder derived(final List<? extends Segment> derived) {
+			this.derived = derived;
+			return this;
+		}
+
+		public Builder parameterType(final String parameterType) {
+			this.parameterType = parameterType;
+			return this;
+		}
+
 	}
 
 }

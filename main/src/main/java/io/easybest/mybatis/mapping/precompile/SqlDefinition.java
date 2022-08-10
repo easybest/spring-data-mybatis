@@ -19,9 +19,7 @@ package io.easybest.mybatis.mapping.precompile;
 import java.util.List;
 
 import io.easybest.mybatis.repository.support.MybatisContext;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
@@ -29,7 +27,6 @@ import lombok.experimental.SuperBuilder;
  * @author Jarvis Song
  */
 @Getter
-@SuperBuilder
 public abstract class SqlDefinition extends AbstractSegment {
 
 	protected String id;
@@ -38,7 +35,6 @@ public abstract class SqlDefinition extends AbstractSegment {
 
 	protected List<? extends Segment> derived;
 
-	@Builder.Default
 	protected String parameterType = MybatisContext.class.getSimpleName();
 
 }

@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import org.springframework.util.StringUtils;
 
@@ -31,7 +30,6 @@ import org.springframework.util.StringUtils;
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Function implements Segment {
 
@@ -54,6 +52,37 @@ public class Function implements Segment {
 
 		return this.name + "(" + (null == this.parameters ? ""
 				: this.parameters.stream().filter(StringUtils::hasText).collect(Collectors.joining(","))) + ")";
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		private String name;
+
+		private List<String> parameters;
+
+		public Function build() {
+
+			Function instance = new Function();
+			instance.name = this.name;
+			instance.parameters = this.parameters;
+
+			return instance;
+		}
+
+		public Builder name(final String name) {
+			this.name = name;
+			return this;
+		}
+
+		public Builder parameters(final List<String> parameters) {
+			this.parameters = parameters;
+			return this;
+		}
+
 	}
 
 }

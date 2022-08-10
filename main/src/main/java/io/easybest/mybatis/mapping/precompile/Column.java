@@ -17,7 +17,6 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 import org.springframework.util.StringUtils;
 
@@ -28,7 +27,6 @@ import static io.easybest.mybatis.mapping.precompile.SQL.ROOT_ALIAS;
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Column implements Segment {
 
@@ -64,6 +62,36 @@ public class Column implements Segment {
 		}
 
 		return this.value;
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		private String alias;
+
+		private String value;
+
+		public Column build() {
+
+			Column instance = new Column(this.value);
+			instance.alias = this.alias;
+
+			return instance;
+		}
+
+		public Builder alias(final String alias) {
+			this.alias = alias;
+			return this;
+		}
+
+		public Builder value(final String value) {
+			this.value = value;
+			return this;
+		}
+
 	}
 
 }

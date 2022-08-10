@@ -16,9 +16,10 @@
 
 package io.easybest.mybatis.mapping.precompile;
 
+import java.util.List;
+
 import io.easybest.mybatis.repository.support.MybatisContext;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 import org.apache.ibatis.type.JdbcType;
 
 import org.springframework.util.StringUtils;
@@ -28,7 +29,6 @@ import org.springframework.util.StringUtils;
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class Parameter extends AbstractSegment {
 
@@ -84,6 +84,69 @@ public class Parameter extends AbstractSegment {
 		}
 		builder.append("}");
 		return builder.toString();
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		protected List<? extends Segment> contents;
+
+		private String property;
+
+		private String javaType;
+
+		private JdbcType jdbcType;
+
+		private Class<?> typeHandler;
+
+		private Class<?> javaTypeClass;
+
+		public Parameter build() {
+
+			Parameter instance = new Parameter();
+			instance.contents = this.contents;
+			instance.property = this.property;
+			instance.javaType = this.javaType;
+			instance.jdbcType = this.jdbcType;
+			instance.typeHandler = this.typeHandler;
+			instance.javaTypeClass = this.javaTypeClass;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder property(final String property) {
+			this.property = property;
+			return this;
+		}
+
+		public Builder javaType(final String javaType) {
+			this.javaType = javaType;
+			return this;
+		}
+
+		public Builder jdbcType(final JdbcType jdbcType) {
+			this.jdbcType = jdbcType;
+			return this;
+		}
+
+		public Builder typeHandler(final Class<?> typeHandler) {
+			this.typeHandler = typeHandler;
+			return this;
+		}
+
+		public Builder javaTypeClass(final Class<?> javaTypeClass) {
+			this.javaTypeClass = javaTypeClass;
+			return this;
+		}
+
 	}
 
 }

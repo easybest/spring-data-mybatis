@@ -20,14 +20,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class MethodInvocation implements Segment {
 
@@ -47,6 +45,45 @@ public class MethodInvocation implements Segment {
 	public String toString() {
 		return "@" + this.staticClass.getName() + "@" + this.methodName + "("
 				+ (null == this.parameters ? "" : String.join(",", this.parameters)) + ")";
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		private Class<?> staticClass;
+
+		private String methodName;
+
+		private List<String> parameters;
+
+		public MethodInvocation build() {
+
+			MethodInvocation instance = new MethodInvocation();
+			instance.staticClass = this.staticClass;
+			instance.methodName = this.methodName;
+			instance.parameters = this.parameters;
+
+			return instance;
+		}
+
+		public Builder staticClass(final Class<?> staticClass) {
+			this.staticClass = staticClass;
+			return this;
+		}
+
+		public Builder methodName(final String methodName) {
+			this.methodName = methodName;
+			return this;
+		}
+
+		public Builder parameters(final List<String> parameters) {
+			this.parameters = parameters;
+			return this;
+		}
+
 	}
 
 }

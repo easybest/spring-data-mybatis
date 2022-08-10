@@ -17,14 +17,12 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class SQL implements Segment {
 
@@ -153,7 +151,11 @@ public class SQL implements Segment {
 	 */
 	public static final SQL ROOT_ALIAS = SQL.of("__root");
 
-	private String value;
+	private final String value;
+
+	public static Builder builder() {
+		return new Builder();
+	}
 
 	public static SQL of(String value) {
 		return new SQL(value);
@@ -166,6 +168,22 @@ public class SQL implements Segment {
 	@Override
 	public String toString() {
 		return this.value;
+	}
+
+	public static class Builder {
+
+		private String value;
+
+		public SQL build() {
+
+			return new SQL(this.value);
+		}
+
+		public Builder value(final String value) {
+			this.value = value;
+			return this;
+		}
+
 	}
 
 }

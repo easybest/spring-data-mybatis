@@ -17,16 +17,15 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import java.util.Arrays;
+import java.util.List;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class If extends AbstractSegment {
 
@@ -40,6 +39,36 @@ public class If extends AbstractSegment {
 	public String toString() {
 
 		return "<if" + " test=\"" + this.test + "\"" + ">" + this.content() + "</if>";
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		protected List<? extends Segment> contents;
+
+		private String test;
+
+		public If build() {
+
+			If instance = new If();
+			instance.test = this.test;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder test(final String test) {
+			this.test = test;
+			return this;
+		}
+
 	}
 
 }

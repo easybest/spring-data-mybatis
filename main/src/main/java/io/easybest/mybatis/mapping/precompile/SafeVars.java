@@ -17,17 +17,16 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@SuperBuilder
 @Getter
 public class SafeVars extends AbstractSegment {
 
@@ -68,6 +67,53 @@ public class SafeVars extends AbstractSegment {
 		builder.append(this.content());
 		builder.append("</if>");
 		return builder.toString();
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+
+		protected List<? extends Segment> contents;
+
+		private String var;
+
+		private int stripPrefix;
+
+		private int stripSuffix;
+
+		public SafeVars build() {
+
+			SafeVars instance = new SafeVars();
+			instance.contents = this.contents;
+			instance.var = this.var;
+			instance.stripPrefix = this.stripPrefix;
+			instance.stripSuffix = this.stripSuffix;
+
+			return instance;
+		}
+
+		public Builder contents(final List<? extends Segment> contents) {
+			this.contents = contents;
+			return this;
+		}
+
+		public Builder var(final String var) {
+			this.var = var;
+			return this;
+		}
+
+		public Builder stripPrefix(final int stripPrefix) {
+			this.stripPrefix = stripPrefix;
+			return this;
+		}
+
+		public Builder stripSuffix(final int stripSuffix) {
+			this.stripSuffix = stripSuffix;
+			return this;
+		}
+
 	}
 
 }
