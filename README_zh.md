@@ -1,5 +1,7 @@
-# Spring Data MyBatis 
-[![Build Status](https://travis-ci.org/easybest/spring-data-mybatis.svg?branch=master)](https://travis-ci.org/easybest/spring-data-mybatis)   [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/spring-data-mybatis)
+# Spring Data MyBatis
+[![Java CI](https://github.com/easybest/spring-data-mybatis/actions/workflows/github-actions-ci.yml/badge.svg)](https://github.com/easybest/spring-data-mybatis/actions/workflows/github-actions-ci.yml)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.easybest/spring-data-mybatis/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.easybest/spring-data-mybatis)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-brightgreen.svg)](https://github.com/hatunet/spring-data-mybatis/blob/main/LICENSE)
 
 
 Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 应用程序变得更加容易。此模块处理增强基于 MyBatis 的数据访问层的支持。
@@ -44,7 +46,7 @@ Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 
 
 ## 获得帮助 ##
 
-这里有一份文档可以帮助你快速学习 Spring Data Mybatis。 [reference documentation](https://easybest.github.io/spring-data-mybatis/)  
+这里有一份文档可以帮助你快速学习 Spring Data Mybatis。 [reference documentation](https://easybest.github.io/spring-data-mybatis/)
 
 如果你有任何疑问或者建议，可以录一个[issue](https://github.com/easybest/spring-data-mybatis/issues) 给我。
 
@@ -118,7 +120,7 @@ public class User extends LongId {
 
   private String firstname;
   private String lastname;
-       
+
   // Getters and setters
   // (Firstname, Lastname)-constructor and noargs-constructor
   // equals / hashcode
@@ -130,8 +132,8 @@ public class User extends LongId {
 
 ```java
 public interface UserRepository extends CrudRepository<User, Long> {
-  List<User> findByLastname(String lastname);  
-  
+  List<User> findByLastname(String lastname);
+
 }
 
 ```
@@ -142,17 +144,17 @@ public interface UserRepository extends CrudRepository<User, Long> {
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = AppConfig.class)
 public class UserRepositoryIntegrationTest {
-     
+
   @Autowired UserRepository repository;
-     
+
   @Test
   public void sampleTestCase() {
     User dave = new User("Dave", "Matthews");
     dave = repository.save(dave);
-         
+
     User carter = new User("Carter", "Beauford");
     carter = repository.save(carter);
-         
+
     List<User> result = repository.findByLastname("Matthews");
     assertThat(result.size(), is(1));
     assertThat(result, hasItem(dave));
@@ -167,7 +169,7 @@ public class UserRepositoryIntegrationTest {
 ## 使用 Spring Boot
 
 通过maven引入:
-   
+
    ```xml
    <dependency>
        <groupId>io.easybest</groupId>
@@ -240,7 +242,7 @@ class Reservation extends LongId {
 
 Here are some ways for you to get involved in the community:
 
-* Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](https://help.github.com/forking/). 
+* Github is for social coding: if you want to write code, we encourage contributions through pull requests from [forks of this repository](https://help.github.com/forking/).
 
 ## Help me better - Donation
 [![paypal](https://www.paypal.com/en_US/i/btn/x-click-butcc-donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W7PLNCBK5K8JS)
