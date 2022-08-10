@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:util="http://www.springframework.org/schema/util"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util https://www.springframework.org/schema/util/spring-util.xsd">
+
+	<import resource="infrastructure.xml"/>
+
+	<!-- Configure a DAO for User class -->
+	<bean id="userDao" class="io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean">
+		<constructor-arg value="io.easybest.mybatis.repository.sample.UserRepository"/>
+		<property name="customImplementation">
+			<bean class="io.easybest.mybatis.repository.sample.UserRepositoryImpl">
+				<constructor-arg>
+					<bean class="org.mybatis.spring.SqlSessionTemplate" autowire="constructor"/>
+				</constructor-arg>
+			</bean>
+		</property>
+		<property name="namedQueries">
+			<bean class="org.springframework.data.repository.core.support.PropertiesBasedNamedQueries">
+				<constructor-arg>
+					<util:properties location="META-INF/mybatis-named-queries.properties"/>
+				</constructor-arg>
+			</bean>
+		</property>
+		<property name="evaluationContextProvider" ref="expressionEvaluationContextProvider"/>
+		<property name="entityManager" ref="entityManager"/>
+	</bean>
+
+	<bean id="roleDao" class="io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean">
+		<constructor-arg value="io.easybest.mybatis.repository.sample.RoleRepository"/>
+		<property name="evaluationContextProvider" ref="expressionEvaluationContextProvider"/>
+		<property name="entityManager" ref="entityManager"/>
+	</bean>
+
+	<bean id="expressionEvaluationContextProvider"
+		  class="org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider"
+		  autowire="constructor"/>
+
+</beans>

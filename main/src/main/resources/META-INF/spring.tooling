@@ -1,0 +1,4 @@
+# Tooling related information for the MyBatis namespace
+http\://www.easybest.io/schema/mybatis@name=MyBatis Namespace
+http\://www.easybest.io/schema/mybatis@prefix=mybatis
+http\://www.easybest.io/schema/mybatis@icon=org/springframework/jdbc/config/spring-jdbc.gif

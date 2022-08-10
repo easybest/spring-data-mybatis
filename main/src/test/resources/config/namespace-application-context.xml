@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:mybatis="http://www.easybest.io/schema/mybatis"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.easybest.io/schema/mybatis https://www.easybest.io/schema/spring-data-mybatis.xsd">
+
+	<import resource="../infrastructure.xml"/>
+
+	<mybatis:repositories base-package="io.easybest.mybatis.repository.sample" entity-manager-ref="entityManager"/>
+
+	<!-- Register custom DAO implementation explicitly -->
+	<bean id="userRepositoryImpl" class="io.easybest.mybatis.repository.sample.UserRepositoryImpl"/>
+
+</beans>

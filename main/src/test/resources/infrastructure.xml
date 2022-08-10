@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	   xsi:schemaLocation="http://www.springframework.org/schema/jdbc https://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="mapperLocations" value="classpath*:/mapper/**.xml"/>
+		<property name="configuration">
+			<bean class="org.apache.ibatis.session.Configuration">
+				<!--				<property name="returnInstanceForEmptyRow" value="true"/>-->
+				<property name="callSettersOnNulls" value="true"/>
+				<!--				<property name="mapUnderscoreToCamelCase" value="true"/>-->
+			</bean>
+		</property>
+	</bean>
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactory"/>
+	</bean>
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+
+
+	<bean id="entityManager" class="io.easybest.mybatis.mapping.DefaultEntityManager">
+		<constructor-arg ref="sqlSessionTemplate"/>
+		<property name="entityPackages" value="io.easybest.mybatis.domain.sample"/>
+		<property name="namingStrategy" value="AS_IS"/>
+	</bean>
+
+	<jdbc:embedded-database id="dataSource" type="HSQL" generate-name="true">
+		<jdbc:script execution="INIT" location="classpath:scripts/hsqldb-init.sql"/>
+	</jdbc:embedded-database>
+
+</beans>

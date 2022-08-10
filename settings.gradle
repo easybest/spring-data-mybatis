@@ -1,0 +1,28 @@
+pluginManagement {
+	repositories {
+		mavenCentral()
+		gradlePluginPortal()
+		maven {
+			url 'https://repo.spring.io/release'
+		}
+	}
+
+	resolutionStrategy {
+		eachPlugin {
+			if (requested.id.id == "org.jetbrains.kotlin.jvm") {
+				useVersion "${kotlinVersion}"
+			}
+			if (requested.id.id == "org.jetbrains.kotlin.plugin.spring") {
+				useVersion "${kotlinVersion}"
+			}
+		}
+	}
+}
+
+rootProject.name = 'spring-data-mybatis-build'
+
+include "core"
+include "main"
+include "starter"
+//include "processor"
+//include "querydsl"

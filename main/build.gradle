@@ -1,0 +1,66 @@
+plugins {
+	id 'jacoco'
+}
+
+description "${projectName}"
+
+dependencies {
+
+	implementation(project(":core"))
+
+	implementation("javax.persistence:javax.persistence-api:2.2")
+	implementation('org.mybatis:mybatis:3.5.10')
+	implementation('org.mybatis:mybatis-spring:2.0.7')
+	implementation("org.springframework.data:spring-data-commons:${springDataVersion}")
+	implementation("org.springframework:spring-core:${springVersion}") {
+		exclude group: 'commons-logging', module: 'commons-logging'
+	}
+	implementation("org.springframework:spring-context:${springVersion}")
+	implementation("org.springframework:spring-beans:${springVersion}")
+	implementation("org.springframework:spring-aop:${springVersion}")
+	implementation("org.springframework:spring-orm:${springVersion}")
+	implementation("org.springframework:spring-tx:${springVersion}")
+
+	compileOnly("com.querydsl:querydsl-sql:5.0.0")
+	compileOnly('com.github.jsqlparser:jsqlparser:4.5')
+
+	compileOnly("org.projectlombok:lombok:${lombokVersion}")
+	annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+
+	testCompileOnly("org.projectlombok:lombok:${lombokVersion}")
+	testAnnotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+	testImplementation("org.springframework:spring-test:${springVersion}")
+	testImplementation('org.junit.jupiter:junit-jupiter:5.9.0')
+	testImplementation('org.assertj:assertj-core:3.23.1')
+	testImplementation('org.aspectj:aspectjweaver:1.9.9.1')
+	testImplementation('ch.qos.logback:logback-classic:1.2.11')
+
+	testImplementation('com.zaxxer:HikariCP:5.0.1')
+	testImplementation('com.h2database:h2:2.1.214')
+	testImplementation('org.hsqldb:hsqldb:2.5.2')
+	testImplementation('mysql:mysql-connector-java:8.0.29')
+	testImplementation('org.postgresql:postgresql:42.3.6')
+	testImplementation('com.microsoft.sqlserver:mssql-jdbc:10.2.1.jre8')
+	testImplementation('com.oracle.database.jdbc:ojdbc10:19.15.0.0.1')
+	testImplementation('org.xerial:sqlite-jdbc:3.36.0.3')
+}
+
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.required = true
+	}
+}
+
+repositories {
+	mavenCentral()
+}

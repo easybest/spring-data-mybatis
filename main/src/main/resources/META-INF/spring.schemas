@@ -1,0 +1,4 @@
+http\://www.easybest.io/schema/spring-data-mybatis-2.0.xsd=io/easybest/mybatis/repository/config/spring-data-mybatis-2.0.xsd
+http\://www.easybest.io/schema/spring-data-mybatis.xsd=io/easybest/mybatis/repository/config/spring-data-mybatis-2.0.xsd
+https\://www.easybest.io/schema/spring-data-mybatis-2.0.xsd=io/easybest/mybatis/repository/config/spring-data-mybatis-2.0.xsd
+https\://www.easybest.io/schema/spring-data-mybatis.xsd=io/easybest/mybatis/repository/config/spring-data-mybatis-2.0.xsd

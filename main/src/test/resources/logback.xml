@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d %5p [%t] %40.40c:%4L - %m%n</pattern>
+		</encoder>
+	</appender>
+	<logger name="com.querydsl.sql" level="debug"/>
+	<logger name="org.springframework.data" level="error"/>
+	<logger name="io.easybest.mybatis.domain.sample" level="debug"/>
+	<logger name="io.easybest.mybatis" level="debug"/>
+	<!--    <logger name="org.springframework.transaction" level="debug"/>-->
+	<!--    <logger name="org.springframework.jdbc.datasource" level="debug"/>-->
+	<!--    <logger name="org.springframework.data.repository.config" level="info"/>-->
+	<root level="info">
+		<appender-ref ref="console"/>
+	</root>
+
+</configuration>
