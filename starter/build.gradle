@@ -1,7 +1,3 @@
-plugins {
-	id "io.easybest.gradle.plugin.deployed"
-}
-
 description "${projectName} starter"
 
 dependencies {

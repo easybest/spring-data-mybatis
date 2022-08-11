@@ -73,7 +73,7 @@ class MavenPublishingConventions {
 				publishing.getRepositories().maven(mavenRepository -> {
 					mavenRepository.setUrl(project.getVersion().toString().endsWith("SNAPSHOT")
 							? System.getenv("MAVEN_SNAPSHOTS_URL") : System.getenv("MAVEN_RELEASE_URL"));
-					mavenRepository.setName("nexus");
+					mavenRepository.setName("central");
 					mavenRepository.getCredentials().setUsername(System.getenv("MAVEN_REPO_USER"));
 					mavenRepository.getCredentials().setPassword(System.getenv("MAVEN_REPO_PASS"));
 				});

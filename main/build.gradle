@@ -1,6 +1,5 @@
 plugins {
 	id 'jacoco'
-	id "io.easybest.gradle.plugin.deployed"
 }
 
 description "${projectName}"
