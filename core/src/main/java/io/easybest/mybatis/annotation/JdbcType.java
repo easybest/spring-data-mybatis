@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
 import java.sql.Types;
 
 /**
- * Specify the jdbc type of a property.
+ * Specify the jdbc type of property.
  * @author JARVIS SONG
  * @since 2.0.0
  * @see Types

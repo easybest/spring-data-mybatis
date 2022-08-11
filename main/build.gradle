@@ -6,20 +6,19 @@ description "${projectName}"
 
 dependencies {
 
-	implementation(project(":core"))
+	api(project(":core"))
 
-	implementation("javax.persistence:javax.persistence-api:2.2")
-	implementation('org.mybatis:mybatis:3.5.10')
-	implementation('org.mybatis:mybatis-spring:2.0.7')
-	implementation("org.springframework.data:spring-data-commons:${springDataVersion}")
-	implementation("org.springframework:spring-core:${springVersion}") {
+	api('org.mybatis:mybatis:3.5.10')
+	api('org.mybatis:mybatis-spring:2.0.7')
+	api("org.springframework.data:spring-data-commons:${springDataVersion}")
+	api("org.springframework:spring-core:${springVersion}") {
 		exclude group: 'commons-logging', module: 'commons-logging'
 	}
-	implementation("org.springframework:spring-context:${springVersion}")
-	implementation("org.springframework:spring-beans:${springVersion}")
-	implementation("org.springframework:spring-aop:${springVersion}")
-	implementation("org.springframework:spring-orm:${springVersion}")
-	implementation("org.springframework:spring-tx:${springVersion}")
+	api("org.springframework:spring-context:${springVersion}")
+	api("org.springframework:spring-beans:${springVersion}")
+	api("org.springframework:spring-aop:${springVersion}")
+	api("org.springframework:spring-orm:${springVersion}")
+	api("org.springframework:spring-tx:${springVersion}")
 
 	compileOnly("com.querydsl:querydsl-sql:5.0.0")
 	compileOnly('com.github.jsqlparser:jsqlparser:4.5')
