@@ -1,4 +1,5 @@
 # Spring Data MyBatis
+
 [![Build](https://github.com/easybest/spring-data-mybatis/actions/workflows/github-actions-ci.yml/badge.svg)](https://github.com/easybest/spring-data-mybatis/actions/workflows/github-actions-ci.yml)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.easybest/spring-data-mybatis/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.easybest/spring-data-mybatis)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-brightgreen.svg)](https://github.com/hatunet/spring-data-mybatis/blob/main/LICENSE)
