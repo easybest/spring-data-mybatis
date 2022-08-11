@@ -25,8 +25,15 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
+import io.easybest.mybatis.dialect.DMDialect;
 import io.easybest.mybatis.dialect.Dialect;
+import io.easybest.mybatis.dialect.H2Dialect;
 import io.easybest.mybatis.dialect.HsqlDbDialect;
+import io.easybest.mybatis.dialect.MariaDBDialect;
+import io.easybest.mybatis.dialect.MysqlDialect;
+import io.easybest.mybatis.dialect.Oracle12cDialect;
+import io.easybest.mybatis.dialect.Oracle8iDialect;
+import io.easybest.mybatis.dialect.Oracle9iDialect;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.SqlSessionTemplate;
 
@@ -83,13 +90,52 @@ public final class DialectResolver {
 		@Nullable
 		private static Dialect getDialect(Connection connection) throws SQLException {
 			DatabaseMetaData metaData = connection.getMetaData();
-			String name = metaData.getDatabaseProductName().toLowerCase(Locale.ENGLISH);
+			String databaseName = metaData.getDatabaseProductName().toLowerCase(Locale.ENGLISH);
+			String driverName = null;
+			try {
+				driverName = metaData.getDriverName();
+			}
+			catch (SQLException ex) {
+				// ignore
+			}
 
-			if (name.contains("hsql")) {
+			int majorVersion = metaData.getDatabaseMajorVersion();
+
+			if (databaseName.contains("hsql")) {
 				return HsqlDbDialect.INSTANCE;
 			}
 
-			log.info(String.format("Couldn't determine Dialect for \"%s\"", name));
+			if ("h2".equals(databaseName)) {
+				return H2Dialect.INSTANCE;
+			}
+
+			if ("mysql".equals(databaseName)) {
+				return MysqlDialect.INSTANCE;
+			}
+
+			if (null != driverName && driverName.startsWith("MariaDB")) {
+				return MariaDBDialect.INSTANCE;
+			}
+
+			if ("oracle".equals(databaseName)) {
+				switch (majorVersion) {
+				case 8:
+					return new Oracle8iDialect();
+				case 9:
+				case 10:
+				case 11:
+					return new Oracle9iDialect();
+				case 12:
+				default:
+					return new Oracle12cDialect();
+				}
+			}
+
+			if ("dm dbms".equals(databaseName)) {
+				return new DMDialect();
+			}
+
+			log.info(String.format("Couldn't determine Dialect for \"%s\"", databaseName));
 			return null;
 		}
 
