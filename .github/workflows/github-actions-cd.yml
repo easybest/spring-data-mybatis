@@ -1,0 +1,41 @@
+name: Deploy
+on:
+    push:
+        branches:
+            - main
+#    pull_request:
+#        branches:
+#            - main
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        name: 'Build on Java 8'
+        steps:
+            -   uses: actions/checkout@v3
+            -   name: 'Set up JDK 8'
+                uses: actions/setup-java@v3
+                with:
+                    java-version: '8'
+                    distribution: 'adopt'
+            -   name: Gradle Cache
+                uses: actions/cache@v3
+                with:
+                    path: |
+                        ~/.gradle/caches
+                        ~/.gradle/wrapper
+                    key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                    restore-keys: |
+                        ${{ runner.os }}-gradle-
+            -   name: Build with Gradle
+                run: ./gradlew build
+            -   name: Decode PGP
+                run: |
+                    echo "${{secrets.SIGNING_SECRET_KEY_RING_FILE}}" > ~/.gradle/secring.gpg.b64
+                    base64 -d ~/.gradle/secring.gpg.b64 > ~/.gradle/secring.gpg
+            -   name: Publish
+                run: ./gradlew publish -Psigning.keyId=${{secrets.SIGNING_KEY_ID}} -Psigning.password= -Psigning.secretKeyRingFile=$(echo ~/.gradle/secring.gpg)
+                env:
+                    MAVEN_SNAPSHOTS_URL: ${{secrets.MAVEN_SNAPSHOTS_URL}}
+                    MAVEN_RELEASE_URL: ${{secrets.MAVEN_RELEASE_URL}}
+                    MAVEN_REPO_USER: ${{secrets.MAVEN_REPO_USER}}
+                    MAVEN_REPO_PASS: ${{secrets.MAVEN_REPO_PASS}}

@@ -59,6 +59,7 @@ import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 class MavenPublishingConventions {
 
 	void apply(Project project) {
+
 		project.getPlugins().withType(MavenPublishPlugin.class).all(mavenPublish -> {
 			PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
 			if (project.hasProperty("deploymentRepository")) {
@@ -72,7 +73,7 @@ class MavenPublishingConventions {
 				publishing.getRepositories().maven(mavenRepository -> {
 					mavenRepository.setUrl(project.getVersion().toString().endsWith("SNAPSHOT")
 							? System.getenv("MAVEN_SNAPSHOTS_URL") : System.getenv("MAVEN_RELEASE_URL"));
-					mavenRepository.setName("nexus");
+					mavenRepository.setName("central");
 					mavenRepository.getCredentials().setUsername(System.getenv("MAVEN_REPO_USER"));
 					mavenRepository.getCredentials().setPassword(System.getenv("MAVEN_REPO_PASS"));
 				});
@@ -88,11 +89,14 @@ class MavenPublishingConventions {
 	}
 
 	private void customizeMavenPublication(MavenPublication publication, Project project) {
+
 		publication.setArtifactId(this.determineProjectName(project));
 		this.customizePom(publication.getPom(), project);
 		project.getPlugins().withType(JavaPlugin.class)
 				.all(javaPlugin -> this.customizeJavaMavenPublication(publication, project));
 		this.suppressMavenOptionalFeatureWarnings(publication);
+
+
 	}
 
 	private void customizePom(MavenPom pom, Project project) {
@@ -156,7 +160,7 @@ class MavenPublishingConventions {
 	private void customizeDevelopers(MavenPomDeveloperSpec developers) {
 		developers.developer(developer -> {
 			developer.getName().set("Jarvis Song");
-			developer.getEmail().set("iamjarvissong@gmail.com<");
+			developer.getEmail().set("iamjarvissong@gmail.com");
 			developer.getOrganization().set("EasyBest");
 			developer.getOrganizationUrl().set("https://easybest.io");
 		});

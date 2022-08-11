@@ -5,10 +5,9 @@ dependencies {
 	implementation("javax.persistence:javax.persistence-api:2.2")
 	compileOnly("org.springframework.data:spring-data-commons:${springDataVersion}")
 
-//	compileOnly("com.google.code.findbugs:jsr305:3.0.2")
-//	compileOnly("com.google.code.findbugs:annotations:3.0.1")
-
 	compileOnly("org.projectlombok:lombok:${lombokVersion}")
 	annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
 
 }
+
+

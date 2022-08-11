@@ -25,6 +25,8 @@ import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin;
 import org.gradle.api.tasks.bundling.Jar;
+import org.gradle.plugins.signing.SigningExtension;
+import org.gradle.plugins.signing.SigningPlugin;
 
 /**
  * A plugin applied to a project that should be deployed.
@@ -40,8 +42,12 @@ public class DeployedPlugin implements Plugin<Project> {
 
 	@Override
 	public void apply(Project project) {
+
 		project.getPlugins().apply(MavenPublishPlugin.class);
 		project.getPlugins().apply(MavenRepositoryPlugin.class);
+		project.getPlugins().apply(SigningPlugin.class);
+
+
 		PublishingExtension publishing = project.getExtensions().getByType(PublishingExtension.class);
 		MavenPublication mavenPublication = publishing.getPublications().create("maven", MavenPublication.class);
 		project.afterEvaluate(evaluated -> {
@@ -54,6 +60,13 @@ public class DeployedPlugin implements Plugin<Project> {
 		});
 		project.getPlugins().withType(JavaPlatformPlugin.class).all(javaPlugin -> project.getComponents()
 				.matching(component -> component.getName().equals("javaPlatform")).all(mavenPublication::from));
+
+
+		String keyId = (String) project.getProperties().get("signing.keyId");
+		if (null != keyId && keyId.trim().length() > 0) {
+			SigningExtension signingExtension = project.getExtensions().getByType(SigningExtension.class);
+			signingExtension.sign(mavenPublication);
+		}
 	}
 
 }
