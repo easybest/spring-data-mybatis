@@ -2,7 +2,7 @@ description "${projectName} core"
 
 dependencies {
 
-	implementation("javax.persistence:javax.persistence-api:2.2")
+	api("javax.persistence:javax.persistence-api:2.2")
 	compileOnly("org.springframework.data:spring-data-commons:${springDataVersion}")
 
 	compileOnly("org.projectlombok:lombok:${lombokVersion}")
