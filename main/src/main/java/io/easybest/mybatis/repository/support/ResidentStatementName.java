@@ -243,6 +243,11 @@ public interface ResidentStatementName {
 	 */
 	String TABLE_NAME = "__table_name";
 
+	/**
+	 * For <code>__table_name_pure</code>.
+	 */
+	String TABLE_NAME_PURE = "__table_name_pure";
+
 	default String statementName(String namespace, String statement) {
 		return namespace + DOT + statement;
 	}

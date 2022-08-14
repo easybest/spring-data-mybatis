@@ -16,23 +16,18 @@
 
 package io.easybest.mybatis.dialect;
 
+import javax.persistence.GenerationType;
+
 import io.easybest.mybatis.mapping.precompile.Segment;
 
-import static javax.persistence.GenerationType.SEQUENCE;
-
 /**
- * A {@link Dialect} for MySQL.
+ * .
  *
  * @author Jarvis Song
  */
-public class H2Dialect extends AbstractDialect {
+public class SQLiteDialect extends AbstractDialect {
 
-	/**
-	 * Singleton instance.
-	 */
-	public static final H2Dialect INSTANCE = new H2Dialect();
-
-	private static final LimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
+	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
 		@Override
 		public boolean supportsLimit() {
 			return true;
@@ -40,33 +35,11 @@ public class H2Dialect extends AbstractDialect {
 
 		@Override
 		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
-
 			final boolean hasOffset = null != offset;
 
 			return sql + (hasOffset ? (" LIMIT " + fetchSize + " OFFSET " + offset) : (" LIMIT " + fetchSize));
 		}
 	};
-
-	public H2Dialect() {
-
-		super();
-
-	}
-
-	@Override
-	public String getIdentitySelectString() {
-		return "CALL IDENTITY()";
-	}
-
-	@Override
-	public String getIdentityInsertString() {
-		return "null";
-	}
-
-	@Override
-	public String getSequenceNextValString(String sequenceName) {
-		return "call next value for " + sequenceName;
-	}
 
 	@Override
 	public LimitHandler getLimitHandler() {
@@ -75,17 +48,17 @@ public class H2Dialect extends AbstractDialect {
 
 	@Override
 	public String getNativeIdentifierGeneratorStrategy() {
-		return SEQUENCE.name().toLowerCase();
+		return GenerationType.IDENTITY.name().toLowerCase();
+	}
+
+	@Override
+	public String getIdentitySelectString() {
+		return "select last_insert_rowid()";
 	}
 
 	@Override
 	public String regexpLike(String column, String pattern) {
-		return "REGEXP_LIKE(" + column + "," + pattern + ")";
-	}
-
-	@Override
-	public String limitN(int n) {
-		return "LIMIT " + n;
+		return column + " regexp " + pattern;
 	}
 
 }

@@ -52,6 +52,7 @@ import static io.easybest.mybatis.mapping.precompile.Constant.COMMA;
 import static io.easybest.mybatis.mapping.precompile.Constant.EQUALS;
 import static io.easybest.mybatis.mapping.precompile.Include.COLUMN_LIST;
 import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME;
+import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME_PURE;
 import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.AFTER;
 import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.BEFORE;
 import static io.easybest.mybatis.mapping.precompile.SQL.COUNTS;
@@ -104,6 +105,13 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		this.entityManager = entityManager;
 		this.stagingMappers = stagingMappers;
 		this.entity = entity;
+	}
+
+	public Fragment pureTableName() {
+
+		return Fragment.builder().id(ResidentStatementName.TABLE_NAME_PURE).contents(Collections.singletonList(Table.of(
+				this.entity.getTableName().getReference(this.entityManager.getDialect().getIdentifierProcessing()))))
+				.build();
 	}
 
 	public Fragment tableName() {
@@ -408,7 +416,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		}
 
 		return Insert.builder().id(selective ? INSERT_SELECTIVE : INSERT).selectKey(this.selectKey())
-				.contents(Arrays.asList(SQL.INSERT_INTO, TABLE_NAME, SQL.of("("),
+				.contents(Arrays.asList(SQL.INSERT_INTO, TABLE_NAME_PURE, SQL.of("("),
 						Trim.builder().suffixOverrides(",").contents(columns).build(), SQL.of(") VALUES ("),
 						Trim.builder().suffixOverrides(",").contents(values).build(), SQL.of(")")))
 				.build();
@@ -485,7 +493,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		return Update.builder()
 				.id(selective ? (byId ? UPDATE_SELECTIVE_BY_ID : UPDATE_SELECTIVE)
 						: (byId ? UPDATE_BY_ID : ResidentStatementName.UPDATE))
-				.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.builder().contents(sets).build(),
+				.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME_PURE, Set.builder().contents(sets).build(),
 						Where.builder().contents(conditions).build(),
 						SQL.of(this.entityManager.getDialect().limitN(1))))
 				.build();
@@ -496,10 +504,11 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		List<Segment> conditions = new ArrayList<>();
 
 		MybatisPersistentPropertyImpl versionProperty = this.entity.getVersionProperty();
+
 		if (null != versionProperty && !byId) {
 
 			conditions.add(SQL.of("AND "
-					+ Column.base(versionProperty.getColumnName()
+					+ Column.of(versionProperty.getColumnName()
 							.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
 					+ "=" + Parameter.builder().property("instance." + versionProperty.getName()).build()));
 
@@ -523,7 +532,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		}
 
 		return Delete.builder().id(byId ? DELETE_BY_ID : DELETE_BY_ENTITY)
-				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME, Where.builder().contents(conditions).build(),
+				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE, Where.builder().contents(conditions).build(),
 						SQL.of(this.entityManager.getDialect().limitN(1))))
 				.build();
 	}
@@ -536,7 +545,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 					Set.of(SQL.of(col + " = 1")), Where.of(this.logicDeleteClause(false)))).build();
 		}
 
-		return Delete.builder().id(DELETE_ALL).contents(Arrays.asList(DELETE_FROM, TABLE_NAME)).build();
+		return Delete.builder().id(DELETE_ALL).contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE)).build();
 	}
 
 	public SqlDefinition deleteAllByIdInBatch() {
@@ -545,13 +554,17 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
 			return Update.builder().id(DELETE_BY_IDS)
-					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")), Where.builder()
-							.contents(Arrays.asList(this.idsCondition(true), this.logicDeleteClause(false))).build()))
+					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")),
+							Where.builder()
+									.contents(
+											Arrays.asList(this.idsCondition(true, true), this.logicDeleteClause(false)))
+									.build()))
 					.build();
 		}
 
 		return Delete.builder().id(DELETE_BY_IDS)
-				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME, Where.of(this.idsCondition(true)))).build();
+				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE, Where.of(this.idsCondition(true, false))))
+				.build();
 	}
 
 	public SqlDefinition deleteAllByEntitiesInBatch() {
@@ -560,13 +573,16 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
 			return Update.builder().id(DELETE_BY_ENTITIES)
-					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")), Where.builder()
-							.contents(Arrays.asList(this.idsCondition(false), this.logicDeleteClause(false))).build()))
+					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")),
+							Where.builder().contents(
+									Arrays.asList(this.idsCondition(false, true), this.logicDeleteClause(false)))
+									.build()))
 					.build();
 		}
 
 		return Delete.builder().id(DELETE_BY_ENTITIES)
-				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME, Where.of(this.idsCondition(false)))).build();
+				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE, Where.of(this.idsCondition(false, false))))
+				.build();
 	}
 
 	public Select countAll() {
@@ -650,10 +666,10 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		}
 
 		return Select.builder().id(FIND_BY_IDS).resultMap(RESULT_MAP).contents(Arrays.asList(SELECT, COLUMN_LIST, FROM,
-				TABLE_NAME, Where.of(this.idsCondition(true), this.logicDeleteClause(true)))).build();
+				TABLE_NAME, Where.of(this.idsCondition(true, true), this.logicDeleteClause(true)))).build();
 	}
 
-	private Segment idsCondition(boolean byId) {
+	private Segment idsCondition(boolean byId, boolean baseAlias) {
 
 		if (!this.entity.hasIdProperty()) {
 			return SQL.EMPTY;
@@ -668,8 +684,8 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 							.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
 									&& !ppp.getRequiredLeafProperty().isEntity())
 							.map(ppp -> Column
-									.base(ppp.getRequiredLeafProperty().getColumnName()
-											.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
+									.base(ppp.getRequiredLeafProperty().getColumnName().getReference(
+											this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
 									+ "="
 									+ Parameter.of("item." + (byId ? (ppp.toDotPath(
 											source -> source == ppp.getBaseProperty() ? null : source.getName()))
@@ -679,14 +695,15 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		}
 
-		return SQL.of("AND "
-				+ Column.base(idProperty
-						.getColumnName().getReference(this.entityManager.getDialect().getIdentifierProcessing()))
-				+ " IN "
-				+ Foreach.builder().collection(byId ? "id" : "instance")
-						.contents(Collections
-								.singletonList(Parameter.of(byId ? "item" : ("item." + idProperty.getName()))))
-						.build());
+		return SQL
+				.of("AND "
+						+ Column.base(idProperty.getColumnName()
+								.getReference(this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
+						+ " IN "
+						+ Foreach.builder().collection(byId ? "id" : "instance")
+								.contents(Collections
+										.singletonList(Parameter.of(byId ? "item" : ("item." + idProperty.getName()))))
+								.build());
 
 	}
 

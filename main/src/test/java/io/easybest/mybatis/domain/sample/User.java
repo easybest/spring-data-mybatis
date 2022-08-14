@@ -39,6 +39,8 @@ import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
 import io.easybest.mybatis.annotation.DatabaseDefault;
+import io.easybest.mybatis.annotation.TypeHandler;
+import org.apache.ibatis.type.ByteArrayTypeHandler;
 
 import org.springframework.data.annotation.PersistenceCreator;
 
@@ -98,6 +100,7 @@ public class User {
 	private Address address;
 
 	@Lob
+	@TypeHandler(ByteArrayTypeHandler.class)
 	private byte[] binaryData;
 
 	@Temporal(TemporalType.DATE)

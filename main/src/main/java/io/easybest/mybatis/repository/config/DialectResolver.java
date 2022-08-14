@@ -25,6 +25,8 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
+import io.easybest.mybatis.dialect.DB2400Dialect;
+import io.easybest.mybatis.dialect.DB2Dialect;
 import io.easybest.mybatis.dialect.DMDialect;
 import io.easybest.mybatis.dialect.Dialect;
 import io.easybest.mybatis.dialect.H2Dialect;
@@ -34,6 +36,7 @@ import io.easybest.mybatis.dialect.MysqlDialect;
 import io.easybest.mybatis.dialect.Oracle12cDialect;
 import io.easybest.mybatis.dialect.Oracle8iDialect;
 import io.easybest.mybatis.dialect.Oracle9iDialect;
+import io.easybest.mybatis.dialect.SQLiteDialect;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.SqlSessionTemplate;
 
@@ -100,6 +103,7 @@ public final class DialectResolver {
 			}
 
 			int majorVersion = metaData.getDatabaseMajorVersion();
+			int minorVersion = metaData.getDatabaseMinorVersion();
 
 			if (databaseName.contains("hsql")) {
 				return HsqlDbDialect.INSTANCE;
@@ -131,8 +135,23 @@ public final class DialectResolver {
 				}
 			}
 
-			if ("dm dbms".equals(databaseName)) {
+			if ("DB2 UDB for AS/400".equalsIgnoreCase(databaseName)) {
+				return new DB2400Dialect();
+			}
+			if (databaseName.startsWith("db2/")) {
+				return new DB2Dialect();
+			}
+
+			if ("Apache Derby".equalsIgnoreCase(databaseName)) {
+				// Derby
+			}
+
+			if ("dm dbms".equalsIgnoreCase(databaseName)) {
 				return new DMDialect();
+			}
+
+			if ("SQLite".equalsIgnoreCase(databaseName)) {
+				return new SQLiteDialect();
 			}
 
 			log.info(String.format("Couldn't determine Dialect for \"%s\"", databaseName));

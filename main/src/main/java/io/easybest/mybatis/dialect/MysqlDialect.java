@@ -17,6 +17,7 @@
 package io.easybest.mybatis.dialect;
 
 import io.easybest.mybatis.mapping.precompile.Segment;
+import io.easybest.mybatis.mapping.sql.IdentifierProcessing;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
@@ -26,6 +27,9 @@ import static javax.persistence.GenerationType.IDENTITY;
  * @author Jarvis Song
  */
 public class MysqlDialect extends AbstractDialect {
+
+	private static final IdentifierProcessing MYSQL_IDENTIFIER_PROCESSING = IdentifierProcessing
+			.create(new IdentifierProcessing.Quoting("`"), IdentifierProcessing.LetterCasing.LOWER_CASE);
 
 	/**
 	 * Singleton instance.
@@ -43,14 +47,18 @@ public class MysqlDialect extends AbstractDialect {
 
 			final boolean hasOffset = null != offset;
 
-			return sql + (hasOffset ? (" OFFSET " + offset + " LIMIT " + fetchSize) : (" LIMIT " + fetchSize));
+			return sql + (hasOffset ? (" LIMIT " + offset + "," + fetchSize) : (" LIMIT " + fetchSize));
 		}
 	};
 
 	public MysqlDialect() {
 
 		super();
+	}
 
+	@Override
+	public IdentifierProcessing getIdentifierProcessing() {
+		return MYSQL_IDENTIFIER_PROCESSING;
 	}
 
 	@Override
@@ -70,7 +78,12 @@ public class MysqlDialect extends AbstractDialect {
 
 	@Override
 	public String regexpLike(String column, String pattern) {
-		return column + " REGEXP '" + pattern + "'";
+		return column + " REGEXP " + pattern;
+	}
+
+	@Override
+	public String limitN(int n) {
+		return "LIMIT " + n;
 	}
 
 }

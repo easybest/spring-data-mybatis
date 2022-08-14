@@ -236,6 +236,10 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	private boolean suitableToResultType() {
 
+		if (this.parameters.hasDynamicProjection()) {
+			return false;
+		}
+
 		return !(this.entity.getType() == this.method.getReturnedObjectType()
 				|| this.entity.getType().isAssignableFrom(this.method.getReturnedObjectType()));
 	}

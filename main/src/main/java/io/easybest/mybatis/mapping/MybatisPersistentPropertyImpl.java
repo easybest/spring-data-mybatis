@@ -217,7 +217,7 @@ public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProp
 			if (null != typeHandlerAnn) {
 
 				Class<?> clz = typeHandlerAnn.value();
-				if (TypeHandler.class.isAssignableFrom(clz)) {
+				if (org.apache.ibatis.type.TypeHandler.class.isAssignableFrom(clz)) {
 					return clz;
 				}
 				else {

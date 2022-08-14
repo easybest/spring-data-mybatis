@@ -55,6 +55,10 @@ public interface Dialect {
 		throw new MappingException(this.getClass().getName() + " does not support identity select.");
 	}
 
+	default String getIdentityInsertString() {
+		return null;
+	}
+
 	default String getSequenceNextValString(String sequenceName) {
 		throw new MappingException(this.getClass().getName() + " does not support sequences");
 	}
