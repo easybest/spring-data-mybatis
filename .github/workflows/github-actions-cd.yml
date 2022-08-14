@@ -3,13 +3,14 @@ on:
     push:
         branches:
             - main
+            - dev
 #    pull_request:
 #        branches:
 #            - main
 jobs:
     build:
         runs-on: ubuntu-latest
-        name: 'Build on Java 8'
+        name: 'Deploy to Maven Central'
         steps:
             -   uses: actions/checkout@v3
             -   name: 'Set up JDK 8'

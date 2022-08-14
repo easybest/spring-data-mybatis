@@ -45,4 +45,5 @@ secrets.yml
 .gradletasknamecache
 .sts4-cache
 /main/src/test/resources/check/
+testcase.db
 

@@ -34,7 +34,7 @@ dependencies {
 	testImplementation('org.aspectj:aspectjweaver:1.9.9.1')
 	testImplementation('ch.qos.logback:logback-classic:1.2.11')
 
-	testImplementation('com.zaxxer:HikariCP:5.0.1')
+	testImplementation('com.zaxxer:HikariCP:4.0.3')
 	testImplementation('com.h2database:h2:2.1.214')
 	testImplementation('org.hsqldb:hsqldb:2.5.2')
 	testImplementation('mysql:mysql-connector-java:8.0.30')

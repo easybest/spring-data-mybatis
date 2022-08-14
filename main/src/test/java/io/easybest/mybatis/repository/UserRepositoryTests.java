@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -125,13 +126,20 @@ public class UserRepositoryTests {
 
 		this.firstUser = new User("Oliver", "Gierke", "gierke@synyx.de");
 		this.firstUser.setAge(28);
+
 		this.secondUser = new User("Joachim", "Arrasz", "arrasz@synyx.de");
 		this.secondUser.setAge(35);
-		Thread.sleep(10);
+		this.secondUser.setCreatedAt(new Date(this.firstUser.getCreatedAt().getTime() + 5000L));
+
+		// Thread.sleep(1000);
 		this.thirdUser = new User("Dave", "Matthews", "no@email.com");
 		this.thirdUser.setAge(43);
+		this.thirdUser.setCreatedAt(new Date(this.secondUser.getCreatedAt().getTime() + 5000L));
+
 		this.fourthUser = new User("kevin", "raymond", "no@gmail.com");
 		this.fourthUser.setAge(31);
+		this.fourthUser.setCreatedAt(new Date(this.thirdUser.getCreatedAt().getTime() + 5000L));
+
 		this.adminRole = new Role("admin");
 
 	}
@@ -1048,7 +1056,7 @@ public class UserRepositoryTests {
 	}
 
 	@Test
-	void findBinaryDataByIdNative() throws Exception {
+	void findBinaryDataByIdNative() {
 
 		byte[] data = "Woho!!".getBytes(StandardCharsets.UTF_8);
 		this.firstUser.setBinaryData(data);
@@ -2039,14 +2047,6 @@ public class UserRepositoryTests {
 		boolean exists = this.repository.exists(example);
 
 		assertThat(exists).isEqualTo(false);
-	}
-
-	@Test
-	void exceptionsDuringParameterSettingGetThrown() {
-
-		assertThatExceptionOfType(MyBatisSystemException.class) //
-				.isThrownBy(() -> this.repository.findByStringAge("twelve")) //
-				.matches(e -> !e.getMessage().contains("Named parameter [age] not set"));
 	}
 
 	@Test

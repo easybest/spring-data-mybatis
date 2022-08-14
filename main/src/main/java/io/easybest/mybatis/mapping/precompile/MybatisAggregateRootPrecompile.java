@@ -45,6 +45,7 @@ public final class MybatisAggregateRootPrecompile {
 				.create(entityManager.getSqlSessionTemplate().getConfiguration(), entity.getType().getName());
 
 		builder //
+				.add(snippet.pureTableName()) //
 				.add(snippet.tableName()) //
 				.add(snippet.columnList()) //
 				.add(snippet.columnListUsingType()) //

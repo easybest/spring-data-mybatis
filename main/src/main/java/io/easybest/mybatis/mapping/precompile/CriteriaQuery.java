@@ -27,10 +27,12 @@ import lombok.Getter;
 
 import org.springframework.data.mapping.MappingException;
 
+import static io.easybest.mybatis.mapping.precompile.CriteriaQuery.Type.DELETE;
 import static io.easybest.mybatis.mapping.precompile.CriteriaQuery.Type.SELECT;
 import static io.easybest.mybatis.mapping.precompile.Include.COLUMN_LIST;
 import static io.easybest.mybatis.mapping.precompile.Include.COLUMN_LIST_USING_TYPE;
 import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME;
+import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME_PURE;
 import static io.easybest.mybatis.mapping.precompile.MybatisMapperSnippet.MYBATIS_DEFAULT_PARAMETER_NAME;
 
 /**
@@ -163,8 +165,9 @@ public class CriteriaQuery implements Segment {
 		switch (commandType) {
 		case DELETE:
 			builder.append("DELETE FROM ");
-			builder.append(null != this.from
-					? Arrays.stream(this.from).map(Segment::toString).collect(Collectors.joining(" ")) : TABLE_NAME);
+			builder.append(
+					null != this.from ? Arrays.stream(this.from).map(Segment::toString).collect(Collectors.joining(" "))
+							: TABLE_NAME_PURE);
 
 			if (!this.basic) {
 				builder.append(this.join());
@@ -173,6 +176,7 @@ public class CriteriaQuery implements Segment {
 			if (null != this.predicates && this.predicates.length > 0) {
 				builder.append(" ").append(Where.of(this.predicates));
 			}
+
 			break;
 		case SELECT:
 			if (this.bind) {
@@ -237,7 +241,13 @@ public class CriteriaQuery implements Segment {
 			throw new MappingException("Unsupported SQL command type " + commandType);
 		}
 
-		return builder.toString();
+		String sql = builder.toString();
+
+		if (commandType == DELETE) {
+			sql = sql.replace(SQL.ROOT_ALIAS.getValue() + '.', "");
+		}
+
+		return sql;
 	}
 
 	public enum Type {

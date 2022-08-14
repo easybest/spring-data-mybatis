@@ -79,7 +79,7 @@ public interface UserRepository extends MybatisRepository<User, Integer>, UserRe
 	User findByEmailAddress(String emailAddress);
 
 	@Modifying
-	@Query("update #{#tableName} u set u.lastname = ?1")
+	@Query("update #{#tableName} set lastname = ?1")
 	void renameAllUsersTo(String lastname);
 
 	@Query("select u from #{#tableName} u where u.emailAddress = ?1")
@@ -163,7 +163,7 @@ public interface UserRepository extends MybatisRepository<User, Integer>, UserRe
 	Collection<User> findByIdIn(@Param("ids") Integer... ids);
 
 	@Modifying
-	@Query("update #{#tableName} u set u.active = :activeState where u.id in :ids")
+	@Query("update #{#tableName} set active = :activeState where id in :ids")
 	void updateUserActiveState(@Param("activeState") boolean activeState, @Param("ids") Integer... ids);
 
 	List<User> findAllByOrderByLastnameAsc();
@@ -291,9 +291,6 @@ public interface UserRepository extends MybatisRepository<User, Integer>, UserRe
 	@Query("select u from #{#tableName} u")
 	Stream<User> streamAllPaged(Pageable pageable);
 
-	@Query("select u from #{#tableName} u where u.age = :age")
-	List<User> findByStringAge(@Param("age") String age);
-
 	<T> Stream<T> findAsStreamByFirstnameLike(String name, Class<T> projectionType);
 
 	<T> List<T> findAsListByFirstnameLike(String name, Class<T> projectionType);
@@ -337,7 +334,7 @@ public interface UserRepository extends MybatisRepository<User, Integer>, UserRe
 	List<NameOnly> findAllInterfaceProjectedBy();
 
 	@Modifying
-	@Query("update SD_User u set u.active = false where u.id = :userId")
+	@Query("update SD_User set active = false where id = :userId")
 	void setActiveToFalseWithModifyingNative(@Param("userId") int userId);
 
 	@Query("select concat(?1,u.id,?2) as idWithPrefixAndSuffix from #{#tableName} u")

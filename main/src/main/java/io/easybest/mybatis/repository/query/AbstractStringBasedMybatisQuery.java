@@ -27,10 +27,11 @@ import java.util.regex.Pattern;
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.dialect.Dialect;
 import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.precompile.Bind;
 import io.easybest.mybatis.mapping.precompile.Choose;
+import io.easybest.mybatis.mapping.precompile.Composite;
 import io.easybest.mybatis.mapping.precompile.Delete;
 import io.easybest.mybatis.mapping.precompile.Foreach;
-import io.easybest.mybatis.mapping.precompile.Function;
 import io.easybest.mybatis.mapping.precompile.Insert;
 import io.easybest.mybatis.mapping.precompile.MethodInvocation;
 import io.easybest.mybatis.mapping.precompile.Page;
@@ -191,7 +192,8 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 		String queryString = settled.toString();
 		Select.Builder builder = Select.builder().id(this.method.getStatementName());
 
-		if (this.method.getResultMap().isPresent() || SELECT_ALL_FROM.matcher(queryString.toLowerCase()).matches()) {
+		if (this.method.getResultMap().isPresent() || SELECT_ALL_FROM.matcher(queryString.toLowerCase()).matches()
+				|| this.method.getReturnedObjectType() == this.entity.getType()) {
 			builder.resultMap(this.method.getResultMap().orElse(ResidentStatementName.RESULT_MAP));
 		}
 		else {
@@ -372,13 +374,23 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 				case LIKE:
 					break;
 				case CONTAINING:
-					like = Function.of(dialect.getFunction("concat"), "'%'", parameter.toString(), "'%'");
+					like = Composite.of(
+							Bind.of("__" + replacedParameter, "'%' + " + parameter.getProperty() + " + '%'"),
+							Parameter.of("__" + replacedParameter));
+					// like = Function.of(dialect.getFunction("concat"), "'%'",
+					// parameter.toString(), "'%'");
 					break;
 				case STARTING_WITH:
-					like = Function.of(dialect.getFunction("concat"), parameter.toString(), "'%'");
+					like = Composite.of(Bind.of("__" + replacedParameter, parameter.getProperty() + " + '%'"),
+							Parameter.of("__" + replacedParameter));
+					// like = Function.of(dialect.getFunction("concat"),
+					// parameter.toString(), "'%'");
 					break;
 				case ENDING_WITH:
-					like = Function.of(dialect.getFunction("concat"), "'%'", parameter.toString());
+					like = Composite.of(Bind.of("__" + replacedParameter, "'%' + " + parameter.getProperty()),
+							Parameter.of("__" + replacedParameter));
+					// like = Function.of(dialect.getFunction("concat"), "'%'",
+					// parameter.toString());
 					break;
 				}
 

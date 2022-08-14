@@ -37,6 +37,11 @@ public class Include implements Segment {
 	public static Include TABLE_NAME = Include.of(ResidentStatementName.TABLE_NAME);
 
 	/**
+	 * Pure table name.
+	 */
+	public static Include TABLE_NAME_PURE = Include.of(ResidentStatementName.TABLE_NAME_PURE);
+
+	/**
 	 * Column list.
 	 */
 	public static Include COLUMN_LIST = Include.of(ResidentStatementName.COLUMN_LIST);
