@@ -1,6 +1,6 @@
 <p align="center">
     <a href="https://github.com/easybest/spring-data-mybatis">
-        <img src="https://raw.githubusercontent.com/easybest/spring-data-mybatis/dameng/logo.png"/>
+        <img src="https://raw.githubusercontent.com/easybest/spring-data-mybatis/main/logo.png"/>
     </a>
 </p>
 
