@@ -31,14 +31,14 @@ At the same time, you can use the Spring Data pattern to reduce the amount of co
 > To put it bluntly, it is to help you automatically generate the Mapper files in advance, all the SQLs are ready, and
 > then, the essence is still MyBatis. Developers who use MyBatis no longer need to envy Spring Data JPA and the like ^_^
 
-
 ## Useful Links
+
 * [Documentation](https://sdm.easybest.io)
 * [Example Project](https://github.com/easybest/spring-data-mybatis-samples)
 * [Simplified Chinese](README_zh.md)
 
-
 ## Features ##
+
 * Do not invade MyBatis, completely native use
 * Use standard Java Persistence API (JPA) annotations
 * Supports full CRUD operations on Entities, as well as more complex queries
@@ -58,14 +58,14 @@ Here is a document to help you learn Spring Data Mybatis quickly. [reference doc
 If you have any questions or suggestions, you can record
 an [issue](https://github.com/easybest/spring-data-mybatis/issues) for me.
 
-[PR](https://github.com/easybest/spring-data-mybatis/pulls) welcome.
-
 ## Quick Start ##
 
 ### Installation
 
 #### Maven
+
 ```xml
+
 <dependency>
     <groupId>io.easybest</groupId>
     <artifactId>spring-data-mybatis</artifactId>
@@ -74,7 +74,9 @@ an [issue](https://github.com/easybest/spring-data-mybatis/issues) for me.
 ```
 
 In Spring Boot, use the following starter directly:
+
 ```xml
+
 <dependency>
     <groupId>io.easybest</groupId>
     <artifactId>spring-data-mybatis-starter</artifactId>
@@ -83,11 +85,25 @@ In Spring Boot, use the following starter directly:
 ```
 
 #### Gradle
+
 ```groovy
 implementation('io.easybest:spring-data-mybatis:2.1.0')
 ```
+
 In Spring Boot, use the following starter directly:
+
 ```groovy
 implementation('io.easybest:spring-data-mybatis-starter:2.1.0')
 ```
+
+## Contributing
+
+Here are some ways for you to get involved in the community:
+
+* GitHub is for social coding: if you want to write code, we encourage contributions through pull requests
+  from [forks of this repository](https://help.github.com/forking/).
+
+## Donation
+
+[![paypal](https://www.paypal.com/en_US/i/btn/x-click-butcc-donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W7PLNCBK5K8JS)
 
