@@ -1,14 +1,25 @@
-# Spring Data MyBatis
+<p align="center">
+    <a href="https://github.com/easybest/spring-data-mybatis">
+        <img src="https://raw.githubusercontent.com/easybest/spring-data-mybatis/dameng/logo.png"/>
+    </a>
+</p>
 
-[![Build](https://github.com/easybest/spring-data-mybatis/actions/workflows/github-actions-ci.yml/badge.svg)](https://github.com/easybest/spring-data-mybatis/actions/workflows/github-actions-ci.yml)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.easybest/spring-data-mybatis/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.easybest/spring-data-mybatis)
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-brightgreen.svg)](https://github.com/hatunet/spring-data-mybatis/blob/main/LICENSE)
+----
 
-[Simplified Chinese](README_zh.md)
-
-[Documentation](https://sdm.easybest.io)
-
-[Example Project](https://github.com/easybest/spring-data-mybatis-samples)
+<p align="center">
+    <a href="https://github.com/easybest/spring-data-mybatis/actions/workflows/github-actions-ci.yml" title="Build">
+        <img src="https://github.com/easybest/spring-data-mybatis/actions/workflows/github-actions-ci.yml/badge.svg"/>
+    </a>
+    <a href="https://maven-badges.herokuapp.com/maven-central/io.easybest/spring-data-mybatis" title="Maven Central">
+        <img src="https://maven-badges.herokuapp.com/maven-central/io.easybest/spring-data-mybatis/badge.svg"/>
+    </a>
+    <a href="https://github.com/hatunet/spring-data-mybatis/blob/main/LICENSE" title="License: Apache 2.0">
+        <img src="https://img.shields.io/badge/license-Apache_2.0-brightgreen.svg"/>
+    </a>
+    <a href="https://gitter.im/spring-data-mybatis" title="Gitter chat">
+        <img src="https://badges.gitter.im/gitterHQ/gitter.png"/>
+    </a>
+</p>
 
 The primary goal of the Spring Data project is to make it easier to build Spring-powered applications that use data
 access technologies.
@@ -20,8 +31,14 @@ At the same time, you can use the Spring Data pattern to reduce the amount of co
 > To put it bluntly, it is to help you automatically generate the Mapper files in advance, all the SQLs are ready, and
 > then, the essence is still MyBatis. Developers who use MyBatis no longer need to envy Spring Data JPA and the like ^_^
 
-## Features ##
 
+## Useful Links
+* [Documentation](https://sdm.easybest.io)
+* [Example Project](https://github.com/easybest/spring-data-mybatis-samples)
+* [Simplified Chinese](README_zh.md)
+
+
+## Features ##
 * Do not invade MyBatis, completely native use
 * Use standard Java Persistence API (JPA) annotations
 * Supports full CRUD operations on Entities, as well as more complex queries
