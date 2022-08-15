@@ -1,6 +1,6 @@
 <p align="center">
     <a href="https://github.com/easybest/spring-data-mybatis">
-        <img src="https://raw.githubusercontent.com/easybest/spring-data-mybatis/dameng/logo.png"/>
+        <img src="https://gitee.com/easybest/spring-data-mybatis/raw/main/logo.png"/>
     </a>
 </p>
 
@@ -66,6 +66,4 @@ Data的快捷构建查询的方式，极大的减少编码量，提升开发效�
 如果你想帮助维护本项目，可以通过PR的方式提交代码 [forks of this repository](https://help.github.com/forking/).
 
 ## 支持与捐赠
-
-[![paypal](https://www.paypal.com/en_US/i/btn/x-click-butcc-donate.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=W7PLNCBK5K8JS)
 
