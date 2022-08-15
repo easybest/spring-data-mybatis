@@ -25,8 +25,8 @@ The primary goal of the Spring Data project is to make it easier to build Spring
 access technologies.
 
 This module deals with enhanced support for MyBatis based data access layers.
-_**This module does not make any modifications to MyBatis, generate Mybatis Mapper Statements by precompiling**_,
-Non-invasive enhancement of MyBatis functionality take developers more flexibility.
+**This module _does not_ make any modifications to MyBatis**. Non-invasive enhancement of MyBatis functionality by using
+the pre-compiled MyBatis Mapper Statement mode take developers more flexibility.
 At the same time, you can use the Spring Data pattern to reduce the amount of code and improve development efficiency.
 
 > To put it bluntly, it is to help you automatically generate the Mapper files in advance, all the SQLs are ready, and
