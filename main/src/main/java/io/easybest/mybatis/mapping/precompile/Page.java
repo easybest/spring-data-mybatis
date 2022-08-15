@@ -48,7 +48,7 @@ public class Page extends AbstractSegment {
 
 		String sql = this.content();
 
-		return this.dialect.getLimitHandler().processSql(sql, this.offset, this.fetchSize, this.offsetEnd);
+		return this.dialect.getPaginationHandler().processSql(sql, this.offset, this.fetchSize, this.offsetEnd);
 
 	}
 

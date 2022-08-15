@@ -16,31 +16,37 @@
 
 package io.easybest.mybatis.dialect;
 
-import io.easybest.mybatis.mapping.precompile.Segment;
+import javax.persistence.GenerationType;
+
+import io.easybest.mybatis.dialect.pagination.TopPaginationHandler;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-public abstract class AbstractLimitHandler implements LimitHandler {
+public class SqlServerDialect extends AbstractDialect {
 
-	protected AbstractLimitHandler() {
+	private final PaginationHandler paginationHandler;
+
+	public SqlServerDialect() {
+
+		this.paginationHandler = new TopPaginationHandler();
 	}
 
 	@Override
-	public boolean supportsLimit() {
-		return false;
+	public PaginationHandler getPaginationHandler() {
+		return this.paginationHandler;
 	}
 
 	@Override
-	public boolean supportsLimitOffset() {
-		return this.supportsLimit();
+	public String getNativeIdentifierGeneratorStrategy() {
+		return GenerationType.IDENTITY.name().toLowerCase();
 	}
 
 	@Override
-	public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
-		throw new UnsupportedOperationException("Paged queries not supported by " + this.getClass().getName());
+	public String getIdentitySelectString(String table, String column, int type) {
+		return "select @@identity";
 	}
 
 }

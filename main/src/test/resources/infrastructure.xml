@@ -49,10 +49,10 @@
 	<!--		</bean>-->
 
 	<!-- HSQLDB -->
-	<jdbc:embedded-database id="dataSource" type="HSQL" generate-name="true">
-		<jdbc:script execution="INIT" separator=";"
-					 location="classpath:scripts/hsqldb-init.sql"/>
-	</jdbc:embedded-database>
+<!--	<jdbc:embedded-database id="dataSource" type="HSQL" generate-name="true">-->
+<!--		<jdbc:script execution="INIT" separator=";"-->
+<!--					 location="classpath:scripts/hsqldb-init.sql"/>-->
+<!--	</jdbc:embedded-database>-->
 
 	<!-- PostgreSQL 12/11/10-->
 	<!--		<jdbc:initialize-database>-->
@@ -91,17 +91,17 @@
 	<!--	</bean>-->
 
 	<!-- DM -->
-	<!--	<jdbc:initialize-database ignore-failures="DROPS">-->
-	<!--		<jdbc:script execution="INIT" separator=";"-->
-	<!--					 location="classpath:scripts/oracle-init.sql"/>-->
-	<!--	</jdbc:initialize-database>-->
-	<!--	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">-->
-	<!--		<property name="driverClassName" value="dm.jdbc.driver.DmDriver"/>-->
-	<!--		<property name="jdbcUrl"-->
-	<!--				  value="jdbc:dm://10.55.2.20:5236"/>-->
-	<!--		<property name="username" value="SYSDBA"/>-->
-	<!--		<property name="password" value="SYSDBA"/>-->
-	<!--	</bean>-->
+		<jdbc:initialize-database ignore-failures="DROPS">
+			<jdbc:script execution="INIT" separator=";"
+						 location="classpath:scripts/oracle-init.sql"/>
+		</jdbc:initialize-database>
+		<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">
+			<property name="driverClassName" value="dm.jdbc.driver.DmDriver"/>
+			<property name="jdbcUrl"
+					  value="jdbc:dm://10.55.4.86:5236"/>
+			<property name="username" value="SYSDBA"/>
+			<property name="password" value="SYSDBA"/>
+		</bean>
 
 	<!-- SQLite -->
 	<!--	<jdbc:initialize-database ignore-failures="DROPS">-->

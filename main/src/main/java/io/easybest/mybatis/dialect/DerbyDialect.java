@@ -18,6 +18,8 @@ package io.easybest.mybatis.dialect;
 
 import java.lang.reflect.Method;
 
+import javax.persistence.GenerationType;
+
 import org.springframework.data.mapping.MappingException;
 import org.springframework.util.ClassUtils;
 
@@ -26,13 +28,13 @@ import org.springframework.util.ClassUtils;
  *
  * @author Jarvis Song
  */
-public class DerbyDialect extends DB2Dialect {
+public class DerbyDialect extends SQLServer2012Dialect {
 
 	private int driverVersionMajor;
 
 	private int driverVersionMinor;
 
-	private final LimitHandler limitHandler;
+	private final PaginationHandler limitHandler;
 
 	public DerbyDialect() {
 
@@ -43,7 +45,7 @@ public class DerbyDialect extends DB2Dialect {
 	}
 
 	@Override
-	public LimitHandler getLimitHandler() {
+	public PaginationHandler getPaginationHandler() {
 
 		return this.limitHandler;
 	}
@@ -77,7 +79,18 @@ public class DerbyDialect extends DB2Dialect {
 		}
 	}
 
-	private static final class DerbyLimitHandler extends AbstractLimitHandler {
+	@Override
+	public String getNativeIdentifierGeneratorStrategy() {
+		return this.supportsSequences() ? GenerationType.SEQUENCE.name().toLowerCase()
+				: GenerationType.IDENTITY.name().toLowerCase();
+	}
+
+	@Override
+	public String getIdentitySelectString(String table, String column, int type) {
+		return "values identity_val_local()";
+	}
+
+	private static final class DerbyLimitHandler extends AbstractPaginationHandler {
 
 	}
 

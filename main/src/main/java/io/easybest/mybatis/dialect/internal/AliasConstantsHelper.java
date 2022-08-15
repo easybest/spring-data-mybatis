@@ -14,27 +14,38 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.dialect;
-
-import io.easybest.mybatis.dialect.pagination.Oracle12PaginationHandler;
-
-import static javax.persistence.GenerationType.SEQUENCE;
+package io.easybest.mybatis.dialect.internal;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-public class Oracle12cDialect extends Oracle9iDialect {
+public class AliasConstantsHelper {
 
-	@Override
-	public PaginationHandler getPaginationHandler() {
-		return Oracle12PaginationHandler.INSTANCE;
+	private static final int MAX_POOL_SIZE = 40;
+
+	private static final String[] pool = initPool(MAX_POOL_SIZE);
+
+	public static String get(final int i) {
+		if (i < MAX_POOL_SIZE && i >= 0) {
+			return pool[i];
+		}
+		else {
+			return internalAlias(i);
+		}
 	}
 
-	@Override
-	public String getNativeIdentifierGeneratorStrategy() {
-		return SEQUENCE.name().toLowerCase();
+	private static String[] initPool(final int maxPoolSize) {
+		String[] pool = new String[maxPoolSize];
+		for (int i = 0; i < maxPoolSize; i++) {
+			pool[i] = internalAlias(i);
+		}
+		return pool;
+	}
+
+	private static String internalAlias(final int i) {
+		return Integer.toString(i) + '_';
 	}
 
 }

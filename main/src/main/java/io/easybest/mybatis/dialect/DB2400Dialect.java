@@ -29,7 +29,7 @@ public class DB2400Dialect extends DB2Dialect {
 	}
 
 	@Override
-	public String getIdentitySelectString() {
+	public String getIdentitySelectString(String table, String column, int type) {
 
 		return "select identity_val_local() from sysibm.sysdummy1";
 	}

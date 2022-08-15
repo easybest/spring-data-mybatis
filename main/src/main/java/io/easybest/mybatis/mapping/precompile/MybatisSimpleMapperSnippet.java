@@ -310,8 +310,10 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return SelectKey.builder().keyProperty(PARAM_INSTANCE_PREFIX + idProperty.getName())
 					.keyColumn(idProperty.getColumnName()
 							.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
-					.resultType(idProperty.getJavaType()).order(AFTER).contents(Collections
-							.singletonList(SQL.of(this.entityManager.getDialect().getIdentitySelectString())))
+					.resultType(idProperty.getJavaType()).order(AFTER)
+					.contents(Collections.singletonList(SQL.of(this.entityManager.getDialect().getIdentitySelectString(
+							this.entity.getTableName().getReference(), idProperty.getColumnName().getReference(),
+							idProperty.getJdbcType().TYPE_CODE))))
 					.build();
 		}
 		else if (generationType == GenerationType.SEQUENCE) {

@@ -16,11 +16,7 @@
 
 package io.easybest.mybatis.dialect;
 
-import java.util.Locale;
-
 import io.easybest.mybatis.mapping.precompile.Segment;
-
-import org.springframework.util.ClassUtils;
 
 import static javax.persistence.GenerationType.SEQUENCE;
 
@@ -31,37 +27,24 @@ import static javax.persistence.GenerationType.SEQUENCE;
  */
 public class HsqlDbDialect extends AbstractDialect {
 
-	/**
-	 * Singleton instance.
-	 */
-	public static final HsqlDbDialect INSTANCE = new HsqlDbDialect();
+	private static final AbstractPaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
 
-	private final LimitHandler limitHandler;
+		@Override
+		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
 
-	private int hsqldbVersion = 180;
+			final boolean hasOffset = null != offset;
+
+			return sql + (hasOffset ? (" LIMIT " + fetchSize + " OFFSET " + offset) : (" LIMIT " + fetchSize));
+		}
+	};
 
 	public HsqlDbDialect() {
 
 		super();
-
-		try {
-			final Class<?> props = ClassUtils.forName("org.hsqldb.persist.HsqlDatabaseProperties",
-					HsqlDbDialect.class.getClassLoader());
-			final String versionString = (String) props.getDeclaredField("THIS_VERSION").get(null);
-
-			this.hsqldbVersion = Integer.parseInt(versionString.substring(0, 1)) * 100;
-			this.hsqldbVersion += Integer.parseInt(versionString.substring(2, 3)) * 10;
-			this.hsqldbVersion += Integer.parseInt(versionString.substring(4, 5));
-		}
-		catch (Throwable ex) {
-			// must be a very old version
-		}
-
-		this.limitHandler = new HsqlLimitHandler();
 	}
 
 	@Override
-	public String getIdentitySelectString() {
+	public String getIdentitySelectString(String table, String column, int type) {
 		return "CALL IDENTITY()";
 	}
 
@@ -71,8 +54,8 @@ public class HsqlDbDialect extends AbstractDialect {
 	}
 
 	@Override
-	public LimitHandler getLimitHandler() {
-		return this.limitHandler;
+	public PaginationHandler getPaginationHandler() {
+		return PAGINATION_HANDLER;
 	}
 
 	@Override
@@ -83,32 +66,6 @@ public class HsqlDbDialect extends AbstractDialect {
 	@Override
 	public String regexpLike(String column, String pattern) {
 		return "REGEXP_MATCHES(" + column + "," + pattern + ")";
-	}
-
-	private final class HsqlLimitHandler extends AbstractLimitHandler {
-
-		@Override
-		public boolean supportsLimit() {
-			return true;
-		}
-
-		@Override
-		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
-
-			final boolean hasOffset = null != offset;
-
-			if (HsqlDbDialect.this.hsqldbVersion < 200) {
-
-				return new StringBuilder(sql.length() + 10).append(sql)
-						.insert(sql.toLowerCase(Locale.ROOT).indexOf("select") + 6,
-								hasOffset ? (" LIMIT " + offset + " " + fetchSize) : (" TOP " + fetchSize))
-						.toString();
-
-			}
-
-			return sql + (hasOffset ? (" OFFSET " + offset + " LIMIT " + fetchSize) : (" LIMIT " + fetchSize));
-		}
-
 	}
 
 }

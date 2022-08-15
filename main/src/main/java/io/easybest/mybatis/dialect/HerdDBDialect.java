@@ -16,6 +16,8 @@
 
 package io.easybest.mybatis.dialect;
 
+import javax.persistence.GenerationType;
+
 import io.easybest.mybatis.mapping.precompile.Segment;
 
 /**
@@ -23,12 +25,27 @@ import io.easybest.mybatis.mapping.precompile.Segment;
  *
  * @author Jarvis Song
  */
-public interface LimitHandler {
+public class HerdDBDialect extends AbstractDialect {
 
-	boolean supportsLimit();
+	private static final PaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
 
-	boolean supportsLimitOffset();
+		@Override
+		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
 
-	String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd);
+			final boolean hasOffset = null != offset;
+
+			return sql + (hasOffset ? (" LIMIT " + offset + "," + fetchSize) : (" LIMIT " + fetchSize));
+		}
+	};
+
+	@Override
+	public PaginationHandler getPaginationHandler() {
+		return PAGINATION_HANDLER;
+	}
+
+	@Override
+	public String getNativeIdentifierGeneratorStrategy() {
+		return GenerationType.SEQUENCE.name().toLowerCase();
+	}
 
 }

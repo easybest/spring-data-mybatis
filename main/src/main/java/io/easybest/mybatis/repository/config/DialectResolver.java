@@ -20,7 +20,6 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 import javax.sql.DataSource;
@@ -28,15 +27,25 @@ import javax.sql.DataSource;
 import io.easybest.mybatis.dialect.DB2400Dialect;
 import io.easybest.mybatis.dialect.DB2Dialect;
 import io.easybest.mybatis.dialect.DMDialect;
+import io.easybest.mybatis.dialect.DerbyDialect;
 import io.easybest.mybatis.dialect.Dialect;
 import io.easybest.mybatis.dialect.H2Dialect;
+import io.easybest.mybatis.dialect.HerdDBDialect;
 import io.easybest.mybatis.dialect.HsqlDbDialect;
+import io.easybest.mybatis.dialect.InformixDialect;
 import io.easybest.mybatis.dialect.MariaDBDialect;
-import io.easybest.mybatis.dialect.MysqlDialect;
+import io.easybest.mybatis.dialect.MySQLDialect;
 import io.easybest.mybatis.dialect.Oracle12cDialect;
 import io.easybest.mybatis.dialect.Oracle8iDialect;
 import io.easybest.mybatis.dialect.Oracle9iDialect;
+import io.easybest.mybatis.dialect.OscarDialect;
+import io.easybest.mybatis.dialect.PhoenixDialect;
+import io.easybest.mybatis.dialect.PolarDBDialect;
+import io.easybest.mybatis.dialect.PostgreSQLDialect;
+import io.easybest.mybatis.dialect.SQLServer2005Dialect;
+import io.easybest.mybatis.dialect.SQLServer2012Dialect;
 import io.easybest.mybatis.dialect.SQLiteDialect;
+import io.easybest.mybatis.dialect.SqlServerDialect;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.SqlSessionTemplate;
 
@@ -92,8 +101,9 @@ public final class DialectResolver {
 
 		@Nullable
 		private static Dialect getDialect(Connection connection) throws SQLException {
+
 			DatabaseMetaData metaData = connection.getMetaData();
-			String databaseName = metaData.getDatabaseProductName().toLowerCase(Locale.ENGLISH);
+			String databaseName = metaData.getDatabaseProductName();
 			String driverName = null;
 			try {
 				driverName = metaData.getDriverName();
@@ -105,23 +115,47 @@ public final class DialectResolver {
 			int majorVersion = metaData.getDatabaseMajorVersion();
 			int minorVersion = metaData.getDatabaseMinorVersion();
 
-			if (databaseName.contains("hsql")) {
-				return HsqlDbDialect.INSTANCE;
+			// HSQL
+			if ("HSQL Database Engine".equals(databaseName)) {
+				return new HsqlDbDialect();
 			}
 
-			if ("h2".equals(databaseName)) {
-				return H2Dialect.INSTANCE;
+			// H2
+			if ("H2".equals(databaseName)) {
+				return new H2Dialect();
 			}
 
-			if ("mysql".equals(databaseName)) {
-				return MysqlDialect.INSTANCE;
+			// Phoenix
+			if ("Phoenix".equals(databaseName)) {
+				return new PhoenixDialect();
 			}
 
+			// PostgreSQL
+			if ("PostgreSQL".equals(databaseName)) {
+				return new PostgreSQLDialect();
+			}
+
+			// MySQL
+			if ("MySQL".equals(databaseName)) {
+				return new MySQLDialect();
+			}
+
+			// MariaDB
 			if (null != driverName && driverName.startsWith("MariaDB")) {
-				return MariaDBDialect.INSTANCE;
+				return new MariaDBDialect();
+			}
+			// SQLite
+			if ("SQLite".equals(databaseName)) {
+				return new SQLiteDialect();
 			}
 
-			if ("oracle".equals(databaseName)) {
+			// HerdDB
+			if ("HerdDB".equals(databaseName)) {
+				return new HerdDBDialect();
+			}
+
+			// Oracle
+			if ("Oracle".equals(databaseName)) {
 				switch (majorVersion) {
 				case 8:
 					return new Oracle8iDialect();
@@ -135,23 +169,56 @@ public final class DialectResolver {
 				}
 			}
 
-			if ("DB2 UDB for AS/400".equalsIgnoreCase(databaseName)) {
+			// DB2
+			if ("DB2 UDB for AS/400".equals(databaseName)) {
 				return new DB2400Dialect();
 			}
-			if (databaseName.startsWith("db2/")) {
+
+			if (databaseName.startsWith("DB2/")) {
 				return new DB2Dialect();
 			}
 
-			if ("Apache Derby".equalsIgnoreCase(databaseName)) {
-				// Derby
+			// Informix
+			if (databaseName.startsWith("Informix")) {
+				return new InformixDialect();
 			}
 
-			if ("dm dbms".equalsIgnoreCase(databaseName)) {
+			// SQL Server
+			if (databaseName.startsWith("Microsoft SQL Server")) {
+				switch (majorVersion) {
+				case 8:
+					return new SqlServerDialect();
+				case 9:
+				case 10:
+					return new SQLServer2005Dialect();
+				default:
+					if (majorVersion < 8) {
+						return new SqlServerDialect();
+					}
+					else {
+						return new SQLServer2012Dialect();
+					}
+				}
+			}
+
+			// Derby
+			if ("Apache Derby".equals(databaseName)) {
+				return new DerbyDialect();
+			}
+
+			// DM
+			if ("DM DBMS".equals(databaseName)) {
 				return new DMDialect();
 			}
 
-			if ("SQLite".equalsIgnoreCase(databaseName)) {
-				return new SQLiteDialect();
+			// PolarDB
+			if ("POLARDB JDBC Driver".equals(driverName)) {
+				return new PolarDBDialect();
+			}
+
+			// OSCAR
+			if ("OSCAR".equals(databaseName)) {
+				return new OscarDialect();
 			}
 
 			log.info(String.format("Couldn't determine Dialect for \"%s\"", databaseName));

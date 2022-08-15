@@ -16,25 +16,15 @@
 
 package io.easybest.mybatis.dialect;
 
-import io.easybest.mybatis.dialect.pagination.Oracle12PaginationHandler;
-
-import static javax.persistence.GenerationType.SEQUENCE;
+import io.easybest.mybatis.mapping.precompile.Segment;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-public class Oracle12cDialect extends Oracle9iDialect {
+public interface PaginationHandler {
 
-	@Override
-	public PaginationHandler getPaginationHandler() {
-		return Oracle12PaginationHandler.INSTANCE;
-	}
-
-	@Override
-	public String getNativeIdentifierGeneratorStrategy() {
-		return SEQUENCE.name().toLowerCase();
-	}
+	String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd);
 
 }

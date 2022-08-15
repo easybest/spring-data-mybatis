@@ -30,7 +30,7 @@ import org.springframework.data.mapping.MappingException;
  */
 public interface Dialect {
 
-	LimitHandler getLimitHandler();
+	PaginationHandler getPaginationHandler();
 
 	String getFunction(String name);
 
@@ -48,10 +48,10 @@ public interface Dialect {
 	}
 
 	default String getNativeIdentifierGeneratorStrategy() {
-		return GenerationType.IDENTITY.name().toLowerCase();
+		return GenerationType.SEQUENCE.name().toLowerCase();
 	}
 
-	default String getIdentitySelectString() {
+	default String getIdentitySelectString(String table, String column, int type) {
 		throw new MappingException(this.getClass().getName() + " does not support identity select.");
 	}
 

@@ -21,12 +21,7 @@ package io.easybest.mybatis.dialect;
  *
  * @author Jarvis Song
  */
-public class MariaDBDialect extends MysqlDialect {
-
-	/**
-	 * Singleton instance.
-	 */
-	public static final MariaDBDialect INSTANCE = new MariaDBDialect();
+public class MariaDBDialect extends MySQLDialect {
 
 	public MariaDBDialect() {
 

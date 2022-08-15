@@ -4,6 +4,8 @@ drop table SD_User_ROLE;
 drop table SD_User_SD_User;
 drop table User_attributes;
 
+drop sequence SEQ_MYBATIS;
+
 create sequence SEQ_MYBATIS start with 1 increment by 1;
 
 

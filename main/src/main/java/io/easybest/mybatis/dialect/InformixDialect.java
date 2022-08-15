@@ -16,8 +16,6 @@
 
 package io.easybest.mybatis.dialect;
 
-import javax.persistence.GenerationType;
-
 import io.easybest.mybatis.mapping.precompile.Segment;
 
 /**
@@ -25,52 +23,45 @@ import io.easybest.mybatis.mapping.precompile.Segment;
  *
  * @author Jarvis Song
  */
-public class DB2Dialect extends AbstractDialect {
+public class InformixDialect extends AbstractDialect {
 
 	private static final AbstractPaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
 
 		@Override
 		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
 
-			if (null != offset) {
-				return "select * from ( select inner2_.*, rownumber() over(order by order of inner2_) as rownumber_ from ( "
-						+ sql + " fetch first " + fetchSize + " rows only ) as inner2_ ) as inner1_ where rownumber_ > "
-						+ offset + " order by rownumber_";
+			final boolean hasOffset = null != offset;
+
+			StringBuilder builder = new StringBuilder();
+			builder.append("SELECT ");
+			if (hasOffset) {
+				builder.append(" SKIP ").append(offsetEnd);
 			}
-			return sql + " fetch first " + fetchSize + " rows only";
+			if (null != fetchSize) {
+				builder.append(" FIRST ").append(fetchSize);
+			}
+			builder.append(" * FROM ( ");
+			builder.append(sql);
+			builder.append(" ) row_");
+
+			return builder.toString();
 		}
 	};
 
-	public DB2Dialect() {
-
-		super();
-	}
-
 	@Override
 	public PaginationHandler getPaginationHandler() {
+
 		return PAGINATION_HANDLER;
 	}
 
 	@Override
-	public String getNativeIdentifierGeneratorStrategy() {
-
-		return GenerationType.SEQUENCE.name().toLowerCase();
-	}
-
-	@Override
 	public String getSequenceNextValString(String sequenceName) {
-
-		return "next value for " + sequenceName;
+		return "SELECT " + sequenceName + ".NEXTVAL";
 	}
 
 	@Override
-	public String getIdentitySelectString(String table, String column, int type) {
-		return "values identity_val_local()";
-	}
-
-	@Override
-	public String getIdentityInsertString() {
-		return "default";
+	public String regexpLike(String column, String pattern) {
+		return "regex_match(" + column + "," + pattern + ")";
 	}
 
 }
