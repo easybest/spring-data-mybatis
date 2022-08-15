@@ -23,8 +23,8 @@
 
 Spring Data 项目的主要目标是使构建使用数据访问技术的 Spring 应用程序变得更加容易。此模块处理增强基于 MyBatis 的数据访问层的支持。
 
-通过使用此模块，你可以在基于MyBatis为ORM的结构下使用Spring Data模式带来的便利性， **本项目不对MyBatis做任何修改，通过前置编译生成MyBatis
-Mapper Statement的模式**，无侵入性的增强MyBatis功能，让各位开发者在享受MyBatis灵活性的同时，使用Spring
+通过使用此模块，你可以在基于MyBatis为ORM的结构下使用Spring Data模式带来的便利性， _**本项目不对MyBatis做任何修改，通过前置编译生成MyBatis
+Mapper Statement的模式**_，无侵入性的增强MyBatis功能，让各位开发者在享受MyBatis灵活性的同时，使用Spring
 Data的快捷构建查询的方式，极大的减少编码量，提升开发效率。
 
 > 说白了，就是帮你自动把Mapper文件都提前生成好了，SQL都准备好了，然后，然后本质MyBatis，该怎么用还怎么用。
