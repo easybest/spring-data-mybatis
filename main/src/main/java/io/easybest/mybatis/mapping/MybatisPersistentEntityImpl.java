@@ -68,10 +68,13 @@ public class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, Myb
 				return this.createSqlIdentifier(this.getEntityName());
 			}
 
-			String name = StringUtils.hasText(tableAnn.name()) ? tableAnn.name() : this.getEntityName();
+			String name = (null != entityManager.getUniformTablePrefix() ? entityManager.getUniformTablePrefix() : "")
+					+ (StringUtils.hasText(tableAnn.name()) ? tableAnn.name() : this.getEntityName());
 			SqlIdentifier tableName = this.createSqlIdentifier(name);
-			return StringUtils.hasText(tableAnn.schema())
-					? SqlIdentifier.from(this.createDerivedSqlIdentifier(tableAnn.schema()), tableName) : tableName;
+			return
+
+			(StringUtils.hasText(tableAnn.schema())
+					? SqlIdentifier.from(this.createDerivedSqlIdentifier(tableAnn.schema()), tableName) : tableName);
 		});
 
 		this.basic = Lazy.of(() -> StreamUtils.createStreamFromIterator(this.iterator())

@@ -39,4 +39,7 @@ public interface EntityManager extends MappingContext<MybatisPersistentEntityImp
 
 	EscapeCharacter getEscapeCharacter();
 
+	@Nullable
+	String getUniformTablePrefix();
+
 }

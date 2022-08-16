@@ -40,6 +40,8 @@ public class SpringDataMybatisProperties {
 
 	private NamingStrategyType namingStrategyType;
 
+	private String uniformTablePrefix;
+
 	public enum NamingStrategyType {
 
 		/**
