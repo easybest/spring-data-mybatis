@@ -38,9 +38,10 @@ public class Page extends AbstractSegment {
 
 	private Dialect dialect;
 
-	public static Page of(Dialect dialect, Segment offset, Segment fetchSize, Segment... segments) {
-		return Page.builder().dialect(dialect).offset(offset).fetchSize(fetchSize).contents(Arrays.asList(segments))
-				.build();
+	public static Page of(Dialect dialect, Segment offset, Segment fetchSize, Segment offsetEnd, Segment... segments) {
+
+		return Page.builder().dialect(dialect).offset(offset).fetchSize(fetchSize).offsetEnd(offsetEnd)
+				.contents(Arrays.asList(segments)).build();
 	}
 
 	@Override

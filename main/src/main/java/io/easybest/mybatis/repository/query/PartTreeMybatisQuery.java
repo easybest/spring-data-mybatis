@@ -175,7 +175,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 		builder.contents(Collections.singletonList(
 
-				Page.of(this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(), sql)));
+				Page.of(this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(),
+						Parameter.pageOffsetEnd(), sql)));
 
 		Select.Builder unpagedBuilder = Select.builder()
 				.id(ResidentStatementName.UNPAGED_PREFIX + this.method.getStatementName())
@@ -199,7 +200,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 		builder.contents(Collections.singletonList(
 
-				Page.of(this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(), sql)));
+				Page.of(this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(),
+						Parameter.pageOffsetEnd(), sql)));
 
 		Select count = Select.builder().id(this.method.getCountStatementName()).resultType("long")
 				.contents(Collections.singletonList(SQL.of(query.toString(COUNT)))).build();
@@ -308,8 +310,8 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 		CriteriaQuery query = creator.createQuery().bind(true).columnAsType(this.suitableToResultType());
 		SQL sql = SQL.of(query.toString());
 
-		builder.contents(Collections.singletonList(this.tree.isLimiting()
-				? Page.of(this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(), sql) : sql));
+		builder.contents(Collections.singletonList(this.tree.isLimiting() ? Page.of(this.entityManager.getDialect(),
+				Parameter.pageOffset(), Parameter.pageSize(), Parameter.pageOffsetEnd(), sql) : sql));
 		return builder.build();
 	}
 

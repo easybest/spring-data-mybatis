@@ -72,4 +72,8 @@ public class Pageable implements Serializable {
 		return !this.unpaged;
 	}
 
+	public long getOffsetEnd() {
+		return this.offset + this.size;
+	}
+
 }

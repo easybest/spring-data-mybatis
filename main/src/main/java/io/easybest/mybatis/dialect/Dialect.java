@@ -67,4 +67,8 @@ public interface Dialect {
 		return "";
 	}
 
+	default boolean supportsBoolean() {
+		return true;
+	}
+
 }

@@ -21,12 +21,6 @@ package io.easybest.mybatis.dialect;
  *
  * @author Jarvis Song
  */
-public class DMDialect extends Oracle12cDialect {
-
-	@Override
-	public String regexpLike(String column, String pattern) {
-
-		return "REGEXP_LIKE(" + column + "," + pattern + ")";
-	}
+public class ClickHouseDialect extends MySQLDialect {
 
 }

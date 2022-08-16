@@ -24,15 +24,26 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
+import io.easybest.mybatis.dialect.CUBRIDDialect;
+import io.easybest.mybatis.dialect.ClickHouseDialect;
 import io.easybest.mybatis.dialect.DB2400Dialect;
 import io.easybest.mybatis.dialect.DB2Dialect;
 import io.easybest.mybatis.dialect.DMDialect;
 import io.easybest.mybatis.dialect.DerbyDialect;
 import io.easybest.mybatis.dialect.Dialect;
+import io.easybest.mybatis.dialect.EnterpriseDBDialect;
+import io.easybest.mybatis.dialect.FirebirdDialect;
 import io.easybest.mybatis.dialect.H2Dialect;
+import io.easybest.mybatis.dialect.HANADialect;
 import io.easybest.mybatis.dialect.HerdDBDialect;
+import io.easybest.mybatis.dialect.HighGoDialect;
 import io.easybest.mybatis.dialect.HsqlDbDialect;
+import io.easybest.mybatis.dialect.ImpalaDialect;
 import io.easybest.mybatis.dialect.InformixDialect;
+import io.easybest.mybatis.dialect.Ingres10Dialect;
+import io.easybest.mybatis.dialect.Ingres9Dialect;
+import io.easybest.mybatis.dialect.IngresDialect;
+import io.easybest.mybatis.dialect.KingbaseDialect;
 import io.easybest.mybatis.dialect.MariaDBDialect;
 import io.easybest.mybatis.dialect.MySQLDialect;
 import io.easybest.mybatis.dialect.Oracle12cDialect;
@@ -46,6 +57,7 @@ import io.easybest.mybatis.dialect.SQLServer2005Dialect;
 import io.easybest.mybatis.dialect.SQLServer2012Dialect;
 import io.easybest.mybatis.dialect.SQLiteDialect;
 import io.easybest.mybatis.dialect.SqlServerDialect;
+import io.easybest.mybatis.dialect.XuguDialect;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.SqlSessionTemplate;
 
@@ -104,7 +116,7 @@ public final class DialectResolver {
 
 			DatabaseMetaData metaData = connection.getMetaData();
 			String databaseName = metaData.getDatabaseProductName();
-			String driverName = null;
+			String driverName = "";
 			try {
 				driverName = metaData.getDriverName();
 			}
@@ -219,6 +231,70 @@ public final class DialectResolver {
 			// OSCAR
 			if ("OSCAR".equals(databaseName)) {
 				return new OscarDialect();
+			}
+
+			// Clickhouse
+			if ("ClickHouse".equals(databaseName)) {
+				return new ClickHouseDialect();
+			}
+
+			// HighGO
+			if ("Highgo".equals(databaseName)) {
+				return new HighGoDialect();
+			}
+
+			// XUGU
+			if ("XuGu".equals(databaseName)) {
+				return new XuguDialect();
+			}
+
+			// Impala
+			if ("Impala".equals(databaseName)) {
+				return new ImpalaDialect();
+			}
+
+			// Kingbase
+			if (driverName.startsWith("Kingbase")) {
+				return new KingbaseDialect();
+			}
+
+			// Firebird
+			if (databaseName.startsWith("Firebird")) {
+				return new FirebirdDialect();
+			}
+
+			// EnterpriseDB
+			if ("EnterpriseDB".equals(databaseName)) {
+				return new EnterpriseDBDialect();
+			}
+
+			// CUBRID
+			if ("CUBRID".equalsIgnoreCase(databaseName)) {
+				return new CUBRIDDialect();
+			}
+
+			// HANA
+			if ("HDB".equals(databaseName)) {
+				return new HANADialect();
+			}
+
+			// Ingres
+			if ("Ingres".equalsIgnoreCase(databaseName)) {
+
+				if (majorVersion < 9) {
+					return new IngresDialect();
+				}
+				else if (majorVersion == 9) {
+					if (minorVersion > 2) {
+						return new Ingres9Dialect();
+					}
+					return new IngresDialect();
+				}
+				else if (majorVersion == 10) {
+					return new Ingres10Dialect();
+				}
+
+				return new Ingres10Dialect();
 			}
 
 			log.info(String.format("Couldn't determine Dialect for \"%s\"", databaseName));

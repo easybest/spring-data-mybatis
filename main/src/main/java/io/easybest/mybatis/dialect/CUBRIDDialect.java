@@ -16,7 +16,7 @@
 
 package io.easybest.mybatis.dialect;
 
-import java.util.Locale;
+import javax.persistence.GenerationType;
 
 import io.easybest.mybatis.mapping.precompile.Segment;
 
@@ -25,45 +25,13 @@ import io.easybest.mybatis.mapping.precompile.Segment;
  *
  * @author Jarvis Song
  */
-public class Oracle8iDialect extends AbstractDialect {
+public class CUBRIDDialect extends AbstractDialect {
 
 	private static final AbstractPaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
-
 		@Override
 		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
 
-			final boolean hasOffset = null != offset;
-
-			sql = sql.trim();
-
-			boolean isForUpdate = false;
-			if (sql.toLowerCase(Locale.ROOT).endsWith(" for update")) {
-				sql = sql.substring(0, sql.length() - 11);
-				isForUpdate = true;
-			}
-
-			final StringBuilder pagingSelect = new StringBuilder(sql.length() + 100);
-			if (hasOffset) {
-				pagingSelect.append("select * from ( select row_.*, rownum rownum_ from ( ");
-			}
-			else {
-				pagingSelect.append("select * from ( ");
-			}
-			pagingSelect.append(sql);
-			if (hasOffset) {
-				pagingSelect.append(" ) row_ ) where rownum_ &lt;= ").append(offsetEnd).append(" and rownum_ &gt; ")
-						.append(offset);
-			}
-			else {
-				pagingSelect.append(" ) where rownum &lt;= ").append(offsetEnd);
-			}
-
-			if (isForUpdate) {
-				pagingSelect.append(" for update");
-			}
-
-			return pagingSelect.toString();
-
+			return sql + (null != offset ? ("LIMIT " + offset + ", " + fetchSize) : "LIMIT " + fetchSize);
 		}
 	};
 
@@ -74,13 +42,22 @@ public class Oracle8iDialect extends AbstractDialect {
 
 	@Override
 	public String getSequenceNextValString(String sequenceName) {
-
-		return "SELECT " + sequenceName + ".NEXTVAL FROM DUAL";
+		return "select " + sequenceName + ".next_value from table({1}) as T(X)";
 	}
 
 	@Override
-	public boolean supportsBoolean() {
-		return false;
+	public String getNativeIdentifierGeneratorStrategy() {
+		return GenerationType.IDENTITY.name().toLowerCase();
+	}
+
+	@Override
+	public String getIdentitySelectString(String table, String column, int type) {
+		return "select last_insert_id()";
+	}
+
+	@Override
+	public String getIdentityInsertString() {
+		return "NULL";
 	}
 
 }

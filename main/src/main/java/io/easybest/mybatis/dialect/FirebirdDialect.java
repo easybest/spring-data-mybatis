@@ -16,17 +16,31 @@
 
 package io.easybest.mybatis.dialect;
 
+import io.easybest.mybatis.mapping.precompile.Segment;
+
 /**
  * .
  *
  * @author Jarvis Song
  */
-public class DMDialect extends Oracle12cDialect {
+public class FirebirdDialect extends AbstractDialect {
+
+	private static final AbstractPaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
+		@Override
+		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
+
+			return sql + (null != offset ? (" FIRST " + fetchSize + " SKIP " + offset) : " FIRST " + fetchSize);
+		}
+	};
 
 	@Override
-	public String regexpLike(String column, String pattern) {
+	public PaginationHandler getPaginationHandler() {
+		return PAGINATION_HANDLER;
+	}
 
-		return "REGEXP_LIKE(" + column + "," + pattern + ")";
+	@Override
+	public String getSequenceNextValString(String sequenceName) {
+		return "select " + "gen_id( " + sequenceName + ", 1 )" + " from rdb$database";
 	}
 
 }

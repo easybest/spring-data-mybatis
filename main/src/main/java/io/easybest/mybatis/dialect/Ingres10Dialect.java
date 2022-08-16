@@ -16,17 +16,23 @@
 
 package io.easybest.mybatis.dialect;
 
+import javax.persistence.GenerationType;
+
 /**
  * .
  *
  * @author Jarvis Song
  */
-public class DMDialect extends Oracle12cDialect {
+public class Ingres10Dialect extends Ingres9Dialect {
 
 	@Override
-	public String regexpLike(String column, String pattern) {
+	public String getNativeIdentifierGeneratorStrategy() {
+		return GenerationType.IDENTITY.name().toLowerCase();
+	}
 
-		return "REGEXP_LIKE(" + column + "," + pattern + ")";
+	@Override
+	public String getIdentityInsertString() {
+		return "default";
 	}
 
 }

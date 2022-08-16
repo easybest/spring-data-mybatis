@@ -14,19 +14,28 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.dialect;
+package io.easybest.mybatis.dialect.pagination;
+
+import io.easybest.mybatis.dialect.AbstractPaginationHandler;
+import io.easybest.mybatis.mapping.precompile.Segment;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-public class DMDialect extends Oracle12cDialect {
+public class FirstPaginationHandler extends AbstractPaginationHandler {
+
+	/**
+	 * Singleton.
+	 */
+	public static final FirstPaginationHandler INSTANCE = new FirstPaginationHandler();
 
 	@Override
-	public String regexpLike(String column, String pattern) {
+	public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
 
-		return "REGEXP_LIKE(" + column + "," + pattern + ")";
+		return new StringBuilder(sql.length() + 16).append(sql)
+				.insert(sql.toLowerCase().indexOf("select") + 6, " first " + fetchSize).toString();
 	}
 
 }

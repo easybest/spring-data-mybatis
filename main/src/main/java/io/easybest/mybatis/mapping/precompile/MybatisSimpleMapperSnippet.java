@@ -727,7 +727,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		return Select.builder().id(FIND_BY_PAGE).resultMap(RESULT_MAP).contents(Collections.singletonList(Page.of(
 				this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(),
-
+				Parameter.pageOffsetEnd(),
 				Bind.of(SQLResult.PARAM_NAME,
 						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
 
@@ -762,9 +762,9 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		Select select = this.queryByExample();
 
 		return Select.builder().id(QUERY_BY_EXAMPLE_FOR_PAGE).resultMap(RESULT_MAP)
-				.contents(Collections.singletonList(
-						Page.builder().dialect(this.entityManager.getDialect()).offset(Parameter.pageOffset())
-								.fetchSize(Parameter.pageSize()).contents(select.contents).build()))
+				.contents(Collections.singletonList(Page.builder().dialect(this.entityManager.getDialect())
+						.offset(Parameter.pageOffset()).fetchSize(Parameter.pageSize())
+						.offsetEnd(Parameter.pageOffsetEnd()).contents(select.contents).build()))
 				.build();
 	}
 

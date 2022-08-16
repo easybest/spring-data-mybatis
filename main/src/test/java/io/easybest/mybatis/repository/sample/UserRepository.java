@@ -334,7 +334,7 @@ public interface UserRepository extends MybatisRepository<User, Integer>, UserRe
 	List<NameOnly> findAllInterfaceProjectedBy();
 
 	@Modifying
-	@Query("update SD_User set active = false where id = :userId")
+	@Query("update SD_User set active = 0 where id = :userId")
 	void setActiveToFalseWithModifyingNative(@Param("userId") int userId);
 
 	@Query("select concat(?1,u.id,?2) as idWithPrefixAndSuffix from #{#tableName} u")

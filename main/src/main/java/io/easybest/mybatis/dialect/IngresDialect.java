@@ -16,17 +16,23 @@
 
 package io.easybest.mybatis.dialect;
 
+import io.easybest.mybatis.dialect.pagination.FirstPaginationHandler;
+
 /**
  * .
  *
  * @author Jarvis Song
  */
-public class DMDialect extends Oracle12cDialect {
+public class IngresDialect extends AbstractDialect {
 
 	@Override
-	public String regexpLike(String column, String pattern) {
+	public PaginationHandler getPaginationHandler() {
+		return FirstPaginationHandler.INSTANCE;
+	}
 
-		return "REGEXP_LIKE(" + column + "," + pattern + ")";
+	@Override
+	public String getSequenceNextValString(String sequenceName) {
+		return "select nextval for " + sequenceName;
 	}
 
 }

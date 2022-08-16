@@ -316,12 +316,16 @@ public class MybatisQueryCreator extends AbstractQueryCreator<CriteriaQuery, Pre
 						.detectConnectors(this.entityManager, this.persistentPropertyPath);
 
 			case TRUE:
-				return Predicate.of(column, SQL.EQUALS, SQL.TRUE).detectConnectors(this.entityManager,
-						this.persistentPropertyPath);
+				return Predicate
+						.of(column, SQL.EQUALS,
+								this.entityManager.getDialect().supportsBoolean() ? SQL.TRUE : SQL.of("1"))
+						.detectConnectors(this.entityManager, this.persistentPropertyPath);
 
 			case FALSE:
-				return Predicate.of(column, SQL.EQUALS, SQL.FALSE).detectConnectors(this.entityManager,
-						this.persistentPropertyPath);
+				return Predicate
+						.of(column, SQL.EQUALS,
+								this.entityManager.getDialect().supportsBoolean() ? SQL.FALSE : SQL.of("0"))
+						.detectConnectors(this.entityManager, this.persistentPropertyPath);
 
 			case SIMPLE_PROPERTY:
 			case NEGATING_SIMPLE_PROPERTY:

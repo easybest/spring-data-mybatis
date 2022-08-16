@@ -46,6 +46,8 @@ dependencies {
 	testImplementation('com.ibm.informix:jdbc:4.50.8')
 	testImplementation('org.apache.derby:derbyclient:10.16.1.1')
 	testImplementation('com.dameng:DmJdbcDriver18:8.1.2.141')
+	testImplementation('com.clickhouse:clickhouse-jdbc:0.3.2-patch11')
+	testImplementation('com.highgo:HgdbJdbc:6.2.2')
 
 	compileOnly("com.google.code.findbugs:annotations:3.0.1")
 }
