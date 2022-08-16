@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package io.easybest.mybatis.autoconfigure;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
