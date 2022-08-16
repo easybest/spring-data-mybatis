@@ -16,25 +16,23 @@
 
 package io.easybest.mybatis.dialect;
 
-import io.easybest.mybatis.dialect.pagination.Oracle12PaginationHandler;
-
-import static javax.persistence.GenerationType.SEQUENCE;
+import io.easybest.mybatis.dialect.pagination.FirstPaginationHandler;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-public class Oracle12cDialect extends Oracle9iDialect {
+public class IngresDialect extends AbstractDialect {
 
 	@Override
 	public PaginationHandler getPaginationHandler() {
-		return Oracle12PaginationHandler.INSTANCE;
+		return FirstPaginationHandler.INSTANCE;
 	}
 
 	@Override
-	public String getNativeIdentifierGeneratorStrategy() {
-		return SEQUENCE.name().toLowerCase();
+	public String getSequenceNextValString(String sequenceName) {
+		return "select nextval for " + sequenceName;
 	}
 
 }

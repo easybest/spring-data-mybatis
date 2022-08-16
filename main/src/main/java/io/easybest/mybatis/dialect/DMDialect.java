@@ -23,4 +23,10 @@ package io.easybest.mybatis.dialect;
  */
 public class DMDialect extends Oracle12cDialect {
 
+	@Override
+	public String regexpLike(String column, String pattern) {
+
+		return "REGEXP_LIKE(" + column + "," + pattern + ")";
+	}
+
 }

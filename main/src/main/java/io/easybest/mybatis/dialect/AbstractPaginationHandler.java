@@ -16,25 +16,21 @@
 
 package io.easybest.mybatis.dialect;
 
-import io.easybest.mybatis.dialect.pagination.Oracle12PaginationHandler;
-
-import static javax.persistence.GenerationType.SEQUENCE;
+import io.easybest.mybatis.mapping.precompile.Segment;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-public class Oracle12cDialect extends Oracle9iDialect {
+public abstract class AbstractPaginationHandler implements PaginationHandler {
 
-	@Override
-	public PaginationHandler getPaginationHandler() {
-		return Oracle12PaginationHandler.INSTANCE;
+	protected AbstractPaginationHandler() {
 	}
 
 	@Override
-	public String getNativeIdentifierGeneratorStrategy() {
-		return SEQUENCE.name().toLowerCase();
+	public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
+		throw new UnsupportedOperationException("Paged queries not supported by " + this.getClass().getName());
 	}
 
 }

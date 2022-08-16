@@ -50,7 +50,7 @@ Data的快捷构建查询的方式，极大的减少编码量，提升开发效�
 * 自持自定义编写基于MyBatis的查询，方便而不失灵活性
 * 方便的与Spring和Spring Boot集成
 * 支持 MySQL, Oracle, SQL Server, H2, PostgreSQL, DB2, Derby, HSQL, Phoenix, MariaDB, Sqlite, Informix, HerdDB,
-  Clickhouse, PolarDB, 达梦, 神通, 瀚高, 虚谷, 人大金仓 等数据库
+  Impala, Clickhouse, CUBRID, EnterpriseDB, Firebird, HANA, Ingres, PolarDB, 达梦, 神通, 瀚高, 虚谷, 人大金仓 等数据库
 * 支持SpringBoot 2.x
 
 ## 获得帮助 ##

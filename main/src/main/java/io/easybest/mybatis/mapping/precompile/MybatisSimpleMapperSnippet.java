@@ -310,8 +310,10 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return SelectKey.builder().keyProperty(PARAM_INSTANCE_PREFIX + idProperty.getName())
 					.keyColumn(idProperty.getColumnName()
 							.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
-					.resultType(idProperty.getJavaType()).order(AFTER).contents(Collections
-							.singletonList(SQL.of(this.entityManager.getDialect().getIdentitySelectString())))
+					.resultType(idProperty.getJavaType()).order(AFTER)
+					.contents(Collections.singletonList(SQL.of(this.entityManager.getDialect().getIdentitySelectString(
+							this.entity.getTableName().getReference(), idProperty.getColumnName().getReference(),
+							idProperty.getJdbcType().TYPE_CODE))))
 					.build();
 		}
 		else if (generationType == GenerationType.SEQUENCE) {
@@ -725,7 +727,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		return Select.builder().id(FIND_BY_PAGE).resultMap(RESULT_MAP).contents(Collections.singletonList(Page.of(
 				this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(),
-
+				Parameter.pageOffsetEnd(),
 				Bind.of(SQLResult.PARAM_NAME,
 						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
 
@@ -760,9 +762,9 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		Select select = this.queryByExample();
 
 		return Select.builder().id(QUERY_BY_EXAMPLE_FOR_PAGE).resultMap(RESULT_MAP)
-				.contents(Collections.singletonList(
-						Page.builder().dialect(this.entityManager.getDialect()).offset(Parameter.pageOffset())
-								.fetchSize(Parameter.pageSize()).contents(select.contents).build()))
+				.contents(Collections.singletonList(Page.builder().dialect(this.entityManager.getDialect())
+						.offset(Parameter.pageOffset()).fetchSize(Parameter.pageSize())
+						.offsetEnd(Parameter.pageOffsetEnd()).contents(select.contents).build()))
 				.build();
 	}
 

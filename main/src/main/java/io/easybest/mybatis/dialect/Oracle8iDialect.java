@@ -27,11 +27,7 @@ import io.easybest.mybatis.mapping.precompile.Segment;
  */
 public class Oracle8iDialect extends AbstractDialect {
 
-	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
-		@Override
-		public boolean supportsLimit() {
-			return true;
-		}
+	private static final AbstractPaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
 
 		@Override
 		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
@@ -72,14 +68,19 @@ public class Oracle8iDialect extends AbstractDialect {
 	};
 
 	@Override
-	public LimitHandler getLimitHandler() {
-		return LIMIT_HANDLER;
+	public PaginationHandler getPaginationHandler() {
+		return PAGINATION_HANDLER;
 	}
 
 	@Override
 	public String getSequenceNextValString(String sequenceName) {
 
 		return "SELECT " + sequenceName + ".NEXTVAL FROM DUAL";
+	}
+
+	@Override
+	public boolean supportsBoolean() {
+		return false;
 	}
 
 }

@@ -220,8 +220,9 @@ abstract class AbstractStringBasedMybatisQuery extends AbstractMybatisQuery {
 		if (this.method.isPageQuery() || this.method.isSliceQuery() || parameters.hasPageableParameter()) {
 			// TODO
 
-			builder.contents(Collections.singletonList(this.query.usesPaging() ? sql
-					: Page.of(this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(), sql)));
+			builder.contents(
+					Collections.singletonList(this.query.usesPaging() ? sql : Page.of(this.entityManager.getDialect(),
+							Parameter.pageOffset(), Parameter.pageSize(), Parameter.pageOffsetEnd(), sql)));
 
 			if (this.method.isPageQuery()) {
 				Segment settledCountQuery = this.settle(this.countQuery);

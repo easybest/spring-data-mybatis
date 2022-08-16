@@ -27,11 +27,7 @@ import io.easybest.mybatis.mapping.precompile.Segment;
  */
 public class SQLiteDialect extends AbstractDialect {
 
-	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
-		@Override
-		public boolean supportsLimit() {
-			return true;
-		}
+	private static final AbstractPaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
 
 		@Override
 		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
@@ -42,8 +38,8 @@ public class SQLiteDialect extends AbstractDialect {
 	};
 
 	@Override
-	public LimitHandler getLimitHandler() {
-		return LIMIT_HANDLER;
+	public PaginationHandler getPaginationHandler() {
+		return PAGINATION_HANDLER;
 	}
 
 	@Override
@@ -52,7 +48,7 @@ public class SQLiteDialect extends AbstractDialect {
 	}
 
 	@Override
-	public String getIdentitySelectString() {
+	public String getIdentitySelectString(String table, String column, int type) {
 		return "select last_insert_rowid()";
 	}
 

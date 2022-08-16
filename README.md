@@ -50,7 +50,8 @@ At the same time, you can use the Spring Data pattern to reduce the amount of co
 * Self-sustained custom writing of MyBatis-based queries, convenient and flexible
 * Easy integration with Spring and Spring Boot
 * Support MySQL, Oracle, SQL Server, H2, PostgreSQL, DB2, Derby, HSQL, Phoenix, MariaDB, Sqlite, Informix, HerdDB,
-  Clickhouse, PolarDB, DM, OSCAR, HighGO, XUGU, Kingbase etc.
+  Impala, Clickhouse, CUBRID, EnterpriseDB, Firebird, HANA, Ingres, PolarDB, DM, OSCAR,
+  HighGO, XUGU, Kingbase etc.
 
 ## Getting Help ##
 

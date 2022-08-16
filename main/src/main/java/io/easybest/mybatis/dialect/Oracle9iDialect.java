@@ -27,11 +27,7 @@ import io.easybest.mybatis.mapping.precompile.Segment;
  */
 public class Oracle9iDialect extends Oracle8iDialect {
 
-	private static final AbstractLimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
-		@Override
-		public boolean supportsLimit() {
-			return true;
-		}
+	private static final AbstractPaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
 
 		@Override
 		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
@@ -66,8 +62,7 @@ public class Oracle9iDialect extends Oracle8iDialect {
 			}
 
 			if (isForUpdate) {
-				pagingSelect.append(" ");
-				pagingSelect.append(forUpdateClause);
+				pagingSelect.append(" ").append(forUpdateClause);
 			}
 
 			return pagingSelect.toString();
@@ -76,8 +71,8 @@ public class Oracle9iDialect extends Oracle8iDialect {
 	};
 
 	@Override
-	public LimitHandler getLimitHandler() {
-		return LIMIT_HANDLER;
+	public PaginationHandler getPaginationHandler() {
+		return PAGINATION_HANDLER;
 	}
 
 }

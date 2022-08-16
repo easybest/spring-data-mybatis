@@ -26,21 +26,12 @@ import static javax.persistence.GenerationType.IDENTITY;
  *
  * @author Jarvis Song
  */
-public class MysqlDialect extends AbstractDialect {
+public class MySQLDialect extends AbstractDialect {
 
 	private static final IdentifierProcessing MYSQL_IDENTIFIER_PROCESSING = IdentifierProcessing
 			.create(new IdentifierProcessing.Quoting("`"), IdentifierProcessing.LetterCasing.LOWER_CASE);
 
-	/**
-	 * Singleton instance.
-	 */
-	public static final MysqlDialect INSTANCE = new MysqlDialect();
-
-	private static final LimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
-		@Override
-		public boolean supportsLimit() {
-			return true;
-		}
+	private static final PaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
 
 		@Override
 		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
@@ -51,7 +42,7 @@ public class MysqlDialect extends AbstractDialect {
 		}
 	};
 
-	public MysqlDialect() {
+	public MySQLDialect() {
 
 		super();
 	}
@@ -62,13 +53,13 @@ public class MysqlDialect extends AbstractDialect {
 	}
 
 	@Override
-	public String getIdentitySelectString() {
+	public String getIdentitySelectString(String table, String column, int type) {
 		return "select last_insert_id()";
 	}
 
 	@Override
-	public LimitHandler getLimitHandler() {
-		return LIMIT_HANDLER;
+	public PaginationHandler getPaginationHandler() {
+		return PAGINATION_HANDLER;
 	}
 
 	@Override

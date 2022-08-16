@@ -16,31 +16,11 @@
 
 package io.easybest.mybatis.dialect;
 
-import io.easybest.mybatis.mapping.precompile.Segment;
-
 /**
  * .
  *
  * @author Jarvis Song
  */
-public abstract class AbstractLimitHandler implements LimitHandler {
-
-	protected AbstractLimitHandler() {
-	}
-
-	@Override
-	public boolean supportsLimit() {
-		return false;
-	}
-
-	@Override
-	public boolean supportsLimitOffset() {
-		return this.supportsLimit();
-	}
-
-	@Override
-	public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
-		throw new UnsupportedOperationException("Paged queries not supported by " + this.getClass().getName());
-	}
+public class XuguDialect extends Oracle12cDialect {
 
 }

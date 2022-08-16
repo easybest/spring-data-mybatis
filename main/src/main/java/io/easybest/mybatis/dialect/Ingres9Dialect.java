@@ -16,8 +16,6 @@
 
 package io.easybest.mybatis.dialect;
 
-import javax.persistence.GenerationType;
-
 import io.easybest.mybatis.mapping.precompile.Segment;
 
 /**
@@ -25,26 +23,23 @@ import io.easybest.mybatis.mapping.precompile.Segment;
  *
  * @author Jarvis Song
  */
-public class DB2Dialect extends AbstractDialect {
+public class Ingres9Dialect extends IngresDialect {
 
-	private static final AbstractPaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
-
+	private static final PaginationHandler PAGINATION_HANDLER = new AbstractPaginationHandler() {
 		@Override
 		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
-
+			final String soff = " offset " + offset;
+			final String slim = " fetch first " + fetchSize + " rows only";
+			final StringBuilder sb = new StringBuilder(sql.length() + soff.length() + slim.length()).append(sql);
 			if (null != offset) {
-				return "select * from ( select inner2_.*, rownumber() over(order by order of inner2_) as rownumber_ from ( "
-						+ sql + " fetch first " + fetchSize + " rows only ) as inner2_ ) as inner1_ where rownumber_ > "
-						+ offset + " order by rownumber_";
+				sb.append(soff);
 			}
-			return sql + " fetch first " + fetchSize + " rows only";
+			if (null != fetchSize) {
+				sb.append(slim);
+			}
+			return sb.toString();
 		}
 	};
-
-	public DB2Dialect() {
-
-		super();
-	}
 
 	@Override
 	public PaginationHandler getPaginationHandler() {
@@ -52,25 +47,8 @@ public class DB2Dialect extends AbstractDialect {
 	}
 
 	@Override
-	public String getNativeIdentifierGeneratorStrategy() {
-
-		return GenerationType.SEQUENCE.name().toLowerCase();
-	}
-
-	@Override
-	public String getSequenceNextValString(String sequenceName) {
-
-		return "next value for " + sequenceName;
-	}
-
-	@Override
 	public String getIdentitySelectString(String table, String column, int type) {
-		return "values identity_val_local()";
-	}
-
-	@Override
-	public String getIdentityInsertString() {
-		return "default";
+		return "select last_identity()";
 	}
 
 }

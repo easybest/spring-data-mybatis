@@ -60,6 +60,10 @@ public class Parameter extends AbstractSegment {
 		return of(MybatisContext.PARAM_PAGEABLE_PREFIX + "offset");
 	}
 
+	public static Parameter pageOffsetEnd() {
+		return of(MybatisContext.PARAM_PAGEABLE_PREFIX + "offsetEnd");
+	}
+
 	public static Parameter pageSize() {
 		return of(MybatisContext.PARAM_PAGEABLE_PREFIX + "size");
 	}

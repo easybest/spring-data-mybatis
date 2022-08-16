@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.dialect;
+package io.easybest.mybatis.dialect.pagination;
 
-import io.easybest.mybatis.dialect.pagination.Oracle12PaginationHandler;
-
-import static javax.persistence.GenerationType.SEQUENCE;
+import io.easybest.mybatis.dialect.AbstractPaginationHandler;
+import io.easybest.mybatis.mapping.precompile.Segment;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-public class Oracle12cDialect extends Oracle9iDialect {
+public class FirstPaginationHandler extends AbstractPaginationHandler {
+
+	/**
+	 * Singleton.
+	 */
+	public static final FirstPaginationHandler INSTANCE = new FirstPaginationHandler();
 
 	@Override
-	public PaginationHandler getPaginationHandler() {
-		return Oracle12PaginationHandler.INSTANCE;
-	}
+	public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
 
-	@Override
-	public String getNativeIdentifierGeneratorStrategy() {
-		return SEQUENCE.name().toLowerCase();
+		return new StringBuilder(sql.length() + 16).append(sql)
+				.insert(sql.toLowerCase().indexOf("select") + 6, " first " + fetchSize).toString();
 	}
 
 }

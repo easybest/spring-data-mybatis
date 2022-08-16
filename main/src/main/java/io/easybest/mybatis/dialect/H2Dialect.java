@@ -16,8 +16,6 @@
 
 package io.easybest.mybatis.dialect;
 
-import io.easybest.mybatis.mapping.precompile.Segment;
-
 import static javax.persistence.GenerationType.SEQUENCE;
 
 /**
@@ -25,27 +23,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
  *
  * @author Jarvis Song
  */
-public class H2Dialect extends AbstractDialect {
-
-	/**
-	 * Singleton instance.
-	 */
-	public static final H2Dialect INSTANCE = new H2Dialect();
-
-	private static final LimitHandler LIMIT_HANDLER = new AbstractLimitHandler() {
-		@Override
-		public boolean supportsLimit() {
-			return true;
-		}
-
-		@Override
-		public String processSql(String sql, Segment offset, Segment fetchSize, Segment offsetEnd) {
-
-			final boolean hasOffset = null != offset;
-
-			return sql + (hasOffset ? (" LIMIT " + fetchSize + " OFFSET " + offset) : (" LIMIT " + fetchSize));
-		}
-	};
+public class H2Dialect extends HsqlDbDialect {
 
 	public H2Dialect() {
 
@@ -54,7 +32,7 @@ public class H2Dialect extends AbstractDialect {
 	}
 
 	@Override
-	public String getIdentitySelectString() {
+	public String getIdentitySelectString(String table, String column, int type) {
 		return "CALL IDENTITY()";
 	}
 
@@ -66,11 +44,6 @@ public class H2Dialect extends AbstractDialect {
 	@Override
 	public String getSequenceNextValString(String sequenceName) {
 		return "call next value for " + sequenceName;
-	}
-
-	@Override
-	public LimitHandler getLimitHandler() {
-		return LIMIT_HANDLER;
 	}
 
 	@Override
