@@ -189,6 +189,11 @@ public class MybatisAssociation extends Association<MybatisPersistentPropertyImp
 		// owning side
 		String joinTableName = owningEntity.getTableName().getReference() + '_'
 				+ targetEntity.getTableName().getReference();
+
+		if (null != this.entityManager.getUniformTablePrefix()) {
+			joinTableName = this.entityManager.getUniformTablePrefix() + joinTableName;
+		}
+
 		JoinColumn[] joinColumns = null;
 		JoinColumn[] inverseJoinColumns = null;
 
