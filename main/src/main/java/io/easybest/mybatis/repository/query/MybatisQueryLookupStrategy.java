@@ -155,7 +155,7 @@ public final class MybatisQueryLookupStrategy {
 				NamedQueries namedQueries) {
 
 			return this.resolveQuery(this.entityManager, namedQueries,
-					new MybatisQueryMethod(method, metadata, factory));
+					new MybatisQueryMethod(this.entityManager, method, metadata, factory));
 		}
 
 		protected abstract RepositoryQuery resolveQuery(EntityManager entityManager, NamedQueries namedQueries,

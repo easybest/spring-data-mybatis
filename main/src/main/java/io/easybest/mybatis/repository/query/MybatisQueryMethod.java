@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.repository.BasicQuery;
 import io.easybest.mybatis.repository.Modifying;
 import io.easybest.mybatis.repository.Query;
@@ -93,14 +94,8 @@ public class MybatisQueryMethod extends QueryMethod {
 
 	private final String countStatementName;
 
-	/**
-	 * Creates a new {@link QueryMethod} from the given parameters. Looks up the correct
-	 * query to use for following invocations of the method given.
-	 * @param method must not be {@literal null}.
-	 * @param metadata must not be {@literal null}.
-	 * @param factory must not be {@literal null}.
-	 */
-	public MybatisQueryMethod(Method method, RepositoryMetadata metadata, ProjectionFactory factory) {
+	public MybatisQueryMethod(EntityManager entityManager, Method method, RepositoryMetadata metadata,
+			ProjectionFactory factory) {
 
 		super(method, metadata, factory);
 
@@ -113,7 +108,8 @@ public class MybatisQueryMethod extends QueryMethod {
 				.of(() -> super.isCollectionQuery() && !NATIVE_ARRAY_TYPES.contains(this.returnType));
 		this.isProcedureQuery = Lazy.of(() -> null != AnnotationUtils.findAnnotation(method, Procedure.class));
 		this.isBasicQuery = Lazy.of(() -> null != AnnotationUtils.findAnnotation(method, BasicQuery.class));
-		this.entityMetadata = Lazy.of(() -> new DefaultMybatisEntityMetadata<>(this.getDomainClass()));
+		this.entityMetadata = Lazy.of(() -> new DefaultMybatisEntityMetadata<>(
+				entityManager.getRequiredPersistentEntity(this.getDomainClass())));
 
 		this.resultMap = Lazy.of(() -> {
 			ResultMap annotation = AnnotationUtils.findAnnotation(method, ResultMap.class);
