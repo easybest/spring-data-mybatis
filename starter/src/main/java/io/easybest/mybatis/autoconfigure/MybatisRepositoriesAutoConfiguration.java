@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package io.easybest.mybatis.autoconfigure;
+
 import java.util.List;
 
 import javax.sql.DataSource;
