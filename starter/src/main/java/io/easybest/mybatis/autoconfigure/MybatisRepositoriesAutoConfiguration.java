@@ -96,6 +96,10 @@ public class MybatisRepositoriesAutoConfiguration {
 			}
 		}
 
+		if (null != this.properties.getUniformTablePrefix()) {
+			entityManager.setUniformTablePrefix(this.properties.getUniformTablePrefix());
+		}
+
 		return entityManager;
 	}
 

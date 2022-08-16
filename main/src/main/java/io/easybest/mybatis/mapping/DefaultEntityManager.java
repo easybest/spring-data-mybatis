@@ -66,6 +66,8 @@ public class DefaultEntityManager
 
 	private NamingStrategy namingStrategy = NamingStrategy.UNDERSCORE;
 
+	private String uniformTablePrefix;
+
 	private final Map<String, String> namedQueries = new HashMap<>();
 
 	private EscapeCharacter escapeCharacter = EscapeCharacter.DEFAULT;
@@ -144,6 +146,11 @@ public class DefaultEntityManager
 	}
 
 	@Override
+	public String getUniformTablePrefix() {
+		return this.uniformTablePrefix;
+	}
+
+	@Override
 	public void destroy() throws Exception {
 		log.info("Destroyed Spring Data Mybatis EntityManager.");
 	}
@@ -188,6 +195,10 @@ public class DefaultEntityManager
 
 	public void setEscapeCharacter(EscapeCharacter escapeCharacter) {
 		this.escapeCharacter = escapeCharacter;
+	}
+
+	public void setUniformTablePrefix(String uniformTablePrefix) {
+		this.uniformTablePrefix = uniformTablePrefix;
 	}
 
 }
