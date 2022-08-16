@@ -64,7 +64,7 @@ public class DefaultEntityManager
 
 	private String[] entityPackages;
 
-	private NamingStrategy namingStrategy = NamingStrategy.INSTANCE;
+	private NamingStrategy namingStrategy = NamingStrategy.UNDERSCORE;
 
 	private final Map<String, String> namedQueries = new HashMap<>();
 
