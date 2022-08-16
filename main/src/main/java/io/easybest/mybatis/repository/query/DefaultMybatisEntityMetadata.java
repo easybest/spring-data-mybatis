@@ -16,12 +16,9 @@
 
 package io.easybest.mybatis.repository.query;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import io.easybest.mybatis.mapping.MybatisPersistentEntity;
 
-import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 /**
  * .
@@ -31,36 +28,30 @@ import org.springframework.util.StringUtils;
  */
 public class DefaultMybatisEntityMetadata<T> implements MybatisEntityMetadata<T> {
 
-	private final Class<T> domainType;
+	private final MybatisPersistentEntity<T> entity;
 
-	public DefaultMybatisEntityMetadata(Class<T> domainType) {
+	public DefaultMybatisEntityMetadata(MybatisPersistentEntity<T> entity) {
 
-		Assert.notNull(domainType, "Domain type must not be null!");
+		Assert.notNull(entity, "entity must not be null!");
+		this.entity = entity;
 
-		this.domainType = domainType;
 	}
 
 	@Override
 	public String getEntityName() {
 
-		Entity entity = AnnotatedElementUtils.findMergedAnnotation(this.domainType, Entity.class);
-		return null != entity && StringUtils.hasText(entity.name()) ? entity.name() : this.domainType.getSimpleName();
+		return this.entity.getEntityName();
 	}
 
 	@Override
 	public String getTableName() {
 
-		Table table = AnnotatedElementUtils.findMergedAnnotation(this.domainType, Table.class);
-		if (null != table && StringUtils.hasText(table.name())) {
-			return table.name();
-		}
-
-		return this.getEntityName();
+		return this.entity.getTableName().getReference();
 	}
 
 	@Override
 	public Class<T> getJavaType() {
-		return this.domainType;
+		return this.entity.getType();
 	}
 
 }
