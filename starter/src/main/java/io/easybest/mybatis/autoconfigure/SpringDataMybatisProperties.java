@@ -16,6 +16,8 @@
 
 package io.easybest.mybatis.autoconfigure;
 
+import lombok.Data;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -24,6 +26,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author Jarvis Song
  */
 @ConfigurationProperties(SpringDataMybatisProperties.PREFIX)
+@Data
 public class SpringDataMybatisProperties {
 
 	/**
@@ -35,20 +38,19 @@ public class SpringDataMybatisProperties {
 
 	private String[] entityPackages;
 
-	public String[] getEntityPackages() {
-		return this.entityPackages;
-	}
+	private NamingStrategyType namingStrategyType;
 
-	public void setEntityPackages(String[] entityPackages) {
-		this.entityPackages = entityPackages;
-	}
+	public enum NamingStrategyType {
 
-	public boolean isEnabled() {
-		return this.enabled;
-	}
+		/**
+		 * UNDERSCORE.
+		 */
+		UNDERSCORE,
+		/**
+		 * AS_IS.
+		 */
+		AS_IS
 
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
 	}
 
 }

@@ -22,6 +22,7 @@ import javax.sql.DataSource;
 
 import io.easybest.mybatis.mapping.DefaultEntityManager;
 import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.NamingStrategy;
 import io.easybest.mybatis.repository.MybatisRepository;
 import io.easybest.mybatis.repository.config.MybatisRepositoryConfigExtension;
 import io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean;
@@ -80,6 +81,18 @@ public class MybatisRepositoriesAutoConfiguration {
 			}
 			if (!packageNames.isEmpty()) {
 				entityManager.setEntityPackages(packageNames.toArray(new String[0]));
+			}
+		}
+
+		if (null != this.properties.getNamingStrategyType()) {
+
+			switch (this.properties.getNamingStrategyType()) {
+			case UNDERSCORE:
+				entityManager.setNamingStrategy(NamingStrategy.UNDERSCORE);
+				break;
+			case AS_IS:
+				entityManager.setNamingStrategy(NamingStrategy.AS_IS);
+				break;
 			}
 		}
 

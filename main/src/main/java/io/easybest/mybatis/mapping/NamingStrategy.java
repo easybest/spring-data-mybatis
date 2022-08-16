@@ -29,7 +29,7 @@ public interface NamingStrategy {
 	/**
 	 * Default instance.
 	 */
-	NamingStrategy INSTANCE = new NamingStrategy() {
+	NamingStrategy UNDERSCORE = new NamingStrategy() {
 	};
 
 	/**
