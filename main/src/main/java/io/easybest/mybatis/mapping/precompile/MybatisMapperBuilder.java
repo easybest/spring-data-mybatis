@@ -99,10 +99,11 @@ public class MybatisMapperBuilder {
 				+ "<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"https://mybatis.org/dtd/mybatis-3-mapper.dtd\">"
 				+ "<mapper namespace=\"" + this.namespace + "\">"
 				+ (this.segments.stream().map(Segment::toString).collect(Collectors.joining())) + "</mapper>";
-		if (this.namespace.equals("io.easybest.mybatis.domain.sample.User")) {
-			System.out.println(this.format(content));
-			// System.out.println(content);
+
+		if (log.isDebugEnabled()) {
+			log.debug(this.format(content));
 		}
+
 		try (InputStream is = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))) {
 			XMLMapperBuilder builder = new XMLMapperBuilder(is, this.configuration, resource,
 					this.configuration.getSqlFragments());
