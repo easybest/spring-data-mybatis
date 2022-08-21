@@ -53,13 +53,6 @@ At the same time, you can use the Spring Data pattern to reduce the amount of co
   Impala, Clickhouse, CUBRID, EnterpriseDB, Firebird, HANA, Ingres, PolarDB, DM, OSCAR,
   HighGO, XUGU, Kingbase etc.
 
-## Getting Help ##
-
-Here is a document to help you learn Spring Data Mybatis quickly. [reference documentation](https://sdm.easybest.io)
-
-If you have any questions or suggestions, you can record
-an [issue](https://github.com/easybest/spring-data-mybatis/issues) for me.
-
 ## Quick Start ##
 
 ### Installation
@@ -104,6 +97,17 @@ Here are some ways for you to get involved in the community:
 
 * GitHub is for social coding: if you want to write code, we encourage contributions through pull requests
   from [forks of this repository](https://help.github.com/forking/).
+
+## Getting Help ##
+
+Here is a [reference documentation](https://sdm.easybest.io) to help you learn Spring Data Mybatis quickly.
+
+If you have any questions or suggestions, you can record
+an [issue](https://github.com/easybest/spring-data-mybatis/issues).
+
+In addition, you can also add a QQ group  to conduct related discussions and seek some help.
+
+QQ Group 1: 497907039
 
 ## Donation
 
