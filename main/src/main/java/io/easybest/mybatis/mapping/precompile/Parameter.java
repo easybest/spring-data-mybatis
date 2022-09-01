@@ -51,6 +51,11 @@ public class Parameter extends AbstractSegment {
 		return of(MybatisContext.PARAM_ADDITIONAL_VALUES_PREFIX + key);
 	}
 
+	public static Parameter bindValue(String key) {
+
+		return of(MybatisContext.PARAM_BINDABLE_PREFIX + key);
+	}
+
 	public static Parameter instance(String key) {
 
 		return of(MybatisContext.PARAM_INSTANCE_PREFIX + key);

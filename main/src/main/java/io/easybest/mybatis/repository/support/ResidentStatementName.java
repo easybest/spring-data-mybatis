@@ -226,27 +226,32 @@ public interface ResidentStatementName {
 	/**
 	 * For <code>__count_query_by_example</code>.
 	 */
-	String COUNT_QUERY_BY_EXAMPLE = "__count_query_by_example";
+	String COUNT_QUERY_BY_EXAMPLE = PREFIX + "count_query_by_example";
 
 	/**
 	 * For <code>__exists_by_example</code>.
 	 */
-	String EXISTS_BY_EXAMPLE = "__exists_by_example";
+	String EXISTS_BY_EXAMPLE = PREFIX + "exists_by_example";
+
+	/**
+	 * For <code>__find_by_criteria</code>.
+	 */
+	String FIND_BY_CRITERIA = PREFIX + "find_by_criteria";
 
 	/**
 	 * For <code>__exists_by_id</code>.
 	 */
-	String EXISTS_BY_ID = "__exists_by_id";
+	String EXISTS_BY_ID = PREFIX + "exists_by_id";
 
 	/**
 	 * For <code>__table_name</code>.
 	 */
-	String TABLE_NAME = "__table_name";
+	String TABLE_NAME = PREFIX + "table_name";
 
 	/**
 	 * For <code>__table_name_pure</code>.
 	 */
-	String TABLE_NAME_PURE = "__table_name_pure";
+	String TABLE_NAME_PURE = PREFIX + "table_name_pure";
 
 	default String statementName(String namespace, String statement) {
 		return namespace + DOT + statement;

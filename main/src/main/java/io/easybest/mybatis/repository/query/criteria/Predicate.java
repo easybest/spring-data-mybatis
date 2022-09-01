@@ -1,0 +1,190 @@
+/*
+ * Copyright 2019-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.easybest.mybatis.repository.query.criteria;
+
+import java.io.Serializable;
+
+import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
+import io.easybest.mybatis.mapping.precompile.Column;
+import io.easybest.mybatis.mapping.precompile.SQL;
+import io.easybest.mybatis.mapping.sql.SqlIdentifier;
+import lombok.Data;
+
+import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.repository.query.parser.Part;
+import org.springframework.lang.Nullable;
+
+import static io.easybest.mybatis.repository.query.criteria.Operator.AND;
+import static io.easybest.mybatis.repository.query.criteria.Operator.OR;
+
+/**
+ * .
+ *
+ * @author Jarvis Song
+ * @param <F> field type
+ */
+@Data
+public final class Predicate<F> implements Serializable {
+
+	private F field;
+
+	private Part.Type type;
+
+	@Nullable
+	private ParamValue[] values;
+
+	private Operator operator;
+
+	private Predicate<F> opposite;
+
+	private Predicate<F> pointer = this;
+
+	private String fieldName;
+
+	private int idx;
+
+	private Predicate() {
+	}
+
+	public static <F> Predicate<F> of(F field, Part.Type type, ParamValue... values) {
+
+		Predicate<F> predicate = new Predicate<>();
+		predicate.setField(field);
+		predicate.setType(type);
+		predicate.setValues(values);
+		predicate.setFieldName(convertFieldName(field));
+
+		return predicate;
+	}
+
+	public PredicateResult toSQL(int group, EntityManager entityManager, Class<?> domainClass,
+			ParamValueCallback callback, boolean tr) {
+
+		Predicate<F> opposite = this.opposite;
+
+		PredicateResult result = this.toSQL(group, entityManager, domainClass, this, callback, tr);
+
+		while (null != opposite) {
+
+			result.append(opposite.operator, this.toSQL(group, entityManager, domainClass, opposite, callback, tr));
+
+			opposite = opposite.opposite;
+		}
+		return result;
+	}
+
+	@SuppressWarnings({ "unchecked" })
+	private PredicateResult toSQL(int group, EntityManager entityManager, Class<?> domainClass, Predicate<F> predicate,
+			ParamValueCallback callback, boolean tr) {
+
+		StringBuilder builder = new StringBuilder();
+
+		PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp;
+		if (predicate.field instanceof PersistentPropertyPath) {
+			ppp = (PersistentPropertyPath<MybatisPersistentPropertyImpl>) predicate.field;
+		}
+		else {
+			ppp = entityManager.getPersistentPropertyPath(predicate.fieldName, domainClass);
+		}
+		MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+
+		SqlIdentifier tableAlias = SqlIdentifier.unquoted(SQL.ROOT_ALIAS.getValue());
+
+		if (leaf.isAssociation()) {
+			// TODO
+		}
+
+		Column column = Column.of(tableAlias.getReference(entityManager.getDialect().getIdentifierProcessing()),
+				leaf.getColumnName().getReference());
+
+		switch (predicate.type) {
+		case SIMPLE_PROPERTY:
+		case NEGATING_SIMPLE_PROPERTY:
+			builder.append(column)
+					.append(predicate.type.equals(Part.Type.SIMPLE_PROPERTY) ? SQL.EQUALS
+							: (tr ? SQL.NOT_EQUALS_TR : SQL.NOT_EQUALS))
+					.append(callback.apply(predicate.get(group, predicate.idx, 0)));
+
+		}
+
+		return new PredicateResult(builder.toString());
+	}
+
+	private ParamValue get(int group, int idx, int i) {
+
+		if (null == this.values || this.values.length == 0) {
+			throw new MappingException("Required param values");
+		}
+
+		if (i > this.values.length - 1) {
+			throw new MappingException("Exceed param values length");
+		}
+		ParamValue pv = this.values[i];
+		if (null == pv.getName()) {
+			pv.setName(this.fieldName + "_" + group + "_" + idx);
+		}
+		return pv;
+	}
+
+	public Predicate<F> opposing(Operator operator, Predicate<F> opposite) {
+
+		this.pointer.opposite = opposite;
+		this.pointer.opposite.operator = operator;
+		this.pointer.opposite.idx = this.pointer.idx + 1;
+		this.pointer = opposite;
+		return this;
+	}
+
+	public Predicate<F> and(Predicate<F> opposite) {
+
+		return this.opposing(AND, opposite);
+
+	}
+
+	public Predicate<F> or(Predicate<F> opposite) {
+
+		return this.opposing(OR, opposite);
+	}
+
+	private static <F> String convertFieldName(F field) {
+		String f = null;
+
+		if (field instanceof String) {
+			f = (String) field;
+		}
+
+		else if (field instanceof FieldFunction) {
+			f = LambdaUtils.getFieldName((FieldFunction<?, ?>) field);
+		}
+		else if (field instanceof PersistentPropertyPath) {
+			f = ((PersistentPropertyPath<?>) field).toDotPath();
+		}
+		if (null == f) {
+			throw new MappingException("Error field was found in the criteria: " + field);
+		}
+
+		return f;
+	}
+
+	@Override
+	public String toString() {
+		return "Predicate{" + "fieldName='" + this.fieldName + '\'' + '}';
+	}
+
+}

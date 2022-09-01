@@ -32,7 +32,8 @@ import org.springframework.data.repository.query.QueryByExampleExecutor;
  * @param <ID> primary key
  */
 @NoRepositoryBean
-public interface MybatisRepository<T, ID> extends PagingAndSortingRepository<T, ID>, QueryByExampleExecutor<T> {
+public interface MybatisRepository<T, ID>
+		extends PagingAndSortingRepository<T, ID>, QueryByExampleExecutor<T>, QueryByCriteriaExecutor<T> {
 
 	T getById(ID id);
 

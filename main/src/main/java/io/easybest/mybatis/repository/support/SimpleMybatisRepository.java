@@ -26,6 +26,8 @@ import io.easybest.mybatis.mapping.MybatisAssociation;
 import io.easybest.mybatis.mapping.MybatisPersistentEntity;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import io.easybest.mybatis.repository.MybatisRepository;
+import io.easybest.mybatis.repository.query.criteria.Criteria;
+import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Example;
@@ -54,6 +56,7 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.DELET
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_EXAMPLE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_CRITERIA;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_IDS;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_PAGE;
@@ -213,7 +216,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			Object value = accessor.getProperty(inverse);
 			if (null == value) {
 				// FIXME
-				return;
 			}
 		});
 
@@ -571,6 +573,30 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		FetchableFluentQuery<S> fluentQuery = new FetchableFluentQueryByExample<>((QueryByExampleExecutor) this,
 				example, example.getProbeType(), example.getProbeType(), Sort.unsorted(), Collections.emptySet());
 		return queryFunction.apply(fluentQuery);
+	}
+
+	@Override
+	public <S extends T> Optional<S> findOne(Criteria<?, ?> criteria) {
+
+		return Optional.empty();
+	}
+
+	@Override
+	@SuppressWarnings({ "unchecked" })
+	public <S extends T> List<S> findAll(Criteria<?, ?> criteria) {
+
+		Assert.notNull(criteria, "Criteria must not be null!");
+
+		Class<T> type = this.persistentEntity.getType();
+		if (criteria instanceof CriteriaImpl) {
+			Class<T> domainClass = ((CriteriaImpl<T, ?, ?>) criteria).getDomainClass();
+			if (null != domainClass) {
+				type = domainClass;
+			}
+		}
+
+		return this.selectList(FIND_BY_CRITERIA,
+				new MybatisContext<>(null, type, Collections.emptyMap(), this.basic, this.entityManager, criteria));
 	}
 
 }

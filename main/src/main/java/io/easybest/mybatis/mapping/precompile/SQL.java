@@ -49,27 +49,52 @@ public class SQL implements Segment {
 	/**
 	 * GREATER.
 	 */
-	public static final SQL GREATER_THAN = SQL.of("&gt;");
+	public static final SQL GREATER_THAN_TR = SQL.of("&gt;");
+
+	/**
+	 * GREATER.
+	 */
+	public static final SQL GREATER_THAN = SQL.of(">");
 
 	/**
 	 * GREATER_THAN_EQUAL.
 	 */
-	public static final SQL GREATER_THAN_EQUAL = SQL.of("&gt;=");
+	public static final SQL GREATER_THAN_EQUAL_TR = SQL.of("&gt;=");
+
+	/**
+	 * GREATER_THAN_EQUAL.
+	 */
+	public static final SQL GREATER_THAN_EQUAL = SQL.of(">=");
 
 	/**
 	 * LESS_THAN.
 	 */
-	public static final SQL LESS_THAN = SQL.of("&lt;");
+	public static final SQL LESS_THAN_TR = SQL.of("&lt;");
+
+	/**
+	 * LESS_THAN.
+	 */
+	public static final SQL LESS_THAN = SQL.of("<");
 
 	/**
 	 * LESS_THAN_EQUAL.
 	 */
-	public static final SQL LESS_THAN_EQUAL = SQL.of("&lt;=");
+	public static final SQL LESS_THAN_EQUAL_TR = SQL.of("&lt;=");
+
+	/**
+	 * LESS_THAN_EQUAL.
+	 */
+	public static final SQL LESS_THAN_EQUAL = SQL.of("<=");
 
 	/**
 	 * NOT EQUALS.
 	 */
-	public static final SQL NOT_EQUALS = SQL.of("&lt;&gt;");
+	public static final SQL NOT_EQUALS_TR = SQL.of("&lt;&gt;");
+
+	/**
+	 * NOT EQUALS.
+	 */
+	public static final SQL NOT_EQUALS = SQL.of("<>");
 
 	/**
 	 * BETWEEN.
@@ -158,6 +183,13 @@ public class SQL implements Segment {
 	}
 
 	public static SQL of(String value) {
+		return new SQL(value);
+	}
+
+	public static SQL of(String value, boolean tr) {
+		if (tr) {
+			value = value.replace("<", "&lt;").replace(">", "&gt;");
+		}
 		return new SQL(value);
 	}
 

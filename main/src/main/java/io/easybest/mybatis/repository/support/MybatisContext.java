@@ -23,6 +23,7 @@ import java.util.Map;
 
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.sql.Identifier;
+import io.easybest.mybatis.repository.query.criteria.Criteria;
 
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
@@ -45,6 +46,11 @@ public class MybatisContext<T, ID> implements Serializable {
 	public static final String PARAM_INSTANCE_PREFIX = "instance.";
 
 	/**
+	 * Criteria.
+	 */
+	public static final String CRITERIA_PREFIX = "criteria.";
+
+	/**
 	 * Bindable parameter prefix.
 	 */
 	public static final String PARAM_BINDABLE_PREFIX = "bindable.";
@@ -65,6 +71,8 @@ public class MybatisContext<T, ID> implements Serializable {
 
 	private @Nullable Identifier identifier;
 
+	private @Nullable Criteria<?, ?> criteria;
+
 	private @Nullable Class<?> domainType;
 
 	private Map<String, Object> additionalValues;
@@ -82,6 +90,22 @@ public class MybatisContext<T, ID> implements Serializable {
 	private boolean basic;
 
 	public MybatisContext() {
+	}
+
+	public MybatisContext(@Nullable ID id, @Nullable Class<?> domainType, Map<String, Object> additionalValues,
+			boolean basic, EntityManager entityManager, Criteria<?, ?> criteria) {
+
+		this.id = id;
+		this.identifier = null;
+		this.instance = null;
+		this.criteria = criteria;
+		this.domainType = domainType;
+		this.additionalValues = additionalValues;
+		this.pageable = null;
+		this.sort = null;
+		this.example = null;
+		this.basic = basic;
+		this.entityManager = entityManager;
 	}
 
 	public MybatisContext(@Nullable ID id, @Nullable T instance, @Nullable Class<?> domainType,
@@ -389,6 +413,15 @@ public class MybatisContext<T, ID> implements Serializable {
 			return Collections.emptyMap();
 		}
 		return this.bindable;
+	}
+
+	@Nullable
+	public Criteria<?, ?> getCriteria() {
+		return this.criteria;
+	}
+
+	public void setCriteria(@Nullable Criteria<?, ?> criteria) {
+		this.criteria = criteria;
 	}
 
 }

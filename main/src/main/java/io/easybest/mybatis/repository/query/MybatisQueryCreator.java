@@ -232,7 +232,7 @@ public class MybatisQueryCreator extends AbstractQueryCreator<CriteriaQuery, Pre
 			case GREATER_THAN:
 			case GREATER_THAN_EQUAL:
 				return Predicate
-						.of(column, type.equals(GREATER_THAN_EQUAL) ? SQL.GREATER_THAN_EQUAL : SQL.GREATER_THAN,
+						.of(column, type.equals(GREATER_THAN_EQUAL) ? SQL.GREATER_THAN_EQUAL_TR : SQL.GREATER_THAN_TR,
 								Parameter.additionalValue(
 										MybatisQueryCreator.this.provider.next(this.part).getExpression().getName()))
 						.detectConnectors(this.entityManager, this.persistentPropertyPath);
@@ -241,7 +241,7 @@ public class MybatisQueryCreator extends AbstractQueryCreator<CriteriaQuery, Pre
 			case LESS_THAN:
 			case LESS_THAN_EQUAL:
 				return Predicate
-						.of(column, type.equals(LESS_THAN_EQUAL) ? SQL.LESS_THAN_EQUAL : SQL.LESS_THAN,
+						.of(column, type.equals(LESS_THAN_EQUAL) ? SQL.LESS_THAN_EQUAL_TR : SQL.LESS_THAN_TR,
 								Parameter.additionalValue(
 										MybatisQueryCreator.this.provider.next(this.part).getExpression().getName()))
 						.detectConnectors(this.entityManager, this.persistentPropertyPath);
@@ -336,7 +336,7 @@ public class MybatisQueryCreator extends AbstractQueryCreator<CriteriaQuery, Pre
 				Parameter parameter = Parameter.additionalValue(expression.getExpression().getName());
 				return Predicate
 						.of(this.lowerIfIgnoreCase(expression, column),
-								type.equals(SIMPLE_PROPERTY) ? SQL.EQUALS : SQL.NOT_EQUALS,
+								type.equals(SIMPLE_PROPERTY) ? SQL.EQUALS : SQL.NOT_EQUALS_TR,
 								this.lowerIfIgnoreCase(expression, parameter))
 						.detectConnectors(this.entityManager, this.persistentPropertyPath);
 

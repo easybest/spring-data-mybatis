@@ -73,6 +73,7 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.DELET
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_EXAMPLE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_CRITERIA;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_IDS;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_PAGE;
@@ -791,6 +792,24 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 				Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
 						this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true) : SQL.EMPTY)))
 				.build();
+	}
+
+	public Select findByCriteria() {
+
+		return Select
+				.builder().id(
+						FIND_BY_CRITERIA)
+				.resultMap(
+						RESULT_MAP)
+				.contents(Arrays.asList(
+						Bind.of(SQLResult.PARAM_NAME,
+								MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
+						SELECT, COLUMN_LIST, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
+						Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
+								this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true)
+										: SQL.EMPTY)))
+				.build();
+
 	}
 
 }

@@ -75,6 +75,7 @@ public final class MybatisAggregateRootPrecompile {
 				.add(snippet.queryByExampleForPage()) //
 				.add(snippet.countByExample()) //
 				.add(snippet.existsByExample()) //
+				.add(snippet.findByCriteria()) //
 
 		;
 

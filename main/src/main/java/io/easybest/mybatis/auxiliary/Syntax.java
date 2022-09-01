@@ -38,6 +38,9 @@ import io.easybest.mybatis.mapping.precompile.SQL;
 import io.easybest.mybatis.mapping.precompile.Segment;
 import io.easybest.mybatis.mapping.precompile.Table;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
+import io.easybest.mybatis.repository.query.criteria.Criteria;
+import io.easybest.mybatis.repository.query.criteria.PredicateResult;
+import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
 import io.easybest.mybatis.repository.support.MybatisContext;
 
 import org.springframework.beans.NullValueInNestedPathException;
@@ -62,20 +65,6 @@ import org.springframework.util.ObjectUtils;
  */
 public class Syntax {
 
-	public static boolean isEmpty(Object obj) {
-
-		if (null == obj) {
-			return true;
-		}
-		if (obj.getClass().isArray()) {
-			return ((Object[]) obj).length == 0;
-		}
-		if (obj instanceof Collection) {
-			return ((Collection<?>) obj).isEmpty();
-		}
-		return false;
-	}
-
 	public static SQLResult bind(MybatisContext<?, ?> context) {
 
 		if (null == context) {
@@ -97,12 +86,21 @@ public class Syntax {
 		// <condition, connector>
 		Tuple<Set<String>, Set<String>> examples = examples(entityManager, context, domainType, basic, example);
 
+		// <condition, connector>
+		Tuple<Set<String>, Set<String>> criteriaQueryResults = criteriaQuery(entityManager, context, domainType, basic,
+				context.getCriteria());
+
 		if (null != orders && !CollectionUtils.isEmpty(orders.getFirst())) {
 			builder.sorting("ORDER BY " + String.join(",", orders.getFirst()));
 		}
 
 		if (null != examples && !CollectionUtils.isEmpty(examples.getFirst())) {
 			builder.condition(examples.getFirst().stream().map(String::toString).collect(Collectors.joining(" ")));
+		}
+
+		if (null != criteriaQueryResults && !CollectionUtils.isEmpty(criteriaQueryResults.getFirst())) {
+			builder.condition(
+					criteriaQueryResults.getFirst().stream().map(String::toString).collect(Collectors.joining(" ")));
 		}
 
 		if (!basic) {
@@ -130,6 +128,37 @@ public class Syntax {
 		}
 
 		return builder.build();
+	}
+
+	private static Tuple<Set<String>, Set<String>> criteriaQuery(EntityManager entityManager,
+			MybatisContext<?, ?> context, Class<?> domainType, boolean basic, Criteria<?, ?> criteria) {
+
+		if (null == criteria) {
+			return null;
+		}
+
+		Set<String> conditions = new LinkedHashSet<>();
+		Set<String> connectors = new LinkedHashSet<>();
+
+		criteriaQuery(conditions, connectors, entityManager, context, domainType, basic,
+				(CriteriaImpl<?, ?, ?>) criteria);
+
+		return new Tuple<>(conditions, connectors);
+	}
+
+	private static void criteriaQuery(Set<String> conditions, Set<String> connectors, EntityManager entityManager,
+			MybatisContext<?, ?> context, Class<?> domainType, boolean basic, CriteriaImpl<?, ?, ?> criteria) {
+
+		PredicateResult pr = criteria.toConditionSQL(entityManager, pv -> {
+			context.setBindable(pv.getName(), pv.getValue());
+			return Parameter.bindValue(pv.getName());
+		}, false);
+
+		conditions.add(pr.getSql());
+		if (!CollectionUtils.isEmpty(pr.getConnectors())) {
+			connectors.addAll(pr.getConnectors());
+		}
+
 	}
 
 	public static Set<String> connectors(EntityManager entityManager,
@@ -486,6 +515,20 @@ public class Syntax {
 
 		});
 
+	}
+
+	public static boolean isEmpty(Object obj) {
+
+		if (null == obj) {
+			return true;
+		}
+		if (obj.getClass().isArray()) {
+			return ((Object[]) obj).length == 0;
+		}
+		if (obj instanceof Collection) {
+			return ((Collection<?>) obj).isEmpty();
+		}
+		return false;
 	}
 
 	private static class PathNode {
