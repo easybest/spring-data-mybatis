@@ -90,6 +90,7 @@ public class ConditionsImpl<T, R, F> implements Conditions<R, F> {
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked" })
 	public R or(Conditions<R, F> conditions) {
 
 		if (null == this.condition) {
@@ -102,6 +103,7 @@ public class ConditionsImpl<T, R, F> implements Conditions<R, F> {
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked" })
 	public R and(Conditions<R, F> conditions) {
 
 		if (null == this.condition) {

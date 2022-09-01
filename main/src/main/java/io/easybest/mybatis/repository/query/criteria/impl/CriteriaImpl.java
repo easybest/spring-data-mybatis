@@ -50,14 +50,16 @@ public class CriteriaImpl<T, R, F> extends ConditionsImpl<T, R, F> implements Cr
 		return this.returns;
 	}
 
+	@SafeVarargs
 	@Override
-	public R select(F... fields) {
+	public final R select(F... fields) {
 
 		return this.returns;
 	}
 
+	@SafeVarargs
 	@Override
-	public R exclude(F... fields) {
+	public final R exclude(F... fields) {
 
 		return this.returns;
 	}
