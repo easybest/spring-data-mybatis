@@ -16,7 +16,7 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
-import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
+import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
 
 /**
  * .
@@ -24,15 +24,15 @@ import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
  * @author Jarvis Song
  * @param <T> domain type
  */
-public class DefaultCriteria<T> extends CriteriaImpl<T, DefaultCriteria<T>, String> {
+public class DefaultCriteriaQuery<T> extends CriteriaQueryImpl<T, DefaultCriteriaQuery<T>, String, Object> {
 
-	public DefaultCriteria(Class<T> domainClass) {
+	public DefaultCriteriaQuery(Class<T> domainClass) {
 		super(domainClass);
 	}
 
 	@Override
-	protected Conditions<DefaultCriteria<T>, String> createConditionsInstance() {
-		return new DefaultCriteria<>(this.domainClass);
+	protected Conditions<DefaultCriteriaQuery<T>, String, Object> createConditionsInstance() {
+		return new DefaultCriteriaQuery<>(this.domainClass);
 	}
 
 }

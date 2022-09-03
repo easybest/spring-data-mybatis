@@ -38,9 +38,9 @@ import io.easybest.mybatis.mapping.precompile.SQL;
 import io.easybest.mybatis.mapping.precompile.Segment;
 import io.easybest.mybatis.mapping.precompile.Table;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
-import io.easybest.mybatis.repository.query.criteria.Criteria;
+import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
 import io.easybest.mybatis.repository.query.criteria.PredicateResult;
-import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
+import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
 import io.easybest.mybatis.repository.support.MybatisContext;
 
 import org.springframework.beans.NullValueInNestedPathException;
@@ -131,7 +131,7 @@ public class Syntax {
 	}
 
 	private static Tuple<Set<String>, Set<String>> criteriaQuery(EntityManager entityManager,
-			MybatisContext<?, ?> context, Class<?> domainType, boolean basic, Criteria<?, ?> criteria) {
+			MybatisContext<?, ?> context, Class<?> domainType, boolean basic, CriteriaQuery<?, ?, Object> criteria) {
 
 		if (null == criteria) {
 			return null;
@@ -141,18 +141,19 @@ public class Syntax {
 		Set<String> connectors = new LinkedHashSet<>();
 
 		criteriaQuery(conditions, connectors, entityManager, context, domainType, basic,
-				(CriteriaImpl<?, ?, ?>) criteria);
+				(CriteriaQueryImpl<?, ?, ?, Object>) criteria);
 
 		return new Tuple<>(conditions, connectors);
 	}
 
 	private static void criteriaQuery(Set<String> conditions, Set<String> connectors, EntityManager entityManager,
-			MybatisContext<?, ?> context, Class<?> domainType, boolean basic, CriteriaImpl<?, ?, ?> criteria) {
+			MybatisContext<?, ?> context, Class<?> domainType, boolean basic,
+			CriteriaQueryImpl<?, ?, ?, Object> criteria) {
 
 		PredicateResult pr = criteria.toConditionSQL(entityManager, pv -> {
 			context.setBindable(pv.getName(), pv.getValue());
 			return Parameter.bindValue(pv.getName());
-		}, false);
+		}, false, true);
 
 		conditions.add(pr.getSql());
 		if (!CollectionUtils.isEmpty(pr.getConnectors())) {

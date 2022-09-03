@@ -64,15 +64,15 @@ public class Condition<F> implements Serializable {
 	}
 
 	public PredicateResult toSQL(EntityManager entityManager, Class<?> domainClass, ParamValueCallback callback,
-			boolean tr) {
+			boolean tr, boolean alias) {
 
 		Condition<F> opposite = this.opposite;
 
-		PredicateResult pr = this.predicate.toSQL(this.idx, entityManager, domainClass, callback, tr);
+		PredicateResult pr = this.predicate.toSQL(this.idx, entityManager, domainClass, callback, tr, alias);
 
 		while (null != opposite) {
 
-			pr.append(opposite.operator, opposite.toSQL(entityManager, domainClass, callback, tr), true);
+			pr.append(opposite.operator, opposite.toSQL(entityManager, domainClass, callback, tr, alias), true);
 
 			opposite = opposite.opposite;
 		}

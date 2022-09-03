@@ -26,8 +26,8 @@ import io.easybest.mybatis.mapping.MybatisAssociation;
 import io.easybest.mybatis.mapping.MybatisPersistentEntity;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import io.easybest.mybatis.repository.MybatisRepository;
-import io.easybest.mybatis.repository.query.criteria.Criteria;
-import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
+import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Example;
@@ -576,20 +576,20 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 	}
 
 	@Override
-	public <S extends T> Optional<S> findOne(Criteria<?, ?> criteria) {
+	public <S extends T> Optional<S> findOne(CriteriaQuery<?, ?, Object> criteria) {
 
 		return Optional.empty();
 	}
 
 	@Override
 	@SuppressWarnings({ "unchecked" })
-	public <S extends T> List<S> findAll(Criteria<?, ?> criteria) {
+	public <S extends T> List<S> findAll(CriteriaQuery<?, ?, Object> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
 		Class<T> type = this.persistentEntity.getType();
-		if (criteria instanceof CriteriaImpl) {
-			Class<T> domainClass = ((CriteriaImpl<T, ?, ?>) criteria).getDomainClass();
+		if (criteria instanceof CriteriaQueryImpl) {
+			Class<T> domainClass = ((CriteriaQueryImpl<T, ?, ?, Object>) criteria).getDomainClass();
 			if (null != domainClass) {
 				type = domainClass;
 			}

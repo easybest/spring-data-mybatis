@@ -47,6 +47,11 @@ public class Include implements Segment {
 	public static Include COLUMN_LIST = Include.of(ResidentStatementName.COLUMN_LIST);
 
 	/**
+	 * Column list.
+	 */
+	public static Include COLUMN_LIST_PURE = Include.of(ResidentStatementName.COLUMN_LIST_PURE);
+
+	/**
 	 * COLUMN_LIST_USING_TYPE.
 	 */
 	public static Include COLUMN_LIST_USING_TYPE = Include.of(ResidentStatementName.COLUMN_LIST_USING_TYPE);

@@ -18,9 +18,11 @@ package io.easybest.mybatis.repository.query.criteria;
 
 import java.io.Serializable;
 
+import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.ibatis.type.JdbcType;
 
 /**
  * .
@@ -36,6 +38,17 @@ public class ParamValue implements Serializable {
 
 	private Object value;
 
+	private String javaType;
+
+	private JdbcType jdbcType;
+
+	private Class<?> typeHandler;
+
+	public ParamValue(String name, Object value) {
+		this.name = name;
+		this.value = value;
+	}
+
 	public static ParamValue of(String name, Object value) {
 		return new ParamValue(name, value);
 	}
@@ -45,6 +58,14 @@ public class ParamValue implements Serializable {
 		ParamValue pv = new ParamValue();
 		pv.setValue(value);
 		return pv;
+	}
+
+	public static ParamValue of(String name, Object value, String javaType, JdbcType jdbcType, Class<?> typeHandler) {
+		return new ParamValue(name, value, javaType, jdbcType, typeHandler);
+	}
+
+	public static ParamValue of(String name, Object value, MybatisPersistentPropertyImpl leaf) {
+		return new ParamValue(name, value, leaf.getJavaType(), leaf.getJdbcType(), leaf.getTypeHandler());
 	}
 
 }

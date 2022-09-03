@@ -16,23 +16,25 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
-import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
-
 /**
  * .
  *
  * @author Jarvis Song
- * @param <T> domain type
+ * @param <R> return type
+ * @param <F> field type
+ * @param <V> value type
  */
-public class LambdaCriteria<T> extends CriteriaImpl<T, LambdaCriteria<T>, FieldFunction<T, ?>> {
+public interface CriteriaQuery<R, F, V> extends SelectRange<R, F>, Conditions<R, F, V> {
 
-	public LambdaCriteria(Class<T> domainClass) {
-		super(domainClass);
+	static <T> LambdaCriteriaQuery<T> lambda(Class<T> domainClass) {
+
+		return new LambdaCriteriaQuery<>(domainClass);
 	}
 
-	@Override
-	protected Conditions<LambdaCriteria<T>, FieldFunction<T, ?>> createConditionsInstance() {
-		return new LambdaCriteria<>(this.domainClass);
+	static <T> DefaultCriteriaQuery<T> create(Class<T> domainClass) {
+		return new DefaultCriteriaQuery<>(domainClass);
 	}
+
+	R returns(R returns);
 
 }

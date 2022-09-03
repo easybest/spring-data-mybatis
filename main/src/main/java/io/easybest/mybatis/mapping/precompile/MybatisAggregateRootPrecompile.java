@@ -47,6 +47,7 @@ public final class MybatisAggregateRootPrecompile {
 		builder //
 				.add(snippet.pureTableName()) //
 				.add(snippet.tableName()) //
+				.add(snippet.pureColumnList()) //
 				.add(snippet.columnList()) //
 				.add(snippet.columnListUsingType()) //
 				.add(snippet.baseResultMap()) //

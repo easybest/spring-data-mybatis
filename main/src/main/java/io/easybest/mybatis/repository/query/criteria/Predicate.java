@@ -17,21 +17,30 @@
 package io.easybest.mybatis.repository.query.criteria;
 
 import java.io.Serializable;
+import java.util.Collections;
 
+import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
+import io.easybest.mybatis.mapping.precompile.Choose;
 import io.easybest.mybatis.mapping.precompile.Column;
+import io.easybest.mybatis.mapping.precompile.Foreach;
+import io.easybest.mybatis.mapping.precompile.Function;
+import io.easybest.mybatis.mapping.precompile.MethodInvocation;
+import io.easybest.mybatis.mapping.precompile.Parameter;
 import io.easybest.mybatis.mapping.precompile.SQL;
+import io.easybest.mybatis.mapping.precompile.Segment;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 import lombok.Data;
 
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.repository.query.parser.Part;
 import org.springframework.lang.Nullable;
 
 import static io.easybest.mybatis.repository.query.criteria.Operator.AND;
 import static io.easybest.mybatis.repository.query.criteria.Operator.OR;
+import static io.easybest.mybatis.repository.query.criteria.PredicateType.NOT_IN;
+import static io.easybest.mybatis.repository.query.criteria.PredicateType.SIMPLE_PROPERTY;
 
 /**
  * .
@@ -44,7 +53,7 @@ public final class Predicate<F> implements Serializable {
 
 	private F field;
 
-	private Part.Type type;
+	private PredicateType type;
 
 	@Nullable
 	private ParamValue[] values;
@@ -57,32 +66,35 @@ public final class Predicate<F> implements Serializable {
 
 	private String fieldName;
 
+	private boolean ignoreCase;
+
 	private int idx;
 
 	private Predicate() {
 	}
 
-	public static <F> Predicate<F> of(F field, Part.Type type, ParamValue... values) {
+	public static <F> Predicate<F> of(F field, PredicateType type, boolean ignoreCase, ParamValue... values) {
 
 		Predicate<F> predicate = new Predicate<>();
 		predicate.setField(field);
 		predicate.setType(type);
 		predicate.setValues(values);
 		predicate.setFieldName(convertFieldName(field));
-
+		predicate.setIgnoreCase(ignoreCase);
 		return predicate;
 	}
 
 	public PredicateResult toSQL(int group, EntityManager entityManager, Class<?> domainClass,
-			ParamValueCallback callback, boolean tr) {
+			ParamValueCallback callback, boolean tr, boolean alias) {
 
 		Predicate<F> opposite = this.opposite;
 
-		PredicateResult result = this.toSQL(group, entityManager, domainClass, this, callback, tr);
+		PredicateResult result = this.toSQL(group, entityManager, domainClass, this, callback, tr, alias);
 
 		while (null != opposite) {
 
-			result.append(opposite.operator, this.toSQL(group, entityManager, domainClass, opposite, callback, tr));
+			result.append(opposite.operator,
+					this.toSQL(group, entityManager, domainClass, opposite, callback, tr, alias));
 
 			opposite = opposite.opposite;
 		}
@@ -91,7 +103,7 @@ public final class Predicate<F> implements Serializable {
 
 	@SuppressWarnings({ "unchecked" })
 	private PredicateResult toSQL(int group, EntityManager entityManager, Class<?> domainClass, Predicate<F> predicate,
-			ParamValueCallback callback, boolean tr) {
+			ParamValueCallback callback, boolean tr, boolean alias) {
 
 		StringBuilder builder = new StringBuilder();
 
@@ -110,20 +122,54 @@ public final class Predicate<F> implements Serializable {
 			// TODO
 		}
 
-		Column column = Column.of(tableAlias.getReference(entityManager.getDialect().getIdentifierProcessing()),
+		Column column = Column.of(
+				alias ? tableAlias.getReference(entityManager.getDialect().getIdentifierProcessing()) : null,
 				leaf.getColumnName().getReference());
+		Parameter parameter;
+		ParamValue pv;
 
 		switch (predicate.type) {
+		case IN:
+		case NOT_IN:
+			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, column) : column).append(" ");
+			builder.append(predicate.type.equals(NOT_IN) ? SQL.of("NOT IN") : SQL.of("IN")).append(" ");
+
+			pv = predicate.get(group, predicate.idx, 0);
+
+			if (null != callback) {
+				parameter = callback.apply(pv);
+			}
+			else {
+				parameter = Parameter.of(pv);
+			}
+			builder.append(Choose.of(MethodInvocation.of(Syntax.class, "isEmpty", parameter.getProperty()).toString(),
+					SQL.of("(NULL)"), Foreach.builder().collection(parameter.getProperty())
+							.contents(Collections.singletonList(Parameter.of("item"))).build()));
+			break;
 		case SIMPLE_PROPERTY:
 		case NEGATING_SIMPLE_PROPERTY:
-			builder.append(column)
-					.append(predicate.type.equals(Part.Type.SIMPLE_PROPERTY) ? SQL.EQUALS
-							: (tr ? SQL.NOT_EQUALS_TR : SQL.NOT_EQUALS))
-					.append(callback.apply(predicate.get(group, predicate.idx, 0)));
+			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, column) : column);
+			builder.append(
+					predicate.type.equals(SIMPLE_PROPERTY) ? SQL.EQUALS : (tr ? SQL.NOT_EQUALS_TR : SQL.NOT_EQUALS));
 
+			pv = predicate.get(group, predicate.idx, 0);
+			if (null != callback) {
+				parameter = callback.apply(pv);
+			}
+			else {
+				parameter = Parameter.of(pv);
+			}
+
+			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, parameter) : parameter);
+			break;
 		}
 
 		return new PredicateResult(builder.toString());
+	}
+
+	private Segment lowerIfIgnoreCase(EntityManager entityManager, Segment segment) {
+
+		return Function.of(entityManager.getDialect().getFunction("lower"), segment);
 	}
 
 	private ParamValue get(int group, int idx, int i) {
@@ -162,7 +208,7 @@ public final class Predicate<F> implements Serializable {
 		return this.opposing(OR, opposite);
 	}
 
-	private static <F> String convertFieldName(F field) {
+	public static <F> String convertFieldName(F field) {
 		String f = null;
 
 		if (field instanceof String) {

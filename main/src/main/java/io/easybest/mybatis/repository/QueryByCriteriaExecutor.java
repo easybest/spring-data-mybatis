@@ -19,7 +19,7 @@ package io.easybest.mybatis.repository;
 import java.util.List;
 import java.util.Optional;
 
-import io.easybest.mybatis.repository.query.criteria.Criteria;
+import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
 
 /**
  * .
@@ -29,8 +29,8 @@ import io.easybest.mybatis.repository.query.criteria.Criteria;
  */
 public interface QueryByCriteriaExecutor<T> {
 
-	<S extends T> Optional<S> findOne(Criteria<?, ?> criteria);
+	<S extends T> Optional<S> findOne(CriteriaQuery<?, ?, Object> criteria);
 
-	<S extends T> List<S> findAll(Criteria<?, ?> criteria);
+	<S extends T> List<S> findAll(CriteriaQuery<?, ?, Object> criteria);
 
 }

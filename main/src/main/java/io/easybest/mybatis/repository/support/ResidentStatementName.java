@@ -39,6 +39,11 @@ public interface ResidentStatementName {
 	String COLUMN_LIST = PREFIX + "column_list";
 
 	/**
+	 * For <code>__pure_column_list</code>.
+	 */
+	String COLUMN_LIST_PURE = PREFIX + "column_list_pure";
+
+	/**
 	 * For <code>__column_list_using_type</code>.
 	 */
 	String COLUMN_LIST_USING_TYPE = PREFIX + "column_list_using_type";
