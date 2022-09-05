@@ -18,20 +18,30 @@ package io.easybest.mybatis.repository.query.criteria.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.easybest.mybatis.auxiliary.SQLResult;
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
+import io.easybest.mybatis.mapping.precompile.Bind;
 import io.easybest.mybatis.mapping.precompile.Column;
+import io.easybest.mybatis.mapping.precompile.Delete;
 import io.easybest.mybatis.mapping.precompile.Include;
+import io.easybest.mybatis.mapping.precompile.Interpolation;
+import io.easybest.mybatis.mapping.precompile.MethodInvocation;
+import io.easybest.mybatis.mapping.precompile.Page;
+import io.easybest.mybatis.mapping.precompile.Parameter;
 import io.easybest.mybatis.mapping.precompile.SQL;
 import io.easybest.mybatis.mapping.precompile.Segment;
 import io.easybest.mybatis.mapping.precompile.Select;
+import io.easybest.mybatis.mapping.precompile.SqlDefinition;
+import io.easybest.mybatis.mapping.precompile.Update;
 import io.easybest.mybatis.mapping.precompile.Where;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 import io.easybest.mybatis.repository.query.criteria.ColumnResult;
@@ -42,10 +52,12 @@ import io.easybest.mybatis.repository.query.criteria.Predicate;
 import io.easybest.mybatis.repository.query.criteria.PredicateResult;
 import io.easybest.mybatis.repository.query.criteria.SegmentResult;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.util.CollectionUtils;
 
+import static io.easybest.mybatis.mapping.precompile.MybatisMapperSnippet.MYBATIS_DEFAULT_PARAMETER_NAME;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.RESULT_MAP;
 
 /**
@@ -67,6 +79,12 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 
 	private String selects;
 
+	private Sort sort;
+
+	private boolean withSort;
+
+	private boolean paging;
+
 	public CriteriaQueryImpl(Class<T> domainClass) {
 		super(domainClass);
 	}
@@ -83,6 +101,13 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 		}
 
 		this.returns = returns;
+		return this.returns;
+	}
+
+	@Override
+	public R paging() {
+
+		this.paging = true;
 		return this.returns;
 	}
 
@@ -123,6 +148,45 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public final R orderBy(F... fields) {
+
+		if (null != fields && fields.length > 0) {
+			this.sort = Sort.by(Arrays.stream(fields).map(Predicate::convertFieldName).toArray(String[]::new));
+		}
+
+		return this.returns;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public final R orderBy(Sort.Direction direction, F... fields) {
+
+		if (null != fields && fields.length > 0) {
+			this.sort = Sort.by(direction,
+					Arrays.stream(fields).map(Predicate::convertFieldName).toArray(String[]::new));
+		}
+
+		return this.returns;
+	}
+
+	@Override
+	public R orderBy(Sort sort) {
+
+		this.sort = sort;
+
+		return this.returns;
+	}
+
+	@Override
+	public R withSort() {
+
+		this.withSort = true;
+
+		return this.returns;
+	}
+
+	@Override
 	protected Conditions<R, F, V> createConditionsInstance() {
 
 		return new CriteriaQueryImpl<>(this.domainClass);
@@ -134,8 +198,6 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 		if (!CollectionUtils.isEmpty(this.selectFields)) {
 
 			SegmentResult sr = new SegmentResult();
-
-			StringBuilder builder = new StringBuilder();
 
 			this.selectFields.stream().filter(field -> {
 
@@ -156,6 +218,12 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 
 			return sr;
 		}
+
+		return null;
+	}
+
+	private SegmentResult sorting(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity,
+			Class<?> domainClass) {
 
 		return null;
 	}
@@ -191,7 +259,33 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 		return new ColumnResult(column, connectors);
 	}
 
-	public Select presupposed(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity, String id,
+	public SqlDefinition presupposedDeleteQuery(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity,
+			String id, String parameterType, ParamValueCallback callback) {
+
+		PredicateResult pr = this.toConditionSQL(entityManager, callback, true, false);
+
+		if (entity.getLogicDeleteColumn().isPresent()) {
+
+			Column col = Column.of(entity.getLogicDeleteColumn().get());
+
+			return Update.builder().id(id).parameterType(parameterType).contents(Arrays.asList(//
+					SQL.UPDATE, //
+					Include.TABLE_NAME_PURE, //
+					io.easybest.mybatis.mapping.precompile.Set.of(SQL.of(col + " = 1")), //
+					Where.of(//
+							null == pr ? SQL.EMPTY : SQL.of(pr.getSql()) //
+					))).build();
+		}
+
+		return Delete.builder().id(id).parameterType(parameterType).contents(Arrays.asList(//
+				SQL.DELETE_FROM, //
+				Include.TABLE_NAME_PURE, //
+				Where.of(//
+						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()) //
+				))).build();
+	}
+
+	public Select presupposedSelectQuery(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity, String id,
 			String resultMap, String resultType, String parameterType, ParamValueCallback callback, boolean alias) {
 
 		Select.Builder builder = Select.builder().id(id);
@@ -204,6 +298,10 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 		}
 		else {
 			builder.resultMap(RESULT_MAP);
+		}
+
+		if (null != parameterType) {
+			builder.parameterType(parameterType);
 		}
 
 		Segment selects = null;
@@ -237,23 +335,27 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 			connectors.addAll(pr.getConnectors());
 		}
 
-		builder.contents(Arrays.asList(
+		boolean bind = this.withSort || this.paging;
+
+		Segment[] segments = new Segment[] {
+				bind ? Bind.of(SQLResult.PARAM_NAME,
+						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)) : SQL.EMPTY, //
 
 				SQL.SELECT, //
 				null == selects ? (alias ? Include.COLUMN_LIST : Include.COLUMN_LIST_PURE) : selects, //
 				SQL.FROM, //
 				alias ? Include.TABLE_NAME : Include.TABLE_NAME_PURE, //
 				(CollectionUtils.isEmpty(connectors) ? SQL.EMPTY : SQL.of(String.join(" ", connectors))), //
+				bind ? Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME) : SQL.EMPTY, //
 				Where.of( //
 						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()), //
 						this.logicDeleteClause(entity, alias)//
-				)
+				), //
+				bind ? Interpolation.of(SQLResult.PARAM_SORTING_NAME) : SQL.EMPTY };
 
-		));
-
-		if (null != parameterType) {
-			builder.parameterType(parameterType);
-		}
+		builder.contents(
+				this.paging ? Collections.singletonList(Page.of(entityManager.getDialect(), Parameter.pageOffset(),
+						Parameter.pageSize(), Parameter.pageOffsetEnd(), segments)) : Arrays.asList(segments));
 
 		return builder.build();
 	}

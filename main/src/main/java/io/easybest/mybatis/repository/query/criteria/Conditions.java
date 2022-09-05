@@ -106,6 +106,15 @@ public interface Conditions<R, F, V> {
 
 	R regex(F field, V value);
 
+	/**
+	 * Customize a query condition.
+	 * @param sql predicate SQL
+	 * @param values values
+	 * @return return type
+	 */
+	@SuppressWarnings("unchecked")
+	R custom(String sql, V... values);
+
 	R ignoreCase();
 
 }

@@ -70,6 +70,7 @@ public final class MybatisAggregateRootPrecompile {
 				.add(snippet.findById()) //
 				.add(snippet.findByIds()) //
 				.add(snippet.findAll()) //
+				.add(snippet.findAllWithSort()) //
 				.add(snippet.findByPage()) //
 				.add(snippet.count()) //
 				.add(snippet.queryByExample()) //

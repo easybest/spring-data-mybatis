@@ -119,6 +119,11 @@ public interface ResidentStatementName {
 	String FIND_ALL = PREFIX + "find_all";
 
 	/**
+	 * For <code>__find_all</code>.
+	 */
+	String FIND_ALL_WITH_SORT = PREFIX + "find_all_with_sort";
+
+	/**
 	 * For <code>__find_by_page</code>.
 	 */
 	String FIND_BY_PAGE = PREFIX + "find_by_page";

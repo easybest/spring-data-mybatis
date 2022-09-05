@@ -59,7 +59,6 @@ import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME_PURE;
 import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.AFTER;
 import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.BEFORE;
 import static io.easybest.mybatis.mapping.precompile.SQL.COUNTS;
-import static io.easybest.mybatis.mapping.precompile.SQL.DELETE_FROM;
 import static io.easybest.mybatis.mapping.precompile.SQL.FROM;
 import static io.easybest.mybatis.mapping.precompile.SQL.SELECT;
 import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_INSTANCE_PREFIX;
@@ -76,6 +75,7 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.DELET
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_EXAMPLE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL_WITH_SORT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_CRITERIA;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_IDS;
@@ -520,98 +520,6 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 				.build();
 	}
 
-	public SqlDefinition deleteById(boolean byId) {
-
-		List<Segment> conditions = new ArrayList<>();
-
-		MybatisPersistentPropertyImpl versionProperty = this.entity.getVersionProperty();
-
-		if (null != versionProperty && !byId) {
-
-			conditions.add(SQL.of("AND "
-					+ Column.of(versionProperty.getColumnName()
-							.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
-					+ "=" + Parameter.builder().property("instance." + versionProperty.getName()).build()));
-
-			conditions.add(this.idCondition(false, false));
-		}
-		else {
-			conditions.add(this.idCondition(byId, false));
-		}
-
-		if (this.entity.getLogicDeleteColumn().isPresent()) {
-
-			conditions.add(this.logicDeleteClause(false));
-
-			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
-			return Update.builder().id(byId ? DELETE_BY_ID : DELETE_BY_ENTITY)
-					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")),
-							Where.builder().contents(conditions).build(),
-							SQL.of(this.entityManager.getDialect().limitN(1))))
-					.build();
-
-		}
-
-		return Delete.builder().id(byId ? DELETE_BY_ID : DELETE_BY_ENTITY)
-				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE, Where.builder().contents(conditions).build(),
-						SQL.of(this.entityManager.getDialect().limitN(1))))
-				.build();
-	}
-
-	public SqlDefinition deleteAllInBatch() {
-
-		if (this.entity.getLogicDeleteColumn().isPresent()) {
-			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
-			return Update.builder().id(DELETE_ALL).contents(Arrays.asList(SQL.UPDATE, TABLE_NAME,
-					Set.of(SQL.of(col + " = 1")), Where.of(this.logicDeleteClause(false)))).build();
-		}
-
-		return Delete.builder().id(DELETE_ALL).contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE)).build();
-	}
-
-	public SqlDefinition deleteAllByIdInBatch() {
-
-		if (this.entity.getLogicDeleteColumn().isPresent()) {
-
-			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
-			return Update.builder().id(DELETE_BY_IDS)
-					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")),
-							Where.builder()
-									.contents(
-											Arrays.asList(this.idsCondition(true, true), this.logicDeleteClause(false)))
-									.build()))
-					.build();
-		}
-
-		return Delete.builder().id(DELETE_BY_IDS)
-				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE, Where.of(this.idsCondition(true, false))))
-				.build();
-	}
-
-	public SqlDefinition deleteAllByEntitiesInBatch() {
-
-		if (this.entity.getLogicDeleteColumn().isPresent()) {
-
-			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
-			return Update.builder().id(DELETE_BY_ENTITIES)
-					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")),
-							Where.builder().contents(
-									Arrays.asList(this.idsCondition(false, true), this.logicDeleteClause(false)))
-									.build()))
-					.build();
-		}
-
-		return Delete.builder().id(DELETE_BY_ENTITIES)
-				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE, Where.of(this.idsCondition(false, false))))
-				.build();
-	}
-
-	public Select countAll() {
-
-		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).presupposed(this.entityManager,
-				this.entity, COUNT_ALL, null, "long", null, null, false);
-	}
-
 	private void idCondition(DefaultCriteriaQuery<?> query, boolean byId) {
 
 		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
@@ -634,6 +542,91 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		}
 	}
 
+	private void idsCondition(DefaultCriteriaQuery<?> query, boolean byId) {
+
+		if (!this.entity.hasIdProperty()) {
+			return;
+		}
+
+		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
+
+		if (this.entity.isCompositeId()) {
+			query.custom(
+					Foreach.builder().collection(byId ? "id" : "instance").separator(") OR (").open("(").close(")")
+							.contents(Collections.singletonList(SQL.of(this.entityManager
+									.findPersistentPropertyPaths(this.entity.getType(), p -> true).stream()
+									.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
+											&& !ppp.getRequiredLeafProperty().isEntity())
+									.map(ppp -> Column
+											.base(ppp.getRequiredLeafProperty().getColumnName().getReference(
+													this.entityManager.getDialect().getIdentifierProcessing()))
+											+ "=" + Parameter.of("item." + (byId ? //
+													ppp.toDotPath(source -> source == ppp.getBaseProperty() ? null
+															: source.getName())//
+													: ppp.toDotPath())))
+									.collect(Collectors.joining(" AND ")))))
+							.build().toString());
+		}
+		else {
+			if (byId) {
+				query.in(idProperty.getName(), ParamValue.of("id", null));
+			}
+			else {
+				query.custom(//
+						idProperty.getColumnName()
+								.getReference(this.entityManager.getDialect().getIdentifierProcessing())//
+								+ " IN " + Choose.of(//
+										MethodInvocation.of(Syntax.class, "isEmpty", "instance").toString(), //
+										SQL.of("(NULL)"), //
+										Foreach.builder().collection("instance")
+												.contents(Collections
+														.singletonList(Parameter.of(("item." + idProperty.getName()))))
+												.build()));
+			}
+		}
+	}
+
+	public SqlDefinition deleteById(boolean byId) {
+
+		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
+
+		this.idCondition(query, byId);
+		MybatisPersistentPropertyImpl versionProperty = this.entity.getVersionProperty();
+		if (null != versionProperty && !byId) {
+			query.and(
+					c -> c.eq(versionProperty.getName(), ParamValue.of("instance." + versionProperty.getName(), null)));
+		}
+
+		return query.presupposedDeleteQuery(this.entityManager, this.entity, byId ? DELETE_BY_ID : DELETE_BY_ENTITY,
+				null, null);
+	}
+
+	public SqlDefinition deleteAllInBatch() {
+
+		return CriteriaQuery.create(this.entity.getType()).presupposedDeleteQuery(this.entityManager, this.entity,
+				DELETE_ALL, null, null);
+	}
+
+	public SqlDefinition deleteAllByIdInBatch() {
+
+		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
+		this.idsCondition(query, true);
+		return query.presupposedDeleteQuery(this.entityManager, this.entity, DELETE_BY_IDS, null, null);
+	}
+
+	public SqlDefinition deleteAllByEntitiesInBatch() {
+
+		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
+		this.idsCondition(query, false);
+		return query.presupposedDeleteQuery(this.entityManager, this.entity, DELETE_BY_ENTITIES, null, null);
+	}
+
+	public Select countAll() {
+
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue())
+				.presupposedSelectQuery(this.entityManager, this.entity, COUNT_ALL, null, "long", null, null, false);
+	}
+
 	public Select existsById() {
 
 		if (!this.entity.hasIdProperty()) {
@@ -641,10 +634,9 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		}
 
 		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue());
-
 		this.idCondition(query, true);
-
-		return query.presupposed(this.entityManager, this.entity, EXISTS_BY_ID, null, "boolean", null, null, false);
+		return query.presupposedSelectQuery(this.entityManager, this.entity, EXISTS_BY_ID, null, "boolean", null, null,
+				false);
 	}
 
 	private SQL logicDeleteClause(boolean baseAlias) {
@@ -700,7 +692,8 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
 		this.idCondition(query, true);
-		return query.presupposed(this.entityManager, this.entity, FIND_BY_ID, RESULT_MAP, null, null, null, true);
+		return query.presupposedSelectQuery(this.entityManager, this.entity, FIND_BY_ID, RESULT_MAP, null, null, null,
+				true);
 	}
 
 	public Select findByIds() {
@@ -709,92 +702,34 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return null;
 		}
 
-		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
-
 		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
-
-		query.in(idProperty.getName(), ParamValue.of("id", null));
-
-		return query.presupposed(this.entityManager, this.entity, FIND_BY_IDS, RESULT_MAP, null, null, null, true);
-
-		// return
-		// Select.builder().id(FIND_BY_IDS).resultMap(RESULT_MAP).contents(Arrays.asList(SELECT,
-		// COLUMN_LIST, FROM,
-		// TABLE_NAME, Where.of(this.idsCondition(true, true),
-		// this.logicDeleteClause(true)))).build();
-	}
-
-	private Segment idsCondition(boolean byId, boolean baseAlias) {
-
-		if (!this.entity.hasIdProperty()) {
-			return SQL.EMPTY;
-		}
-
-		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
-		if (this.entity.isCompositeId()) {
-
-			return Foreach.builder().collection(byId ? "id" : "instance").separator(") OR (").open("(").close(")")
-					.contents(Collections.singletonList(SQL.of(this.entityManager
-							.findPersistentPropertyPaths(this.entity.getType(), p -> true).stream()
-							.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
-									&& !ppp.getRequiredLeafProperty().isEntity())
-							.map(ppp -> Column
-									.base(ppp.getRequiredLeafProperty().getColumnName().getReference(
-											this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
-									+ "="
-									+ Parameter.of("item." + (byId ? (ppp.toDotPath(
-											source -> source == ppp.getBaseProperty() ? null : source.getName()))
-											: ppp.toDotPath())))
-							.collect(Collectors.joining(" AND ")))))
-					.build();
-
-		}
-
-		return SQL
-				.of("AND "
-						+ Column.base(idProperty.getColumnName()
-								.getReference(this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
-						+ " IN "
-						+ Foreach.builder().collection(byId ? "id" : "instance")
-								.contents(Collections
-										.singletonList(Parameter.of(byId ? "item" : ("item." + idProperty.getName()))))
-								.build());
-
+		this.idsCondition(query, true);
+		return query.presupposedSelectQuery(this.entityManager, this.entity, FIND_BY_IDS, RESULT_MAP, null, null, null,
+				true);
 	}
 
 	public Select findAll() {
 
-		return Select.builder().id(FIND_ALL).resultMap(RESULT_MAP).contents(Arrays.asList(
+		return CriteriaQuery.create(this.entity.getType()).presupposedSelectQuery(this.entityManager, this.entity,
+				FIND_ALL, RESULT_MAP, null, null, null, true);
+	}
 
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-				SELECT, COLUMN_LIST, FROM, TABLE_NAME,
+	public Select findAllWithSort() {
 
-				Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-
-				this.entity.getLogicDeleteColumn().isPresent() ? Where.of(this.logicDeleteClause(true)) : SQL.EMPTY,
-				Interpolation.of(SQLResult.PARAM_SORTING_NAME))).build();
+		return CriteriaQuery.create(this.entity.getType()).withSort().presupposedSelectQuery(this.entityManager,
+				this.entity, FIND_ALL_WITH_SORT, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select findByPage() {
 
-		return Select.builder().id(FIND_BY_PAGE).resultMap(RESULT_MAP).contents(Collections.singletonList(Page.of(
-				this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(),
-				Parameter.pageOffsetEnd(),
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-
-				SELECT, COLUMN_LIST, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-				this.entity.getLogicDeleteColumn().isPresent() ? Where.of(this.logicDeleteClause(true)) : SQL.EMPTY,
-				Interpolation.of(SQLResult.PARAM_SORTING_NAME)))).build();
+		return CriteriaQuery.create(this.entity.getType()).paging().presupposedSelectQuery(this.entityManager,
+				this.entity, FIND_BY_PAGE, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select count() {
 
-		return Select.builder().id(COUNT).resultType("long").contents(Arrays.asList(SELECT, COUNTS, FROM, TABLE_NAME,
-				this.entity.getLogicDeleteColumn().isPresent() ? Where.of(this.logicDeleteClause(true)) : SQL.EMPTY))
-				.build();
-
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue())
+				.presupposedSelectQuery(this.entityManager, this.entity, COUNT, null, "long", null, null, false);
 	}
 
 	public Select queryByExample() {

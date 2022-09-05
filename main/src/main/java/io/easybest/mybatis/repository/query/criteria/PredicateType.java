@@ -31,6 +31,12 @@ import java.util.List;
 public enum PredicateType {
 
 	/**
+	 * CUSTOM.
+	 */
+
+	CUSTOM(0),
+
+	/**
 	 * .
 	 */
 	BETWEEN(2, "IsBetween", "Between"),

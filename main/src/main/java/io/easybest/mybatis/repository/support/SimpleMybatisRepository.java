@@ -56,6 +56,7 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.DELET
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_EXAMPLE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL_WITH_SORT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_CRITERIA;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_IDS;
@@ -302,7 +303,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		if (this.persistentEntity.getLogicDeleteColumn().isPresent()) {
 			affectRows = this.update(DELETE_BY_ID,
 					new MybatisContext<>(id, null, this.persistentEntity.getType(), this.basic));
-
 		}
 		else {
 			affectRows = this.delete(DELETE_BY_ID,
@@ -328,7 +328,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		if (this.persistentEntity.getLogicDeleteColumn().isPresent()) {
 			affectRows = this.update(DELETE_BY_ENTITY,
 					new MybatisContext<>(null, entity, this.persistentEntity.getType(), this.basic));
-
 		}
 		else {
 			affectRows = this.delete(DELETE_BY_ENTITY,
@@ -430,8 +429,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			return this.findAll();
 		}
 
-		return this.selectList(FIND_ALL, new MybatisContext<>(null, null, this.persistentEntity.getType(), sort,
-				this.entityManager, this.basic));
+		return this.selectList(FIND_ALL_WITH_SORT, new MybatisContext<>(null, null, this.persistentEntity.getType(),
+				sort, this.entityManager, this.basic));
 	}
 
 	@Override
@@ -575,10 +574,22 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		return queryFunction.apply(fluentQuery);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <S extends T> Optional<S> findOne(CriteriaQuery<?, ?, Object> criteria) {
 
-		return Optional.empty();
+		Assert.notNull(criteria, "Criteria must not be null!");
+
+		Class<T> type = this.persistentEntity.getType();
+		if (criteria instanceof CriteriaQueryImpl) {
+			Class<T> domainClass = ((CriteriaQueryImpl<T, ?, ?, Object>) criteria).getDomainClass();
+			if (null != domainClass) {
+				type = domainClass;
+			}
+		}
+
+		return Optional.ofNullable(this.selectOne(FIND_BY_CRITERIA,
+				new MybatisContext<>(null, type, Collections.emptyMap(), this.basic, this.entityManager, criteria)));
 	}
 
 	@Override

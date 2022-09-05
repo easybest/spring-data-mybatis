@@ -346,10 +346,9 @@ public class UserRepositoryTests {
 				.eq(User::getLastname, "Gierke");
 		assertThat(this.repository.findAll(criteria)).containsOnly(this.firstUser);
 
-		assertThat(this.repository
-				.findAll(CriteriaQuery.create(User.class).eq("firstname", "Oliver").or().eq("lastname", "Gierke").or()
-						.eq("lastname", "DDD").or(c -> c.eq("lastname", "XXX").ne("firstname", "CCC"))))
-								.containsOnly(this.firstUser);
+		assertThat(this.repository.findAll(CriteriaQuery.create(User.class).eq("firstname", "Oliver")
+				.custom("firstname like ?1", "old1").or().eq("lastname", "Gierke").or().eq("lastname", "DDD")
+				.or(c -> c.eq("lastname", "XXX").ne("firstname", "CCC")))).containsOnly(this.firstUser);
 
 	}
 

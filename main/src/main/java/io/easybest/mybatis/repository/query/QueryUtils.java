@@ -92,9 +92,15 @@ public abstract class QueryUtils {
 
 	private static final String IDENTIFIER = "[._$[\\P{Z}&&\\P{Cc}&&\\P{Cf}&&\\P{Punct}]]+";
 
-	static final String COLON_NO_DOUBLE_COLON = "(?<![:\\\\]):";
+	/**
+	 * .
+	 */
+	public static final String COLON_NO_DOUBLE_COLON = "(?<![:\\\\]):";
 
-	static final String IDENTIFIER_GROUP = String.format("(%s)", IDENTIFIER);
+	/**
+	 * .
+	 */
+	public static final String IDENTIFIER_GROUP = String.format("(%s)", IDENTIFIER);
 
 	private static final String COUNT_REPLACEMENT_TEMPLATE = "select count(%s) $5$6$7";
 

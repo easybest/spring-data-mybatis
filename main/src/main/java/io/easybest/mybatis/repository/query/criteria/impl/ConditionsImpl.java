@@ -331,20 +331,57 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		return this.returns;
 	}
 
+	@SafeVarargs
+	@Override
+	public final R custom(String sql, V... values) {
+
+		if (null == this.condition) {
+			this.condition = new Condition<>();
+		}
+		Predicate<F> predicate;
+		if (null != values && values.length > 0) {
+
+			ParamValue[] pvs = new ParamValue[values.length];
+			for (int i = 0; i < values.length; i++) {
+				V v = values[i];
+				if (v instanceof ParamValue) {
+					pvs[i] = (ParamValue) v;
+				}
+				else {
+					pvs[i] = ParamValue.of(v);
+				}
+			}
+
+			predicate = Predicate.of(sql, pvs);
+		}
+		else {
+			predicate = Predicate.of(sql);
+		}
+
+		this.addPredicate(predicate);
+
+		return this.returns;
+	}
+
 	private void addPredicate(F field, PredicateType type, ParamValue... values) {
+
+		this.addPredicate(Predicate.of(field, type, false, values));
+	}
+
+	private void addPredicate(Predicate<F> predicate) {
+
+		this.pointer = predicate;
 
 		if (null == this.condition) {
 			this.condition = new Condition<>();
 		}
 
-		Predicate<F> predicate = Predicate.of(field, type, false, values);
 		if (null == this.condition.getPredicate()) {
 			this.condition.setPredicate(predicate);
 		}
 		else {
 			this.condition.getPredicate().opposing(this.takeFlushOperator(), predicate);
 		}
-
 	}
 
 	private Operator takeFlushOperator() {

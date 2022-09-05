@@ -16,27 +16,25 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
+import org.springframework.data.domain.Sort;
+
 /**
  * .
  *
  * @author Jarvis Song
  * @param <R> return type
  * @param <F> field type
- * @param <V> value type
  */
-public interface CriteriaQuery<R, F, V> extends SelectRange<R, F>, Conditions<R, F, V>, Sorting<R, F> {
+public interface Sorting<R, F> {
 
-	static <T> LambdaCriteriaQuery<T> lambda(Class<T> domainClass) {
+	@SuppressWarnings("unchecked")
+	R orderBy(F... fields);
 
-		return new LambdaCriteriaQuery<>(domainClass);
-	}
+	@SuppressWarnings("unchecked")
+	R orderBy(Sort.Direction direction, F... fields);
 
-	static <T> DefaultCriteriaQuery<T> create(Class<T> domainClass) {
-		return new DefaultCriteriaQuery<>(domainClass);
-	}
+	R orderBy(Sort sort);
 
-	R returns(R returns);
-
-	R paging();
+	R withSort();
 
 }
