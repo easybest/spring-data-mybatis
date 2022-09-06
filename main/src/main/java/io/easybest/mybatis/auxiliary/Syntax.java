@@ -130,7 +130,6 @@ public class Syntax {
 		return builder.build();
 	}
 
-	@SuppressWarnings("unchecked")
 	private static Tuple<Set<String>, Set<String>> criteriaQuery(EntityManager entityManager,
 			MybatisContext<?, ?> context, Class<?> domainType, boolean basic, CriteriaQuery<?, ?, ?, ?> criteria) {
 

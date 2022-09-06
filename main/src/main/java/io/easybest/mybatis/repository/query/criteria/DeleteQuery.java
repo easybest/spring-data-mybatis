@@ -16,34 +16,23 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
-import org.springframework.data.domain.Example;
-
 /**
  * .
  *
  * @author Jarvis Song
- * @param <T> domain type
  * @param <R> return type
  * @param <F> field type
  * @param <V> value type
  */
-public interface CriteriaQuery<T, R, F, V> extends SelectRange<R, F>, Conditions<R, F, V>, Sorting<R, F> {
+public interface DeleteQuery<R, F, V> {
 
-	static <T, V> LambdaCriteriaQuery<T, V> lambda(Class<T> domainClass) {
+	static <T, V> LambdaDeleteQuery<T, V> lambda(Class<T> domainClass) {
 
-		return new LambdaCriteriaQuery<>(domainClass);
+		return new LambdaDeleteQuery<>(domainClass);
 	}
 
-	static <T, V> DefaultCriteriaQuery<T, V> create(Class<T> domainClass) {
-		return new DefaultCriteriaQuery<>(domainClass);
+	static <T, V> DefaultDeleteQuery<T, V> create(Class<T> domainClass) {
+		return new DefaultDeleteQuery<>(domainClass);
 	}
-
-	R paging();
-
-	<S extends T> R example(Example<S> example);
-
-	R exampling();
-
-	R binding();
 
 }

@@ -17,7 +17,6 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +24,6 @@ import java.util.stream.Stream;
 
 import javax.persistence.GenerationType;
 
-import io.easybest.mybatis.auxiliary.SQLResult;
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisAssociation;
@@ -36,8 +34,10 @@ import io.easybest.mybatis.mapping.precompile.ResultMap.ResultMapping;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
 import io.easybest.mybatis.repository.query.criteria.DefaultCriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.DefaultDeleteQuery;
 import io.easybest.mybatis.repository.query.criteria.DefaultInsertQuery;
 import io.easybest.mybatis.repository.query.criteria.DefaultUpdateQuery;
+import io.easybest.mybatis.repository.query.criteria.DeleteQuery;
 import io.easybest.mybatis.repository.query.criteria.InsertQuery;
 import io.easybest.mybatis.repository.query.criteria.ParamValue;
 import io.easybest.mybatis.repository.query.criteria.UpdateQuery;
@@ -47,11 +47,7 @@ import org.apache.ibatis.mapping.ResultFlag;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 
-import static io.easybest.mybatis.mapping.precompile.Include.COLUMN_LIST;
-import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME;
 import static io.easybest.mybatis.mapping.precompile.SQL.COUNTS;
-import static io.easybest.mybatis.mapping.precompile.SQL.FROM;
-import static io.easybest.mybatis.mapping.precompile.SQL.SELECT;
 import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_INSTANCE_PREFIX;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.BASE_RESULT_MAP;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.BASIC_RESULT_MAP;
@@ -510,7 +506,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 	public SqlDefinition deleteById(boolean byId) {
 
-		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
+		DefaultDeleteQuery<?, ParamValue> query = DeleteQuery.create(this.entity.getType());
 
 		this.idCondition(query, byId);
 		MybatisPersistentPropertyImpl versionProperty = this.entity.getVersionProperty();
@@ -519,34 +515,33 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 					c -> c.eq(versionProperty.getName(), ParamValue.of("instance." + versionProperty.getName(), null)));
 		}
 
-		return query.presupposedDeleteQuery(this.entityManager, this.entity, byId ? DELETE_BY_ID : DELETE_BY_ENTITY,
-				null, null);
+		return query.presupposed(this.entityManager, this.entity, byId ? DELETE_BY_ID : DELETE_BY_ENTITY, null, null);
 	}
 
 	public SqlDefinition deleteAllInBatch() {
 
-		return CriteriaQuery.create(this.entity.getType()).presupposedDeleteQuery(this.entityManager, this.entity,
-				DELETE_ALL, null, null);
+		return DeleteQuery.create(this.entity.getType()).presupposed(this.entityManager, this.entity, DELETE_ALL, null,
+				null);
 	}
 
 	public SqlDefinition deleteAllByIdInBatch() {
 
-		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
+		DefaultDeleteQuery<?, ParamValue> query = DeleteQuery.create(this.entity.getType());
 		this.idsCondition(query, true);
-		return query.presupposedDeleteQuery(this.entityManager, this.entity, DELETE_BY_IDS, null, null);
+		return query.presupposed(this.entityManager, this.entity, DELETE_BY_IDS, null, null);
 	}
 
 	public SqlDefinition deleteAllByEntitiesInBatch() {
 
-		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
+		DefaultDeleteQuery<?, ParamValue> query = DeleteQuery.create(this.entity.getType());
 		this.idsCondition(query, false);
-		return query.presupposedDeleteQuery(this.entityManager, this.entity, DELETE_BY_ENTITIES, null, null);
+		return query.presupposed(this.entityManager, this.entity, DELETE_BY_ENTITIES, null, null);
 	}
 
 	public Select countAll() {
 
-		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue())
-				.presupposedSelectQuery(this.entityManager, this.entity, COUNT_ALL, null, "long", null, null, false);
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).presupposed(this.entityManager,
+				this.entity, COUNT_ALL, null, "long", null, null, false);
 	}
 
 	public Select existsById() {
@@ -558,17 +553,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		query.selects(COUNTS.getValue());
 		this.idCondition(query, true);
-		return query.presupposedSelectQuery(this.entityManager, this.entity, EXISTS_BY_ID, null, "boolean", null, null,
-				false);
-	}
-
-	private SQL logicDeleteClause(boolean baseAlias) {
-
-		if (!this.entity.getLogicDeleteColumn().isPresent()) {
-			return SQL.EMPTY;
-		}
-		Column col = Column.base(this.entity.getLogicDeleteColumn().get(), baseAlias);
-		return SQL.of("AND " + col + " = 0");
+		return query.presupposed(this.entityManager, this.entity, EXISTS_BY_ID, null, "boolean", null, null, false);
 	}
 
 	public Select findById() {
@@ -579,8 +564,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		this.idCondition(query, true);
-		return query.presupposedSelectQuery(this.entityManager, this.entity, FIND_BY_ID, RESULT_MAP, null, null, null,
-				true);
+		return query.presupposed(this.entityManager, this.entity, FIND_BY_ID, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select findByIds() {
@@ -591,82 +575,67 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		this.idsCondition(query, true);
-		return query.presupposedSelectQuery(this.entityManager, this.entity, FIND_BY_IDS, RESULT_MAP, null, null, null,
-				true);
+		return query.presupposed(this.entityManager, this.entity, FIND_BY_IDS, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select findAll() {
 
-		return CriteriaQuery.create(this.entity.getType()).presupposedSelectQuery(this.entityManager, this.entity,
-				FIND_ALL, RESULT_MAP, null, null, null, true);
+		return CriteriaQuery.create(this.entity.getType()).presupposed(this.entityManager, this.entity, FIND_ALL,
+				RESULT_MAP, null, null, null, true);
 	}
 
 	public Select findAllWithSort() {
 
-		return CriteriaQuery.create(this.entity.getType()).withSort().presupposedSelectQuery(this.entityManager,
-				this.entity, FIND_ALL_WITH_SORT, RESULT_MAP, null, null, null, true);
+		return CriteriaQuery.create(this.entity.getType()).withSort().presupposed(this.entityManager, this.entity,
+				FIND_ALL_WITH_SORT, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select findByPage() {
 
-		return CriteriaQuery.create(this.entity.getType()).paging().presupposedSelectQuery(this.entityManager,
-				this.entity, FIND_BY_PAGE, RESULT_MAP, null, null, null, true);
+		return CriteriaQuery.create(this.entity.getType()).paging().presupposed(this.entityManager, this.entity,
+				FIND_BY_PAGE, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select count() {
 
-		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue())
-				.presupposedSelectQuery(this.entityManager, this.entity, COUNT, null, "long", null, null, false);
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).presupposed(this.entityManager,
+				this.entity, COUNT, null, "long", null, null, false);
 	}
 
 	public Select queryByExample() {
 
-		return CriteriaQuery.create(this.entity.getType()).exampling().presupposedSelectQuery(this.entityManager,
-				this.entity, QUERY_BY_EXAMPLE, RESULT_MAP, null, null, null, true);
+		return CriteriaQuery.create(this.entity.getType()).exampling().presupposed(this.entityManager, this.entity,
+				QUERY_BY_EXAMPLE, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select queryByExampleWithSort() {
 
-		return CriteriaQuery.create(this.entity.getType()).withSort().exampling().presupposedSelectQuery(
-				this.entityManager, this.entity, QUERY_BY_EXAMPLE_WITH_SORT, RESULT_MAP, null, null, null, true);
+		return CriteriaQuery.create(this.entity.getType()).withSort().exampling().presupposed(this.entityManager,
+				this.entity, QUERY_BY_EXAMPLE_WITH_SORT, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select queryByExampleWithPage() {
 
-		return CriteriaQuery.create(this.entity.getType()).paging().exampling().presupposedSelectQuery(
-				this.entityManager, this.entity, QUERY_BY_EXAMPLE_WITH_PAGE, RESULT_MAP, null, null, null, true);
+		return CriteriaQuery.create(this.entity.getType()).paging().exampling().presupposed(this.entityManager,
+				this.entity, QUERY_BY_EXAMPLE_WITH_PAGE, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select countByExample() {
 
 		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).exampling()
-				.presupposedSelectQuery(this.entityManager, this.entity, COUNT_QUERY_BY_EXAMPLE, null, "long", null,
-						null, true);
+				.presupposed(this.entityManager, this.entity, COUNT_QUERY_BY_EXAMPLE, null, "long", null, null, true);
 	}
 
 	public Select existsByExample() {
 
 		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).exampling()
-				.presupposedSelectQuery(this.entityManager, this.entity, EXISTS_BY_EXAMPLE, null, "boolean", null, null,
-						true);
+				.presupposed(this.entityManager, this.entity, EXISTS_BY_EXAMPLE, null, "boolean", null, null, true);
 	}
 
 	public Select findByCriteria() {
-
-		return Select
-				.builder().id(
-						FIND_BY_CRITERIA)
-				.resultMap(
-						RESULT_MAP)
-				.contents(Arrays.asList(
-						Bind.of(SQLResult.PARAM_NAME,
-								MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-						SELECT, COLUMN_LIST, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-						Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
-								this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true)
-										: SQL.EMPTY)))
-				.build();
-
+		// try to bootstrap
+		return CriteriaQuery.create(this.entity.getType()).binding().presupposed(this.entityManager, this.entity,
+				FIND_BY_CRITERIA, RESULT_MAP, null, null, null, true);
 	}
 
 }

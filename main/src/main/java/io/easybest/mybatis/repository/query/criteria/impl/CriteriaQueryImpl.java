@@ -31,7 +31,6 @@ import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import io.easybest.mybatis.mapping.precompile.Bind;
 import io.easybest.mybatis.mapping.precompile.Column;
-import io.easybest.mybatis.mapping.precompile.Delete;
 import io.easybest.mybatis.mapping.precompile.Include;
 import io.easybest.mybatis.mapping.precompile.Interpolation;
 import io.easybest.mybatis.mapping.precompile.MethodInvocation;
@@ -40,8 +39,6 @@ import io.easybest.mybatis.mapping.precompile.Parameter;
 import io.easybest.mybatis.mapping.precompile.SQL;
 import io.easybest.mybatis.mapping.precompile.Segment;
 import io.easybest.mybatis.mapping.precompile.Select;
-import io.easybest.mybatis.mapping.precompile.SqlDefinition;
-import io.easybest.mybatis.mapping.precompile.Update;
 import io.easybest.mybatis.mapping.precompile.Where;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 import io.easybest.mybatis.repository.query.criteria.ColumnResult;
@@ -88,6 +85,8 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 	private Example<? extends T> example;
 
 	private boolean exampling;
+
+	private boolean binding;
 
 	public CriteriaQueryImpl(Class<T> domainClass) {
 		super(domainClass);
@@ -236,6 +235,13 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 		return this.getReturns();
 	}
 
+	@Override
+	public R binding() {
+
+		this.binding = true;
+		return this.getReturns();
+	}
+
 	private ColumnResult fieldToColumnName(EntityManager entityManager, Class<?> domainClass, String field,
 			MybatisPersistentEntityImpl<?> entity) {
 
@@ -267,33 +273,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 		return new ColumnResult(column, connectors);
 	}
 
-	public SqlDefinition presupposedDeleteQuery(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity,
-			String id, String parameterType, ParamValueCallback callback) {
-
-		PredicateResult pr = this.toConditionSQL(entityManager, callback, true, false);
-
-		if (entity.getLogicDeleteColumn().isPresent()) {
-
-			Column col = Column.of(entity.getLogicDeleteColumn().get());
-
-			return Update.builder().id(id).parameterType(parameterType).contents(Arrays.asList(//
-					SQL.UPDATE, //
-					Include.TABLE_NAME_PURE, //
-					io.easybest.mybatis.mapping.precompile.Set.of(SQL.of(col + " = 1")), //
-					Where.of(//
-							null == pr ? SQL.EMPTY : SQL.of(pr.getSql()) //
-					))).build();
-		}
-
-		return Delete.builder().id(id).parameterType(parameterType).contents(Arrays.asList(//
-				SQL.DELETE_FROM, //
-				Include.TABLE_NAME_PURE, //
-				Where.of(//
-						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()) //
-				))).build();
-	}
-
-	public Select presupposedSelectQuery(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity, String id,
+	public Select presupposed(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity, String id,
 			String resultMap, String resultType, String parameterType, ParamValueCallback callback, boolean alias) {
 
 		Select.Builder builder = Select.builder().id(id);
@@ -343,7 +323,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 			connectors.addAll(pr.getConnectors());
 		}
 
-		boolean bind = this.withSort || this.paging || this.exampling || (null != this.example);
+		boolean bind = this.binding || this.withSort || this.paging || this.exampling || (null != this.example);
 
 		Segment[] segments = new Segment[] {
 				bind ? Bind.of(SQLResult.PARAM_NAME,
@@ -356,8 +336,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 				(CollectionUtils.isEmpty(connectors) ? SQL.EMPTY : SQL.of(String.join(" ", connectors))), //
 				bind ? Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME) : SQL.EMPTY, //
 				Where.of( //
-						this.exampling || (null != this.example) ? Interpolation.of(SQLResult.PARAM_CONDITION_NAME)
-								: SQL.EMPTY,
+						bind ? Interpolation.of(SQLResult.PARAM_CONDITION_NAME) : SQL.EMPTY,
 						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()), //
 						this.logicDeleteClause(entity, alias)//
 				), //
