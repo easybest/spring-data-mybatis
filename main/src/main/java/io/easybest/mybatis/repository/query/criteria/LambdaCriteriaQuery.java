@@ -23,15 +23,16 @@ import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
  *
  * @author Jarvis Song
  * @param <T> domain type
+ * @param <V> value type
  */
-public class LambdaCriteriaQuery<T> extends CriteriaQueryImpl<T, LambdaCriteriaQuery<T>, FieldFunction<T, ?>, Object> {
+public class LambdaCriteriaQuery<T, V> extends CriteriaQueryImpl<T, LambdaCriteriaQuery<T, V>, FieldFunction<T, ?>, V> {
 
 	public LambdaCriteriaQuery(Class<T> domainClass) {
 		super(domainClass);
 	}
 
 	@Override
-	protected Conditions<LambdaCriteriaQuery<T>, FieldFunction<T, ?>, Object> createConditionsInstance() {
+	protected Conditions<LambdaCriteriaQuery<T, V>, FieldFunction<T, ?>, V> createConditionsInstance() {
 		return new LambdaCriteriaQuery<>(this.domainClass);
 	}
 

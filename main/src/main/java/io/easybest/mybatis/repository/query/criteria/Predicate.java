@@ -17,11 +17,7 @@
 package io.easybest.mybatis.repository.query.criteria;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
@@ -37,13 +33,11 @@ import io.easybest.mybatis.mapping.precompile.Parameter;
 import io.easybest.mybatis.mapping.precompile.SQL;
 import io.easybest.mybatis.mapping.precompile.Segment;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
-import io.easybest.mybatis.repository.query.QueryUtils;
 import lombok.Data;
 
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.lang.Nullable;
-import org.springframework.util.StringUtils;
 
 import static io.easybest.mybatis.repository.query.criteria.Operator.AND;
 import static io.easybest.mybatis.repository.query.criteria.Operator.OR;
@@ -56,7 +50,6 @@ import static io.easybest.mybatis.repository.query.criteria.PredicateType.NOT_IN
 import static io.easybest.mybatis.repository.query.criteria.PredicateType.NOT_LIKE;
 import static io.easybest.mybatis.repository.query.criteria.PredicateType.SIMPLE_PROPERTY;
 import static io.easybest.mybatis.repository.query.criteria.PredicateType.STARTING_WITH;
-import static java.util.regex.Pattern.CASE_INSENSITIVE;
 
 /**
  * .
@@ -87,41 +80,6 @@ public final class Predicate<F> implements Serializable {
 	private String customSql;
 
 	private int idx;
-
-	private static final String POSITIONAL_OR_INDEXED_PARAMETER = "\\?(\\d*+(?![#\\w]))";
-
-	private static final Pattern PARAMETER_BINDING_PATTERN;
-
-	private static final int INDEXED_PARAMETER_GROUP = 4;
-
-	private static final int NAMED_PARAMETER_GROUP = 6;
-
-	private static final int COMPARISION_TYPE_GROUP = 1;
-	static {
-
-		List<String> keywords = new ArrayList<>();
-
-		keywords.add("like ");
-		keywords.add("in ");
-
-		String builder = "(" + StringUtils.collectionToDelimitedString(keywords, "|") + // keywords
-				")?" + "(?: )?" + // some whitespace
-				"\\(?" + // optional braces around parameters
-				"(" + "%?(" + POSITIONAL_OR_INDEXED_PARAMETER + ")%?" + // position
-				// parameter
-				// and
-				// parameter
-				// index
-				"|" + // or
-
-				// named parameter and the parameter name
-				"%?(" + QueryUtils.COLON_NO_DOUBLE_COLON + QueryUtils.IDENTIFIER_GROUP + ")%?" + ")" + "\\)?"; // optional
-																												// braces
-																												// around
-																												// parameters
-
-		PARAMETER_BINDING_PATTERN = Pattern.compile(builder, CASE_INSENSITIVE);
-	}
 
 	private Predicate() {
 	}
@@ -163,15 +121,6 @@ public final class Predicate<F> implements Serializable {
 		return result;
 	}
 
-	@Nullable
-	private static Integer getParameterIndex(@Nullable String parameterIndexString) {
-
-		if (parameterIndexString == null || parameterIndexString.isEmpty()) {
-			return null;
-		}
-		return Integer.valueOf(parameterIndexString);
-	}
-
 	@SuppressWarnings({ "unchecked" })
 	private PredicateResult toSQL(int group, EntityManager entityManager, Class<?> domainClass, Predicate<F> predicate,
 			ParamValueCallback callback, boolean tr, boolean alias) {
@@ -181,31 +130,8 @@ public final class Predicate<F> implements Serializable {
 		if (predicate.type == CUSTOM) {
 
 			String sql = predicate.customSql;
-			// TODO Parse parameters, such as ?1 or :param
-			Matcher matcher = PARAMETER_BINDING_PATTERN.matcher(sql);
-			while (matcher.find()) {
-
-				String parameterIndexString = matcher.group(INDEXED_PARAMETER_GROUP);
-				// String parameterName = parameterIndexString != null ? null :
-				// matcher.group(NAMED_PARAMETER_GROUP);
-				Integer parameterIndex = getParameterIndex(parameterIndexString);
-				Parameter p;
-				if (null != parameterIndex) {
-					ParamValue pv = predicate.get(group, predicate.idx, parameterIndex - 1);
-
-					if (null != callback) {
-						p = callback.apply(pv);
-					}
-					else {
-						p = Parameter.of(pv);
-					}
-
-					sql = sql.replace("?" + parameterIndex, p.toString());
-				}
-
-			}
-
-			builder.append(sql);
+			// Parse parameters, such as ?1 or :param
+			builder.append(QueryUtils.parse(sql, callback, index -> predicate.get(group, predicate.idx, index)));
 
 			return new PredicateResult(builder.toString());
 		}

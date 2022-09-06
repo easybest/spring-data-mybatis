@@ -16,25 +16,24 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
+import io.easybest.mybatis.repository.query.criteria.impl.InsertQueryImpl;
+
 /**
  * .
  *
  * @author Jarvis Song
- * @param <R> return type
- * @param <F> field type
+ * @param <T> domain type
  * @param <V> value type
  */
-public interface CriteriaQuery<R, F, V> extends SelectRange<R, F>, Conditions<R, F, V>, Sorting<R, F> {
+public class LambdaInsertQuery<T, V> extends InsertQueryImpl<T, LambdaInsertQuery<T, V>, FieldFunction<T, ?>, V> {
 
-	static <T, V> LambdaCriteriaQuery<T, V> lambda(Class<T> domainClass) {
-
-		return new LambdaCriteriaQuery<>(domainClass);
+	public LambdaInsertQuery(Class<T> domainClass) {
+		super(domainClass);
 	}
 
-	static <T, V> DefaultCriteriaQuery<T, V> create(Class<T> domainClass) {
-		return new DefaultCriteriaQuery<>(domainClass);
+	@Override
+	protected LambdaInsertQuery<T, V> getReturns() {
+		return this;
 	}
-
-	R paging();
 
 }

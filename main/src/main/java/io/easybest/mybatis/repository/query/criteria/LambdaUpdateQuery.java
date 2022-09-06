@@ -16,25 +16,29 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
+import io.easybest.mybatis.repository.query.criteria.impl.UpdateQueryImpl;
+
 /**
  * .
  *
  * @author Jarvis Song
- * @param <R> return type
- * @param <F> field type
+ * @param <T> domain type
  * @param <V> value type
  */
-public interface CriteriaQuery<R, F, V> extends SelectRange<R, F>, Conditions<R, F, V>, Sorting<R, F> {
+public class LambdaUpdateQuery<T, V> extends UpdateQueryImpl<T, LambdaUpdateQuery<T, V>, FieldFunction<T, ?>, V> {
 
-	static <T, V> LambdaCriteriaQuery<T, V> lambda(Class<T> domainClass) {
-
-		return new LambdaCriteriaQuery<>(domainClass);
+	public LambdaUpdateQuery(Class<T> domainClass) {
+		super(domainClass);
 	}
 
-	static <T, V> DefaultCriteriaQuery<T, V> create(Class<T> domainClass) {
-		return new DefaultCriteriaQuery<>(domainClass);
+	@Override
+	protected Conditions<LambdaUpdateQuery<T, V>, FieldFunction<T, ?>, V> createConditionsInstance() {
+		return new LambdaUpdateQuery<>(this.domainClass);
 	}
 
-	R paging();
+	@Override
+	protected LambdaUpdateQuery<T, V> getReturns() {
+		return this;
+	}
 
 }

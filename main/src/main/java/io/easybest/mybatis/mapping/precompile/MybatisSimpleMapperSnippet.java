@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,18 +43,20 @@ import io.easybest.mybatis.mapping.precompile.ResultMap.ResultMapping;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
 import io.easybest.mybatis.repository.query.criteria.DefaultCriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.DefaultInsertQuery;
+import io.easybest.mybatis.repository.query.criteria.DefaultUpdateQuery;
+import io.easybest.mybatis.repository.query.criteria.InsertQuery;
 import io.easybest.mybatis.repository.query.criteria.ParamValue;
+import io.easybest.mybatis.repository.query.criteria.UpdateQuery;
+import io.easybest.mybatis.repository.query.criteria.impl.ConditionsImpl;
 import io.easybest.mybatis.repository.support.ResidentStatementName;
 import org.apache.ibatis.mapping.ResultFlag;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.util.StringUtils;
 
-import static io.easybest.mybatis.mapping.precompile.Constant.COMMA;
-import static io.easybest.mybatis.mapping.precompile.Constant.EQUALS;
 import static io.easybest.mybatis.mapping.precompile.Include.COLUMN_LIST;
 import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME;
-import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME_PURE;
 import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.AFTER;
 import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.BEFORE;
 import static io.easybest.mybatis.mapping.precompile.SQL.COUNTS;
@@ -366,8 +367,11 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 	public Insert insert(boolean selective) {
 
-		List<Segment> columns = new LinkedList<>();
-		List<Segment> values = new LinkedList<>();
+		DefaultInsertQuery<?, ParamValue> query = InsertQuery.create(this.entity.getType());
+		query.selectKey();
+		if (selective) {
+			query.selective();
+		}
 
 		for (PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp : this.entityManager
 				.findPersistentPropertyPaths(this.entity.getType(), p -> true)) {
@@ -381,17 +385,12 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 							continue;
 						}
 
-						Constant column = Constant.builder()
+						Column column = Column.builder()
 								.value(jc.getColumnName()
 										.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
 								.build();
-						Parameter val = Parameter.builder().property(PARAM_INSTANCE_PREFIX + ppp.toDotPath() + '.'
-								+ jc.getReferencedPropertyPath().toDotPath()).build();
-
-						columns.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1)
-								.stripSuffix(selective ? 0 : 1).contents(Arrays.asList(column, COMMA)).build());
-						values.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1)
-								.stripSuffix(selective ? 0 : 1).contents(Arrays.asList(val, COMMA)).build());
+						query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath() + '.'
+								+ jc.getReferencedPropertyPath().toDotPath(), null));
 
 					}
 
@@ -415,7 +414,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 					}
 				}
 
-				Constant column = Constant.builder().value(leaf.getRequiredColumnName()
+				Column column = Column.builder().value(leaf.getRequiredColumnName()
 						.getReference(this.entityManager.getDialect().getIdentifierProcessing())).build();
 				Parameter val = Parameter.builder().property(PARAM_INSTANCE_PREFIX + ppp.toDotPath())
 						.javaType(leaf.getJavaType()).jdbcType(leaf.getJdbcType()).typeHandler(leaf.getTypeHandler())
@@ -423,24 +422,16 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 				if (leaf.isIdProperty()) {
 
-					columns.add(Composite.builder().contents(Arrays.asList(column, COMMA)).build());
-					values.add(Composite.builder().contents(Arrays.asList(val, COMMA)).build());
-
+					query.customSet(column.toString(), val.toString());
 				}
 				else {
-					columns.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1).stripSuffix(selective ? 0 : 1)
-							.contents(Arrays.asList(column, COMMA)).build());
-					values.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1).stripSuffix(selective ? 0 : 1)
-							.contents(Arrays.asList(val, COMMA)).build());
+					query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath(), null));
 				}
 			}
 		}
 
-		return Insert.builder().id(selective ? INSERT_SELECTIVE : INSERT).selectKey(this.selectKey())
-				.contents(Arrays.asList(SQL.INSERT_INTO, TABLE_NAME_PURE, SQL.of("("),
-						Trim.builder().suffixOverrides(",").contents(columns).build(), SQL.of(") VALUES ("),
-						Trim.builder().suffixOverrides(",").contents(values).build(), SQL.of(")")))
-				.build();
+		return query.presupposed(this.entityManager, this.entity, selective ? INSERT_SELECTIVE : INSERT, null, null);
+
 	}
 
 	public Update update(boolean selective, boolean byId) {
@@ -449,8 +440,11 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return null;
 		}
 
-		List<Segment> sets = new ArrayList<>();
-		List<Segment> conditions = new ArrayList<>();
+		DefaultUpdateQuery<?, ParamValue> query = UpdateQuery.create(this.entity.getType());
+
+		if (selective) {
+			query.selective();
+		}
 
 		for (PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp : this.entityManager
 				.findPersistentPropertyPaths(this.entity.getType(), p -> true)) {
@@ -466,11 +460,9 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 						Column column = Column.of(jc.getColumnName()
 								.getReference(this.entityManager.getDialect().getIdentifierProcessing()));
-						Parameter val = Parameter.builder().property(PARAM_INSTANCE_PREFIX + ppp.toDotPath() + '.'
-								+ jc.getReferencedPropertyPath().toDotPath()).build();
 
-						sets.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1).stripSuffix(selective ? 0 : 1)
-								.contents(Arrays.asList(column, EQUALS, val, COMMA)).build());
+						query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath() + '.'
+								+ jc.getReferencedPropertyPath().toDotPath(), null));
 
 					}
 
@@ -495,32 +487,25 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 				if (leaf.isVersionProperty()) {
 
-					sets.add(SQL.of(column + "=" + column + "+1,"));
-
-					conditions.add(SQL.of("AND " + column + "=" + val));
+					query.customSet(column + " = " + column + " + 1");
+					query.eq(leaf.getName(), ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath(), null, leaf));
 
 					continue;
 				}
 
-				sets.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1).stripSuffix(selective ? 0 : 1)
-						.contents(Arrays.asList(column, EQUALS, val, COMMA)).build());
-
+				query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath(), null, leaf));
 			}
 		}
 
-		conditions.add(this.idCondition(byId, false));
-		conditions.add(this.logicDeleteClause(false));
+		this.idCondition(query, byId);
 
-		return Update.builder()
-				.id(selective ? (byId ? UPDATE_SELECTIVE_BY_ID : UPDATE_SELECTIVE)
-						: (byId ? UPDATE_BY_ID : ResidentStatementName.UPDATE))
-				.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME_PURE, Set.builder().contents(sets).build(),
-						Where.builder().contents(conditions).build(),
-						SQL.of(this.entityManager.getDialect().limitN(1))))
-				.build();
+		return query.presupposed(this.entityManager, this.entity,
+				selective ? (byId ? UPDATE_SELECTIVE_BY_ID : UPDATE_SELECTIVE)
+						: (byId ? UPDATE_BY_ID : ResidentStatementName.UPDATE),
+				null, null);
 	}
 
-	private void idCondition(DefaultCriteriaQuery<?> query, boolean byId) {
+	private void idCondition(ConditionsImpl<?, ?, String, ParamValue> query, boolean byId) {
 
 		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
 		if (this.entity.isCompositeId()) {
@@ -542,7 +527,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		}
 	}
 
-	private void idsCondition(DefaultCriteriaQuery<?> query, boolean byId) {
+	private void idsCondition(DefaultCriteriaQuery<?, ParamValue> query, boolean byId) {
 
 		if (!this.entity.hasIdProperty()) {
 			return;
@@ -588,7 +573,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 	public SqlDefinition deleteById(boolean byId) {
 
-		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
+		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 
 		this.idCondition(query, byId);
 		MybatisPersistentPropertyImpl versionProperty = this.entity.getVersionProperty();
@@ -609,14 +594,14 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 	public SqlDefinition deleteAllByIdInBatch() {
 
-		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
+		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		this.idsCondition(query, true);
 		return query.presupposedDeleteQuery(this.entityManager, this.entity, DELETE_BY_IDS, null, null);
 	}
 
 	public SqlDefinition deleteAllByEntitiesInBatch() {
 
-		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
+		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		this.idsCondition(query, false);
 		return query.presupposedDeleteQuery(this.entityManager, this.entity, DELETE_BY_ENTITIES, null, null);
 	}
@@ -633,7 +618,8 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return null;
 		}
 
-		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue());
+		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
+		query.selects(COUNTS.getValue());
 		this.idCondition(query, true);
 		return query.presupposedSelectQuery(this.entityManager, this.entity, EXISTS_BY_ID, null, "boolean", null, null,
 				false);
@@ -648,49 +634,13 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		return SQL.of("AND " + col + " = 0");
 	}
 
-	private Segment idCondition(boolean byId, boolean baseAlias) {
-
-		if (!this.entity.hasIdProperty()) {
-			return SQL.EMPTY;
-		}
-
-		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
-		if (this.entity.isCompositeId()) {
-			return Composite.builder().contents(this.entityManager
-					.findPersistentPropertyPaths(this.entity.getType(), p -> true).stream()
-					.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
-							&& !ppp.getRequiredLeafProperty().isEntity())
-					.map(ppp -> SQL.of("AND "
-							+ Column.base(ppp.getRequiredLeafProperty().getColumnName()
-									.getReference(this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
-							+ "="
-							+ Parameter.builder()
-									.property(byId ? ("id." + ppp.toDotPath(
-											source -> source == ppp.getBaseProperty() ? null : source.getName()))
-											: ("instance." + ppp.toDotPath()))
-									.build()))
-					.collect(Collectors.toList())).build();
-
-		}
-
-		return SQL
-				.of("AND "
-						+ Column.base(idProperty.getColumnName()
-								.getReference(this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
-						+ " = "
-						+ Parameter.builder().property(byId ? "id" : ("instance." + idProperty.getName()))
-								.javaType(idProperty.getJavaType()).jdbcType(idProperty.getJdbcType())
-								.typeHandler(idProperty.getTypeHandler()).build());
-
-	}
-
 	public Select findById() {
 
 		if (!this.entity.hasIdProperty()) {
 			return null;
 		}
 
-		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
+		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		this.idCondition(query, true);
 		return query.presupposedSelectQuery(this.entityManager, this.entity, FIND_BY_ID, RESULT_MAP, null, null, null,
 				true);
@@ -702,7 +652,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return null;
 		}
 
-		DefaultCriteriaQuery<?> query = CriteriaQuery.create(this.entity.getType());
+		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		this.idsCondition(query, true);
 		return query.presupposedSelectQuery(this.entityManager, this.entity, FIND_BY_IDS, RESULT_MAP, null, null, null,
 				true);

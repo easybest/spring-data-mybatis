@@ -16,6 +16,8 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
+import io.easybest.mybatis.mapping.precompile.Column;
+
 /**
  * .
  *
@@ -24,17 +26,26 @@ package io.easybest.mybatis.repository.query.criteria;
  * @param <F> field type
  * @param <V> value type
  */
-public interface CriteriaQuery<R, F, V> extends SelectRange<R, F>, Conditions<R, F, V>, Sorting<R, F> {
+public interface InsertQuery<R, F, V> {
 
-	static <T, V> LambdaCriteriaQuery<T, V> lambda(Class<T> domainClass) {
+	static <T, V> LambdaInsertQuery<T, V> lambda(Class<T> domainClass) {
 
-		return new LambdaCriteriaQuery<>(domainClass);
+		return new LambdaInsertQuery<>(domainClass);
 	}
 
-	static <T, V> DefaultCriteriaQuery<T, V> create(Class<T> domainClass) {
-		return new DefaultCriteriaQuery<>(domainClass);
+	static <T, V> DefaultInsertQuery<T, V> create(Class<T> domainClass) {
+		return new DefaultInsertQuery<>(domainClass);
 	}
 
-	R paging();
+	R set(F field, V value);
+
+	R set(Column column, V value);
+
+	@SuppressWarnings("unchecked")
+	R customSet(String columnPart, String valuePart, V... values);
+
+	R selective();
+
+	R selectKey();
 
 }

@@ -19,6 +19,9 @@ package io.easybest.mybatis.repository.query.criteria.impl;
 import java.util.function.Consumer;
 
 import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
+import io.easybest.mybatis.mapping.precompile.Column;
+import io.easybest.mybatis.mapping.precompile.SQL;
 import io.easybest.mybatis.repository.query.criteria.Condition;
 import io.easybest.mybatis.repository.query.criteria.Conditions;
 import io.easybest.mybatis.repository.query.criteria.Operator;
@@ -64,9 +67,6 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 	protected final Class<T> domainClass;
 
-	@SuppressWarnings({ "unchecked" })
-	protected R returns = (R) this;
-
 	/**
 	 * Conditions tree.
 	 */
@@ -79,6 +79,11 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 	public ConditionsImpl(Class<T> domainClass) {
 
 		this.domainClass = domainClass;
+	}
+
+	@SuppressWarnings("unchecked")
+	protected R getReturns() {
+		return (R) this;
 	}
 
 	public PredicateResult toConditionSQL(EntityManager entityManager, ParamValueCallback callback, boolean tr,
@@ -98,7 +103,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.flushOperator = OR;
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -110,7 +115,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.flushOperator = AND;
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -123,7 +128,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.condition.or(((ConditionsImpl<T, R, F, V>) conditions).condition);
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -136,7 +141,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.condition.and(((ConditionsImpl<T, R, F, V>) conditions).condition);
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -175,7 +180,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.addPredicate(field, SIMPLE_PROPERTY,
 				(value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -184,7 +189,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.addPredicate(field, NEGATING_SIMPLE_PROPERTY,
 				(value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -193,7 +198,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.addPredicate(field, BETWEEN, (begin instanceof ParamValue) ? (ParamValue) begin : ParamValue.of(begin),
 				(end instanceof ParamValue) ? (ParamValue) end : ParamValue.of(end));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -202,7 +207,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.addPredicate(field, GREATER_THAN,
 				(value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -211,7 +216,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.addPredicate(field, GREATER_THAN_EQUAL,
 				(value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -219,7 +224,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(field, LESS_THAN, (value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -228,7 +233,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.addPredicate(field, LESS_THAN_EQUAL,
 				(value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -236,7 +241,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(field, LIKE, (value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -244,7 +249,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(field, NOT_LIKE, (value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -253,7 +258,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.addPredicate(field, STARTING_WITH,
 				(value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -262,7 +267,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.addPredicate(field, ENDING_WITH,
 				(value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -270,7 +275,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(field, CONTAINING, (value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -279,7 +284,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.addPredicate(field, NOT_CONTAINING,
 				(value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -287,7 +292,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(field, IS_NULL);
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -295,7 +300,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(field, IS_NOT_NULL);
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -303,7 +308,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(field, IN, (value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -311,7 +316,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(field, NOT_IN, (value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -319,7 +324,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(field, REGEX, (value instanceof ParamValue) ? (ParamValue) value : ParamValue.of(value));
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -328,7 +333,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		if (null != this.pointer) {
 			this.pointer.setIgnoreCase(true);
 		}
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@SafeVarargs
@@ -360,7 +365,7 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 
 		this.addPredicate(predicate);
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	private void addPredicate(F field, PredicateType type, ParamValue... values) {
@@ -394,6 +399,17 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		this.flushOperator = null;
 
 		return fo;
+	}
+
+	protected SQL logicDeleteClause(MybatisPersistentEntityImpl<?> entity, boolean alias) {
+
+		if (!entity.getLogicDeleteColumn().isPresent()) {
+			return SQL.EMPTY;
+		}
+
+		Column col = alias ? Column.base(entity.getLogicDeleteColumn().get())
+				: Column.of(entity.getLogicDeleteColumn().get());
+		return SQL.of("AND " + col + " = 0");
 	}
 
 	@Override

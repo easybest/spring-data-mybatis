@@ -23,16 +23,22 @@ import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
  *
  * @author Jarvis Song
  * @param <T> domain type
+ * @param <V> value type
  */
-public class DefaultCriteriaQuery<T> extends CriteriaQueryImpl<T, DefaultCriteriaQuery<T>, String, Object> {
+public class DefaultCriteriaQuery<T, V> extends CriteriaQueryImpl<T, DefaultCriteriaQuery<T, V>, String, V> {
 
 	public DefaultCriteriaQuery(Class<T> domainClass) {
 		super(domainClass);
 	}
 
 	@Override
-	protected Conditions<DefaultCriteriaQuery<T>, String, Object> createConditionsInstance() {
+	protected Conditions<DefaultCriteriaQuery<T, V>, String, V> createConditionsInstance() {
 		return new DefaultCriteriaQuery<>(this.domainClass);
+	}
+
+	@Override
+	protected DefaultCriteriaQuery<T, V> getReturns() {
+		return this;
 	}
 
 }

@@ -469,28 +469,16 @@ public class Syntax {
 					context.setBindable(key,
 							"%" + entityManager.getEscapeCharacter().escape((String) attributeValue) + "%");
 					parameter = Parameter.of(MybatisContext.PARAM_BINDABLE_PREFIX + key);
-					// parameter =
-					// (Function.of(entityManager.getDialect().getFunction("concat"),
-					// "'%'",
-					// parameter.toString(), "'%'"));
 					break;
 				case STARTING:
 					segments.add(SQL.LIKE);
 					context.setBindable(key, entityManager.getEscapeCharacter().escape((String) attributeValue) + "%");
 					parameter = Parameter.of(MybatisContext.PARAM_BINDABLE_PREFIX + key);
-					// parameter =
-					// (Function.of(entityManager.getDialect().getFunction("concat"),
-					// parameter.toString(),
-					// "'%'"));
 					break;
 				case ENDING:
 					segments.add(SQL.LIKE);
 					context.setBindable(key, "%" + entityManager.getEscapeCharacter().escape((String) attributeValue));
 					parameter = Parameter.of(MybatisContext.PARAM_BINDABLE_PREFIX + key);
-					// parameter =
-					// (Function.of(entityManager.getDialect().getFunction("concat"),
-					// "'%'",
-					// parameter.toString()));
 					break;
 				default:
 					throw new IllegalArgumentException("Unsupported StringMatcher " + stringMatcher);

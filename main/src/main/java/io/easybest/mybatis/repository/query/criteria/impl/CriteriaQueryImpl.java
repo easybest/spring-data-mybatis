@@ -53,7 +53,6 @@ import io.easybest.mybatis.repository.query.criteria.PredicateResult;
 import io.easybest.mybatis.repository.query.criteria.SegmentResult;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.util.CollectionUtils;
 
@@ -93,22 +92,17 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 		return this.domainClass;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public R returns(R returns) {
-
-		if (null != this.condition) {
-			throw new MappingException("Setting returns must be the first.");
-		}
-
-		this.returns = returns;
-		return this.returns;
+	protected R getReturns() {
+		return (R) this;
 	}
 
 	@Override
 	public R paging() {
 
 		this.paging = true;
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -119,20 +113,20 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 			this.selectFields = Arrays.stream(fields).map(Predicate::convertFieldName).collect(Collectors.toSet());
 		}
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
 	public R selects(Column... columns) {
 		this.columns = columns;
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
 	public R selects(String selects) {
 
 		this.selects = selects;
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -144,7 +138,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 					.collect(Collectors.toSet());
 		}
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -155,7 +149,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 			this.sort = Sort.by(Arrays.stream(fields).map(Predicate::convertFieldName).toArray(String[]::new));
 		}
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -167,7 +161,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 					Arrays.stream(fields).map(Predicate::convertFieldName).toArray(String[]::new));
 		}
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -175,7 +169,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 
 		this.sort = sort;
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -183,7 +177,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 
 		this.withSort = true;
 
-		return this.returns;
+		return this.getReturns();
 	}
 
 	@Override
@@ -358,17 +352,6 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 						Parameter.pageSize(), Parameter.pageOffsetEnd(), segments)) : Arrays.asList(segments));
 
 		return builder.build();
-	}
-
-	private SQL logicDeleteClause(MybatisPersistentEntityImpl<?> entity, boolean alias) {
-
-		if (!entity.getLogicDeleteColumn().isPresent()) {
-			return SQL.EMPTY;
-		}
-
-		Column col = alias ? Column.base(entity.getLogicDeleteColumn().get())
-				: Column.of(entity.getLogicDeleteColumn().get());
-		return SQL.of("AND " + col + " = 0");
 	}
 
 }
