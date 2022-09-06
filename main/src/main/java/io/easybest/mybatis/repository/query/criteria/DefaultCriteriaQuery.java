@@ -14,23 +14,31 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.repository;
+package io.easybest.mybatis.repository.query.criteria;
 
-import java.util.List;
-import java.util.Optional;
-
-import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
 
 /**
  * .
  *
  * @author Jarvis Song
  * @param <T> domain type
+ * @param <V> value type
  */
-public interface QueryByCriteriaExecutor<T> {
+public class DefaultCriteriaQuery<T, V> extends CriteriaQueryImpl<T, DefaultCriteriaQuery<T, V>, String, V> {
 
-	<S extends T> Optional<S> findOne(CriteriaQuery<T, ?, ?, ?> criteria);
+	public DefaultCriteriaQuery(Class<T> domainClass) {
+		super(domainClass);
+	}
 
-	<S extends T> List<S> findAll(CriteriaQuery<T, ?, ?, ?> criteria);
+	@Override
+	protected Conditions<DefaultCriteriaQuery<T, V>, String, V> createConditionsInstance() {
+		return new DefaultCriteriaQuery<>(this.domainClass);
+	}
+
+	@Override
+	protected DefaultCriteriaQuery<T, V> getReturns() {
+		return this;
+	}
 
 }

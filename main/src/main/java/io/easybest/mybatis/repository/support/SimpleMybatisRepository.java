@@ -26,8 +26,8 @@ import io.easybest.mybatis.mapping.MybatisAssociation;
 import io.easybest.mybatis.mapping.MybatisPersistentEntity;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import io.easybest.mybatis.repository.MybatisRepository;
-import io.easybest.mybatis.repository.query.criteria.Criteria;
-import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
+import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Example;
@@ -56,6 +56,7 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.DELET
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_EXAMPLE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL_WITH_SORT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_CRITERIA;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_IDS;
@@ -63,7 +64,8 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_
 import static io.easybest.mybatis.repository.support.ResidentStatementName.INSERT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.INSERT_SELECTIVE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE;
-import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_FOR_PAGE;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_WITH_PAGE;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_WITH_SORT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE_SELECTIVE;
@@ -302,7 +304,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		if (this.persistentEntity.getLogicDeleteColumn().isPresent()) {
 			affectRows = this.update(DELETE_BY_ID,
 					new MybatisContext<>(id, null, this.persistentEntity.getType(), this.basic));
-
 		}
 		else {
 			affectRows = this.delete(DELETE_BY_ID,
@@ -328,7 +329,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		if (this.persistentEntity.getLogicDeleteColumn().isPresent()) {
 			affectRows = this.update(DELETE_BY_ENTITY,
 					new MybatisContext<>(null, entity, this.persistentEntity.getType(), this.basic));
-
 		}
 		else {
 			affectRows = this.delete(DELETE_BY_ENTITY,
@@ -430,8 +430,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			return this.findAll();
 		}
 
-		return this.selectList(FIND_ALL, new MybatisContext<>(null, null, this.persistentEntity.getType(), sort,
-				this.entityManager, this.basic));
+		return this.selectList(FIND_ALL_WITH_SORT, new MybatisContext<>(null, null, this.persistentEntity.getType(),
+				sort, this.entityManager, this.basic));
 	}
 
 	@Override
@@ -522,7 +522,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			return this.findAll(example);
 		}
 
-		return this.selectList(QUERY_BY_EXAMPLE, new MybatisContext<>(null, example.getProbe(),
+		return this.selectList(QUERY_BY_EXAMPLE_WITH_SORT, new MybatisContext<>(null, example.getProbe(),
 				this.persistentEntity.getType(), null, sort, example, this.entityManager, this.basic));
 	}
 
@@ -539,7 +539,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 				io.easybest.mybatis.repository.support.Pageable.of(pageable), pageable.getSort(), example,
 				this.entityManager, this.basic);
 
-		List<S> content = this.selectList(QUERY_BY_EXAMPLE_FOR_PAGE, context);
+		List<S> content = this.selectList(QUERY_BY_EXAMPLE_WITH_PAGE, context);
 
 		return PageableExecutionUtils.getPage(content, pageable, () -> this.selectOne(COUNT_QUERY_BY_EXAMPLE, context));
 	}
@@ -575,21 +575,33 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		return queryFunction.apply(fluentQuery);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <S extends T> Optional<S> findOne(Criteria<?, ?> criteria) {
-
-		return Optional.empty();
-	}
-
-	@Override
-	@SuppressWarnings({ "unchecked" })
-	public <S extends T> List<S> findAll(Criteria<?, ?> criteria) {
+	public <S extends T> Optional<S> findOne(CriteriaQuery<T, ?, ?, ?> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
 		Class<T> type = this.persistentEntity.getType();
-		if (criteria instanceof CriteriaImpl) {
-			Class<T> domainClass = ((CriteriaImpl<T, ?, ?>) criteria).getDomainClass();
+		if (criteria instanceof CriteriaQueryImpl) {
+			Class<T> domainClass = ((CriteriaQueryImpl<T, ?, ?, ?>) criteria).getDomainClass();
+			if (null != domainClass) {
+				type = domainClass;
+			}
+		}
+
+		return Optional.ofNullable(this.selectOne(FIND_BY_CRITERIA,
+				new MybatisContext<>(null, type, Collections.emptyMap(), this.basic, this.entityManager, criteria)));
+	}
+
+	@Override
+	@SuppressWarnings({ "unchecked" })
+	public <S extends T> List<S> findAll(CriteriaQuery<T, ?, ?, ?> criteria) {
+
+		Assert.notNull(criteria, "Criteria must not be null!");
+
+		Class<T> type = this.persistentEntity.getType();
+		if (criteria instanceof CriteriaQueryImpl) {
+			Class<T> domainClass = ((CriteriaQueryImpl<T, ?, ?, Object>) criteria).getDomainClass();
 			if (null != domainClass) {
 				type = domainClass;
 			}

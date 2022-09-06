@@ -17,48 +17,37 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.SequenceGenerators;
 
-import io.easybest.mybatis.auxiliary.SQLResult;
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisAssociation;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
-import io.easybest.mybatis.mapping.precompile.Insert.SelectKey;
 import io.easybest.mybatis.mapping.precompile.ResultMap.Association;
 import io.easybest.mybatis.mapping.precompile.ResultMap.ResultMapping;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
+import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.DefaultCriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.DefaultDeleteQuery;
+import io.easybest.mybatis.repository.query.criteria.DefaultInsertQuery;
+import io.easybest.mybatis.repository.query.criteria.DefaultUpdateQuery;
+import io.easybest.mybatis.repository.query.criteria.DeleteQuery;
+import io.easybest.mybatis.repository.query.criteria.InsertQuery;
+import io.easybest.mybatis.repository.query.criteria.ParamValue;
+import io.easybest.mybatis.repository.query.criteria.UpdateQuery;
+import io.easybest.mybatis.repository.query.criteria.impl.ConditionsImpl;
 import io.easybest.mybatis.repository.support.ResidentStatementName;
 import org.apache.ibatis.mapping.ResultFlag;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.util.StringUtils;
 
-import static io.easybest.mybatis.mapping.precompile.Constant.COMMA;
-import static io.easybest.mybatis.mapping.precompile.Constant.EQUALS;
-import static io.easybest.mybatis.mapping.precompile.Include.COLUMN_LIST;
-import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME;
-import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME_PURE;
-import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.AFTER;
-import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.BEFORE;
 import static io.easybest.mybatis.mapping.precompile.SQL.COUNTS;
-import static io.easybest.mybatis.mapping.precompile.SQL.DELETE_FROM;
-import static io.easybest.mybatis.mapping.precompile.SQL.FROM;
-import static io.easybest.mybatis.mapping.precompile.SQL.SELECT;
 import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_INSTANCE_PREFIX;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.BASE_RESULT_MAP;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.BASIC_RESULT_MAP;
@@ -73,6 +62,7 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.DELET
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_EXAMPLE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.EXISTS_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_ALL_WITH_SORT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_CRITERIA;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_BY_IDS;
@@ -81,7 +71,8 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.INSER
 import static io.easybest.mybatis.repository.support.ResidentStatementName.INSERT_SELECTIVE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.LAZY_RESULT_MAP;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE;
-import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_FOR_PAGE;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_WITH_PAGE;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_WITH_SORT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.RESULT_MAP;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE_SELECTIVE;
@@ -119,6 +110,21 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		return Fragment.builder().id(ResidentStatementName.TABLE_NAME).contents(Collections.singletonList(Table.base(
 				this.entity.getTableName().getReference(this.entityManager.getDialect().getIdentifierProcessing()))))
+				.build();
+	}
+
+	public Fragment pureColumnList() {
+
+		ResultMap baseResultMap = this.baseResultMap();
+		List<Column> columns = baseResultMap.getResultMappings().stream().map(rm -> Column.of(rm.getColumn()))
+				.collect(Collectors.toList());
+
+		columns.addAll(this.basicResultMap().getResultMappings().stream().map(rm -> Column.of(rm.getColumn()))
+				.collect(Collectors.toList()));
+
+		return Fragment.builder().id(ResidentStatementName.COLUMN_LIST_PURE)
+				.contents(Collections
+						.singletonList(SQL.of(columns.stream().map(Column::toString).collect(Collectors.joining(",")))))
 				.build();
 	}
 
@@ -292,64 +298,13 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 	}
 
-	private SelectKey selectKey() {
-
-		if (!this.entity.hasIdProperty() || this.entity.isCompositeId()) {
-			return null;
-		}
-
-		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
-		GeneratedValue gv = idProperty.findAnnotation(GeneratedValue.class);
-		if (null == gv) {
-			return null;
-		}
-
-		GenerationType generationType = this.entity.getGenerationType();
-
-		if (generationType == GenerationType.IDENTITY) {
-
-			return SelectKey.builder().keyProperty(PARAM_INSTANCE_PREFIX + idProperty.getName())
-					.keyColumn(idProperty.getColumnName()
-							.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
-					.resultType(idProperty.getJavaType()).order(AFTER)
-					.contents(Collections.singletonList(SQL.of(this.entityManager.getDialect().getIdentitySelectString(
-							this.entity.getTableName().getReference(), idProperty.getColumnName().getReference(),
-							idProperty.getJdbcType().TYPE_CODE))))
-					.build();
-		}
-		else if (generationType == GenerationType.SEQUENCE) {
-
-			String sequenceName = DEFAULT_SEQUENCE_NAME;
-
-			Map<String, String> sequenceGenerators = new HashMap<>();
-			Optional.ofNullable(idProperty.findPropertyOrOwnerAnnotation(SequenceGenerators.class))
-					.filter(sgs -> sgs.value().length > 0)
-					.ifPresent(sgs -> Arrays.stream(sgs.value()).filter(sg -> StringUtils.hasText(sg.sequenceName()))
-							.forEach(sg -> sequenceGenerators.put(sg.name(), sg.sequenceName())));
-			Optional.ofNullable(idProperty.findPropertyOrOwnerAnnotation(SequenceGenerator.class))
-					.filter(sg -> StringUtils.hasText(sg.sequenceName()))
-					.ifPresent(sg -> sequenceGenerators.put(sg.name(), sg.sequenceName()));
-
-			String sn = sequenceGenerators.get(gv.generator());
-			if (StringUtils.hasText(sn)) {
-				sequenceName = sn;
-			}
-
-			String sql = this.entityManager.getDialect().getSequenceNextValString(sequenceName);
-			return SelectKey.builder().keyProperty(PARAM_INSTANCE_PREFIX + idProperty.getName())
-					.keyColumn(idProperty.getColumnName()
-							.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
-					.resultType(idProperty.getJavaType()).order(BEFORE).contents(Collections.singletonList(SQL.of(sql)))
-					.build();
-		}
-
-		return null;
-	}
-
 	public Insert insert(boolean selective) {
 
-		List<Segment> columns = new LinkedList<>();
-		List<Segment> values = new LinkedList<>();
+		DefaultInsertQuery<?, ParamValue> query = InsertQuery.create(this.entity.getType());
+		query.selectKey();
+		if (selective) {
+			query.selective();
+		}
 
 		for (PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp : this.entityManager
 				.findPersistentPropertyPaths(this.entity.getType(), p -> true)) {
@@ -363,17 +318,12 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 							continue;
 						}
 
-						Constant column = Constant.builder()
+						Column column = Column.builder()
 								.value(jc.getColumnName()
 										.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
 								.build();
-						Parameter val = Parameter.builder().property(PARAM_INSTANCE_PREFIX + ppp.toDotPath() + '.'
-								+ jc.getReferencedPropertyPath().toDotPath()).build();
-
-						columns.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1)
-								.stripSuffix(selective ? 0 : 1).contents(Arrays.asList(column, COMMA)).build());
-						values.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1)
-								.stripSuffix(selective ? 0 : 1).contents(Arrays.asList(val, COMMA)).build());
+						query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath() + '.'
+								+ jc.getReferencedPropertyPath().toDotPath(), null));
 
 					}
 
@@ -397,7 +347,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 					}
 				}
 
-				Constant column = Constant.builder().value(leaf.getRequiredColumnName()
+				Column column = Column.builder().value(leaf.getRequiredColumnName()
 						.getReference(this.entityManager.getDialect().getIdentifierProcessing())).build();
 				Parameter val = Parameter.builder().property(PARAM_INSTANCE_PREFIX + ppp.toDotPath())
 						.javaType(leaf.getJavaType()).jdbcType(leaf.getJdbcType()).typeHandler(leaf.getTypeHandler())
@@ -405,24 +355,16 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 				if (leaf.isIdProperty()) {
 
-					columns.add(Composite.builder().contents(Arrays.asList(column, COMMA)).build());
-					values.add(Composite.builder().contents(Arrays.asList(val, COMMA)).build());
-
+					query.customSet(column.toString(), val.toString());
 				}
 				else {
-					columns.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1).stripSuffix(selective ? 0 : 1)
-							.contents(Arrays.asList(column, COMMA)).build());
-					values.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1).stripSuffix(selective ? 0 : 1)
-							.contents(Arrays.asList(val, COMMA)).build());
+					query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath(), null));
 				}
 			}
 		}
 
-		return Insert.builder().id(selective ? INSERT_SELECTIVE : INSERT).selectKey(this.selectKey())
-				.contents(Arrays.asList(SQL.INSERT_INTO, TABLE_NAME_PURE, SQL.of("("),
-						Trim.builder().suffixOverrides(",").contents(columns).build(), SQL.of(") VALUES ("),
-						Trim.builder().suffixOverrides(",").contents(values).build(), SQL.of(")")))
-				.build();
+		return query.presupposed(this.entityManager, this.entity, selective ? INSERT_SELECTIVE : INSERT, null, null);
+
 	}
 
 	public Update update(boolean selective, boolean byId) {
@@ -431,8 +373,11 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return null;
 		}
 
-		List<Segment> sets = new ArrayList<>();
-		List<Segment> conditions = new ArrayList<>();
+		DefaultUpdateQuery<?, ParamValue> query = UpdateQuery.create(this.entity.getType());
+
+		if (selective) {
+			query.selective();
+		}
 
 		for (PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp : this.entityManager
 				.findPersistentPropertyPaths(this.entity.getType(), p -> true)) {
@@ -448,11 +393,9 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 						Column column = Column.of(jc.getColumnName()
 								.getReference(this.entityManager.getDialect().getIdentifierProcessing()));
-						Parameter val = Parameter.builder().property(PARAM_INSTANCE_PREFIX + ppp.toDotPath() + '.'
-								+ jc.getReferencedPropertyPath().toDotPath()).build();
 
-						sets.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1).stripSuffix(selective ? 0 : 1)
-								.contents(Arrays.asList(column, EQUALS, val, COMMA)).build());
+						query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath() + '.'
+								+ jc.getReferencedPropertyPath().toDotPath(), null));
 
 					}
 
@@ -477,124 +420,128 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 				if (leaf.isVersionProperty()) {
 
-					sets.add(SQL.of(column + "=" + column + "+1,"));
-
-					conditions.add(SQL.of("AND " + column + "=" + val));
+					query.customSet(column + " = " + column + " + 1");
+					query.eq(leaf.getName(), ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath(), null, leaf));
 
 					continue;
 				}
 
-				sets.add(SafeVars.builder().var(val.getProperty()).stripPrefix(1).stripSuffix(selective ? 0 : 1)
-						.contents(Arrays.asList(column, EQUALS, val, COMMA)).build());
-
+				query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath(), null, leaf));
 			}
 		}
 
-		conditions.add(this.idCondition(byId, false));
-		conditions.add(this.logicDeleteClause(false));
+		this.idCondition(query, byId);
 
-		return Update.builder()
-				.id(selective ? (byId ? UPDATE_SELECTIVE_BY_ID : UPDATE_SELECTIVE)
-						: (byId ? UPDATE_BY_ID : ResidentStatementName.UPDATE))
-				.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME_PURE, Set.builder().contents(sets).build(),
-						Where.builder().contents(conditions).build(),
-						SQL.of(this.entityManager.getDialect().limitN(1))))
-				.build();
+		return query.presupposed(this.entityManager, this.entity,
+				selective ? (byId ? UPDATE_SELECTIVE_BY_ID : UPDATE_SELECTIVE)
+						: (byId ? UPDATE_BY_ID : ResidentStatementName.UPDATE),
+				null, null);
+	}
+
+	private void idCondition(ConditionsImpl<?, ?, String, ParamValue> query, boolean byId) {
+
+		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
+		if (this.entity.isCompositeId()) {
+			this.entityManager.findPersistentPropertyPaths(this.entity.getType(), p -> true).stream()
+					.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
+							&& !ppp.getRequiredLeafProperty().isEntity())
+					.forEach(ppp -> {
+						MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+						query.eq(ppp.toDotPath(),
+								ParamValue.of(byId
+										? ("id." + ppp.toDotPath(
+												source -> source == ppp.getBaseProperty() ? null : source.getName()))
+										: ("instance." + ppp.toDotPath()), null, leaf));
+					});
+		}
+		else {
+			query.eq(idProperty.getName(),
+					ParamValue.of(byId ? "id" : ("instance." + idProperty.getName()), null, idProperty));
+		}
+	}
+
+	private void idsCondition(ConditionsImpl<?, ?, String, ParamValue> query, boolean byId) {
+
+		if (!this.entity.hasIdProperty()) {
+			return;
+		}
+
+		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
+
+		if (this.entity.isCompositeId()) {
+			query.custom(
+					Foreach.builder().collection(byId ? "id" : "instance").separator(") OR (").open("(").close(")")
+							.contents(Collections.singletonList(SQL.of(this.entityManager
+									.findPersistentPropertyPaths(this.entity.getType(), p -> true).stream()
+									.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
+											&& !ppp.getRequiredLeafProperty().isEntity())
+									.map(ppp -> Column
+											.base(ppp.getRequiredLeafProperty().getColumnName().getReference(
+													this.entityManager.getDialect().getIdentifierProcessing()))
+											+ "=" + Parameter.of("item." + (byId ? //
+													ppp.toDotPath(source -> source == ppp.getBaseProperty() ? null
+															: source.getName())//
+													: ppp.toDotPath())))
+									.collect(Collectors.joining(" AND ")))))
+							.build().toString());
+		}
+		else {
+			if (byId) {
+				query.in(idProperty.getName(), ParamValue.of("id", null));
+			}
+			else {
+				query.custom(//
+						idProperty.getColumnName()
+								.getReference(this.entityManager.getDialect().getIdentifierProcessing())//
+								+ " IN " + Choose.of(//
+										MethodInvocation.of(Syntax.class, "isEmpty", "instance").toString(), //
+										SQL.of("(NULL)"), //
+										Foreach.builder().collection("instance")
+												.contents(Collections
+														.singletonList(Parameter.of(("item." + idProperty.getName()))))
+												.build()));
+			}
+		}
 	}
 
 	public SqlDefinition deleteById(boolean byId) {
 
-		List<Segment> conditions = new ArrayList<>();
+		DefaultDeleteQuery<?, ParamValue> query = DeleteQuery.create(this.entity.getType());
 
+		this.idCondition(query, byId);
 		MybatisPersistentPropertyImpl versionProperty = this.entity.getVersionProperty();
-
 		if (null != versionProperty && !byId) {
-
-			conditions.add(SQL.of("AND "
-					+ Column.of(versionProperty.getColumnName()
-							.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
-					+ "=" + Parameter.builder().property("instance." + versionProperty.getName()).build()));
-
-			conditions.add(this.idCondition(false, false));
-		}
-		else {
-			conditions.add(this.idCondition(byId, false));
+			query.and(
+					c -> c.eq(versionProperty.getName(), ParamValue.of("instance." + versionProperty.getName(), null)));
 		}
 
-		if (this.entity.getLogicDeleteColumn().isPresent()) {
-
-			conditions.add(this.logicDeleteClause(false));
-
-			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
-			return Update.builder().id(byId ? DELETE_BY_ID : DELETE_BY_ENTITY)
-					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")),
-							Where.builder().contents(conditions).build(),
-							SQL.of(this.entityManager.getDialect().limitN(1))))
-					.build();
-
-		}
-
-		return Delete.builder().id(byId ? DELETE_BY_ID : DELETE_BY_ENTITY)
-				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE, Where.builder().contents(conditions).build(),
-						SQL.of(this.entityManager.getDialect().limitN(1))))
-				.build();
+		return query.presupposed(this.entityManager, this.entity, byId ? DELETE_BY_ID : DELETE_BY_ENTITY, null, null);
 	}
 
 	public SqlDefinition deleteAllInBatch() {
 
-		if (this.entity.getLogicDeleteColumn().isPresent()) {
-			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
-			return Update.builder().id(DELETE_ALL).contents(Arrays.asList(SQL.UPDATE, TABLE_NAME,
-					Set.of(SQL.of(col + " = 1")), Where.of(this.logicDeleteClause(false)))).build();
-		}
-
-		return Delete.builder().id(DELETE_ALL).contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE)).build();
+		return DeleteQuery.create(this.entity.getType()).presupposed(this.entityManager, this.entity, DELETE_ALL, null,
+				null);
 	}
 
 	public SqlDefinition deleteAllByIdInBatch() {
 
-		if (this.entity.getLogicDeleteColumn().isPresent()) {
-
-			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
-			return Update.builder().id(DELETE_BY_IDS)
-					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")),
-							Where.builder()
-									.contents(
-											Arrays.asList(this.idsCondition(true, true), this.logicDeleteClause(false)))
-									.build()))
-					.build();
-		}
-
-		return Delete.builder().id(DELETE_BY_IDS)
-				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE, Where.of(this.idsCondition(true, false))))
-				.build();
+		DefaultDeleteQuery<?, ParamValue> query = DeleteQuery.create(this.entity.getType());
+		this.idsCondition(query, true);
+		return query.presupposed(this.entityManager, this.entity, DELETE_BY_IDS, null, null);
 	}
 
 	public SqlDefinition deleteAllByEntitiesInBatch() {
 
-		if (this.entity.getLogicDeleteColumn().isPresent()) {
-
-			Column col = Column.base(this.entity.getLogicDeleteColumn().get());
-			return Update.builder().id(DELETE_BY_ENTITIES)
-					.contents(Arrays.asList(SQL.UPDATE, TABLE_NAME, Set.of(SQL.of(col + " = 1")),
-							Where.builder().contents(
-									Arrays.asList(this.idsCondition(false, true), this.logicDeleteClause(false)))
-									.build()))
-					.build();
-		}
-
-		return Delete.builder().id(DELETE_BY_ENTITIES)
-				.contents(Arrays.asList(DELETE_FROM, TABLE_NAME_PURE, Where.of(this.idsCondition(false, false))))
-				.build();
+		DefaultDeleteQuery<?, ParamValue> query = DeleteQuery.create(this.entity.getType());
+		this.idsCondition(query, false);
+		return query.presupposed(this.entityManager, this.entity, DELETE_BY_ENTITIES, null, null);
 	}
 
 	public Select countAll() {
 
-		return Select.builder().id(COUNT_ALL).resultType("long")
-				.contents(Arrays.asList(SELECT, COUNTS, FROM, TABLE_NAME,
-						Where.builder().contents(Collections.singletonList(this.logicDeleteClause(false))).build()))
-				.build();
-
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).presupposed(this.entityManager,
+				this.entity, COUNT_ALL, null, "long", null, null, false);
 	}
 
 	public Select existsById() {
@@ -603,53 +550,10 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return null;
 		}
 
-		return Select.builder().id(EXISTS_BY_ID).resultType("boolean").contents(Arrays.asList(SELECT, COUNTS, FROM,
-				TABLE_NAME, Where.of(this.idCondition(true, false), this.logicDeleteClause(false)))).build();
-	}
-
-	private SQL logicDeleteClause(boolean baseAlias) {
-
-		if (!this.entity.getLogicDeleteColumn().isPresent()) {
-			return SQL.EMPTY;
-		}
-		Column col = Column.base(this.entity.getLogicDeleteColumn().get(), baseAlias);
-		return SQL.of("AND " + col + " = 0");
-	}
-
-	private Segment idCondition(boolean byId, boolean baseAlias) {
-
-		if (!this.entity.hasIdProperty()) {
-			return SQL.EMPTY;
-		}
-
-		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
-		if (this.entity.isCompositeId()) {
-			return Composite.builder().contents(this.entityManager
-					.findPersistentPropertyPaths(this.entity.getType(), p -> true).stream()
-					.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
-							&& !ppp.getRequiredLeafProperty().isEntity())
-					.map(ppp -> SQL.of("AND "
-							+ Column.base(ppp.getRequiredLeafProperty().getColumnName()
-									.getReference(this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
-							+ "="
-							+ Parameter.builder()
-									.property(byId ? ("id." + ppp.toDotPath(
-											source -> source == ppp.getBaseProperty() ? null : source.getName()))
-											: ("instance." + ppp.toDotPath()))
-									.build()))
-					.collect(Collectors.toList())).build();
-
-		}
-
-		return SQL
-				.of("AND "
-						+ Column.base(idProperty.getColumnName()
-								.getReference(this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
-						+ " = "
-						+ Parameter.builder().property(byId ? "id" : ("instance." + idProperty.getName()))
-								.javaType(idProperty.getJavaType()).jdbcType(idProperty.getJdbcType())
-								.typeHandler(idProperty.getTypeHandler()).build());
-
+		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
+		query.selects(COUNTS.getValue());
+		this.idCondition(query, true);
+		return query.presupposed(this.entityManager, this.entity, EXISTS_BY_ID, null, "boolean", null, null, false);
 	}
 
 	public Select findById() {
@@ -658,8 +562,9 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return null;
 		}
 
-		return Select.builder().id(FIND_BY_ID).resultMap(RESULT_MAP).contents(Arrays.asList(SELECT, COLUMN_LIST, FROM,
-				TABLE_NAME, Where.of(this.idCondition(true, true), this.logicDeleteClause(true)))).build();
+		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
+		this.idCondition(query, true);
+		return query.presupposed(this.entityManager, this.entity, FIND_BY_ID, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select findByIds() {
@@ -668,148 +573,69 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 			return null;
 		}
 
-		return Select.builder().id(FIND_BY_IDS).resultMap(RESULT_MAP).contents(Arrays.asList(SELECT, COLUMN_LIST, FROM,
-				TABLE_NAME, Where.of(this.idsCondition(true, true), this.logicDeleteClause(true)))).build();
-	}
-
-	private Segment idsCondition(boolean byId, boolean baseAlias) {
-
-		if (!this.entity.hasIdProperty()) {
-			return SQL.EMPTY;
-		}
-
-		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
-		if (this.entity.isCompositeId()) {
-
-			return Foreach.builder().collection(byId ? "id" : "instance").separator(") OR (").open("(").close(")")
-					.contents(Collections.singletonList(SQL.of(this.entityManager
-							.findPersistentPropertyPaths(this.entity.getType(), p -> true).stream()
-							.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
-									&& !ppp.getRequiredLeafProperty().isEntity())
-							.map(ppp -> Column
-									.base(ppp.getRequiredLeafProperty().getColumnName().getReference(
-											this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
-									+ "="
-									+ Parameter.of("item." + (byId ? (ppp.toDotPath(
-											source -> source == ppp.getBaseProperty() ? null : source.getName()))
-											: ppp.toDotPath())))
-							.collect(Collectors.joining(" AND ")))))
-					.build();
-
-		}
-
-		return SQL
-				.of("AND "
-						+ Column.base(idProperty.getColumnName()
-								.getReference(this.entityManager.getDialect().getIdentifierProcessing()), baseAlias)
-						+ " IN "
-						+ Foreach.builder().collection(byId ? "id" : "instance")
-								.contents(Collections
-										.singletonList(Parameter.of(byId ? "item" : ("item." + idProperty.getName()))))
-								.build());
-
+		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
+		this.idsCondition(query, true);
+		return query.presupposed(this.entityManager, this.entity, FIND_BY_IDS, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select findAll() {
 
-		return Select.builder().id(FIND_ALL).resultMap(RESULT_MAP).contents(Arrays.asList(
+		return CriteriaQuery.create(this.entity.getType()).presupposed(this.entityManager, this.entity, FIND_ALL,
+				RESULT_MAP, null, null, null, true);
+	}
 
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-				SELECT, COLUMN_LIST, FROM, TABLE_NAME,
+	public Select findAllWithSort() {
 
-				Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-
-				this.entity.getLogicDeleteColumn().isPresent() ? Where.of(this.logicDeleteClause(true)) : SQL.EMPTY,
-				Interpolation.of(SQLResult.PARAM_SORTING_NAME))).build();
+		return CriteriaQuery.create(this.entity.getType()).withSort().presupposed(this.entityManager, this.entity,
+				FIND_ALL_WITH_SORT, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select findByPage() {
 
-		return Select.builder().id(FIND_BY_PAGE).resultMap(RESULT_MAP).contents(Collections.singletonList(Page.of(
-				this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(),
-				Parameter.pageOffsetEnd(),
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-
-				SELECT, COLUMN_LIST, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-				this.entity.getLogicDeleteColumn().isPresent() ? Where.of(this.logicDeleteClause(true)) : SQL.EMPTY,
-				Interpolation.of(SQLResult.PARAM_SORTING_NAME)))).build();
+		return CriteriaQuery.create(this.entity.getType()).paging().presupposed(this.entityManager, this.entity,
+				FIND_BY_PAGE, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select count() {
 
-		return Select.builder().id(COUNT).resultType("long").contents(Arrays.asList(SELECT, COUNTS, FROM, TABLE_NAME,
-				this.entity.getLogicDeleteColumn().isPresent() ? Where.of(this.logicDeleteClause(true)) : SQL.EMPTY))
-				.build();
-
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).presupposed(this.entityManager,
+				this.entity, COUNT, null, "long", null, null, false);
 	}
 
 	public Select queryByExample() {
 
-		return Select.builder().id(QUERY_BY_EXAMPLE).resultMap(RESULT_MAP).contents(Arrays.asList(
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-				SELECT, COLUMN_LIST, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-
-				Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
-						this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true) : SQL.EMPTY),
-
-				Interpolation.of(SQLResult.PARAM_SORTING_NAME))).build();
+		return CriteriaQuery.create(this.entity.getType()).exampling().presupposed(this.entityManager, this.entity,
+				QUERY_BY_EXAMPLE, RESULT_MAP, null, null, null, true);
 	}
 
-	public Select queryByExampleForPage() {
+	public Select queryByExampleWithSort() {
 
-		Select select = this.queryByExample();
+		return CriteriaQuery.create(this.entity.getType()).withSort().exampling().presupposed(this.entityManager,
+				this.entity, QUERY_BY_EXAMPLE_WITH_SORT, RESULT_MAP, null, null, null, true);
+	}
 
-		return Select.builder().id(QUERY_BY_EXAMPLE_FOR_PAGE).resultMap(RESULT_MAP)
-				.contents(Collections.singletonList(Page.builder().dialect(this.entityManager.getDialect())
-						.offset(Parameter.pageOffset()).fetchSize(Parameter.pageSize())
-						.offsetEnd(Parameter.pageOffsetEnd()).contents(select.contents).build()))
-				.build();
+	public Select queryByExampleWithPage() {
+
+		return CriteriaQuery.create(this.entity.getType()).paging().exampling().presupposed(this.entityManager,
+				this.entity, QUERY_BY_EXAMPLE_WITH_PAGE, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select countByExample() {
 
-		return Select.builder().id(COUNT_QUERY_BY_EXAMPLE).resultType("long").contents(Arrays.asList(
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-				SELECT, COUNTS, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-
-				Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
-						this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true) : SQL.EMPTY)))
-				.build();
-
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).exampling()
+				.presupposed(this.entityManager, this.entity, COUNT_QUERY_BY_EXAMPLE, null, "long", null, null, true);
 	}
 
 	public Select existsByExample() {
 
-		return Select.builder().id(EXISTS_BY_EXAMPLE).resultType("boolean").contents(Arrays.asList(
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-				SELECT, COUNTS, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-
-				Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
-						this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true) : SQL.EMPTY)))
-				.build();
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).exampling()
+				.presupposed(this.entityManager, this.entity, EXISTS_BY_EXAMPLE, null, "boolean", null, null, true);
 	}
 
 	public Select findByCriteria() {
-
-		return Select
-				.builder().id(
-						FIND_BY_CRITERIA)
-				.resultMap(
-						RESULT_MAP)
-				.contents(Arrays.asList(
-						Bind.of(SQLResult.PARAM_NAME,
-								MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-						SELECT, COLUMN_LIST, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-						Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
-								this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true)
-										: SQL.EMPTY)))
-				.build();
-
+		// try to bootstrap
+		return CriteriaQuery.create(this.entity.getType()).binding().presupposed(this.entityManager, this.entity,
+				FIND_BY_CRITERIA, RESULT_MAP, null, null, null, true);
 	}
 
 }

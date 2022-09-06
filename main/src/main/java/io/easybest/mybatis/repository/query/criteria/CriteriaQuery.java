@@ -14,23 +14,36 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.repository;
+package io.easybest.mybatis.repository.query.criteria;
 
-import java.util.List;
-import java.util.Optional;
-
-import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import org.springframework.data.domain.Example;
 
 /**
  * .
  *
  * @author Jarvis Song
  * @param <T> domain type
+ * @param <R> return type
+ * @param <F> field type
+ * @param <V> value type
  */
-public interface QueryByCriteriaExecutor<T> {
+public interface CriteriaQuery<T, R, F, V> extends SelectRange<R, F>, Conditions<R, F, V>, Sorting<R, F> {
 
-	<S extends T> Optional<S> findOne(CriteriaQuery<T, ?, ?, ?> criteria);
+	static <T, V> LambdaCriteriaQuery<T, V> lambda(Class<T> domainClass) {
 
-	<S extends T> List<S> findAll(CriteriaQuery<T, ?, ?, ?> criteria);
+		return new LambdaCriteriaQuery<>(domainClass);
+	}
+
+	static <T, V> DefaultCriteriaQuery<T, V> create(Class<T> domainClass) {
+		return new DefaultCriteriaQuery<>(domainClass);
+	}
+
+	R paging();
+
+	<S extends T> R example(Example<S> example);
+
+	R exampling();
+
+	R binding();
 
 }

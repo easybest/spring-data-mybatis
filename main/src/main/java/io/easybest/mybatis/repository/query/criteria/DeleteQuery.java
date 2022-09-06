@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.repository;
-
-import java.util.List;
-import java.util.Optional;
-
-import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+package io.easybest.mybatis.repository.query.criteria;
 
 /**
  * .
  *
  * @author Jarvis Song
- * @param <T> domain type
+ * @param <R> return type
+ * @param <F> field type
+ * @param <V> value type
  */
-public interface QueryByCriteriaExecutor<T> {
+public interface DeleteQuery<R, F, V> {
 
-	<S extends T> Optional<S> findOne(CriteriaQuery<T, ?, ?, ?> criteria);
+	static <T, V> LambdaDeleteQuery<T, V> lambda(Class<T> domainClass) {
 
-	<S extends T> List<S> findAll(CriteriaQuery<T, ?, ?, ?> criteria);
+		return new LambdaDeleteQuery<>(domainClass);
+	}
+
+	static <T, V> DefaultDeleteQuery<T, V> create(Class<T> domainClass) {
+		return new DefaultDeleteQuery<>(domainClass);
+	}
 
 }

@@ -16,6 +16,8 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
+import io.easybest.mybatis.mapping.precompile.Column;
+
 /**
  * .
  *
@@ -25,8 +27,14 @@ package io.easybest.mybatis.repository.query.criteria;
  */
 public interface SelectRange<R, F> {
 
+	@SuppressWarnings("unchecked")
 	R select(F... fields);
 
+	@SuppressWarnings("unchecked")
 	R exclude(F... fields);
+
+	R selects(Column... columns);
+
+	R selects(String selects);
 
 }

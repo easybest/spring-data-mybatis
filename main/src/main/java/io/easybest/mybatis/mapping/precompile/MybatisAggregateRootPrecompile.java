@@ -47,6 +47,7 @@ public final class MybatisAggregateRootPrecompile {
 		builder //
 				.add(snippet.pureTableName()) //
 				.add(snippet.tableName()) //
+				.add(snippet.pureColumnList()) //
 				.add(snippet.columnList()) //
 				.add(snippet.columnListUsingType()) //
 				.add(snippet.baseResultMap()) //
@@ -69,10 +70,12 @@ public final class MybatisAggregateRootPrecompile {
 				.add(snippet.findById()) //
 				.add(snippet.findByIds()) //
 				.add(snippet.findAll()) //
+				.add(snippet.findAllWithSort()) //
 				.add(snippet.findByPage()) //
 				.add(snippet.count()) //
 				.add(snippet.queryByExample()) //
-				.add(snippet.queryByExampleForPage()) //
+				.add(snippet.queryByExampleWithSort()) //
+				.add(snippet.queryByExampleWithPage()) //
 				.add(snippet.countByExample()) //
 				.add(snippet.existsByExample()) //
 				.add(snippet.findByCriteria()) //

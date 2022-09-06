@@ -16,23 +16,34 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
-import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
+import io.easybest.mybatis.mapping.precompile.Column;
 
 /**
  * .
  *
  * @author Jarvis Song
- * @param <T> domain type
+ * @param <R> return type
+ * @param <F> field type
+ * @param <V> value type
  */
-public class LambdaCriteria<T> extends CriteriaImpl<T, LambdaCriteria<T>, FieldFunction<T, ?>> {
+public interface UpdateQuery<R, F, V> {
 
-	public LambdaCriteria(Class<T> domainClass) {
-		super(domainClass);
+	static <T, V> LambdaUpdateQuery<T, V> lambda(Class<T> domainClass) {
+
+		return new LambdaUpdateQuery<>(domainClass);
 	}
 
-	@Override
-	protected Conditions<LambdaCriteria<T>, FieldFunction<T, ?>> createConditionsInstance() {
-		return new LambdaCriteria<>(this.domainClass);
+	static <T, V> DefaultUpdateQuery<T, V> create(Class<T> domainClass) {
+		return new DefaultUpdateQuery<>(domainClass);
 	}
+
+	R set(F field, V value);
+
+	R set(Column column, V value);
+
+	@SuppressWarnings("unchecked")
+	R customSet(String sql, V... values);
+
+	R selective();
 
 }

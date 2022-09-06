@@ -33,8 +33,7 @@ import io.easybest.mybatis.domain.sample.Address;
 import io.easybest.mybatis.domain.sample.Role;
 import io.easybest.mybatis.domain.sample.SpecialUser;
 import io.easybest.mybatis.domain.sample.User;
-import io.easybest.mybatis.repository.query.criteria.Criteria;
-import io.easybest.mybatis.repository.query.criteria.LambdaCriteria;
+import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
 import io.easybest.mybatis.repository.sample.RoleRepository;
 import io.easybest.mybatis.repository.sample.UserRepository;
 import io.easybest.mybatis.repository.sample.UserRepository.NameOnly;
@@ -342,14 +341,13 @@ public class UserRepositoryTests {
 
 		this.flushTestUsers();
 
-		LambdaCriteria<User> criteria = Criteria.lambda(User.class).eq(User::getFirstname, "Oliver")
-				.eq(User::getLastname, "Gierke");
-		assertThat(this.repository.findAll(criteria)).containsOnly(this.firstUser);
+		assertThat(this.repository.findAll(
+				CriteriaQuery.lambda(User.class).eq(User::getFirstname, "Oliver").eq(User::getLastname, "Gierke")))
+						.containsOnly(this.firstUser);
 
-		assertThat(this.repository
-				.findAll(Criteria.create(User.class).eq("firstname", "Oliver").or().eq("lastname", "Gierke").or()
-						.eq("lastname", "DDD").or(c -> c.eq("lastname", "XXX").ne("firstname", "CCC"))))
-								.containsOnly(this.firstUser);
+		assertThat(this.repository.findAll(CriteriaQuery.create(User.class).eq("firstname", "Oliver")
+				.custom("firstname like ?1", "old1").or().eq("lastname", "Gierke").or().eq("lastname", "DDD")
+				.or(c -> c.eq("lastname", "XXX").ne("firstname", "CCC")))).containsOnly(this.firstUser);
 
 	}
 

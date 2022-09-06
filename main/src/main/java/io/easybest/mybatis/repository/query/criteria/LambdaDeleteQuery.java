@@ -14,23 +14,31 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.repository;
+package io.easybest.mybatis.repository.query.criteria;
 
-import java.util.List;
-import java.util.Optional;
-
-import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.impl.DeleteQueryImpl;
 
 /**
  * .
  *
  * @author Jarvis Song
  * @param <T> domain type
+ * @param <V> value type
  */
-public interface QueryByCriteriaExecutor<T> {
+public class LambdaDeleteQuery<T, V> extends DeleteQueryImpl<T, LambdaDeleteQuery<T, V>, FieldFunction<T, ?>, V> {
 
-	<S extends T> Optional<S> findOne(CriteriaQuery<T, ?, ?, ?> criteria);
+	public LambdaDeleteQuery(Class<T> domainClass) {
+		super(domainClass);
+	}
 
-	<S extends T> List<S> findAll(CriteriaQuery<T, ?, ?, ?> criteria);
+	@Override
+	protected Conditions<LambdaDeleteQuery<T, V>, FieldFunction<T, ?>, V> createConditionsInstance() {
+		return new LambdaDeleteQuery<>(this.domainClass);
+	}
+
+	@Override
+	protected LambdaDeleteQuery<T, V> getReturns() {
+		return this;
+	}
 
 }

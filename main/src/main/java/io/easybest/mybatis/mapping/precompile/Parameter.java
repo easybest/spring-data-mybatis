@@ -18,6 +18,7 @@ package io.easybest.mybatis.mapping.precompile;
 
 import java.util.List;
 
+import io.easybest.mybatis.repository.query.criteria.ParamValue;
 import io.easybest.mybatis.repository.support.MybatisContext;
 import lombok.Getter;
 import org.apache.ibatis.type.JdbcType;
@@ -44,6 +45,16 @@ public class Parameter extends AbstractSegment {
 
 	public static Parameter of(String property) {
 		return Parameter.builder().property(property).build();
+	}
+
+	public static Parameter of(ParamValue pv) {
+		return Parameter.builder().property(pv.getName()).javaType(pv.getJavaType()).jdbcType(pv.getJdbcType())
+				.typeHandler(pv.getTypeHandler()).build();
+	}
+
+	public static Parameter of(String property, ParamValue pv) {
+		return Parameter.builder().property(property).javaType(pv.getJavaType()).jdbcType(pv.getJdbcType())
+				.typeHandler(pv.getTypeHandler()).build();
 	}
 
 	public static Parameter additionalValue(String key) {

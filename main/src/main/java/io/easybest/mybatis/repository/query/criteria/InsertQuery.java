@@ -14,23 +14,38 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.repository;
+package io.easybest.mybatis.repository.query.criteria;
 
-import java.util.List;
-import java.util.Optional;
-
-import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import io.easybest.mybatis.mapping.precompile.Column;
 
 /**
  * .
  *
  * @author Jarvis Song
- * @param <T> domain type
+ * @param <R> return type
+ * @param <F> field type
+ * @param <V> value type
  */
-public interface QueryByCriteriaExecutor<T> {
+public interface InsertQuery<R, F, V> {
 
-	<S extends T> Optional<S> findOne(CriteriaQuery<T, ?, ?, ?> criteria);
+	static <T, V> LambdaInsertQuery<T, V> lambda(Class<T> domainClass) {
 
-	<S extends T> List<S> findAll(CriteriaQuery<T, ?, ?, ?> criteria);
+		return new LambdaInsertQuery<>(domainClass);
+	}
+
+	static <T, V> DefaultInsertQuery<T, V> create(Class<T> domainClass) {
+		return new DefaultInsertQuery<>(domainClass);
+	}
+
+	R set(F field, V value);
+
+	R set(Column column, V value);
+
+	@SuppressWarnings("unchecked")
+	R customSet(String columnPart, String valuePart, V... values);
+
+	R selective();
+
+	R selectKey();
 
 }

@@ -16,23 +16,29 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
-import io.easybest.mybatis.repository.query.criteria.impl.CriteriaImpl;
+import io.easybest.mybatis.repository.query.criteria.impl.DeleteQueryImpl;
 
 /**
  * .
  *
  * @author Jarvis Song
  * @param <T> domain type
+ * @param <V> value type
  */
-public class DefaultCriteria<T> extends CriteriaImpl<T, DefaultCriteria<T>, String> {
+public class DefaultDeleteQuery<T, V> extends DeleteQueryImpl<T, DefaultDeleteQuery<T, V>, String, V> {
 
-	public DefaultCriteria(Class<T> domainClass) {
+	public DefaultDeleteQuery(Class<T> domainClass) {
 		super(domainClass);
 	}
 
 	@Override
-	protected Conditions<DefaultCriteria<T>, String> createConditionsInstance() {
-		return new DefaultCriteria<>(this.domainClass);
+	protected Conditions<DefaultDeleteQuery<T, V>, String, V> createConditionsInstance() {
+		return new DefaultDeleteQuery<>(this.domainClass);
+	}
+
+	@Override
+	protected DefaultDeleteQuery<T, V> getReturns() {
+		return this;
 	}
 
 }

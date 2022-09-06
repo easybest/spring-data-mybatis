@@ -16,24 +16,26 @@
 
 package io.easybest.mybatis.repository.query.criteria;
 
+import java.io.Serializable;
+import java.util.Set;
+
+import io.easybest.mybatis.mapping.precompile.Column;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 /**
  * .
  *
  * @author Jarvis Song
- * @param <R> return type
- * @param <F> field type
  */
-public interface Criteria<R, F> extends SelectRange<R, F>, Conditions<R, F> {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class ColumnResult implements Serializable {
 
-	static <T> LambdaCriteria<T> lambda(Class<T> domainClass) {
+	private Column column;
 
-		return new LambdaCriteria<>(domainClass);
-	}
-
-	static <T> DefaultCriteria<T> create(Class<T> domainClass) {
-		return new DefaultCriteria<>(domainClass);
-	}
-
-	R returns(R returns);
+	private Set<String> connectors;
 
 }

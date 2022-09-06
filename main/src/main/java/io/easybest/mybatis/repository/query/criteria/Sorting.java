@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.repository;
+package io.easybest.mybatis.repository.query.criteria;
 
-import java.util.List;
-import java.util.Optional;
-
-import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import org.springframework.data.domain.Sort;
 
 /**
  * .
  *
  * @author Jarvis Song
- * @param <T> domain type
+ * @param <R> return type
+ * @param <F> field type
  */
-public interface QueryByCriteriaExecutor<T> {
+public interface Sorting<R, F> {
 
-	<S extends T> Optional<S> findOne(CriteriaQuery<T, ?, ?, ?> criteria);
+	@SuppressWarnings("unchecked")
+	R orderBy(F... fields);
 
-	<S extends T> List<S> findAll(CriteriaQuery<T, ?, ?, ?> criteria);
+	@SuppressWarnings("unchecked")
+	R orderBy(Sort.Direction direction, F... fields);
+
+	R orderBy(Sort sort);
+
+	R withSort();
 
 }
