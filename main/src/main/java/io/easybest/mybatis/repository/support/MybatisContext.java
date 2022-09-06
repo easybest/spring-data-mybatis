@@ -71,7 +71,7 @@ public class MybatisContext<T, ID> implements Serializable {
 
 	private @Nullable Identifier identifier;
 
-	private @Nullable CriteriaQuery<?, ?, Object> criteria;
+	private @Nullable CriteriaQuery<T, ?, ?, ?> criteria;
 
 	private @Nullable Class<?> domainType;
 
@@ -93,7 +93,7 @@ public class MybatisContext<T, ID> implements Serializable {
 	}
 
 	public MybatisContext(@Nullable ID id, @Nullable Class<?> domainType, Map<String, Object> additionalValues,
-			boolean basic, EntityManager entityManager, CriteriaQuery<?, ?, Object> criteria) {
+			boolean basic, EntityManager entityManager, CriteriaQuery<T, ?, ?, ?> criteria) {
 
 		this.id = id;
 		this.identifier = null;
@@ -416,11 +416,11 @@ public class MybatisContext<T, ID> implements Serializable {
 	}
 
 	@Nullable
-	public CriteriaQuery<?, ?, Object> getCriteria() {
+	public CriteriaQuery<T, ?, ?, ?> getCriteria() {
 		return this.criteria;
 	}
 
-	public void setCriteria(@Nullable CriteriaQuery<?, ?, Object> criteria) {
+	public void setCriteria(@Nullable CriteriaQuery<T, ?, ?, ?> criteria) {
 		this.criteria = criteria;
 	}
 

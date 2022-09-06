@@ -229,9 +229,14 @@ public interface ResidentStatementName {
 	String QUERY_BY_EXAMPLE = "__query_by_example";
 
 	/**
-	 * For <code>__query_by_example_for_page</code>.
+	 * For <code>__query_by_example_with_sort</code>.
 	 */
-	String QUERY_BY_EXAMPLE_FOR_PAGE = QUERY_BY_EXAMPLE + "_for_page";
+	String QUERY_BY_EXAMPLE_WITH_SORT = QUERY_BY_EXAMPLE + "_with_sort";
+
+	/**
+	 * For <code>__query_by_example_with_page</code>.
+	 */
+	String QUERY_BY_EXAMPLE_WITH_PAGE = QUERY_BY_EXAMPLE + "_with_page";
 
 	/**
 	 * For <code>__count_query_by_example</code>.

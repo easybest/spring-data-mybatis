@@ -19,17 +19,11 @@ package io.easybest.mybatis.mapping.precompile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.SequenceGenerators;
 
 import io.easybest.mybatis.auxiliary.SQLResult;
 import io.easybest.mybatis.auxiliary.Syntax;
@@ -37,7 +31,6 @@ import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisAssociation;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
-import io.easybest.mybatis.mapping.precompile.Insert.SelectKey;
 import io.easybest.mybatis.mapping.precompile.ResultMap.Association;
 import io.easybest.mybatis.mapping.precompile.ResultMap.ResultMapping;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
@@ -53,12 +46,9 @@ import io.easybest.mybatis.repository.support.ResidentStatementName;
 import org.apache.ibatis.mapping.ResultFlag;
 
 import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.util.StringUtils;
 
 import static io.easybest.mybatis.mapping.precompile.Include.COLUMN_LIST;
 import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME;
-import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.AFTER;
-import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.BEFORE;
 import static io.easybest.mybatis.mapping.precompile.SQL.COUNTS;
 import static io.easybest.mybatis.mapping.precompile.SQL.FROM;
 import static io.easybest.mybatis.mapping.precompile.SQL.SELECT;
@@ -85,7 +75,8 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.INSER
 import static io.easybest.mybatis.repository.support.ResidentStatementName.INSERT_SELECTIVE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.LAZY_RESULT_MAP;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE;
-import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_FOR_PAGE;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_WITH_PAGE;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_WITH_SORT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.RESULT_MAP;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE_SELECTIVE;
@@ -311,60 +302,6 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 	}
 
-	private SelectKey selectKey() {
-
-		if (!this.entity.hasIdProperty() || this.entity.isCompositeId()) {
-			return null;
-		}
-
-		MybatisPersistentPropertyImpl idProperty = this.entity.getRequiredIdProperty();
-		GeneratedValue gv = idProperty.findAnnotation(GeneratedValue.class);
-		if (null == gv) {
-			return null;
-		}
-
-		GenerationType generationType = this.entity.getGenerationType();
-
-		if (generationType == GenerationType.IDENTITY) {
-
-			return SelectKey.builder().keyProperty(PARAM_INSTANCE_PREFIX + idProperty.getName())
-					.keyColumn(idProperty.getColumnName()
-							.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
-					.resultType(idProperty.getJavaType()).order(AFTER)
-					.contents(Collections.singletonList(SQL.of(this.entityManager.getDialect().getIdentitySelectString(
-							this.entity.getTableName().getReference(), idProperty.getColumnName().getReference(),
-							idProperty.getJdbcType().TYPE_CODE))))
-					.build();
-		}
-		else if (generationType == GenerationType.SEQUENCE) {
-
-			String sequenceName = DEFAULT_SEQUENCE_NAME;
-
-			Map<String, String> sequenceGenerators = new HashMap<>();
-			Optional.ofNullable(idProperty.findPropertyOrOwnerAnnotation(SequenceGenerators.class))
-					.filter(sgs -> sgs.value().length > 0)
-					.ifPresent(sgs -> Arrays.stream(sgs.value()).filter(sg -> StringUtils.hasText(sg.sequenceName()))
-							.forEach(sg -> sequenceGenerators.put(sg.name(), sg.sequenceName())));
-			Optional.ofNullable(idProperty.findPropertyOrOwnerAnnotation(SequenceGenerator.class))
-					.filter(sg -> StringUtils.hasText(sg.sequenceName()))
-					.ifPresent(sg -> sequenceGenerators.put(sg.name(), sg.sequenceName()));
-
-			String sn = sequenceGenerators.get(gv.generator());
-			if (StringUtils.hasText(sn)) {
-				sequenceName = sn;
-			}
-
-			String sql = this.entityManager.getDialect().getSequenceNextValString(sequenceName);
-			return SelectKey.builder().keyProperty(PARAM_INSTANCE_PREFIX + idProperty.getName())
-					.keyColumn(idProperty.getColumnName()
-							.getReference(this.entityManager.getDialect().getIdentifierProcessing()))
-					.resultType(idProperty.getJavaType()).order(BEFORE).contents(Collections.singletonList(SQL.of(sql)))
-					.build();
-		}
-
-		return null;
-	}
-
 	public Insert insert(boolean selective) {
 
 		DefaultInsertQuery<?, ParamValue> query = InsertQuery.create(this.entity.getType());
@@ -527,7 +464,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		}
 	}
 
-	private void idsCondition(DefaultCriteriaQuery<?, ParamValue> query, boolean byId) {
+	private void idsCondition(ConditionsImpl<?, ?, String, ParamValue> query, boolean byId) {
 
 		if (!this.entity.hasIdProperty()) {
 			return;
@@ -684,51 +621,34 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 	public Select queryByExample() {
 
-		return Select.builder().id(QUERY_BY_EXAMPLE).resultMap(RESULT_MAP).contents(Arrays.asList(
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-				SELECT, COLUMN_LIST, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-
-				Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
-						this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true) : SQL.EMPTY),
-
-				Interpolation.of(SQLResult.PARAM_SORTING_NAME))).build();
+		return CriteriaQuery.create(this.entity.getType()).exampling().presupposedSelectQuery(this.entityManager,
+				this.entity, QUERY_BY_EXAMPLE, RESULT_MAP, null, null, null, true);
 	}
 
-	public Select queryByExampleForPage() {
+	public Select queryByExampleWithSort() {
 
-		Select select = this.queryByExample();
+		return CriteriaQuery.create(this.entity.getType()).withSort().exampling().presupposedSelectQuery(
+				this.entityManager, this.entity, QUERY_BY_EXAMPLE_WITH_SORT, RESULT_MAP, null, null, null, true);
+	}
 
-		return Select.builder().id(QUERY_BY_EXAMPLE_FOR_PAGE).resultMap(RESULT_MAP)
-				.contents(Collections.singletonList(Page.builder().dialect(this.entityManager.getDialect())
-						.offset(Parameter.pageOffset()).fetchSize(Parameter.pageSize())
-						.offsetEnd(Parameter.pageOffsetEnd()).contents(select.contents).build()))
-				.build();
+	public Select queryByExampleWithPage() {
+
+		return CriteriaQuery.create(this.entity.getType()).paging().exampling().presupposedSelectQuery(
+				this.entityManager, this.entity, QUERY_BY_EXAMPLE_WITH_PAGE, RESULT_MAP, null, null, null, true);
 	}
 
 	public Select countByExample() {
 
-		return Select.builder().id(COUNT_QUERY_BY_EXAMPLE).resultType("long").contents(Arrays.asList(
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-				SELECT, COUNTS, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-
-				Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
-						this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true) : SQL.EMPTY)))
-				.build();
-
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).exampling()
+				.presupposedSelectQuery(this.entityManager, this.entity, COUNT_QUERY_BY_EXAMPLE, null, "long", null,
+						null, true);
 	}
 
 	public Select existsByExample() {
 
-		return Select.builder().id(EXISTS_BY_EXAMPLE).resultType("boolean").contents(Arrays.asList(
-				Bind.of(SQLResult.PARAM_NAME,
-						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)),
-				SELECT, COUNTS, FROM, TABLE_NAME, Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME),
-
-				Where.of(Interpolation.of(SQLResult.PARAM_CONDITION_NAME),
-						this.entity.getLogicDeleteColumn().isPresent() ? this.logicDeleteClause(true) : SQL.EMPTY)))
-				.build();
+		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).exampling()
+				.presupposedSelectQuery(this.entityManager, this.entity, EXISTS_BY_EXAMPLE, null, "boolean", null, null,
+						true);
 	}
 
 	public Select findByCriteria() {

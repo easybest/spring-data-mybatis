@@ -132,7 +132,7 @@ public class Syntax {
 
 	@SuppressWarnings("unchecked")
 	private static Tuple<Set<String>, Set<String>> criteriaQuery(EntityManager entityManager,
-			MybatisContext<?, ?> context, Class<?> domainType, boolean basic, CriteriaQuery<?, ?, Object> criteria) {
+			MybatisContext<?, ?> context, Class<?> domainType, boolean basic, CriteriaQuery<?, ?, ?, ?> criteria) {
 
 		if (null == criteria) {
 			return null;
@@ -142,14 +142,13 @@ public class Syntax {
 		Set<String> connectors = new LinkedHashSet<>();
 
 		criteriaQuery(conditions, connectors, entityManager, context, domainType, basic,
-				(CriteriaQueryImpl<?, ?, ?, Object>) criteria);
+				(CriteriaQueryImpl<?, ?, ?, ?>) criteria);
 
 		return new Tuple<>(conditions, connectors);
 	}
 
 	private static void criteriaQuery(Set<String> conditions, Set<String> connectors, EntityManager entityManager,
-			MybatisContext<?, ?> context, Class<?> domainType, boolean basic,
-			CriteriaQueryImpl<?, ?, ?, Object> criteria) {
+			MybatisContext<?, ?> context, Class<?> domainType, boolean basic, CriteriaQueryImpl<?, ?, ?, ?> criteria) {
 
 		PredicateResult pr = criteria.toConditionSQL(entityManager, pv -> {
 			context.setBindable(pv.getName(), pv.getValue());

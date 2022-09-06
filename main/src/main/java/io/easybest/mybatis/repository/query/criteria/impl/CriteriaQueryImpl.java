@@ -52,6 +52,7 @@ import io.easybest.mybatis.repository.query.criteria.Predicate;
 import io.easybest.mybatis.repository.query.criteria.PredicateResult;
 import io.easybest.mybatis.repository.query.criteria.SegmentResult;
 
+import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.util.CollectionUtils;
@@ -68,7 +69,7 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.RESUL
  * @param <F> field type
  * @param <V> value type
  */
-public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> implements CriteriaQuery<R, F, V> {
+public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> implements CriteriaQuery<T, R, F, V> {
 
 	private Set<String> selectFields;
 
@@ -83,6 +84,10 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 	private boolean withSort;
 
 	private boolean paging;
+
+	private Example<? extends T> example;
+
+	private boolean exampling;
 
 	public CriteriaQueryImpl(Class<T> domainClass) {
 		super(domainClass);
@@ -216,10 +221,19 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 		return null;
 	}
 
-	private SegmentResult sorting(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity,
-			Class<?> domainClass) {
+	@Override
+	public <S extends T> R example(Example<S> example) {
 
-		return null;
+		this.example = example;
+
+		return this.getReturns();
+	}
+
+	@Override
+	public R exampling() {
+
+		this.exampling = true;
+		return this.getReturns();
 	}
 
 	private ColumnResult fieldToColumnName(EntityManager entityManager, Class<?> domainClass, String field,
@@ -329,7 +343,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 			connectors.addAll(pr.getConnectors());
 		}
 
-		boolean bind = this.withSort || this.paging;
+		boolean bind = this.withSort || this.paging || this.exampling || (null != this.example);
 
 		Segment[] segments = new Segment[] {
 				bind ? Bind.of(SQLResult.PARAM_NAME,
@@ -342,10 +356,13 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 				(CollectionUtils.isEmpty(connectors) ? SQL.EMPTY : SQL.of(String.join(" ", connectors))), //
 				bind ? Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME) : SQL.EMPTY, //
 				Where.of( //
+						this.exampling || (null != this.example) ? Interpolation.of(SQLResult.PARAM_CONDITION_NAME)
+								: SQL.EMPTY,
 						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()), //
 						this.logicDeleteClause(entity, alias)//
 				), //
-				bind ? Interpolation.of(SQLResult.PARAM_SORTING_NAME) : SQL.EMPTY };
+				bind && (this.withSort || this.paging) ? Interpolation.of(SQLResult.PARAM_SORTING_NAME) : SQL.EMPTY//
+		};
 
 		builder.contents(
 				this.paging ? Collections.singletonList(Page.of(entityManager.getDialect(), Parameter.pageOffset(),

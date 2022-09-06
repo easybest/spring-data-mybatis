@@ -29,8 +29,8 @@ import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
  */
 public interface QueryByCriteriaExecutor<T> {
 
-	<S extends T> Optional<S> findOne(CriteriaQuery<?, ?, Object> criteria);
+	<S extends T> Optional<S> findOne(CriteriaQuery<T, ?, ?, ?> criteria);
 
-	<S extends T> List<S> findAll(CriteriaQuery<?, ?, Object> criteria);
+	<S extends T> List<S> findAll(CriteriaQuery<T, ?, ?, ?> criteria);
 
 }

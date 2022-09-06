@@ -64,7 +64,8 @@ import static io.easybest.mybatis.repository.support.ResidentStatementName.FIND_
 import static io.easybest.mybatis.repository.support.ResidentStatementName.INSERT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.INSERT_SELECTIVE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE;
-import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_FOR_PAGE;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_WITH_PAGE;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_BY_EXAMPLE_WITH_SORT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE_BY_ID;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.UPDATE_SELECTIVE;
@@ -521,7 +522,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			return this.findAll(example);
 		}
 
-		return this.selectList(QUERY_BY_EXAMPLE, new MybatisContext<>(null, example.getProbe(),
+		return this.selectList(QUERY_BY_EXAMPLE_WITH_SORT, new MybatisContext<>(null, example.getProbe(),
 				this.persistentEntity.getType(), null, sort, example, this.entityManager, this.basic));
 	}
 
@@ -538,7 +539,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 				io.easybest.mybatis.repository.support.Pageable.of(pageable), pageable.getSort(), example,
 				this.entityManager, this.basic);
 
-		List<S> content = this.selectList(QUERY_BY_EXAMPLE_FOR_PAGE, context);
+		List<S> content = this.selectList(QUERY_BY_EXAMPLE_WITH_PAGE, context);
 
 		return PageableExecutionUtils.getPage(content, pageable, () -> this.selectOne(COUNT_QUERY_BY_EXAMPLE, context));
 	}
@@ -576,13 +577,13 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <S extends T> Optional<S> findOne(CriteriaQuery<?, ?, Object> criteria) {
+	public <S extends T> Optional<S> findOne(CriteriaQuery<T, ?, ?, ?> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
 		Class<T> type = this.persistentEntity.getType();
 		if (criteria instanceof CriteriaQueryImpl) {
-			Class<T> domainClass = ((CriteriaQueryImpl<T, ?, ?, Object>) criteria).getDomainClass();
+			Class<T> domainClass = ((CriteriaQueryImpl<T, ?, ?, ?>) criteria).getDomainClass();
 			if (null != domainClass) {
 				type = domainClass;
 			}
@@ -594,7 +595,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 	@Override
 	@SuppressWarnings({ "unchecked" })
-	public <S extends T> List<S> findAll(CriteriaQuery<?, ?, Object> criteria) {
+	public <S extends T> List<S> findAll(CriteriaQuery<T, ?, ?, ?> criteria) {
 
 		Assert.notNull(criteria, "Criteria must not be null!");
 
