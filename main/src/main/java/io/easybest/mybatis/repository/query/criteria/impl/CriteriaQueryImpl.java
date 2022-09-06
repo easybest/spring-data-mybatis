@@ -39,6 +39,7 @@ import io.easybest.mybatis.mapping.precompile.Parameter;
 import io.easybest.mybatis.mapping.precompile.SQL;
 import io.easybest.mybatis.mapping.precompile.Segment;
 import io.easybest.mybatis.mapping.precompile.Select;
+import io.easybest.mybatis.mapping.precompile.Sorting;
 import io.easybest.mybatis.mapping.precompile.Where;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 import io.easybest.mybatis.repository.query.criteria.ColumnResult;
@@ -88,6 +89,14 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 
 	private boolean binding;
 
+	private boolean distinct;
+
+	private String parameterType;
+
+	private String resultType;
+
+	private String resultMap;
+
 	public CriteriaQueryImpl(Class<T> domainClass) {
 		super(domainClass);
 	}
@@ -103,9 +112,23 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 	}
 
 	@Override
+	public R distinct() {
+
+		this.distinct = true;
+
+		return this.getReturns();
+	}
+
+	@Override
 	public R paging() {
 
 		this.paging = true;
+		return this.getReturns();
+	}
+
+	@Override
+	public R unpaged() {
+		this.paging = false;
 		return this.getReturns();
 	}
 
@@ -242,6 +265,24 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 		return this.getReturns();
 	}
 
+	@Override
+	public R parameterType(String parameterType) {
+		this.parameterType = parameterType;
+		return this.getReturns();
+	}
+
+	@Override
+	public R resultType(String resultType) {
+		this.resultType = resultType;
+		return this.getReturns();
+	}
+
+	@Override
+	public R resultMap(String resultMap) {
+		this.resultMap = resultMap;
+		return this.getReturns();
+	}
+
 	private ColumnResult fieldToColumnName(EntityManager entityManager, Class<?> domainClass, String field,
 			MybatisPersistentEntityImpl<?> entity) {
 
@@ -274,25 +315,31 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 	}
 
 	public Select presupposed(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity, String id,
-			String resultMap, String resultType, String parameterType, ParamValueCallback callback, boolean alias) {
+			ParamValueCallback callback, boolean alias) {
+		return this.presupposed(entityManager, entity, id, callback, alias, null);
+	}
+
+	public Select presupposed(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity, String id,
+			ParamValueCallback callback, boolean alias, List<? extends Segment> derived) {
 
 		Select.Builder builder = Select.builder().id(id);
 
-		if (null != resultMap) {
-			builder.resultMap(resultMap);
+		if (null != this.resultMap) {
+			builder.resultMap(this.resultMap);
 		}
-		else if (null != resultType) {
-			builder.resultType(resultType);
+		else if (null != this.resultType) {
+			builder.resultType(this.resultType);
 		}
 		else {
 			builder.resultMap(RESULT_MAP);
 		}
 
-		if (null != parameterType) {
-			builder.parameterType(parameterType);
+		if (null != this.parameterType) {
+			builder.parameterType(this.parameterType);
 		}
 
 		Segment selects = null;
+		Sorting sorting = null;
 		Set<String> connectors = new LinkedHashSet<>();
 
 		if (null != this.selects) {
@@ -323,6 +370,14 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 			connectors.addAll(pr.getConnectors());
 		}
 
+		if (null != this.sort) {
+			sorting = Sorting.of(this.sort).detectConnectors(entityManager, entity);
+			Set<String> sortConnectors = sorting.getAllConnectors();
+			if (!CollectionUtils.isEmpty(sortConnectors)) {
+				connectors.addAll(sortConnectors);
+			}
+		}
+
 		boolean bind = this.binding || this.withSort || this.paging || this.exampling || (null != this.example);
 
 		Segment[] segments = new Segment[] {
@@ -330,22 +385,28 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 						MethodInvocation.of(Syntax.class, "bind", MYBATIS_DEFAULT_PARAMETER_NAME)) : SQL.EMPTY, //
 
 				SQL.SELECT, //
+				this.distinct ? SQL.DISTINCT : SQL.EMPTY, //
 				null == selects ? (alias ? Include.COLUMN_LIST : Include.COLUMN_LIST_PURE) : selects, //
 				SQL.FROM, //
 				alias ? Include.TABLE_NAME : Include.TABLE_NAME_PURE, //
-				(CollectionUtils.isEmpty(connectors) ? SQL.EMPTY : SQL.of(String.join(" ", connectors))), //
 				bind ? Interpolation.of(SQLResult.PARAM_CONNECTOR_NAME) : SQL.EMPTY, //
+				(CollectionUtils.isEmpty(connectors) ? SQL.EMPTY : SQL.of(String.join(" ", connectors))), //
 				Where.of( //
 						bind ? Interpolation.of(SQLResult.PARAM_CONDITION_NAME) : SQL.EMPTY,
 						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()), //
 						this.logicDeleteClause(entity, alias)//
 				), //
-				bind && (this.withSort || this.paging) ? Interpolation.of(SQLResult.PARAM_SORTING_NAME) : SQL.EMPTY//
+				bind && (this.withSort || this.paging) ? Interpolation.of(SQLResult.PARAM_SORTING_NAME)
+						: (null != sorting ? sorting : SQL.EMPTY), //
+				//
+
 		};
 
 		builder.contents(
 				this.paging ? Collections.singletonList(Page.of(entityManager.getDialect(), Parameter.pageOffset(),
 						Parameter.pageSize(), Parameter.pageOffsetEnd(), segments)) : Arrays.asList(segments));
+
+		builder.derived(derived);
 
 		return builder.build();
 	}

@@ -540,8 +540,8 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 	public Select countAll() {
 
-		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).presupposed(this.entityManager,
-				this.entity, COUNT_ALL, null, "long", null, null, false);
+		return CriteriaQuery.create(this.entity.getType()).resultType("long").selects(COUNTS.getValue())
+				.presupposed(this.entityManager, this.entity, COUNT_ALL, null, false);
 	}
 
 	public Select existsById() {
@@ -553,7 +553,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		query.selects(COUNTS.getValue());
 		this.idCondition(query, true);
-		return query.presupposed(this.entityManager, this.entity, EXISTS_BY_ID, null, "boolean", null, null, false);
+		return query.resultType("boolean").presupposed(this.entityManager, this.entity, EXISTS_BY_ID, null, false);
 	}
 
 	public Select findById() {
@@ -564,7 +564,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		this.idCondition(query, true);
-		return query.presupposed(this.entityManager, this.entity, FIND_BY_ID, RESULT_MAP, null, null, null, true);
+		return query.presupposed(this.entityManager, this.entity, FIND_BY_ID, null, true);
 	}
 
 	public Select findByIds() {
@@ -575,67 +575,67 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		DefaultCriteriaQuery<?, ParamValue> query = CriteriaQuery.create(this.entity.getType());
 		this.idsCondition(query, true);
-		return query.presupposed(this.entityManager, this.entity, FIND_BY_IDS, RESULT_MAP, null, null, null, true);
+		return query.presupposed(this.entityManager, this.entity, FIND_BY_IDS, null, true);
 	}
 
 	public Select findAll() {
 
-		return CriteriaQuery.create(this.entity.getType()).presupposed(this.entityManager, this.entity, FIND_ALL,
-				RESULT_MAP, null, null, null, true);
+		return CriteriaQuery.create(this.entity.getType()).presupposed(this.entityManager, this.entity, FIND_ALL, null,
+				true);
 	}
 
 	public Select findAllWithSort() {
 
 		return CriteriaQuery.create(this.entity.getType()).withSort().presupposed(this.entityManager, this.entity,
-				FIND_ALL_WITH_SORT, RESULT_MAP, null, null, null, true);
+				FIND_ALL_WITH_SORT, null, true);
 	}
 
 	public Select findByPage() {
 
 		return CriteriaQuery.create(this.entity.getType()).paging().presupposed(this.entityManager, this.entity,
-				FIND_BY_PAGE, RESULT_MAP, null, null, null, true);
+				FIND_BY_PAGE, null, true);
 	}
 
 	public Select count() {
 
-		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).presupposed(this.entityManager,
-				this.entity, COUNT, null, "long", null, null, false);
+		return CriteriaQuery.create(this.entity.getType()).resultType("long").selects(COUNTS.getValue())
+				.presupposed(this.entityManager, this.entity, COUNT, null, false);
 	}
 
 	public Select queryByExample() {
 
 		return CriteriaQuery.create(this.entity.getType()).exampling().presupposed(this.entityManager, this.entity,
-				QUERY_BY_EXAMPLE, RESULT_MAP, null, null, null, true);
+				QUERY_BY_EXAMPLE, null, true);
 	}
 
 	public Select queryByExampleWithSort() {
 
 		return CriteriaQuery.create(this.entity.getType()).withSort().exampling().presupposed(this.entityManager,
-				this.entity, QUERY_BY_EXAMPLE_WITH_SORT, RESULT_MAP, null, null, null, true);
+				this.entity, QUERY_BY_EXAMPLE_WITH_SORT, null, true);
 	}
 
 	public Select queryByExampleWithPage() {
 
 		return CriteriaQuery.create(this.entity.getType()).paging().exampling().presupposed(this.entityManager,
-				this.entity, QUERY_BY_EXAMPLE_WITH_PAGE, RESULT_MAP, null, null, null, true);
+				this.entity, QUERY_BY_EXAMPLE_WITH_PAGE, null, true);
 	}
 
 	public Select countByExample() {
 
-		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).exampling()
-				.presupposed(this.entityManager, this.entity, COUNT_QUERY_BY_EXAMPLE, null, "long", null, null, true);
+		return CriteriaQuery.create(this.entity.getType()).resultType("long").selects(COUNTS.getValue()).exampling()
+				.presupposed(this.entityManager, this.entity, COUNT_QUERY_BY_EXAMPLE, null, true);
 	}
 
 	public Select existsByExample() {
 
-		return CriteriaQuery.create(this.entity.getType()).selects(COUNTS.getValue()).exampling()
-				.presupposed(this.entityManager, this.entity, EXISTS_BY_EXAMPLE, null, "boolean", null, null, true);
+		return CriteriaQuery.create(this.entity.getType()).resultType("boolean").selects(COUNTS.getValue()).exampling()
+				.presupposed(this.entityManager, this.entity, EXISTS_BY_EXAMPLE, null, true);
 	}
 
 	public Select findByCriteria() {
 		// try to bootstrap
 		return CriteriaQuery.create(this.entity.getType()).binding().presupposed(this.entityManager, this.entity,
-				FIND_BY_CRITERIA, RESULT_MAP, null, null, null, true);
+				FIND_BY_CRITERIA, null, true);
 	}
 
 }

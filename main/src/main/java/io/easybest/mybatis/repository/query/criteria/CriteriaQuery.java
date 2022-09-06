@@ -38,12 +38,22 @@ public interface CriteriaQuery<T, R, F, V> extends SelectRange<R, F>, Conditions
 		return new DefaultCriteriaQuery<>(domainClass);
 	}
 
+	R distinct();
+
 	R paging();
+
+	R unpaged();
 
 	<S extends T> R example(Example<S> example);
 
 	R exampling();
 
 	R binding();
+
+	R parameterType(String parameterType);
+
+	R resultType(String resultType);
+
+	R resultMap(String resultMap);
 
 }

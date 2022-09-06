@@ -18,9 +18,11 @@ package io.easybest.mybatis.repository.query.criteria;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Set;
 
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.MybatisAssociation;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import io.easybest.mybatis.mapping.precompile.Bind;
 import io.easybest.mybatis.mapping.precompile.Choose;
@@ -145,21 +147,76 @@ public final class Predicate<F> implements Serializable {
 		}
 		MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
 
-		SqlIdentifier tableAlias = SqlIdentifier.unquoted(SQL.ROOT_ALIAS.getValue());
+		Column column;
+		Parameter parameter;
+		ParamValue pv;
+		Set<String> connectors = null;
 
 		if (leaf.isAssociation()) {
 			// TODO
+
+			MybatisAssociation association = leaf.getRequiredAssociation();
+			switch (predicate.type) {
+			case CONTAINING:
+			case NOT_CONTAINING:
+				String sql = null;
+				MybatisAssociation.JoinTable joinTable = association.getJoinTable();
+				if (null != joinTable) {
+
+					pv = predicate.get(group, predicate.idx, 0);
+					if (null != callback) {
+						parameter = callback.apply(pv);
+					}
+					else {
+						parameter = Parameter.of(pv);
+					}
+
+					sql = "(SELECT "
+							+ joinTable.getJoinColumns()[0].getColumnName()
+									.getReference(entityManager.getDialect().getIdentifierProcessing())
+							+ " FROM "
+							+ joinTable.getTable().getReference(entityManager.getDialect().getIdentifierProcessing())
+							+ " WHERE "
+							+ joinTable.getInverseJoinColumns()[0]
+									.getColumnName().getReference(entityManager.getDialect().getIdentifierProcessing())
+							+ "="
+							+ Parameter.of(
+									parameter.getProperty() + "."
+											+ association.getTargetEntity().getRequiredIdProperty().getName(),
+									parameter)
+							+ ")";
+				}
+				// TODO ONE2MANY
+
+				column = Column.of(SQL.ROOT_ALIAS.toString(), entityManager.getRequiredPersistentEntity(domainClass)
+						.getRequiredIdProperty().getColumnName().getReference());
+				return new PredicateResult(
+						column + (predicate.type.equals(NOT_CONTAINING) ? " NOT IN " : " IN ") + sql);
+
+			}
+
 		}
 
-		Column column = Column.of(
-				alias ? tableAlias.getReference(entityManager.getDialect().getIdentifierProcessing()) : null,
-				leaf.getColumnName().getReference());
-		Parameter parameter;
-		ParamValue pv;
+		SqlIdentifier columnName = leaf.getColumnName();
+
+		if (alias) {
+			SqlIdentifier tableAlias = SqlIdentifier.unquoted(SQL.ROOT_ALIAS.getValue());
+			String tablePath = ppp.toDotPath(source -> source.isAssociation() ? source.getName() : null);
+			if (null != tablePath) {
+				tableAlias = SqlIdentifier.quoted(tablePath);
+			}
+
+			column = Column.of(tableAlias.toSql(entityManager.getDialect().getIdentifierProcessing()),
+					columnName.getReference(entityManager.getDialect().getIdentifierProcessing()));
+			connectors = Syntax.connectors(entityManager, ppp);
+		}
+		else {
+			column = Column.of(columnName.getReference(entityManager.getDialect().getIdentifierProcessing()));
+		}
 
 		switch (predicate.type) {
 		case BETWEEN:
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, column) : column).append(" ");
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, column)).append(" ");
 			builder.append("BETWEEN").append(" ");
 
 			ParamValue pv1 = predicate.get(group, predicate.idx, 0);
@@ -176,27 +233,47 @@ public final class Predicate<F> implements Serializable {
 				p2 = Parameter.of(pv2);
 			}
 
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, p1) : p1);
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, p1));
 			builder.append(" AND ");
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, p2) : p2);
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, p2));
 			break;
 
 		case AFTER:
 		case GREATER_THAN:
 		case GREATER_THAN_EQUAL:
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, column) : column).append(" ");
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, column)).append(" ");
 			builder.append(predicate.type.equals(GREATER_THAN_EQUAL) //
 					? (tr ? SQL.GREATER_THAN_EQUAL_TR : SQL.GREATER_THAN_EQUAL) //
 					: (tr ? SQL.GREATER_THAN_TR : SQL.GREATER_THAN));
+
+			pv = predicate.get(group, predicate.idx, 0);
+			if (null != callback) {
+				parameter = callback.apply(pv);
+			}
+			else {
+				parameter = Parameter.of(pv);
+			}
+
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, parameter));
 			break;
 
 		case BEFORE:
 		case LESS_THAN:
 		case LESS_THAN_EQUAL:
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, column) : column).append(" ");
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, column)).append(" ");
 			builder.append(predicate.type.equals(LESS_THAN_EQUAL) //
 					? (tr ? SQL.LESS_THAN_EQUAL_TR : SQL.LESS_THAN_EQUAL) //
 					: (tr ? SQL.LESS_THAN_TR : SQL.LESS_THAN));
+
+			pv = predicate.get(group, predicate.idx, 0);
+			if (null != callback) {
+				parameter = callback.apply(pv);
+			}
+			else {
+				parameter = Parameter.of(pv);
+			}
+
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, parameter));
 			break;
 
 		case IS_NULL:
@@ -209,7 +286,7 @@ public final class Predicate<F> implements Serializable {
 
 		case IN:
 		case NOT_IN:
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, column) : column).append(" ");
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, column)).append(" ");
 			builder.append(predicate.type.equals(NOT_IN) ? SQL.of("NOT IN") : SQL.of("IN")).append(" ");
 
 			pv = predicate.get(group, predicate.idx, 0);
@@ -231,6 +308,7 @@ public final class Predicate<F> implements Serializable {
 		case NOT_CONTAINING:
 			if (leaf.isCollectionLike()) {
 				// TODO
+				return null;
 			}
 
 			pv = predicate.get(group, predicate.idx, 0);
@@ -245,10 +323,10 @@ public final class Predicate<F> implements Serializable {
 					(predicate.type.equals(STARTING_WITH) ? "" : "'%'+") + "entityManager.escapeCharacter.escape("
 							+ parameter.getProperty() + ")" + (predicate.type.equals(ENDING_WITH) ? "" : "+'%'"));
 			builder.append(bind);
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, column) : column).append(" ");
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, column)).append(" ");
 			builder.append(predicate.type.equals(NOT_CONTAINING) ? SQL.NOT_LIKE : SQL.LIKE).append(" ");
-			builder.append(this.lowerIfIgnoreCase(entityManager, Parameter.of("__bindable_" + parameter.getProperty())))
-					.append(" ");
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager,
+					Parameter.of("__bindable_" + parameter.getProperty()))).append(" ");
 			builder.append(Escape.of(entityManager.getDialect()));
 			break;
 
@@ -261,9 +339,9 @@ public final class Predicate<F> implements Serializable {
 			else {
 				parameter = Parameter.of(pv);
 			}
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, column) : column).append(" ");
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, column)).append(" ");
 			builder.append(predicate.type.equals(NOT_LIKE) ? SQL.NOT_LIKE : SQL.LIKE).append(" ");
-			builder.append(this.lowerIfIgnoreCase(entityManager, parameter)).append(" ");
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, parameter)).append(" ");
 			builder.append(Escape.of(entityManager.getDialect()));
 			break;
 
@@ -279,7 +357,7 @@ public final class Predicate<F> implements Serializable {
 
 		case SIMPLE_PROPERTY:
 		case NEGATING_SIMPLE_PROPERTY:
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, column) : column);
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, column));
 			builder.append(
 					predicate.type.equals(SIMPLE_PROPERTY) ? SQL.EQUALS : (tr ? SQL.NOT_EQUALS_TR : SQL.NOT_EQUALS));
 
@@ -291,7 +369,7 @@ public final class Predicate<F> implements Serializable {
 				parameter = Parameter.of(pv);
 			}
 
-			builder.append(predicate.ignoreCase ? this.lowerIfIgnoreCase(entityManager, parameter) : parameter);
+			builder.append(this.lowerIfIgnoreCase(predicate, entityManager, parameter));
 			break;
 
 		case REGEX:
@@ -318,12 +396,12 @@ public final class Predicate<F> implements Serializable {
 			throw new IllegalArgumentException("Unsupported keyword " + predicate.type);
 		}
 
-		return new PredicateResult(builder.toString());
+		return new PredicateResult(builder.toString(), connectors);
 	}
 
-	private Segment lowerIfIgnoreCase(EntityManager entityManager, Segment segment) {
+	private Segment lowerIfIgnoreCase(Predicate<F> predicate, EntityManager entityManager, Segment segment) {
 
-		return Function.of(entityManager.getDialect().getFunction("lower"), segment);
+		return predicate.ignoreCase ? Function.of(entityManager.getDialect().getFunction("lower"), segment) : segment;
 	}
 
 	private ParamValue get(int group, int idx, int i) {

@@ -17,6 +17,7 @@
 package io.easybest.mybatis.repository.query.criteria.impl;
 
 import java.util.Arrays;
+import java.util.List;
 
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
@@ -24,6 +25,7 @@ import io.easybest.mybatis.mapping.precompile.Column;
 import io.easybest.mybatis.mapping.precompile.Delete;
 import io.easybest.mybatis.mapping.precompile.Include;
 import io.easybest.mybatis.mapping.precompile.SQL;
+import io.easybest.mybatis.mapping.precompile.Segment;
 import io.easybest.mybatis.mapping.precompile.SqlDefinition;
 import io.easybest.mybatis.mapping.precompile.Update;
 import io.easybest.mybatis.mapping.precompile.Where;
@@ -54,6 +56,11 @@ public class DeleteQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> impl
 
 	public SqlDefinition presupposed(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity, String id,
 			String parameterType, ParamValueCallback callback) {
+		return this.presupposed(entityManager, entity, id, parameterType, callback, null);
+	}
+
+	public SqlDefinition presupposed(EntityManager entityManager, MybatisPersistentEntityImpl<?> entity, String id,
+			String parameterType, ParamValueCallback callback, final List<? extends Segment> derived) {
 
 		Delete.Builder builder = Delete.builder().id(id);
 
@@ -81,7 +88,7 @@ public class DeleteQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> impl
 				Include.TABLE_NAME_PURE, //
 				Where.of(//
 						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()) //
-				))).build();
+				))).derived(derived).build();
 
 	}
 

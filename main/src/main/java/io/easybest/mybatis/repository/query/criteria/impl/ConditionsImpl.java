@@ -368,6 +368,14 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		return this.getReturns();
 	}
 
+	@Override
+	public R predicate(Predicate<F> predicate) {
+
+		this.addPredicate(predicate);
+
+		return this.getReturns();
+	}
+
 	private void addPredicate(F field, PredicateType type, ParamValue... values) {
 
 		this.addPredicate(Predicate.of(field, type, false, values));
