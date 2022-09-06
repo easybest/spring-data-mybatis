@@ -117,4 +117,6 @@ public interface Conditions<R, F, V> {
 
 	R ignoreCase();
 
+	R predicate(Predicate<F> predicate);
+
 }

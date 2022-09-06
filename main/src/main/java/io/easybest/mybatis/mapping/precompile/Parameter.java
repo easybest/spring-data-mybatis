@@ -57,6 +57,11 @@ public class Parameter extends AbstractSegment {
 				.typeHandler(pv.getTypeHandler()).build();
 	}
 
+	public static Parameter of(String property, Parameter pv) {
+		return Parameter.builder().property(property).javaType(pv.getJavaType()).jdbcType(pv.getJdbcType())
+				.typeHandler(pv.getTypeHandler()).build();
+	}
+
 	public static Parameter additionalValue(String key) {
 
 		return of(MybatisContext.PARAM_ADDITIONAL_VALUES_PREFIX + key);

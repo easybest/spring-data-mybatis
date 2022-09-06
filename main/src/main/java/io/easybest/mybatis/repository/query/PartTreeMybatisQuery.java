@@ -20,9 +20,6 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import io.easybest.mybatis.mapping.EntityManager;
-import io.easybest.mybatis.mapping.precompile.CriteriaQuery;
-import io.easybest.mybatis.mapping.precompile.Delete;
-import io.easybest.mybatis.mapping.precompile.Page;
 import io.easybest.mybatis.mapping.precompile.Parameter;
 import io.easybest.mybatis.mapping.precompile.Placeholder;
 import io.easybest.mybatis.mapping.precompile.SQL;
@@ -31,20 +28,23 @@ import io.easybest.mybatis.mapping.precompile.SqlDefinition;
 import io.easybest.mybatis.repository.query.MybatisParameters.MybatisParameter;
 import io.easybest.mybatis.repository.query.MybatisQueryExecution.DeleteExecution;
 import io.easybest.mybatis.repository.query.MybatisQueryExecution.ExistsExecution;
+import io.easybest.mybatis.repository.query.criteria.DefaultCriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.DefaultDeleteQuery;
+import io.easybest.mybatis.repository.query.criteria.DeleteQuery;
+import io.easybest.mybatis.repository.query.criteria.ParamValue;
+import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
 import io.easybest.mybatis.repository.support.MybatisContext;
 import io.easybest.mybatis.repository.support.Pageable;
 import io.easybest.mybatis.repository.support.ResidentStatementName;
 
 import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.query.ResultProcessor;
-import org.springframework.data.repository.query.ReturnedType;
 import org.springframework.data.repository.query.parser.Part;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.data.util.Streamable;
 
-import static io.easybest.mybatis.mapping.precompile.CriteriaQuery.Type.COUNT;
-import static io.easybest.mybatis.mapping.precompile.CriteriaQuery.Type.DELETE;
+import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_ADDITIONAL_VALUES_PREFIX;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_PREFIX;
+import static io.easybest.mybatis.repository.support.ResidentStatementName.UNPAGED_PREFIX;
 
 /**
  * .
@@ -73,16 +73,6 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 			throw new IllegalArgumentException(
 					String.format("Failed to create query for method %s! %s", method, ex.getMessage()), ex);
 		}
-
-	}
-
-	private MybatisQueryCreator createCreator() {
-
-		ResultProcessor processor = this.method.getResultProcessor();
-		ParameterMetadataProvider provider = new ParameterMetadataProvider(this.entityManager,
-				this.method.getParameters());
-		ReturnedType returnedType = processor.getReturnedType();
-		return new MybatisQueryCreator(this.tree, returnedType, provider, this.entityManager, this.entity);
 
 	}
 
@@ -129,7 +119,7 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 			}
 		}
 
-		if (this.tree.isLimiting()) {
+		if (this.tree.isLimiting() && null != this.tree.getMaxResults()) {
 
 			int maxResults = this.tree.getMaxResults();
 
@@ -151,89 +141,34 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 
 	private SqlDefinition collection() {
 
-		MybatisQueryCreator creator = this.createCreator();
-		CriteriaQuery query = creator.createQuery().bind(true).columnAsType(this.suitableToResultType());
-
-		SQL sql = SQL.of(query.toString());
-
-		Select.Builder builder = Select.builder().id(this.method.getStatementName());
-		this.resultMapOrType(builder);
-
-		builder.contents(Collections.singletonList(sql));
-		return builder.build();
+		return this.createQueryCreator().createQuery().binding().presupposed(this.entityManager, this.entity,
+				this.method.getStatementName(), pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv),
+				true);
 	}
 
 	private SqlDefinition slice() {
 
-		MybatisQueryCreator creator = this.createCreator();
-		CriteriaQuery query = creator.createQuery().bind(true).columnAsType(this.suitableToResultType());
-
-		SQL sql = SQL.of(query.toString());
-
-		Select.Builder builder = Select.builder().id(this.method.getStatementName());
-		this.resultMapOrType(builder);
-
-		builder.contents(Collections.singletonList(
-
-				Page.of(this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(),
-						Parameter.pageOffsetEnd(), sql)));
-
-		Select.Builder unpagedBuilder = Select.builder()
-				.id(ResidentStatementName.UNPAGED_PREFIX + this.method.getStatementName())
-				.contents(Collections.singletonList(sql));
-		this.resultMapOrType(unpagedBuilder);
-
-		builder.derived(Collections.singletonList(unpagedBuilder.build()));
-
-		return builder.build();
+		return this.createQueryCreator().createQuery().binding().paging().presupposed(this.entityManager, this.entity,
+				this.method.getStatementName(), pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv),
+				true,
+				Collections.singletonList(this.createQueryCreator().createQuery().binding().presupposed(
+						this.entityManager, this.entity, UNPAGED_PREFIX + this.method.getStatementName(),
+						pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv), true)));
 	}
 
 	private SqlDefinition page() {
 
-		MybatisQueryCreator creator = this.createCreator();
-		CriteriaQuery query = creator.createQuery().bind(true).columnAsType(this.suitableToResultType());
-
-		SQL sql = SQL.of(query.toString());
-
-		Select.Builder builder = Select.builder().id(this.method.getStatementName());
-		this.resultMapOrType(builder);
-
-		builder.contents(Collections.singletonList(
-
-				Page.of(this.entityManager.getDialect(), Parameter.pageOffset(), Parameter.pageSize(),
-						Parameter.pageOffsetEnd(), sql)));
-
-		Select count = Select.builder().id(this.method.getCountStatementName()).resultType("long")
-				.contents(Collections.singletonList(SQL.of(query.toString(COUNT)))).build();
-
-		Select.Builder unpagedBuilder = Select.builder()
-				.id(ResidentStatementName.UNPAGED_PREFIX + this.method.getStatementName())
-				.contents(Collections.singletonList(sql));
-		this.resultMapOrType(unpagedBuilder);
-
-		builder.derived(Arrays.asList(count, unpagedBuilder.build()));
-
-		return builder.build();
-	}
-
-	private void resultMapOrType(Select.Builder builder) {
-
-		if (this.method.getResultMap().isPresent()) {
-			builder.resultMap(this.method.getResultMap().orElse(ResidentStatementName.RESULT_MAP));
-		}
-		else if (this.method.getResultType().isPresent()) {
-			builder.resultType(this.method.getActualResultType());
-		}
-		else {
-
-			if (this.suitableToResultType()) {
-				builder.resultType(this.method.getActualResultType());
-				return;
-			}
-
-			builder.resultMap(ResidentStatementName.RESULT_MAP);
-
-		}
+		return this.createQueryCreator().createQuery().binding().paging().presupposed(this.entityManager, this.entity,
+				this.method.getStatementName(), pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv),
+				true, Arrays.asList(//
+						this.createQueryCreator().createQuery().resultMap(null).resultType("long").unpaged()
+								.selects(SQL.COUNTS.getValue()).binding().presupposed(this.entityManager, this.entity,
+										this.method.getCountStatementName(),
+										pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv), true), //
+						this.createQueryCreator().createQuery().unpaged().binding().presupposed(this.entityManager,
+								this.entity, UNPAGED_PREFIX + this.method.getStatementName(),
+								pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv), true))//
+		);
 	}
 
 	private boolean suitableToResultType() {
@@ -246,73 +181,87 @@ public class PartTreeMybatisQuery extends AbstractMybatisQuery {
 				|| this.entity.getType().isAssignableFrom(this.method.getReturnedObjectType()));
 	}
 
-	private SqlDefinition exists() {
+	private PartTreeQueryCreator<DefaultCriteriaQuery<?, ParamValue>> createQueryCreator() {
 
-		MybatisQueryCreator creator = this.createCreator();
-		CriteriaQuery query = creator.createQuery().select(SQL.COUNTS);
+		ParameterMetadataProvider provider = new ParameterMetadataProvider(this.entityManager,
+				this.method.getParameters());
+		DefaultCriteriaQuery<?, ParamValue> query = io.easybest.mybatis.repository.query.criteria.CriteriaQuery
+				.create(this.entity.getType());
+		this.resultMapOrType(query);
+		if (this.tree.isLimiting()) {
+			query.paging();
+		}
+		return new PartTreeQueryCreator<>(this.tree, provider, query);
 
-		return Select.builder().id(this.method.getStatementName()).resultType("boolean")
-				.contents(Collections.singletonList(
-
-						SQL.of(query.toString())
-
-				)).build();
 	}
 
 	private SqlDefinition count() {
 
-		MybatisQueryCreator creator = this.createCreator();
-		CriteriaQuery query = creator.createQuery().select(SQL.COUNTS);
+		return this.createQueryCreator().createQuery().resultType("long").selects(SQL.COUNTS.getValue()).presupposed(
+				this.entityManager, this.entity, this.method.getStatementName(),
+				pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv), true);
+	}
 
-		return Select.builder().id(this.method.getStatementName()).resultType("long")
-				.contents(Collections.singletonList(
+	private SqlDefinition exists() {
 
-						SQL.of(query.toString())
+		return this.createQueryCreator().createQuery().resultType("boolean").selects(SQL.COUNTS.getValue()).presupposed(
+				this.entityManager, this.entity, this.method.getStatementName(),
+				pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv), true);
+	}
 
-				)).build();
+	private void resultMapOrType(CriteriaQueryImpl<?, ?, String, ParamValue> query) {
 
+		if (this.method.getResultMap().isPresent()) {
+			query.resultMap(this.method.getResultMap().orElse(ResidentStatementName.RESULT_MAP));
+		}
+		else if (this.method.getResultType().isPresent()) {
+			query.resultType(this.method.getActualResultType());
+		}
+		else {
+
+			if (this.suitableToResultType()) {
+				query.resultType(this.method.getActualResultType());
+				return;
+			}
+
+			query.resultMap(ResidentStatementName.RESULT_MAP);
+
+		}
 	}
 
 	private SqlDefinition delete() {
 
-		if (this.entity.getLogicDeleteColumn().isPresent()) {
-			// TODO
+		ParameterMetadataProvider provider = new ParameterMetadataProvider(this.entityManager,
+				this.method.getParameters());
+		DefaultDeleteQuery<?, ParamValue> query = DeleteQuery.create(this.entity.getType());
+		PartTreeQueryCreator<? extends DefaultDeleteQuery<?, ParamValue>> creator = new PartTreeQueryCreator<>(
+				this.tree, provider, query);
 
-		}
-
-		MybatisQueryCreator creator = this.createCreator();
-
-		Delete.Builder builder = Delete.builder().id(this.method.getStatementName());
-
-		CriteriaQuery cq = creator.createQuery();
-
+		Select derived = null;
 		if (this.method.isCollectionQuery()) {
+			ParameterMetadataProvider criteriaProvider = new ParameterMetadataProvider(this.entityManager,
+					this.method.getParameters());
+			DefaultCriteriaQuery<?, ParamValue> criteriaQuery = io.easybest.mybatis.repository.query.criteria.CriteriaQuery
+					.create(this.entity.getType());
+			PartTreeQueryCreator<? extends DefaultCriteriaQuery<?, ParamValue>> queryCreator = new PartTreeQueryCreator<>(
+					this.tree, criteriaProvider, criteriaQuery);
+			this.resultMapOrType(criteriaQuery);
 
-			Select.Builder selectBuilder = Select.builder().id(QUERY_PREFIX + this.method.getStatementName());
-
-			this.resultMapOrType(selectBuilder);
-
-			selectBuilder.contents(Collections.singletonList(SQL.of(cq.toString())));
-			Select select = selectBuilder.build();
-			builder.derived(Collections.singletonList(select));
+			derived = queryCreator.createQuery().presupposed(this.entityManager, this.entity,
+					QUERY_PREFIX + this.method.getStatementName(),
+					pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv), true);
 		}
 
-		builder.contents(Collections.singletonList(SQL.of(cq.toString(DELETE))));
-		return builder.build();
+		return creator.createQuery().presupposed(this.entityManager, this.entity, this.method.getStatementName(), null,
+				pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv),
+				derived == null ? null : Collections.singletonList(derived));
 	}
 
 	private SqlDefinition selectOne() {
 
-		Select.Builder builder = Select.builder().id(this.method.getStatementName());
-		this.resultMapOrType(builder);
-
-		MybatisQueryCreator creator = this.createCreator();
-		CriteriaQuery query = creator.createQuery().bind(true).columnAsType(this.suitableToResultType());
-		SQL sql = SQL.of(query.toString());
-
-		builder.contents(Collections.singletonList(this.tree.isLimiting() ? Page.of(this.entityManager.getDialect(),
-				Parameter.pageOffset(), Parameter.pageSize(), Parameter.pageOffsetEnd(), sql) : sql));
-		return builder.build();
+		return this.createQueryCreator().createQuery().presupposed(this.entityManager, this.entity,
+				this.method.getStatementName(), pv -> Parameter.of(PARAM_ADDITIONAL_VALUES_PREFIX + pv.getName(), pv),
+				true);
 	}
 
 	@Override

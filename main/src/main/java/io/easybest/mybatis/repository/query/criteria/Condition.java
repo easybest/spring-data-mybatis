@@ -66,6 +66,10 @@ public class Condition<F> implements Serializable {
 	public PredicateResult toSQL(EntityManager entityManager, Class<?> domainClass, ParamValueCallback callback,
 			boolean tr, boolean alias) {
 
+		if (null == this.predicate) {
+			return null;
+		}
+
 		Condition<F> opposite = this.opposite;
 
 		PredicateResult pr = this.predicate.toSQL(this.idx, entityManager, domainClass, callback, tr, alias);
