@@ -282,6 +282,14 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 	@Override
 	@Transactional
+	public <S extends T> List<S> saveSelectiveAll(Iterable<S> entities) {
+		Assert.notNull(entities, "Entities must not be null!");
+
+		return Streamable.of(entities).map(this::saveSelective).toList();
+	}
+
+	@Override
+	@Transactional
 	public <S extends T> List<S> saveCascadeAll(Iterable<S> entities) {
 
 		Assert.notNull(entities, "Entities must not be null!");

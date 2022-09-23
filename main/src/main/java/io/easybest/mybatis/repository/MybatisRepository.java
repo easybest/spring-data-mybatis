@@ -55,6 +55,8 @@ public interface MybatisRepository<T, ID>
 	@Override
 	<S extends T> List<S> saveAll(Iterable<S> entities);
 
+	<S extends T> List<S> saveSelectiveAll(Iterable<S> entities);
+
 	<S extends T> List<S> saveCascadeAll(Iterable<S> entities);
 
 	<S extends T> S saveCascade(S entity);
