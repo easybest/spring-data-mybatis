@@ -80,7 +80,7 @@ public class MybatisMapperBuilder {
 			return this;
 		}
 		if ((segment instanceof Select || segment instanceof Insert || segment instanceof Update
-				|| segment instanceof Delete) && this.configuration.hasStatement(id, true)) {
+				|| segment instanceof Delete) && this.configuration.hasStatement(id, false)) {
 			return this;
 		}
 
