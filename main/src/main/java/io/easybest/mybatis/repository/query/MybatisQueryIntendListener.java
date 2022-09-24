@@ -48,6 +48,11 @@ public enum MybatisQueryIntendListener implements QueryCreationListener<Reposito
 			return;
 		}
 
+		if (query instanceof MapperedMybatisQuery) {
+			// don't have to do anything
+			return;
+		}
+
 		throw new MappingException("Unsupported query " + query.getClass() + ", " + query.getQueryMethod());
 	}
 
