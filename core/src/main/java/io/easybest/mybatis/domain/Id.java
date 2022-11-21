@@ -22,24 +22,33 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.MappedSuperclass;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
  * .
  *
  * @author Jarvis Song
  * @param <T> pk
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @MappedSuperclass
 public abstract class Id<T extends Serializable> implements Identifiable<T> {
 
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@javax.persistence.Id
 	protected T id;
+
+	public Id() {
+	}
+
+	public Id(T id) {
+		this.id = id;
+	}
+
+	@Override
+	public T getId() {
+		return this.id;
+	}
+
+	public void setId(T id) {
+		this.id = id;
+	}
 
 }

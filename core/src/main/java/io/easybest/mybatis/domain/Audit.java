@@ -23,11 +23,6 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Temporal;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -43,12 +38,8 @@ import static javax.persistence.TemporalType.TIMESTAMP;
  * @param <ID> identifier type
  * @param <AUDITOR> auditor identifier type
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
-@NoArgsConstructor
 @MappedSuperclass
-public abstract class Auditable<AUDITOR, ID extends Serializable> extends Id<ID> {
+public abstract class Audit<AUDITOR, ID extends Serializable> extends Id<ID> {
 
 	private static final long serialVersionUID = -6950555360571982081L;
 
@@ -81,5 +72,41 @@ public abstract class Auditable<AUDITOR, ID extends Serializable> extends Id<ID>
 	@Temporal(TIMESTAMP)
 	@Column(name = "last_modified_date")
 	private @Nullable LocalDateTime lastModifiedDate;
+
+	@Nullable
+	public AUDITOR getCreatedBy() {
+		return this.createdBy;
+	}
+
+	public void setCreatedBy(@Nullable AUDITOR createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	@Nullable
+	public AUDITOR getLastModifiedBy() {
+		return this.lastModifiedBy;
+	}
+
+	public void setLastModifiedBy(@Nullable AUDITOR lastModifiedBy) {
+		this.lastModifiedBy = lastModifiedBy;
+	}
+
+	@Nullable
+	public LocalDateTime getCreatedDate() {
+		return this.createdDate;
+	}
+
+	public void setCreatedDate(@Nullable LocalDateTime createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	@Nullable
+	public LocalDateTime getLastModifiedDate() {
+		return this.lastModifiedDate;
+	}
+
+	public void setLastModifiedDate(@Nullable LocalDateTime lastModifiedDate) {
+		this.lastModifiedDate = lastModifiedDate;
+	}
 
 }
