@@ -50,7 +50,7 @@ public abstract class AbstractPersistable<PK extends Serializable> implements Pe
 		return this.id;
 	}
 
-	protected void setId(@Nullable PK id) {
+	public void setId(@Nullable PK id) {
 		this.id = id;
 	}
 
