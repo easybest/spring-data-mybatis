@@ -358,7 +358,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 					query.customSet(column.toString(), val.toString());
 				}
 				else {
-					query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath(), null));
+					query.set(column, ParamValue.of(PARAM_INSTANCE_PREFIX + ppp.toDotPath(), null, leaf));
 				}
 			}
 		}
