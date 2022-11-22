@@ -16,9 +16,13 @@
 
 package io.easybest.mybatis.domain.sample;
 
+import java.util.Optional;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+
+import io.easybest.mybatis.annotation.GetterOptional;
 
 /**
  * Sample domain class representing roles. Mapped with XML.
@@ -35,6 +39,7 @@ public class Role {
 	@GeneratedValue
 	private Integer id;
 
+	@GetterOptional
 	private String name;
 
 	public Role() {
@@ -49,8 +54,8 @@ public class Role {
 		return this.id;
 	}
 
-	public String getName() {
-		return this.name;
+	public Optional<String> getName() {
+		return Optional.ofNullable(this.name);
 	}
 
 	@Override

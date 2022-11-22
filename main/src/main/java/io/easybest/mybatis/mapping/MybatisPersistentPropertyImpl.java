@@ -373,7 +373,9 @@ public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProp
 
 	@Override
 	public boolean isGetterOptional() {
-		return this.isAnnotationPresent(GetterOptional.class);
+
+		return null != this.getGetter() && this.getGetter().getReturnType() == Optional.class
+				|| this.isAnnotationPresent(GetterOptional.class);
 	}
 
 	private boolean isEnumerated() {

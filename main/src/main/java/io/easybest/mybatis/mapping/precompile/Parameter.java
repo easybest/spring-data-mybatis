@@ -51,17 +51,17 @@ public class Parameter extends AbstractSegment {
 
 	public static Parameter of(ParamValue pv) {
 		return Parameter.builder().property(pv.getName()).javaType(pv.getJavaType()).jdbcType(pv.getJdbcType())
-				.typeHandler(pv.getTypeHandler()).build();
+				.typeHandler(pv.getTypeHandler()).getterOptional(pv.isGetterOptional()).build();
 	}
 
 	public static Parameter of(String property, ParamValue pv) {
 		return Parameter.builder().property(property).javaType(pv.getJavaType()).jdbcType(pv.getJdbcType())
-				.typeHandler(pv.getTypeHandler()).build();
+				.typeHandler(pv.getTypeHandler()).getterOptional(pv.isGetterOptional()).build();
 	}
 
 	public static Parameter of(String property, Parameter pv) {
 		return Parameter.builder().property(property).javaType(pv.getJavaType()).jdbcType(pv.getJdbcType())
-				.typeHandler(pv.getTypeHandler()).build();
+				.typeHandler(pv.getTypeHandler()).getterOptional(pv.isGetterOptional()).build();
 	}
 
 	public static Parameter additionalValue(String key) {
@@ -95,11 +95,18 @@ public class Parameter extends AbstractSegment {
 	public String toString() {
 
 		StringBuilder builder = new StringBuilder();
+		if (this.isGetterOptional()) {
+			builder.append(
+					Bind.of("__optional_" + this.property.replace('.', '_'), this.property + ".orElseGet(null)"));
+		}
 		builder.append("#{");
-		builder.append(this.property);
 
 		if (this.isGetterOptional()) {
-			builder.append(".orElseGet(null)");
+			builder.append("__optional_").append(this.property.replace('.', '_'));
+		}
+		else {
+			builder.append(this.property);
+
 		}
 
 		if (StringUtils.hasText(this.javaType)) {
