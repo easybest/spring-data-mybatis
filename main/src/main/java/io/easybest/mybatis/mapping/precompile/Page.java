@@ -19,8 +19,9 @@ package io.easybest.mybatis.mapping.precompile;
 import java.util.Arrays;
 import java.util.List;
 
-import io.easybest.mybatis.dialect.Dialect;
 import lombok.Getter;
+
+import io.easybest.mybatis.dialect.Dialect;
 
 /**
  * .

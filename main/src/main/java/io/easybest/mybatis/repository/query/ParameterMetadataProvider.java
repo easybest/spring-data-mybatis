@@ -20,11 +20,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import io.easybest.mybatis.mapping.EntityManager;
-import io.easybest.mybatis.mapping.precompile.ParameterExpression;
-import io.easybest.mybatis.repository.support.ResidentParameterName;
 import lombok.ToString;
-
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.repository.query.ParametersParameterAccessor;
@@ -33,6 +29,10 @@ import org.springframework.expression.Expression;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+
+import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.precompile.ParameterExpression;
+import io.easybest.mybatis.repository.support.ResidentParameterName;
 
 /**
  * .

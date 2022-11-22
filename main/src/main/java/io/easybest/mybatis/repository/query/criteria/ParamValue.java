@@ -18,11 +18,12 @@ package io.easybest.mybatis.repository.query.criteria;
 
 import java.io.Serializable;
 
-import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.ibatis.type.JdbcType;
+
+import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 
 /**
  * .
@@ -44,6 +45,8 @@ public class ParamValue implements Serializable {
 
 	private Class<?> typeHandler;
 
+	private boolean getterOptional;
+
 	public ParamValue(String name, Object value) {
 		this.name = name;
 		this.value = value;
@@ -61,11 +64,17 @@ public class ParamValue implements Serializable {
 	}
 
 	public static ParamValue of(String name, Object value, String javaType, JdbcType jdbcType, Class<?> typeHandler) {
-		return new ParamValue(name, value, javaType, jdbcType, typeHandler);
+		return new ParamValue(name, value, javaType, jdbcType, typeHandler, false);
+	}
+
+	public static ParamValue of(String name, Object value, String javaType, JdbcType jdbcType, Class<?> typeHandler,
+			boolean getterOptional) {
+		return new ParamValue(name, value, javaType, jdbcType, typeHandler, getterOptional);
 	}
 
 	public static ParamValue of(String name, Object value, MybatisPersistentPropertyImpl leaf) {
-		return new ParamValue(name, value, leaf.getJavaType(), leaf.getJdbcType(), leaf.getTypeHandler());
+		return new ParamValue(name, value, leaf.getJavaType(), leaf.getJdbcType(), leaf.getTypeHandler(),
+				leaf.isGetterOptional());
 	}
 
 }

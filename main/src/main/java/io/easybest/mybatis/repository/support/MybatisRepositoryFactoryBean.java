@@ -18,8 +18,6 @@ package io.easybest.mybatis.repository.support;
 
 import java.io.Serializable;
 
-import io.easybest.mybatis.mapping.EntityManager;
-
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
@@ -27,6 +25,8 @@ import org.springframework.data.mapping.callback.EntityCallbacks;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.support.RepositoryFactorySupport;
 import org.springframework.data.repository.core.support.TransactionalRepositoryFactoryBeanSupport;
+
+import io.easybest.mybatis.mapping.EntityManager;
 
 /**
  * .

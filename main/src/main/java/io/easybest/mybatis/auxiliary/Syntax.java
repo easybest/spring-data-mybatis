@@ -25,6 +25,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.beans.NullValueInNestedPathException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.support.ExampleMatcherAccessor;
+import org.springframework.data.util.DirectFieldAccessFallbackBeanWrapper;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
+
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisAssociation;
 import io.easybest.mybatis.mapping.MybatisAssociation.JoinColumn;
@@ -42,21 +57,6 @@ import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
 import io.easybest.mybatis.repository.query.criteria.PredicateResult;
 import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
 import io.easybest.mybatis.repository.support.MybatisContext;
-
-import org.springframework.beans.NullValueInNestedPathException;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.support.ExampleMatcherAccessor;
-import org.springframework.data.util.DirectFieldAccessFallbackBeanWrapper;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 /**
  * .

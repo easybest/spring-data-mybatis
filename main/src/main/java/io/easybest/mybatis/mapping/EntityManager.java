@@ -16,12 +16,12 @@
 
 package io.easybest.mybatis.mapping;
 
-import io.easybest.mybatis.dialect.Dialect;
-import io.easybest.mybatis.repository.query.EscapeCharacter;
 import org.mybatis.spring.SqlSessionTemplate;
-
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.lang.Nullable;
+
+import io.easybest.mybatis.dialect.Dialect;
+import io.easybest.mybatis.repository.query.EscapeCharacter;
 
 /**
  * .

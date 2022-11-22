@@ -20,15 +20,8 @@ import java.util.List;
 
 import javax.sql.DataSource;
 
-import io.easybest.mybatis.mapping.DefaultEntityManager;
-import io.easybest.mybatis.mapping.EntityManager;
-import io.easybest.mybatis.mapping.NamingStrategy;
-import io.easybest.mybatis.repository.MybatisRepository;
-import io.easybest.mybatis.repository.config.MybatisRepositoryConfigExtension;
-import io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration;
-
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -42,6 +35,13 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+
+import io.easybest.mybatis.mapping.DefaultEntityManager;
+import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.NamingStrategy;
+import io.easybest.mybatis.repository.MybatisRepository;
+import io.easybest.mybatis.repository.config.MybatisRepositoryConfigExtension;
+import io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean;
 
 /**
  * .

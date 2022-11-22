@@ -38,11 +38,11 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Version;
 
+import org.apache.ibatis.type.ByteArrayTypeHandler;
+import org.springframework.data.annotation.PersistenceCreator;
+
 import io.easybest.mybatis.annotation.DatabaseDefault;
 import io.easybest.mybatis.annotation.TypeHandler;
-import org.apache.ibatis.type.ByteArrayTypeHandler;
-
-import org.springframework.data.annotation.PersistenceCreator;
 
 /**
  * Domain class representing a person emphasizing the use of {@code AbstractEntity}. No

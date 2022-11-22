@@ -18,8 +18,9 @@ package io.easybest.mybatis.mapping.precompile;
 
 import java.util.List;
 
-import io.easybest.mybatis.repository.support.MybatisContext;
 import lombok.Getter;
+
+import io.easybest.mybatis.repository.support.MybatisContext;
 
 /**
  * .

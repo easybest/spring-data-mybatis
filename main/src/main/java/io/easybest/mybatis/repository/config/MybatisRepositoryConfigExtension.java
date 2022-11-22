@@ -26,10 +26,6 @@ import java.util.Optional;
 import javax.persistence.Entity;
 import javax.persistence.MappedSuperclass;
 
-import io.easybest.mybatis.repository.MybatisRepository;
-import io.easybest.mybatis.repository.support.MybatisEvaluationContextExtension;
-import io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean;
-
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.annotation.AnnotationAttributes;
@@ -39,6 +35,10 @@ import org.springframework.data.repository.config.RepositoryConfigurationSource;
 import org.springframework.data.repository.config.XmlRepositoryConfigurationSource;
 import org.springframework.data.repository.util.TxUtils;
 import org.springframework.util.StringUtils;
+
+import io.easybest.mybatis.repository.MybatisRepository;
+import io.easybest.mybatis.repository.support.MybatisEvaluationContextExtension;
+import io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean;
 
 /**
  * .

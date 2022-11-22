@@ -18,8 +18,9 @@ package io.easybest.mybatis.repository.query.criteria;
 
 import java.io.Serializable;
 
-import io.easybest.mybatis.mapping.EntityManager;
 import lombok.Data;
+
+import io.easybest.mybatis.mapping.EntityManager;
 
 import static io.easybest.mybatis.repository.query.criteria.Operator.AND;
 import static io.easybest.mybatis.repository.query.criteria.Operator.OR;

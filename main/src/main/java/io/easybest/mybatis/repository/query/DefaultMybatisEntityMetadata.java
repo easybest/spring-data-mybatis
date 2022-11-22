@@ -16,9 +16,9 @@
 
 package io.easybest.mybatis.repository.query;
 
-import io.easybest.mybatis.mapping.MybatisPersistentEntity;
-
 import org.springframework.util.Assert;
+
+import io.easybest.mybatis.mapping.MybatisPersistentEntity;
 
 /**
  * .

@@ -23,9 +23,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import io.easybest.mybatis.mapping.EntityManager;
-import io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean;
-
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
@@ -34,6 +31,9 @@ import org.springframework.data.repository.config.BootstrapMode;
 import org.springframework.data.repository.config.DefaultRepositoryBaseClass;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean;
 
 /**
  * Annotation to enable MyBatis repositories. Will scan the package of the annotated

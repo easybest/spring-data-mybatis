@@ -24,6 +24,9 @@ import java.util.stream.Stream;
 
 import javax.persistence.GenerationType;
 
+import org.apache.ibatis.mapping.ResultFlag;
+import org.springframework.data.mapping.PersistentPropertyPath;
+
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisAssociation;
@@ -43,9 +46,6 @@ import io.easybest.mybatis.repository.query.criteria.ParamValue;
 import io.easybest.mybatis.repository.query.criteria.UpdateQuery;
 import io.easybest.mybatis.repository.query.criteria.impl.ConditionsImpl;
 import io.easybest.mybatis.repository.support.ResidentStatementName;
-import org.apache.ibatis.mapping.ResultFlag;
-
-import org.springframework.data.mapping.PersistentPropertyPath;
 
 import static io.easybest.mybatis.mapping.precompile.SQL.COUNTS;
 import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_INSTANCE_PREFIX;

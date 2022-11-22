@@ -2,7 +2,6 @@
 <xsd:schema xmlns="http://www.easybest.io/schema/mybatis"
 			xmlns:xsd="http://www.w3.org/2001/XMLSchema"
 			xmlns:tool="http://www.springframework.org/schema/tool"
-			xmlns:context="http://www.springframework.org/schema/context"
 			xmlns:repository="http://www.springframework.org/schema/data/repository"
 			targetNamespace="http://www.easybest.io/schema/mybatis"
 			elementFormDefault="qualified" attributeFormDefault="unqualified">

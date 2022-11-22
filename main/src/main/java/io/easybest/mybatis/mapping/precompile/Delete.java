@@ -18,11 +18,11 @@ package io.easybest.mybatis.mapping.precompile;
 
 import java.util.List;
 
-import io.easybest.mybatis.repository.support.MybatisContext;
 import lombok.Getter;
-
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import io.easybest.mybatis.repository.support.MybatisContext;
 
 /**
  * .

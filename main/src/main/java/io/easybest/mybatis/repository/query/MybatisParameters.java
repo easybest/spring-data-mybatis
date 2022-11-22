@@ -23,18 +23,18 @@ import java.util.UUID;
 
 import javax.persistence.TemporalType;
 
-import io.easybest.mybatis.annotation.TypeHandler;
-import io.easybest.mybatis.mapping.TypeRegistry;
-import io.easybest.mybatis.mapping.handler.UUIDTypeHandler;
-import io.easybest.mybatis.repository.Temporal;
 import org.apache.ibatis.type.JdbcType;
-
 import org.springframework.core.MethodParameter;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
 import org.springframework.data.util.Lazy;
 import org.springframework.lang.Nullable;
+
+import io.easybest.mybatis.annotation.TypeHandler;
+import io.easybest.mybatis.mapping.TypeRegistry;
+import io.easybest.mybatis.mapping.handler.UUIDTypeHandler;
+import io.easybest.mybatis.repository.Temporal;
 
 /**
  * .

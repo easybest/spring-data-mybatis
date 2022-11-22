@@ -16,9 +16,9 @@
 
 package io.easybest.mybatis.repository.support;
 
-import io.easybest.mybatis.repository.query.EscapeCharacter;
-
 import org.springframework.data.spel.spi.EvaluationContextExtension;
+
+import io.easybest.mybatis.repository.query.EscapeCharacter;
 
 /**
  * .

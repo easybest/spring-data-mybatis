@@ -13,23 +13,23 @@ create table ROLE
 
 create table SD_User
 (
-	id           integer      not null primary key identity,
-	active       bit      not null,
+	id           integer          not null primary key identity,
+	active       bit              not null,
 	city         varchar(255),
 	country      varchar(255),
 	streetName   varchar(255),
 	streetNo     varchar(255),
-	age          integer      not null,
+	age          integer          not null,
 	binaryData   binary,
 	createdAt    datetime,
 	dateOfBirth  date,
-	emailAddress varchar(255) not null,
+	emailAddress varchar(255)     not null,
 	firstname    varchar(255),
 	lastname     varchar(255),
 	manager_id   integer,
 	version      bigint default 0 not null,
 	deleted      int    default 0 not null,
-	DTYPE        varchar(31)  null
+	DTYPE        varchar(31)      null
 
 );
 create table SD_User_ROLE

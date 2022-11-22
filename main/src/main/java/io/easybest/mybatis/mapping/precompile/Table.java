@@ -17,7 +17,6 @@
 package io.easybest.mybatis.mapping.precompile;
 
 import lombok.Getter;
-
 import org.springframework.util.StringUtils;
 
 import static io.easybest.mybatis.mapping.precompile.SQL.ROOT_ALIAS;

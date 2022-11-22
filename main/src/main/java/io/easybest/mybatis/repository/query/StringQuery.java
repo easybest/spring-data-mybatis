@@ -283,7 +283,8 @@ class StringQuery implements DeclaredQuery {
 
 					break;
 
-				case AS_IS: // fall-through we don't need a special parameter binding for
+				case AS_IS: // fall-through we don't need a special parameter binding
+							// for
 					// the given parameter.
 				default:
 

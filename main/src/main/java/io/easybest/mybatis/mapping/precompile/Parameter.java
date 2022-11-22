@@ -18,12 +18,12 @@ package io.easybest.mybatis.mapping.precompile;
 
 import java.util.List;
 
-import io.easybest.mybatis.repository.query.criteria.ParamValue;
-import io.easybest.mybatis.repository.support.MybatisContext;
 import lombok.Getter;
 import org.apache.ibatis.type.JdbcType;
-
 import org.springframework.util.StringUtils;
+
+import io.easybest.mybatis.repository.query.criteria.ParamValue;
+import io.easybest.mybatis.repository.support.MybatisContext;
 
 /**
  * .
@@ -42,6 +42,8 @@ public class Parameter extends AbstractSegment {
 	private Class<?> typeHandler;
 
 	private Class<?> javaTypeClass;
+
+	private boolean getterOptional;
 
 	public static Parameter of(String property) {
 		return Parameter.builder().property(property).build();
@@ -95,6 +97,11 @@ public class Parameter extends AbstractSegment {
 		StringBuilder builder = new StringBuilder();
 		builder.append("#{");
 		builder.append(this.property);
+
+		if (this.isGetterOptional()) {
+			builder.append(".orElseGet(null)");
+		}
+
 		if (StringUtils.hasText(this.javaType)) {
 			builder.append(",javaType=").append(this.javaType);
 		}
@@ -129,6 +136,8 @@ public class Parameter extends AbstractSegment {
 
 		private Class<?> javaTypeClass;
 
+		private boolean getterOptional;
+
 		public Parameter build() {
 
 			Parameter instance = new Parameter();
@@ -138,6 +147,7 @@ public class Parameter extends AbstractSegment {
 			instance.jdbcType = this.jdbcType;
 			instance.typeHandler = this.typeHandler;
 			instance.javaTypeClass = this.javaTypeClass;
+			instance.getterOptional = this.getterOptional;
 
 			return instance;
 		}
@@ -169,6 +179,11 @@ public class Parameter extends AbstractSegment {
 
 		public Builder javaTypeClass(final Class<?> javaTypeClass) {
 			this.javaTypeClass = javaTypeClass;
+			return this;
+		}
+
+		public Builder getterOptional(final boolean getterOptional) {
+			this.getterOptional = getterOptional;
 			return this;
 		}
 

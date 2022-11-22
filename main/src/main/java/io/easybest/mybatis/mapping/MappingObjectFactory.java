@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
-
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.model.EntityInstantiator;

@@ -16,10 +16,10 @@
 
 package io.easybest.mybatis.repository.query;
 
-import io.easybest.mybatis.mapping.EntityManager;
-
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
+
+import io.easybest.mybatis.mapping.EntityManager;
 
 /**
  * .

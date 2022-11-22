@@ -19,7 +19,6 @@ package io.easybest.mybatis.mapping.precompile;
 import java.util.List;
 
 import lombok.Getter;
-
 import org.springframework.util.StringUtils;
 
 /**

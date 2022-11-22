@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
-
 import org.springframework.util.StringUtils;
 
 /**

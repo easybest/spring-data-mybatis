@@ -32,6 +32,12 @@ import javax.persistence.GenerationType;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.SequenceGenerators;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.util.StringUtils;
+
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
@@ -47,12 +53,6 @@ import io.easybest.mybatis.repository.query.criteria.ParamValue;
 import io.easybest.mybatis.repository.query.criteria.ParamValueCallback;
 import io.easybest.mybatis.repository.query.criteria.Predicate;
 import io.easybest.mybatis.repository.query.criteria.QueryUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.util.StringUtils;
 
 import static io.easybest.mybatis.mapping.precompile.Constant.COMMA;
 import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME_PURE;

@@ -21,8 +21,6 @@ import java.util.List;
 
 import javax.persistence.NoResultException;
 
-import io.easybest.mybatis.repository.support.ResidentStatementName;
-
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -34,6 +32,8 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+
+import io.easybest.mybatis.repository.support.ResidentStatementName;
 
 import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_PREFIX;
 

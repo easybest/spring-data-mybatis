@@ -20,10 +20,10 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.UnaryOperator;
 
+import org.springframework.util.Assert;
+
 import io.easybest.mybatis.mapping.sql.IdentifierProcessing;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
-
-import org.springframework.util.Assert;
 
 /**
  * .

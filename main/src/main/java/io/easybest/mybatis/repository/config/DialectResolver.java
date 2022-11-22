@@ -24,6 +24,13 @@ import java.util.Optional;
 
 import javax.sql.DataSource;
 
+import lombok.extern.slf4j.Slf4j;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.core.io.support.SpringFactoriesLoader;
+import org.springframework.dao.NonTransientDataAccessException;
+import org.springframework.data.util.Optionals;
+import org.springframework.lang.Nullable;
+
 import io.easybest.mybatis.dialect.CUBRIDDialect;
 import io.easybest.mybatis.dialect.ClickHouseDialect;
 import io.easybest.mybatis.dialect.DB2400Dialect;
@@ -58,13 +65,6 @@ import io.easybest.mybatis.dialect.SQLServer2012Dialect;
 import io.easybest.mybatis.dialect.SQLiteDialect;
 import io.easybest.mybatis.dialect.SqlServerDialect;
 import io.easybest.mybatis.dialect.XuguDialect;
-import lombok.extern.slf4j.Slf4j;
-import org.mybatis.spring.SqlSessionTemplate;
-
-import org.springframework.core.io.support.SpringFactoriesLoader;
-import org.springframework.dao.NonTransientDataAccessException;
-import org.springframework.data.util.Optionals;
-import org.springframework.lang.Nullable;
 
 /**
  * .

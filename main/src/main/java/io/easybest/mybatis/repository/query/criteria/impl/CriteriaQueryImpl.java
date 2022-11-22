@@ -24,6 +24,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.util.CollectionUtils;
+
 import io.easybest.mybatis.auxiliary.SQLResult;
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
@@ -49,11 +54,6 @@ import io.easybest.mybatis.repository.query.criteria.ParamValueCallback;
 import io.easybest.mybatis.repository.query.criteria.Predicate;
 import io.easybest.mybatis.repository.query.criteria.PredicateResult;
 import io.easybest.mybatis.repository.query.criteria.SegmentResult;
-
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.util.CollectionUtils;
 
 import static io.easybest.mybatis.mapping.precompile.MybatisMapperSnippet.MYBATIS_DEFAULT_PARAMETER_NAME;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.RESULT_MAP;

@@ -14,34 +14,20 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.repository.sample;
+package io.easybest.mybatis.annotation;
 
-import lombok.extern.slf4j.Slf4j;
-import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import io.easybest.mybatis.domain.sample.User;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-@Slf4j
-public class UserRepositoryImpl implements UserRepositoryCustom {
-
-	@Autowired
-	public UserRepositoryImpl(SqlSessionTemplate sqlSessionTemplate) {
-	}
-
-	@Override
-	public void findByOverrridingMethod() {
-		log.debug("A method overriding a finder was invoked!");
-	}
-
-	@Override
-	public void someCustomMethod(User user) {
-		log.debug("Some custom method was invoked!");
-	}
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface GetterOptional {
 
 }

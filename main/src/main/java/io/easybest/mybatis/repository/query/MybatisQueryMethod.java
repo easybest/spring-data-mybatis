@@ -27,15 +27,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import io.easybest.mybatis.mapping.EntityManager;
-import io.easybest.mybatis.repository.BasicQuery;
-import io.easybest.mybatis.repository.Modifying;
-import io.easybest.mybatis.repository.Query;
-import io.easybest.mybatis.repository.ResultMap;
-import io.easybest.mybatis.repository.ResultType;
-import io.easybest.mybatis.repository.support.ResidentStatementName;
 import org.apache.ibatis.mapping.SqlCommandType;
-
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.projection.ProjectionFactory;
@@ -49,6 +41,14 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+
+import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.repository.BasicQuery;
+import io.easybest.mybatis.repository.Modifying;
+import io.easybest.mybatis.repository.Query;
+import io.easybest.mybatis.repository.ResultMap;
+import io.easybest.mybatis.repository.ResultType;
+import io.easybest.mybatis.repository.support.ResidentStatementName;
 
 /**
  * .

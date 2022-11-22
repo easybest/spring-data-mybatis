@@ -22,8 +22,6 @@ import java.util.function.Function;
 import com.querydsl.core.types.EntityPath;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
-import io.easybest.mybatis.mapping.EntityManager;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,6 +29,8 @@ import org.springframework.data.querydsl.EntityPathResolver;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.query.FluentQuery.FetchableFluentQuery;
+
+import io.easybest.mybatis.mapping.EntityManager;
 
 /**
  * .

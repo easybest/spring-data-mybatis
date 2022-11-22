@@ -20,13 +20,6 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import io.easybest.mybatis.mapping.EntityManager;
-import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
-import io.easybest.mybatis.repository.QuerydslMybatisPredicateExecutor;
-import io.easybest.mybatis.repository.query.MybatisQueryIntendListener;
-import io.easybest.mybatis.repository.query.MybatisQueryLookupStrategy;
-import io.easybest.mybatis.repository.query.Procedure;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.mapping.callback.EntityCallbacks;
@@ -44,6 +37,13 @@ import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
+
+import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
+import io.easybest.mybatis.repository.QuerydslMybatisPredicateExecutor;
+import io.easybest.mybatis.repository.query.MybatisQueryIntendListener;
+import io.easybest.mybatis.repository.query.MybatisQueryLookupStrategy;
+import io.easybest.mybatis.repository.query.Procedure;
 
 import static org.springframework.data.querydsl.QuerydslUtils.QUERY_DSL_PRESENT;
 

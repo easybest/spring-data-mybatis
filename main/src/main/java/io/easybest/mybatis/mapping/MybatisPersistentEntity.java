@@ -18,9 +18,9 @@ package io.easybest.mybatis.mapping;
 
 import java.util.Optional;
 
-import io.easybest.mybatis.mapping.sql.SqlIdentifier;
-
 import org.springframework.data.mapping.model.MutablePersistentEntity;
+
+import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 
 /**
  * .

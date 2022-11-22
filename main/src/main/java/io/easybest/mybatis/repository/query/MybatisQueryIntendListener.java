@@ -16,12 +16,12 @@
 
 package io.easybest.mybatis.repository.query;
 
-import io.easybest.mybatis.mapping.precompile.MybatisAggregateRootPrecompile;
-
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.repository.core.support.QueryCreationListener;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.lang.NonNull;
+
+import io.easybest.mybatis.mapping.precompile.MybatisAggregateRootPrecompile;
 
 /**
  * .

@@ -16,11 +16,11 @@
 
 package io.easybest.mybatis.mapping;
 
-import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
-
 import org.springframework.data.mapping.PersistentProperty;
+
+import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 
 /**
  * .
@@ -40,6 +40,8 @@ public interface MybatisPersistentProperty extends PersistentProperty<MybatisPer
 	String getJavaType();
 
 	Class<? extends TypeHandler<?>> getTypeHandler();
+
+	boolean isGetterOptional();
 
 	@Override
 	MybatisPersistentEntity<?> getOwner();

@@ -28,6 +28,17 @@ import java.util.stream.Collectors;
 import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
 
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.data.repository.query.ResultProcessor;
+import org.springframework.data.repository.query.ReturnedType;
+import org.springframework.data.util.Lazy;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.precompile.SqlDefinition;
@@ -40,17 +51,6 @@ import io.easybest.mybatis.repository.query.MybatisQueryExecution.SlicedExecutio
 import io.easybest.mybatis.repository.query.MybatisQueryExecution.StreamExecution;
 import io.easybest.mybatis.repository.support.MybatisContext;
 import io.easybest.mybatis.repository.support.ResidentParameterName;
-
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.query.Parameters;
-import org.springframework.data.repository.query.RepositoryQuery;
-import org.springframework.data.repository.query.ResultProcessor;
-import org.springframework.data.repository.query.ReturnedType;
-import org.springframework.data.util.Lazy;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * .

@@ -29,21 +29,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import io.easybest.mybatis.domain.sample.Address;
-import io.easybest.mybatis.domain.sample.Role;
-import io.easybest.mybatis.domain.sample.SpecialUser;
-import io.easybest.mybatis.domain.sample.User;
-import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
-import io.easybest.mybatis.repository.sample.RoleRepository;
-import io.easybest.mybatis.repository.sample.UserRepository;
-import io.easybest.mybatis.repository.sample.UserRepository.NameOnly;
 import lombok.Data;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mybatis.spring.MyBatisSystemException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Example;
@@ -57,6 +48,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
+
+import io.easybest.mybatis.domain.sample.Address;
+import io.easybest.mybatis.domain.sample.Role;
+import io.easybest.mybatis.domain.sample.SpecialUser;
+import io.easybest.mybatis.domain.sample.User;
+import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import io.easybest.mybatis.repository.sample.RoleRepository;
+import io.easybest.mybatis.repository.sample.UserRepository;
+import io.easybest.mybatis.repository.sample.UserRepository.NameOnly;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;

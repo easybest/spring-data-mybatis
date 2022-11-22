@@ -19,10 +19,11 @@ package io.easybest.mybatis.repository.query.criteria;
 import java.io.Serializable;
 import java.util.Set;
 
-import io.easybest.mybatis.mapping.precompile.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import io.easybest.mybatis.mapping.precompile.Column;
 
 /**
  * .

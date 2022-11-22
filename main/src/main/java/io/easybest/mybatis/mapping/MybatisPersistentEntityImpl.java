@@ -26,14 +26,14 @@ import javax.persistence.GenerationType;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 
-import io.easybest.mybatis.annotation.LogicDelete;
-import io.easybest.mybatis.mapping.sql.SqlIdentifier;
-
 import org.springframework.data.mapping.model.BasicPersistentEntity;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.util.StringUtils;
+
+import io.easybest.mybatis.annotation.LogicDelete;
+import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 
 /**
  * .

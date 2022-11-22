@@ -22,10 +22,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import io.easybest.mybatis.mapping.precompile.Segment;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import io.easybest.mybatis.mapping.precompile.Segment;
 
 /**
  * .

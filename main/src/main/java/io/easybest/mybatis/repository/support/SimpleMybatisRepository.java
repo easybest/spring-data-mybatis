@@ -21,14 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import io.easybest.mybatis.mapping.EntityManager;
-import io.easybest.mybatis.mapping.MybatisAssociation;
-import io.easybest.mybatis.mapping.MybatisPersistentEntity;
-import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
-import io.easybest.mybatis.repository.MybatisRepository;
-import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
-import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
-
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
@@ -44,6 +36,14 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.data.util.Streamable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+
+import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.MybatisAssociation;
+import io.easybest.mybatis.mapping.MybatisPersistentEntity;
+import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
+import io.easybest.mybatis.repository.MybatisRepository;
+import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
+import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
 
 import static io.easybest.mybatis.repository.support.ResidentStatementName.COUNT;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.COUNT_ALL;

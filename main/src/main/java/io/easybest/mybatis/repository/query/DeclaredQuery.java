@@ -18,10 +18,10 @@ package io.easybest.mybatis.repository.query;
 
 import java.util.List;
 
-import io.easybest.mybatis.repository.query.StringQuery.ParameterBinding;
-
 import org.springframework.lang.Nullable;
 import org.springframework.util.ObjectUtils;
+
+import io.easybest.mybatis.repository.query.StringQuery.ParameterBinding;
 
 /**
  * .

@@ -18,6 +18,12 @@ package io.easybest.mybatis.repository.query;
 
 import java.util.Iterator;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PropertyPath;
+import org.springframework.data.repository.query.parser.AbstractQueryCreator;
+import org.springframework.data.repository.query.parser.Part;
+import org.springframework.data.repository.query.parser.PartTree;
+
 import io.easybest.mybatis.mapping.precompile.ParameterExpression;
 import io.easybest.mybatis.repository.query.ParameterMetadataProvider.ParameterMetadata;
 import io.easybest.mybatis.repository.query.criteria.ParamValue;
@@ -25,12 +31,6 @@ import io.easybest.mybatis.repository.query.criteria.Predicate;
 import io.easybest.mybatis.repository.query.criteria.PredicateType;
 import io.easybest.mybatis.repository.query.criteria.impl.ConditionsImpl;
 import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
-
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.repository.query.parser.AbstractQueryCreator;
-import org.springframework.data.repository.query.parser.Part;
-import org.springframework.data.repository.query.parser.PartTree;
 
 import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.ALWAYS;
 import static org.springframework.data.repository.query.parser.Part.IgnoreCaseType.WHEN_POSSIBLE;

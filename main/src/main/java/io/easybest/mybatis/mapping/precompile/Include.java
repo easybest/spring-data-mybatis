@@ -16,10 +16,11 @@
 
 package io.easybest.mybatis.mapping.precompile;
 
-import io.easybest.mybatis.repository.support.ResidentStatementName;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import io.easybest.mybatis.repository.support.ResidentStatementName;
 
 /**
  * .

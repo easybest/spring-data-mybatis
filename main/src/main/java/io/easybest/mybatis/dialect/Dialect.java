@@ -18,10 +18,10 @@ package io.easybest.mybatis.dialect;
 
 import javax.persistence.GenerationType;
 
-import io.easybest.mybatis.mapping.sql.IdentifierProcessing;
-
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.mapping.MappingException;
+
+import io.easybest.mybatis.mapping.sql.IdentifierProcessing;
 
 /**
  * .

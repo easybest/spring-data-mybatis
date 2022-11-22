@@ -17,7 +17,6 @@
 package io.easybest.mybatis.autoconfigure;
 
 import lombok.Data;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**

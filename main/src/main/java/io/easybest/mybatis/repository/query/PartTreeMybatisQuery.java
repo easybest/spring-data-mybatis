@@ -19,6 +19,11 @@ package io.easybest.mybatis.repository.query;
 import java.util.Arrays;
 import java.util.Collections;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.repository.query.parser.Part;
+import org.springframework.data.repository.query.parser.PartTree;
+import org.springframework.data.util.Streamable;
+
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.precompile.Parameter;
 import io.easybest.mybatis.mapping.precompile.Placeholder;
@@ -36,11 +41,6 @@ import io.easybest.mybatis.repository.query.criteria.impl.CriteriaQueryImpl;
 import io.easybest.mybatis.repository.support.MybatisContext;
 import io.easybest.mybatis.repository.support.Pageable;
 import io.easybest.mybatis.repository.support.ResidentStatementName;
-
-import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.query.parser.Part;
-import org.springframework.data.repository.query.parser.PartTree;
-import org.springframework.data.util.Streamable;
 
 import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_ADDITIONAL_VALUES_PREFIX;
 import static io.easybest.mybatis.repository.support.ResidentStatementName.QUERY_PREFIX;

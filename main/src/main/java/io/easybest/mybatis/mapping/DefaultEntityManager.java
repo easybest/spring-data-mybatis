@@ -29,14 +29,8 @@ import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 
-import io.easybest.mybatis.dialect.Dialect;
-import io.easybest.mybatis.mapping.precompile.StagingMappers;
-import io.easybest.mybatis.repository.config.DialectResolver;
-import io.easybest.mybatis.repository.query.EscapeCharacter;
-import io.easybest.mybatis.repository.support.MybatisContext;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.SqlSessionTemplate;
-
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.mapping.context.AbstractMappingContext;
@@ -45,6 +39,12 @@ import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.AnnotatedTypeScanner;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.util.StopWatch;
+
+import io.easybest.mybatis.dialect.Dialect;
+import io.easybest.mybatis.mapping.precompile.StagingMappers;
+import io.easybest.mybatis.repository.config.DialectResolver;
+import io.easybest.mybatis.repository.query.EscapeCharacter;
+import io.easybest.mybatis.repository.support.MybatisContext;
 
 import static io.easybest.mybatis.mapping.precompile.MybatisAggregateRootPrecompile.compile;
 

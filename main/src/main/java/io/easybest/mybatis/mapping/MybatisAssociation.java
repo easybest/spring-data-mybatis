@@ -31,14 +31,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
-import io.easybest.mybatis.mapping.precompile.SQL;
-import io.easybest.mybatis.mapping.sql.IdentifierProcessing;
-import io.easybest.mybatis.mapping.sql.SqlIdentifier;
-import io.easybest.mybatis.repository.Fetch;
-import io.easybest.mybatis.repository.FetchMode;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mapping.Association;
 import org.springframework.data.mapping.MappingException;
@@ -46,6 +40,12 @@ import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.util.Lazy;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import io.easybest.mybatis.mapping.precompile.SQL;
+import io.easybest.mybatis.mapping.sql.IdentifierProcessing;
+import io.easybest.mybatis.mapping.sql.SqlIdentifier;
+import io.easybest.mybatis.repository.Fetch;
+import io.easybest.mybatis.repository.FetchMode;
 
 import static io.easybest.mybatis.mapping.MybatisAssociation.Type.MANY2MANY;
 import static io.easybest.mybatis.mapping.MybatisAssociation.Type.MANY2ONE;

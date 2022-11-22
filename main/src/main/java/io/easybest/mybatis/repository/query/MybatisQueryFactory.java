@@ -16,13 +16,13 @@
 
 package io.easybest.mybatis.repository.query;
 
-import io.easybest.mybatis.mapping.EntityManager;
-
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
+
+import io.easybest.mybatis.mapping.EntityManager;
 
 /**
  * .

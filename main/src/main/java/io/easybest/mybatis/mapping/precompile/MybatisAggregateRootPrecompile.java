@@ -18,13 +18,13 @@ package io.easybest.mybatis.mapping.precompile;
 
 import java.util.List;
 
+import org.springframework.util.CollectionUtils;
+
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisAssociation;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.repository.query.IndicatingMybatisQuery;
 import io.easybest.mybatis.repository.query.PartTreeMybatisQuery;
-
-import org.springframework.util.CollectionUtils;
 
 /**
  * .

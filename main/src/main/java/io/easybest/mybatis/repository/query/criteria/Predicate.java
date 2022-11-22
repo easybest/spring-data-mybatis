@@ -20,6 +20,11 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
 
+import lombok.Data;
+import org.springframework.data.mapping.MappingException;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.lang.Nullable;
+
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisAssociation;
@@ -35,11 +40,6 @@ import io.easybest.mybatis.mapping.precompile.Parameter;
 import io.easybest.mybatis.mapping.precompile.SQL;
 import io.easybest.mybatis.mapping.precompile.Segment;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
-import lombok.Data;
-
-import org.springframework.data.mapping.MappingException;
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.lang.Nullable;
 
 import static io.easybest.mybatis.repository.query.criteria.Operator.AND;
 import static io.easybest.mybatis.repository.query.criteria.Operator.OR;

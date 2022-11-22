@@ -24,12 +24,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import io.easybest.mybatis.domain.sample.Role;
-import io.easybest.mybatis.domain.sample.User;
-import io.easybest.mybatis.repository.Modifying;
-import io.easybest.mybatis.repository.MybatisRepository;
-import io.easybest.mybatis.repository.Query;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +32,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+
+import io.easybest.mybatis.domain.sample.Role;
+import io.easybest.mybatis.domain.sample.User;
+import io.easybest.mybatis.repository.Modifying;
+import io.easybest.mybatis.repository.MybatisRepository;
+import io.easybest.mybatis.repository.Query;
 
 /**
  * .

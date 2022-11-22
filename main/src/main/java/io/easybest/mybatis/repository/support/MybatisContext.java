@@ -21,13 +21,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.easybest.mybatis.mapping.EntityManager;
-import io.easybest.mybatis.mapping.sql.Identifier;
-import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
-
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.lang.Nullable;
+
+import io.easybest.mybatis.mapping.EntityManager;
+import io.easybest.mybatis.mapping.sql.Identifier;
+import io.easybest.mybatis.repository.query.criteria.CriteriaQuery;
 
 /**
  * {@link MybatisContext} instances get passed to MyBatis mapped statements as arguments.

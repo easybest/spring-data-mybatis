@@ -22,10 +22,10 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.easybest.mybatis.mapping.precompile.Parameter;
-
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
+
+import io.easybest.mybatis.mapping.precompile.Parameter;
 
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 

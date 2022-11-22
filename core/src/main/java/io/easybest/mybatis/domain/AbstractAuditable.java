@@ -29,6 +29,8 @@ import org.springframework.data.domain.Auditable;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
+import io.easybest.mybatis.annotation.GetterOptional;
+
 /**
  * Abstract base class for auditable entities. Stores the audition values in persistent
  * fields.
@@ -43,16 +45,20 @@ public abstract class AbstractAuditable<UID, PK extends Serializable> extends Ab
 
 	private static final long serialVersionUID = -5136973663465530271L;
 
+	@GetterOptional
 	@Column(name = "created_by")
 	protected @Nullable UID createdBy;
 
+	@GetterOptional
 	@Column(name = "created_date")
 	@Temporal(TemporalType.TIMESTAMP)
 	protected @Nullable LocalDateTime createdDate;
 
+	@GetterOptional
 	@Column(name = "last_modified_by")
 	private @Nullable UID lastModifiedBy;
 
+	@GetterOptional
 	@Column(name = "last_modified_date")
 	@Temporal(TemporalType.TIMESTAMP)
 	private @Nullable LocalDateTime lastModifiedDate;

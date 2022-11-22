@@ -24,6 +24,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import org.apache.ibatis.mapping.SqlCommandType;
+import org.springframework.data.mapping.MappingException;
+import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
+import org.springframework.data.util.Lazy;
+import org.springframework.expression.EvaluationContext;
+import org.springframework.expression.Expression;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.dialect.Dialect;
 import io.easybest.mybatis.mapping.EntityManager;
@@ -47,18 +59,6 @@ import io.easybest.mybatis.repository.query.StringQuery.LikeParameterBinding;
 import io.easybest.mybatis.repository.query.StringQuery.ParameterBinding;
 import io.easybest.mybatis.repository.support.MybatisContext;
 import io.easybest.mybatis.repository.support.ResidentStatementName;
-import org.apache.ibatis.mapping.SqlCommandType;
-
-import org.springframework.data.mapping.MappingException;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
-import org.springframework.data.util.Lazy;
-import org.springframework.expression.EvaluationContext;
-import org.springframework.expression.Expression;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_ADDITIONAL_VALUES_PREFIX;
 import static io.easybest.mybatis.repository.support.ResidentParameterName.POSITION_PREFIX;

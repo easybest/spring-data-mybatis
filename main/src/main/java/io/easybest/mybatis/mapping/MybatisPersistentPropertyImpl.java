@@ -46,15 +46,10 @@ import javax.persistence.Temporal;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
-import io.easybest.mybatis.annotation.DatabaseDefault;
-import io.easybest.mybatis.annotation.TypeHandler;
-import io.easybest.mybatis.mapping.handler.UUIDTypeHandler;
-import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 import org.apache.ibatis.type.EnumOrdinalTypeHandler;
 import org.apache.ibatis.type.EnumTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeAliasRegistry;
-
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.annotation.AccessType;
 import org.springframework.data.mapping.MappingException;
@@ -67,6 +62,12 @@ import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
+
+import io.easybest.mybatis.annotation.DatabaseDefault;
+import io.easybest.mybatis.annotation.GetterOptional;
+import io.easybest.mybatis.annotation.TypeHandler;
+import io.easybest.mybatis.mapping.handler.UUIDTypeHandler;
+import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 
 /**
  * .
@@ -368,6 +369,11 @@ public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProp
 	@SuppressWarnings({ "unchecked" })
 	public Class<? extends org.apache.ibatis.type.TypeHandler<?>> getTypeHandler() {
 		return (Class<? extends org.apache.ibatis.type.TypeHandler<?>>) this.typeHandler.getNullable();
+	}
+
+	@Override
+	public boolean isGetterOptional() {
+		return this.isAnnotationPresent(GetterOptional.class);
 	}
 
 	private boolean isEnumerated() {

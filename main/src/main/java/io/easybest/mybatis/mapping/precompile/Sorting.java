@@ -20,16 +20,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import lombok.Getter;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mapping.PersistentPropertyPath;
+import org.springframework.util.CollectionUtils;
+
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
-import lombok.Getter;
-
-import org.springframework.data.domain.Sort;
-import org.springframework.data.mapping.PersistentPropertyPath;
-import org.springframework.util.CollectionUtils;
 
 /**
  * .

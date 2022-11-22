@@ -18,6 +18,8 @@ package io.easybest.mybatis.repository.query.criteria.impl;
 
 import java.util.function.Consumer;
 
+import org.springframework.data.mapping.MappingException;
+
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.precompile.Column;
@@ -30,8 +32,6 @@ import io.easybest.mybatis.repository.query.criteria.ParamValueCallback;
 import io.easybest.mybatis.repository.query.criteria.Predicate;
 import io.easybest.mybatis.repository.query.criteria.PredicateResult;
 import io.easybest.mybatis.repository.query.criteria.PredicateType;
-
-import org.springframework.data.mapping.MappingException;
 
 import static io.easybest.mybatis.repository.query.criteria.Operator.AND;
 import static io.easybest.mybatis.repository.query.criteria.Operator.OR;

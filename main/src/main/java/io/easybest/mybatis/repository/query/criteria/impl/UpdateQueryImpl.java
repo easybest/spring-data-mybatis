@@ -22,6 +22,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.mapping.PersistentPropertyPath;
+
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
@@ -38,11 +43,6 @@ import io.easybest.mybatis.repository.query.criteria.Predicate;
 import io.easybest.mybatis.repository.query.criteria.PredicateResult;
 import io.easybest.mybatis.repository.query.criteria.QueryUtils;
 import io.easybest.mybatis.repository.query.criteria.UpdateQuery;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import org.springframework.data.mapping.PersistentPropertyPath;
 
 import static io.easybest.mybatis.mapping.precompile.Constant.COMMA;
 import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME_PURE;
