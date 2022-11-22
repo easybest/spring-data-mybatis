@@ -96,8 +96,7 @@ public class Parameter extends AbstractSegment {
 
 		StringBuilder builder = new StringBuilder();
 		if (this.isGetterOptional()) {
-			builder.append(
-					Bind.of("__optional_" + this.property.replace('.', '_'), this.property + ".orElseGet(null)"));
+			builder.append(Bind.of("__optional_" + this.property.replace('.', '_'), this.property + ".orElse(null)"));
 		}
 		builder.append("#{");
 

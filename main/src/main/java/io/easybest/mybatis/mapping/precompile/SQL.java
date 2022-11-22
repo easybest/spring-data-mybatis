@@ -174,7 +174,7 @@ public class SQL implements Segment {
 	/**
 	 * Base entity alias.
 	 */
-	public static final SQL ROOT_ALIAS = SQL.of("__root");
+	public static final SQL ROOT_ALIAS = SQL.of("__");
 
 	private final String value;
 

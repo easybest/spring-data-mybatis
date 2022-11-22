@@ -101,7 +101,7 @@ public class UserRepositoryTests {
 
 	void flushTestUsers() {
 
-		this.roleRepository.save(this.adminRole);
+		this.roleRepository.saveSelective(this.adminRole);
 
 		this.firstUser = this.repository.save(this.firstUser);
 		this.secondUser = this.repository.save(this.secondUser);
