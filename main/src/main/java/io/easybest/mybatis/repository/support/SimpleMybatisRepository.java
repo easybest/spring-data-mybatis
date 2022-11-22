@@ -155,7 +155,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 					.setProperty(this.persistentEntity.getRequiredVersionProperty(), 0);
 		}
 
-		this.insert(INSERT_SELECTIVE, entity);
+		this.insert(INSERT_SELECTIVE, new MybatisContext<>(null, entity, this.persistentEntity.getType(), this.basic));
 
 		return entity;
 	}
