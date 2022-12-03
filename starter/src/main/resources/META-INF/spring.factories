@@ -1,3 +1,4 @@
 # Auto Configure
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+io.easybest.mybatis.autoconfigure.MybatisEntityManagerAutoConfiguration,\
 io.easybest.mybatis.autoconfigure.MybatisRepositoriesAutoConfiguration
