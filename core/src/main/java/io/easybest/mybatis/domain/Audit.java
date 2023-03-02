@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2019-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,16 @@ package io.easybest.mybatis.domain;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Temporal;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.lang.Nullable;
-
-import static javax.persistence.TemporalType.TIMESTAMP;
 
 /**
  * Base audit.
@@ -61,7 +60,7 @@ public abstract class Audit<AUDITOR, ID extends Serializable> extends Id<ID> {
 	 * 创建时间.
 	 */
 	@CreatedDate
-	@Temporal(TIMESTAMP)
+	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "created_date")
 	private @Nullable LocalDateTime createdDate;
 
@@ -69,7 +68,7 @@ public abstract class Audit<AUDITOR, ID extends Serializable> extends Id<ID> {
 	 * 最后修改时间.
 	 */
 	@LastModifiedDate
-	@Temporal(TIMESTAMP)
+	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "last_modified_date")
 	private @Nullable LocalDateTime lastModifiedDate;
 

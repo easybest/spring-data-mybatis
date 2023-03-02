@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2019-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.sql.Blob;
 import java.sql.SQLException;
 
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.dao.CleanupFailureDataAccessException;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.lang.Nullable;
 import org.springframework.util.StreamUtils;
@@ -72,7 +71,7 @@ final class MybatisResultConverters {
 						blobStream.close();
 					}
 					catch (IOException ex) {
-						throw new CleanupFailureDataAccessException("Couldn't close binary stream for given blob.", ex);
+						throw new DataRetrievalFailureException("Couldn't close binary stream for given blob.", ex);
 					}
 				}
 			}
