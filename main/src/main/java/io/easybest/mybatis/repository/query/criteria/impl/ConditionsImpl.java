@@ -53,6 +53,7 @@ import static io.easybest.mybatis.repository.query.criteria.PredicateType.NOT_LI
 import static io.easybest.mybatis.repository.query.criteria.PredicateType.REGEX;
 import static io.easybest.mybatis.repository.query.criteria.PredicateType.SIMPLE_PROPERTY;
 import static io.easybest.mybatis.repository.query.criteria.PredicateType.STARTING_WITH;
+import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_TENANT_ID;
 
 /**
  * .
@@ -418,6 +419,16 @@ public class ConditionsImpl<T, R, F, V> implements Conditions<R, F, V> {
 		Column col = alias ? Column.base(entity.getLogicDeleteColumn().get())
 				: Column.of(entity.getLogicDeleteColumn().get());
 		return SQL.of("AND " + col + " = 0");
+	}
+
+	protected SQL tenantIdClause(MybatisPersistentEntityImpl<?> entity, boolean alias) {
+
+		if (!entity.getTenantIdColumn().isPresent()) {
+			return SQL.EMPTY;
+		}
+		Column col = alias ? Column.base(entity.getTenantIdColumn().get())
+				: Column.of(entity.getTenantIdColumn().get());
+		return SQL.of("AND " + col + " = #{" + PARAM_TENANT_ID + "}");
 	}
 
 	@Override

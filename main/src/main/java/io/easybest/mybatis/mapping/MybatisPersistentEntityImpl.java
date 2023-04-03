@@ -33,6 +33,7 @@ import org.springframework.data.util.TypeInformation;
 import org.springframework.util.StringUtils;
 
 import io.easybest.mybatis.annotation.LogicDelete;
+import io.easybest.mybatis.annotation.Tenant;
 import io.easybest.mybatis.mapping.sql.SqlIdentifier;
 
 /**
@@ -103,6 +104,11 @@ public class MybatisPersistentEntityImpl<T> extends BasicPersistentEntity<T, Myb
 	@Override
 	public Optional<String> getLogicDeleteColumn() {
 		return Optional.ofNullable(this.findAnnotation(LogicDelete.class)).map(LogicDelete::value);
+	}
+
+	@Override
+	public Optional<String> getTenantIdColumn() {
+		return Optional.ofNullable(this.findAnnotation(Tenant.class)).map(Tenant::value);
 	}
 
 	public GenerationType getGenerationType() {

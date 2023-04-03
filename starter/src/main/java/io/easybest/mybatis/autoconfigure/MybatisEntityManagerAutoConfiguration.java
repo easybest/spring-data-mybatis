@@ -34,12 +34,13 @@ import org.springframework.context.annotation.Configuration;
 import io.easybest.mybatis.mapping.DefaultEntityManager;
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.NamingStrategy;
+import io.easybest.mybatis.mapping.TenantStrategy;
 import io.easybest.mybatis.repository.MybatisRepository;
 import io.easybest.mybatis.repository.config.MybatisRepositoryConfigExtension;
 import io.easybest.mybatis.repository.support.MybatisRepositoryFactoryBean;
 
 /**
- * .
+ * MybatisEntityManagerAutoConfiguration.
  *
  * @author Jarvis Song
  */
@@ -54,8 +55,12 @@ public class MybatisEntityManagerAutoConfiguration {
 
 	private final SpringDataMybatisProperties properties;
 
-	public MybatisEntityManagerAutoConfiguration(SpringDataMybatisProperties properties) {
+	private final TenantStrategy tenantStrategy;
+
+	public MybatisEntityManagerAutoConfiguration(SpringDataMybatisProperties properties,
+			TenantStrategy tenantStrategy) {
 		this.properties = properties;
+		this.tenantStrategy = tenantStrategy;
 	}
 
 	@Bean
@@ -92,7 +97,9 @@ public class MybatisEntityManagerAutoConfiguration {
 		if (null != this.properties.getUniformTablePrefix()) {
 			entityManager.setUniformTablePrefix(this.properties.getUniformTablePrefix());
 		}
-
+		if (null != this.tenantStrategy) {
+			entityManager.setTenantStrategy(this.tenantStrategy);
+		}
 		return entityManager;
 	}
 

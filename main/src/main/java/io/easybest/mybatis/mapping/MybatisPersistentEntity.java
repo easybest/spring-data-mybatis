@@ -38,6 +38,8 @@ public interface MybatisPersistentEntity<T> extends MutablePersistentEntity<T, M
 
 	Optional<String> getLogicDeleteColumn();
 
+	Optional<String> getTenantIdColumn();
+
 	/**
 	 * Check whether the entity has associated attributes.
 	 * @return result

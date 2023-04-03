@@ -16,32 +16,13 @@
 
 package io.easybest.mybatis.mapping;
 
-import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.lang.Nullable;
-
-import io.easybest.mybatis.dialect.Dialect;
-import io.easybest.mybatis.repository.query.EscapeCharacter;
-
 /**
- * .
+ * The strategy for obtaining the multi-tenant ID.
  *
  * @author Jarvis Song
  */
-public interface EntityManager extends MappingContext<MybatisPersistentEntityImpl<?>, MybatisPersistentPropertyImpl> {
+public interface TenantStrategy {
 
-	SqlSessionTemplate getSqlSessionTemplate();
-
-	Dialect getDialect();
-
-	@Nullable
-	String getNamedQuery(String name);
-
-	EscapeCharacter getEscapeCharacter();
-
-	@Nullable
-	String getUniformTablePrefix();
-
-	TenantStrategy getTenantStrategy();
+	Object getTenantId();
 
 }

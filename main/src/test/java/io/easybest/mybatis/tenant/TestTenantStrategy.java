@@ -14,34 +14,20 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.mapping;
+package io.easybest.mybatis.tenant;
 
-import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.lang.Nullable;
-
-import io.easybest.mybatis.dialect.Dialect;
-import io.easybest.mybatis.repository.query.EscapeCharacter;
+import io.easybest.mybatis.mapping.TenantStrategy;
 
 /**
  * .
  *
  * @author Jarvis Song
  */
-public interface EntityManager extends MappingContext<MybatisPersistentEntityImpl<?>, MybatisPersistentPropertyImpl> {
+public class TestTenantStrategy implements TenantStrategy {
 
-	SqlSessionTemplate getSqlSessionTemplate();
-
-	Dialect getDialect();
-
-	@Nullable
-	String getNamedQuery(String name);
-
-	EscapeCharacter getEscapeCharacter();
-
-	@Nullable
-	String getUniformTablePrefix();
-
-	TenantStrategy getTenantStrategy();
+	@Override
+	public Object getTenantId() {
+		return 10001L;
+	}
 
 }

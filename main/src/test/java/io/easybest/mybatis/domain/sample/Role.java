@@ -23,6 +23,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 
 import io.easybest.mybatis.annotation.GetterOptional;
+import io.easybest.mybatis.annotation.Tenant;
 
 /**
  * Sample domain class representing roles. Mapped with XML.
@@ -31,6 +32,7 @@ import io.easybest.mybatis.annotation.GetterOptional;
  * @author Thomas Darimont
  */
 @Entity
+@Tenant
 public class Role {
 
 	private static final String PREFIX = "ROLE_";

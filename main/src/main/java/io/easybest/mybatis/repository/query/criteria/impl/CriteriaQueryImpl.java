@@ -394,7 +394,8 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 				Where.of( //
 						bind ? Interpolation.of(SQLResult.PARAM_CONDITION_NAME) : SQL.EMPTY,
 						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()), //
-						this.logicDeleteClause(entity, alias)//
+						this.logicDeleteClause(entity, alias), //
+						this.tenantIdClause(entity, alias)//
 				), //
 				bind && (this.withSort || this.paging) ? Interpolation.of(SQLResult.PARAM_SORTING_NAME)
 						: (null != sorting ? sorting : SQL.EMPTY), //

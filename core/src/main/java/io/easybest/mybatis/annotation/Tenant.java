@@ -14,34 +14,26 @@
  * limitations under the License.
  */
 
-package io.easybest.mybatis.mapping;
+package io.easybest.mybatis.annotation;
 
-import org.mybatis.spring.SqlSessionTemplate;
-import org.springframework.data.mapping.context.MappingContext;
-import org.springframework.lang.Nullable;
-
-import io.easybest.mybatis.dialect.Dialect;
-import io.easybest.mybatis.repository.query.EscapeCharacter;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * .
+ * Tags need to support multi-tenancy.
  *
  * @author Jarvis Song
  */
-public interface EntityManager extends MappingContext<MybatisPersistentEntityImpl<?>, MybatisPersistentPropertyImpl> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface Tenant {
 
-	SqlSessionTemplate getSqlSessionTemplate();
-
-	Dialect getDialect();
-
-	@Nullable
-	String getNamedQuery(String name);
-
-	EscapeCharacter getEscapeCharacter();
-
-	@Nullable
-	String getUniformTablePrefix();
-
-	TenantStrategy getTenantStrategy();
+	/**
+	 * Column name of the multi-tenant ID.
+	 * @return column name
+	 */
+	String value() default "tenant_id";
 
 }

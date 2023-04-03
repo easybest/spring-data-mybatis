@@ -189,7 +189,8 @@ public class UpdateQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> impl
 								})).toArray(Segment[]::new)), //
 				Where.of(//
 						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()), //
-						this.logicDeleteClause(entity, false) //
+						this.logicDeleteClause(entity, false), //
+						this.tenantIdClause(entity, false) //
 				)));
 
 		return builder.build();

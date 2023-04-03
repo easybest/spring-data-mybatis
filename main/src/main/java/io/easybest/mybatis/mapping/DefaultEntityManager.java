@@ -72,6 +72,8 @@ public class DefaultEntityManager
 
 	private EscapeCharacter escapeCharacter = EscapeCharacter.DEFAULT;
 
+	private TenantStrategy tenantStrategy;
+
 	public DefaultEntityManager(SqlSessionTemplate sqlSessionTemplate) {
 		this.sqlSessionTemplate = sqlSessionTemplate;
 	}
@@ -199,6 +201,15 @@ public class DefaultEntityManager
 
 	public void setUniformTablePrefix(String uniformTablePrefix) {
 		this.uniformTablePrefix = uniformTablePrefix;
+	}
+
+	@Override
+	public TenantStrategy getTenantStrategy() {
+		return this.tenantStrategy;
+	}
+
+	public void setTenantStrategy(TenantStrategy tenantStrategy) {
+		this.tenantStrategy = tenantStrategy;
 	}
 
 }
