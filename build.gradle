@@ -47,13 +47,27 @@ configure(javaProjects) { project ->
 	apply plugin: "io.easybest.gradle.plugin.deployed"
 	apply plugin: "io.easybest.gradle.plugin.optional-dependencies"
 
-	sourceCompatibility = 17
-	targetCompatibility = 17
+	configurations.all {
+		resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+
+			def jvmVersion = Integer.valueOf(javaVersion)
+
+			if (jvmVersion >= 17) {
+
+			}
+		}
+	}
+
+
+	sourceCompatibility = javaVersion
+	targetCompatibility = javaVersion
 
 	java {
 		toolchain {
-			languageVersion = JavaLanguageVersion.of(17)
+			languageVersion = JavaLanguageVersion.of(javaVersion)
 		}
 	}
+
+
 }
 

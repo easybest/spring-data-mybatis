@@ -23,6 +23,7 @@ rootProject.name = 'spring-data-mybatis-build'
 
 include "core"
 include "main"
+include "spring6"
 include "starter"
 //include "processor"
 //include "querydsl"
