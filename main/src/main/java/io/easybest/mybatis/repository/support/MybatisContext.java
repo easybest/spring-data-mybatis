@@ -70,6 +70,11 @@ public class MybatisContext<T, ID> implements Serializable {
 	 */
 	public static final String PARAM_TENANT_ID = "tenantId";
 
+	/**
+	 * ID.
+	 */
+	public static final String PARAM_ID = "id";
+
 	private @Nullable ID id;
 
 	private @Nullable T instance;
