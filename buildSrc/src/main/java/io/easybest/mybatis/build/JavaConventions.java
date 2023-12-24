@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import io.easybest.mybatis.build.toolchain.ToolchainPlugin;
 import io.spring.javaformat.gradle.FormatTask;
 import io.spring.javaformat.gradle.SpringJavaFormatPlugin;
 import org.gradle.api.JavaVersion;
@@ -38,14 +39,12 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
 
-import io.easybest.mybatis.build.toolchain.ToolchainPlugin;
-
 /**
  * @author Jarvis Song
  */
 class JavaConventions {
 
-	private static final String SOURCE_AND_TARGET_COMPATIBILITY = "17";
+	private static final String SOURCE_AND_TARGET_COMPATIBILITY = "1.8";
 
 	void apply(Project project) {
 		project.getPlugins().withType(JavaBasePlugin.class, java -> {
@@ -115,7 +114,7 @@ class JavaConventions {
 	}
 
 	private boolean buildingWithJava8(Project project) {
-		return !project.hasProperty("toolchainVersion") && JavaVersion.current() == JavaVersion.VERSION_17;
+		return !project.hasProperty("toolchainVersion") && JavaVersion.current() == JavaVersion.VERSION_1_8;
 	}
 
 	private void configureSpringJavaFormat(Project project) {

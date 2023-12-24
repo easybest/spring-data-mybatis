@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class PersistentPropertyPathExtension {
 	}
 
 	public boolean isEmbedded() {
-		return null != this.path && this.path.getLeafProperty().isEmbeddable();
+		return null != this.path && this.path.getRequiredLeafProperty().isEmbeddable();
 	}
 
 	public PersistentPropertyPathExtension getParentPath() {
@@ -75,11 +75,11 @@ public class PersistentPropertyPathExtension {
 	@Nullable
 	public MybatisPersistentEntity<?> getLeafEntity() {
 		return this.path == null ? this.entity
-				: this.context.getPersistentEntity(this.path.getLeafProperty().getActualType());
+				: this.context.getPersistentEntity(this.path.getRequiredLeafProperty().getActualType());
 	}
 
 	public boolean isEntity() {
-		return this.path == null || this.path.getLeafProperty().isEntity();
+		return this.path == null || this.path.getRequiredLeafProperty().isEntity();
 	}
 
 	public boolean hasIdProperty() {

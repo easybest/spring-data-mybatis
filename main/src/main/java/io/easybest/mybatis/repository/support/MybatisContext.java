@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,11 +65,6 @@ public class MybatisContext<T, ID> implements Serializable {
 	 */
 	public static final String PARAM_PAGEABLE_PREFIX = "pageable.";
 
-	/**
-	 * PARAM_TENANT_ID.
-	 */
-	public static final String PARAM_TENANT_ID = "tenantId";
-
 	private @Nullable ID id;
 
 	private @Nullable T instance;
@@ -93,8 +88,6 @@ public class MybatisContext<T, ID> implements Serializable {
 	private Map<String, Object> bindable;
 
 	private boolean basic;
-
-	private Object tenantId;
 
 	public MybatisContext() {
 	}
@@ -429,14 +422,6 @@ public class MybatisContext<T, ID> implements Serializable {
 
 	public void setCriteria(@Nullable CriteriaQuery<T, ?, ?, ?> criteria) {
 		this.criteria = criteria;
-	}
-
-	public Object getTenantId() {
-		return this.tenantId;
-	}
-
-	public void setTenantId(Object tenantId) {
-		this.tenantId = tenantId;
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,8 @@ import java.util.List;
 
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.ListCrudRepository;
-import org.springframework.data.repository.ListPagingAndSortingRepository;
 import org.springframework.data.repository.NoRepositoryBean;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
 
 /**
@@ -33,8 +32,8 @@ import org.springframework.data.repository.query.QueryByExampleExecutor;
  * @param <ID> primary key
  */
 @NoRepositoryBean
-public interface MybatisRepository<T, ID> extends ListCrudRepository<T, ID>, ListPagingAndSortingRepository<T, ID>,
-		QueryByExampleExecutor<T>, QueryByCriteriaExecutor<T> {
+public interface MybatisRepository<T, ID>
+		extends PagingAndSortingRepository<T, ID>, QueryByExampleExecutor<T>, QueryByCriteriaExecutor<T> {
 
 	T getById(ID id);
 

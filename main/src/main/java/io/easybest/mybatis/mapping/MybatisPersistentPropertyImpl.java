@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,25 +26,25 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import jakarta.persistence.Access;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.OrderColumn;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.Transient;
-import jakarta.persistence.Version;
+import javax.persistence.Access;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.Enumerated;
+import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.OrderColumn;
+import javax.persistence.Temporal;
+import javax.persistence.Transient;
+import javax.persistence.Version;
 
 import org.apache.ibatis.type.EnumOrdinalTypeHandler;
 import org.apache.ibatis.type.EnumTypeHandler;
@@ -57,6 +57,7 @@ import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.model.AnnotationBasedPersistentProperty;
 import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
+import org.springframework.data.util.ClassTypeInformation;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
@@ -270,6 +271,11 @@ public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProp
 	}
 
 	@Override
+	public Iterable<? extends TypeInformation<?>> getPersistentEntityTypes() {
+		return this.getPersistentEntityTypeInformation();
+	}
+
+	@Override
 	public Iterable<? extends TypeInformation<?>> getPersistentEntityTypeInformation() {
 		return null != this.associationTargetType ? Collections.singleton(this.associationTargetType)
 				: super.getPersistentEntityTypeInformation();
@@ -397,7 +403,7 @@ public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProp
 		Access access = this.findAnnotation(Access.class);
 
 		if (access != null) {
-			return jakarta.persistence.AccessType.PROPERTY.equals(access.value());
+			return javax.persistence.AccessType.PROPERTY.equals(access.value());
 		}
 
 		accessType = this.findPropertyOrOwnerAnnotation(org.springframework.data.annotation.AccessType.class);
@@ -409,7 +415,7 @@ public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProp
 		access = this.findPropertyOrOwnerAnnotation(Access.class);
 
 		if (access != null) {
-			return jakarta.persistence.AccessType.PROPERTY.equals(access.value());
+			return javax.persistence.AccessType.PROPERTY.equals(access.value());
 		}
 
 		return null;
@@ -436,7 +442,7 @@ public class MybatisPersistentPropertyImpl extends AnnotationBasedPersistentProp
 				continue;
 			}
 
-			return TypeInformation.of((Class<?>) entityValue);
+			return ClassTypeInformation.from((Class<?>) entityValue);
 		}
 
 		return null;

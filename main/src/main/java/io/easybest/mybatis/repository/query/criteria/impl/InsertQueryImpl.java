@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.SequenceGenerators;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.SequenceGenerators;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -42,7 +42,6 @@ import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisPersistentEntityImpl;
 import io.easybest.mybatis.mapping.MybatisPersistentPropertyImpl;
 import io.easybest.mybatis.mapping.precompile.Column;
-import io.easybest.mybatis.mapping.precompile.Composite;
 import io.easybest.mybatis.mapping.precompile.Insert;
 import io.easybest.mybatis.mapping.precompile.Parameter;
 import io.easybest.mybatis.mapping.precompile.SQL;
@@ -60,9 +59,7 @@ import static io.easybest.mybatis.mapping.precompile.Include.TABLE_NAME_PURE;
 import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.AFTER;
 import static io.easybest.mybatis.mapping.precompile.Insert.SelectKey.Order.BEFORE;
 import static io.easybest.mybatis.mapping.precompile.MybatisMapperSnippet.DEFAULT_SEQUENCE_NAME;
-import static io.easybest.mybatis.mapping.precompile.SQL.INSERT_INTO;
 import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_INSTANCE_PREFIX;
-import static io.easybest.mybatis.repository.support.MybatisContext.PARAM_TENANT_ID;
 
 /**
  * .
@@ -167,11 +164,6 @@ public class InsertQueryImpl<T, R, F, V> implements InsertQuery<R, F, V> {
 		List<Segment> columns = new LinkedList<>();
 		List<Segment> values = new LinkedList<>();
 
-		if (entity.getTenantIdColumn().isPresent()) {
-			columns.add(Composite.of(SQL.of(entity.getTenantIdColumn().get()), COMMA));
-			values.add(Composite.of(Parameter.of(PARAM_TENANT_ID), COMMA));
-		}
-
 		this.columnAndValues.forEach(cv -> {
 
 			Column column = cv.column;
@@ -189,7 +181,7 @@ public class InsertQueryImpl<T, R, F, V> implements InsertQuery<R, F, V> {
 			String field = Predicate.convertFieldName(fv.field);
 			PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp = entityManager.getPersistentPropertyPath(field,
 					this.domainClass);
-			MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
+			MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
 			if (leaf.isAssociation()) {
 				// TODO MANY2ONE
 
@@ -218,7 +210,7 @@ public class InsertQueryImpl<T, R, F, V> implements InsertQuery<R, F, V> {
 
 		});
 
-		builder.contents(Arrays.asList(INSERT_INTO, TABLE_NAME_PURE, SQL.of("("),
+		builder.contents(Arrays.asList(SQL.INSERT_INTO, TABLE_NAME_PURE, SQL.of("("),
 				Trim.builder().suffixOverrides(",").contents(columns).build(), SQL.of(") VALUES ("),
 				Trim.builder().suffixOverrides(",").contents(values).build(), SQL.of(")")));
 
