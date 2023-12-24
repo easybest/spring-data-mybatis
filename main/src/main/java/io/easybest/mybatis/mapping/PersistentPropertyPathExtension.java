@@ -56,7 +56,7 @@ public class PersistentPropertyPathExtension {
 	}
 
 	public boolean isEmbedded() {
-		return null != this.path && this.path.getRequiredLeafProperty().isEmbeddable();
+		return null != this.path && this.path.getLeafProperty().isEmbeddable();
 	}
 
 	public PersistentPropertyPathExtension getParentPath() {
@@ -75,11 +75,11 @@ public class PersistentPropertyPathExtension {
 	@Nullable
 	public MybatisPersistentEntity<?> getLeafEntity() {
 		return this.path == null ? this.entity
-				: this.context.getPersistentEntity(this.path.getRequiredLeafProperty().getActualType());
+				: this.context.getPersistentEntity(this.path.getLeafProperty().getActualType());
 	}
 
 	public boolean isEntity() {
-		return this.path == null || this.path.getRequiredLeafProperty().isEntity();
+		return this.path == null || this.path.getLeafProperty().isEntity();
 	}
 
 	public boolean hasIdProperty() {

@@ -288,7 +288,7 @@ public class CriteriaQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> im
 
 		PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp = entityManager.getPersistentPropertyPath(field,
 				domainClass);
-		MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+		MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 
 		if (leaf.isAssociation()) {
 			// TODO throw exception?

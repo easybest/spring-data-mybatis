@@ -24,6 +24,7 @@ import lombok.Getter;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
@@ -66,14 +67,15 @@ public class Sorting extends AbstractSegment {
 			PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp = entityManager
 					.getPersistentPropertyPath(order.getProperty(), entity.getType());
 
-			MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+			MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 
 			SqlIdentifier columnName = leaf.getColumnName();
 			SqlIdentifier tableAlias = SqlIdentifier.unquoted(SQL.ROOT_ALIAS.getValue());
 
 			if (!basic) {
 				String tablePath = ppp.toDotPath(source -> source.isAssociation() ? source.getName() : null);
-				if (null != tablePath) {
+				// if (null != tablePath) {
+				if (StringUtils.hasText(tablePath)) {
 					tableAlias = SqlIdentifier.quoted(tablePath);
 				}
 			}

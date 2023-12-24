@@ -189,7 +189,7 @@ public class InsertQueryImpl<T, R, F, V> implements InsertQuery<R, F, V> {
 			String field = Predicate.convertFieldName(fv.field);
 			PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp = entityManager.getPersistentPropertyPath(field,
 					this.domainClass);
-			MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+			MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 			if (leaf.isAssociation()) {
 				// TODO MANY2ONE
 

@@ -24,6 +24,7 @@ import lombok.Data;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
 
 import io.easybest.mybatis.auxiliary.Syntax;
 import io.easybest.mybatis.mapping.EntityManager;
@@ -145,7 +146,7 @@ public final class Predicate<F> implements Serializable {
 		else {
 			ppp = entityManager.getPersistentPropertyPath(predicate.fieldName, domainClass);
 		}
-		MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+		MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 
 		Column column;
 		Parameter parameter;
@@ -202,7 +203,8 @@ public final class Predicate<F> implements Serializable {
 		if (alias) {
 			SqlIdentifier tableAlias = SqlIdentifier.unquoted(SQL.ROOT_ALIAS.getValue());
 			String tablePath = ppp.toDotPath(source -> source.isAssociation() ? source.getName() : null);
-			if (null != tablePath) {
+			// if (null != tablePath) {
+			if (StringUtils.hasText(tablePath)) {
 				tableAlias = SqlIdentifier.quoted(tablePath);
 			}
 

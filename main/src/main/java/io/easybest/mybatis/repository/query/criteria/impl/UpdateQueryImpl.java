@@ -162,7 +162,7 @@ public class UpdateQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> impl
 											String field = Predicate.convertFieldName(fv.field);
 											PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp = entityManager
 													.getPersistentPropertyPath(field, this.domainClass);
-											MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+											MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 											if (leaf.isAssociation()) {
 												// TODO MANY2ONE
 

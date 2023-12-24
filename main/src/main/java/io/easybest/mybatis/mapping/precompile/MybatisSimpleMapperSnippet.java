@@ -161,8 +161,8 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		List<ResultMapping> mappings = this.entityManager
 				.findPersistentPropertyPaths(this.entity.getType(), p -> !p.isAssociation()).stream()
-				.filter(ppp -> !ppp.getRequiredLeafProperty().isEntity() && null != ppp.getBaseProperty()).map(ppp -> {
-					MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+				.filter(ppp -> !ppp.getLeafProperty().isEntity() && null != ppp.getBaseProperty()).map(ppp -> {
+					MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 					MybatisPersistentPropertyImpl base = ppp.getBaseProperty();
 					return ResultMapping.builder().property(ppp.toDotPath())
 							.column(leaf.getRequiredColumnName()
@@ -184,7 +184,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 				.findPersistentPropertyPaths(this.entity.getType(), MybatisPersistentPropertyImpl::isAssociation)
 				.forEach(ppp -> {
 
-					MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+					MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 					MybatisAssociation association = leaf.getRequiredAssociation();
 
 					if (!association.isOwningSide() || !association.isToOne()) {
@@ -195,7 +195,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 							jc -> null != jc.getReferencedPropertyPath() && !jc.getReferencedPropertyPath().isEmpty())
 							.forEach(jc -> {
 								MybatisPersistentPropertyImpl subLeaf = jc.getReferencedPropertyPath()
-										.getRequiredLeafProperty();
+										.getLeafProperty();
 
 								ResultMapping mapping = ResultMapping.builder()
 										.property(leaf.getName() + '.' + jc.getReferencedPropertyPath().toDotPath())
@@ -221,7 +221,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 				.findPersistentPropertyPaths(this.entity.getType(), MybatisPersistentPropertyImpl::isAssociation)
 				.stream().filter(ppp -> null != ppp.getBaseProperty()).forEach(ppp -> {
 
-					MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+					MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 					MybatisAssociation association = leaf.getRequiredAssociation();
 
 					if (association.isToOne()) {
@@ -243,7 +243,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 				.findPersistentPropertyPaths(this.entity.getType(), MybatisPersistentPropertyImpl::isAssociation)
 				.stream().filter(ppp -> null != ppp.getBaseProperty()).forEach(ppp -> {
 
-					MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+					MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 					MybatisAssociation association = leaf.getRequiredAssociation();
 
 					if (association.isToOne()) {
@@ -288,7 +288,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 	private Association associationResultMapping(PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp) {
 
-		MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+		MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 		MybatisAssociation association = leaf.getRequiredAssociation();
 
 		return Association.builder().property(ppp.toDotPath()).javaType(association.getTargetType().getName())
@@ -308,7 +308,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		for (PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp : this.entityManager
 				.findPersistentPropertyPaths(this.entity.getType(), p -> true)) {
-			MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+			MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 			if (leaf.isAssociation()) {
 
 				MybatisAssociation association = leaf.getRequiredAssociation();
@@ -381,7 +381,7 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 
 		for (PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp : this.entityManager
 				.findPersistentPropertyPaths(this.entity.getType(), p -> true)) {
-			MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+			MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 			if (leaf.isAssociation()) {
 
 				MybatisAssociation association = leaf.getRequiredAssociation();
@@ -444,9 +444,9 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 		if (this.entity.isCompositeId()) {
 			this.entityManager.findPersistentPropertyPaths(this.entity.getType(), p -> true).stream()
 					.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
-							&& !ppp.getRequiredLeafProperty().isEntity())
+							&& !ppp.getLeafProperty().isEntity())
 					.forEach(ppp -> {
-						MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+						MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 						query.eq(ppp.toDotPath(),
 								ParamValue.of(byId
 										? ("id." + ppp.toDotPath(
@@ -474,9 +474,9 @@ public class MybatisSimpleMapperSnippet extends MybatisMapperSnippet {
 							.contents(Collections.singletonList(SQL.of(this.entityManager
 									.findPersistentPropertyPaths(this.entity.getType(), p -> true).stream()
 									.filter(ppp -> null != ppp.getBaseProperty() && ppp.getBaseProperty().isIdProperty()
-											&& !ppp.getRequiredLeafProperty().isEntity())
+											&& !ppp.getLeafProperty().isEntity())
 									.map(ppp -> Column
-											.base(ppp.getRequiredLeafProperty().getColumnName().getReference(
+											.base(ppp.getLeafProperty().getColumnName().getReference(
 													this.entityManager.getDialect().getIdentifierProcessing()))
 											+ "=" + Parameter.of("item." + (byId ? //
 													ppp.toDotPath(source -> source == ppp.getBaseProperty() ? null
