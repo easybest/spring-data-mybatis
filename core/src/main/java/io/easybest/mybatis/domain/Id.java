@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package io.easybest.mybatis.domain;
 
 import java.io.Serializable;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.MappedSuperclass;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.MappedSuperclass;
 
 /**
  * .
@@ -32,7 +32,7 @@ import jakarta.persistence.MappedSuperclass;
 public abstract class Id<T extends Serializable> implements Identifiable<T> {
 
 	@GeneratedValue(strategy = GenerationType.AUTO)
-	@jakarta.persistence.Id
+	@javax.persistence.Id
 	protected T id;
 
 	public Id() {

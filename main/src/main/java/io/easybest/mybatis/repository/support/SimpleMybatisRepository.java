@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,14 +115,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			this.persistentEntity.getPropertyAccessor(entity)
 					.setProperty(this.persistentEntity.getRequiredVersionProperty(), 0);
 		}
-		MybatisContext<S, Object> context = new MybatisContext<>(null, entity, this.persistentEntity.getType(),
-				this.basic);
 
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-
-		this.insert(INSERT, context);
+		this.insert(INSERT, new MybatisContext<>(null, entity, this.persistentEntity.getType(), this.basic));
 
 		return entity;
 	}
@@ -161,12 +155,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 					.setProperty(this.persistentEntity.getRequiredVersionProperty(), 0);
 		}
 
-		MybatisContext<S, Object> context = new MybatisContext<>(null, entity, this.persistentEntity.getType(),
-				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		this.insert(INSERT_SELECTIVE, context);
+		this.insert(INSERT_SELECTIVE, new MybatisContext<>(null, entity, this.persistentEntity.getType(), this.basic));
 
 		return entity;
 	}
@@ -177,12 +166,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
 
-		MybatisContext<S, Object> context = new MybatisContext<>(null, entity, this.persistentEntity.getType(),
-				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		this.update(UPDATE, context);
+		this.update(UPDATE, new MybatisContext<>(null, entity, this.persistentEntity.getType(), this.basic));
 
 		return entity;
 	}
@@ -193,12 +177,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
 
-		MybatisContext<S, Object> context = new MybatisContext<>(null, entity, this.persistentEntity.getType(),
-				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		this.update(UPDATE_SELECTIVE, context);
+		this.update(UPDATE_SELECTIVE, new MybatisContext<>(null, entity, this.persistentEntity.getType(), this.basic));
 		return entity;
 	}
 
@@ -209,11 +188,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
 
-		MybatisContext<S, ID> context = new MybatisContext<>(id, entity, this.persistentEntity.getType(), this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		this.update(UPDATE_BY_ID, context);
+		this.update(UPDATE_BY_ID, new MybatisContext<>(id, entity, this.persistentEntity.getType(), this.basic));
 		return entity;
 	}
 
@@ -224,11 +199,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
 		Assert.notNull(entity, ENTITY_MUST_NOT_BE_NULL);
 
-		MybatisContext<S, ID> context = new MybatisContext<>(id, entity, this.persistentEntity.getType(), this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		this.update(UPDATE_SELECTIVE_BY_ID, context);
+		this.update(UPDATE_SELECTIVE_BY_ID,
+				new MybatisContext<>(id, entity, this.persistentEntity.getType(), this.basic));
 		return entity;
 	}
 
@@ -335,18 +307,15 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			this.findById(id).ifPresent(this::delete);
 			return;
 		}
-		MybatisContext<Object, ID> context = new MybatisContext<>(id, null, this.persistentEntity.getType(),
-				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
 
 		int affectRows;
 		if (this.persistentEntity.getLogicDeleteColumn().isPresent()) {
-			affectRows = this.update(DELETE_BY_ID, context);
+			affectRows = this.update(DELETE_BY_ID,
+					new MybatisContext<>(id, null, this.persistentEntity.getType(), this.basic));
 		}
 		else {
-			affectRows = this.delete(DELETE_BY_ID, context);
+			affectRows = this.delete(DELETE_BY_ID,
+					new MybatisContext<>(id, null, this.persistentEntity.getType(), this.basic));
 		}
 		if (affectRows == 0) {
 			throw new EmptyResultDataAccessException(
@@ -364,18 +333,14 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			return;
 		}
 
-		MybatisContext<T, Object> context = new MybatisContext<>(null, entity, this.persistentEntity.getType(),
-				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-
 		int affectRows;
 		if (this.persistentEntity.getLogicDeleteColumn().isPresent()) {
-			affectRows = this.update(DELETE_BY_ENTITY, context);
+			affectRows = this.update(DELETE_BY_ENTITY,
+					new MybatisContext<>(null, entity, this.persistentEntity.getType(), this.basic));
 		}
 		else {
-			affectRows = this.delete(DELETE_BY_ENTITY, context);
+			affectRows = this.delete(DELETE_BY_ENTITY,
+					new MybatisContext<>(null, entity, this.persistentEntity.getType(), this.basic));
 		}
 		if (affectRows == 0) {
 			throw new EmptyResultDataAccessException(
@@ -420,18 +385,14 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			return;
 		}
 
-		MybatisContext<Iterable<T>, Object> context = new MybatisContext<>(null, entities,
-				this.persistentEntity.getType(), this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-
 		if (this.persistentEntity.getLogicDeleteColumn().isPresent()) {
-			this.update(DELETE_BY_ENTITIES, context);
+			this.update(DELETE_BY_ENTITIES,
+					new MybatisContext<>(null, entities, this.persistentEntity.getType(), this.basic));
 			return;
 		}
 
-		this.delete(DELETE_BY_ENTITIES, context);
+		this.delete(DELETE_BY_ENTITIES,
+				new MybatisContext<>(null, entities, this.persistentEntity.getType(), this.basic));
 	}
 
 	@Override
@@ -444,18 +405,12 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			return;
 		}
 
-		MybatisContext<Object, Iterable<ID>> context = new MybatisContext<>(ids, null, this.persistentEntity.getType(),
-				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-
 		if (this.persistentEntity.getLogicDeleteColumn().isPresent()) {
-			this.update(DELETE_BY_IDS, context);
+			this.update(DELETE_BY_IDS, new MybatisContext<>(ids, null, this.persistentEntity.getType(), this.basic));
 			return;
 		}
 
-		this.delete(DELETE_BY_IDS, context);
+		this.delete(DELETE_BY_IDS, new MybatisContext<>(ids, null, this.persistentEntity.getType(), this.basic));
 	}
 
 	@Override
@@ -483,13 +438,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			return this.findAll();
 		}
 
-		MybatisContext<Object, Object> context = new MybatisContext<>(null, null, this.persistentEntity.getType(), sort,
-				this.entityManager, this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-
-		return this.selectList(FIND_ALL_WITH_SORT, context);
+		return this.selectList(FIND_ALL_WITH_SORT, new MybatisContext<>(null, null, this.persistentEntity.getType(),
+				sort, this.entityManager, this.basic));
 	}
 
 	@Override
@@ -503,9 +453,6 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		MybatisContext<T, ID> context = new MybatisContext<>(null, null, this.persistentEntity.getType(),
 				io.easybest.mybatis.repository.support.Pageable.of(pageable), pageable.getSort(), this.entityManager,
 				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
 
 		List<T> content = this.selectList(FIND_BY_PAGE, context);
 
@@ -517,13 +464,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
 
-		MybatisContext<Object, ID> context = new MybatisContext<>(id, null, this.persistentEntity.getType(),
-				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-
-		return this.selectOne(FIND_BY_ID, context);
+		return this.selectOne(FIND_BY_ID, new MybatisContext<>(id, null, this.persistentEntity.getType(), this.basic));
 	}
 
 	@Override
@@ -537,13 +478,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 		Assert.notNull(id, ID_MUST_NOT_BE_NULL);
 
-		MybatisContext<Object, ID> context = new MybatisContext<>(id, null, this.persistentEntity.getType(),
-				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-
-		return this.selectOne(EXISTS_BY_ID, context);
+		return this.selectOne(EXISTS_BY_ID,
+				new MybatisContext<>(id, null, this.persistentEntity.getType(), this.basic));
 	}
 
 	@Override
@@ -554,13 +490,9 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		if (!ids.iterator().hasNext()) {
 			return Collections.emptyList();
 		}
-		MybatisContext<Object, Iterable<ID>> context = new MybatisContext<>(ids, null, this.persistentEntity.getType(),
-				this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
 
-		return this.selectList(FIND_BY_IDS, context);
+		return this.selectList(FIND_BY_IDS,
+				new MybatisContext<>(ids, null, this.persistentEntity.getType(), this.basic));
 	}
 
 	@Override
@@ -574,12 +506,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 		Assert.notNull(example, "Example must not be null.");
 
-		MybatisContext<S, Object> context = new MybatisContext<>(null, example.getProbe(),
-				this.persistentEntity.getType(), example, this.entityManager, this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		S result = this.selectOne(QUERY_BY_EXAMPLE, context);
+		S result = this.selectOne(QUERY_BY_EXAMPLE, new MybatisContext<>(null, example.getProbe(),
+				this.persistentEntity.getType(), example, this.entityManager, this.basic));
 
 		return Optional.ofNullable(result);
 	}
@@ -589,12 +517,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 
 		Assert.notNull(example, "Example must not be null.");
 
-		MybatisContext<S, Object> context = new MybatisContext<>(null, example.getProbe(),
-				this.persistentEntity.getType(), example, this.entityManager, this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		return this.selectList(QUERY_BY_EXAMPLE, context);
+		return this.selectList(QUERY_BY_EXAMPLE, new MybatisContext<>(null, example.getProbe(),
+				this.persistentEntity.getType(), example, this.entityManager, this.basic));
 	}
 
 	@Override
@@ -606,14 +530,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			return this.findAll(example);
 		}
 
-		MybatisContext<S, Object> context = new MybatisContext<>(null, example.getProbe(),
-				this.persistentEntity.getType(), null, sort, example, this.entityManager, this.basic);
-
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-
-		return this.selectList(QUERY_BY_EXAMPLE_WITH_SORT, context);
+		return this.selectList(QUERY_BY_EXAMPLE_WITH_SORT, new MybatisContext<>(null, example.getProbe(),
+				this.persistentEntity.getType(), null, sort, example, this.entityManager, this.basic));
 	}
 
 	@Override
@@ -628,9 +546,7 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 		MybatisContext<S, ID> context = new MybatisContext<>(null, example.getProbe(), this.persistentEntity.getType(),
 				io.easybest.mybatis.repository.support.Pageable.of(pageable), pageable.getSort(), example,
 				this.entityManager, this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
+
 		List<S> content = this.selectList(QUERY_BY_EXAMPLE_WITH_PAGE, context);
 
 		return PageableExecutionUtils.getPage(content, pageable, () -> this.selectOne(COUNT_QUERY_BY_EXAMPLE, context));
@@ -640,24 +556,18 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 	public <S extends T> long count(Example<S> example) {
 
 		Assert.notNull(example, "Example must not be null.");
-		MybatisContext<S, Object> context = new MybatisContext<>(null, example.getProbe(),
-				this.persistentEntity.getType(), example, this.entityManager, this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		return this.selectOne(COUNT_QUERY_BY_EXAMPLE, context);
+
+		return this.selectOne(COUNT_QUERY_BY_EXAMPLE, new MybatisContext<>(null, example.getProbe(),
+				this.persistentEntity.getType(), example, this.entityManager, this.basic));
 	}
 
 	@Override
 	public <S extends T> boolean exists(Example<S> example) {
 
 		Assert.notNull(example, "Example must not be null.");
-		MybatisContext<S, Object> context = new MybatisContext<>(null, example.getProbe(),
-				this.persistentEntity.getType(), example, this.entityManager, this.basic);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		return this.selectOne(EXISTS_BY_EXAMPLE, context);
+
+		return this.selectOne(EXISTS_BY_EXAMPLE, new MybatisContext<>(null, example.getProbe(),
+				this.persistentEntity.getType(), example, this.entityManager, this.basic));
 
 	}
 
@@ -687,12 +597,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			}
 		}
 
-		MybatisContext<T, Object> context = new MybatisContext<>(null, type, Collections.emptyMap(), this.basic,
-				this.entityManager, criteria);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		return Optional.ofNullable(this.selectOne(FIND_BY_CRITERIA, context));
+		return Optional.ofNullable(this.selectOne(FIND_BY_CRITERIA,
+				new MybatisContext<>(null, type, Collections.emptyMap(), this.basic, this.entityManager, criteria)));
 	}
 
 	@Override
@@ -709,12 +615,8 @@ public class SimpleMybatisRepository<T, ID> extends SqlSessionRepositorySupport 
 			}
 		}
 
-		MybatisContext<T, Object> context = new MybatisContext<>(null, type, Collections.emptyMap(), this.basic,
-				this.entityManager, criteria);
-		if (this.persistentEntity.getTenantIdColumn().isPresent()) {
-			context.setTenantId(this.entityManager.getTenantStrategy().getTenantId());
-		}
-		return this.selectList(FIND_BY_CRITERIA, context);
+		return this.selectList(FIND_BY_CRITERIA,
+				new MybatisContext<>(null, type, Collections.emptyMap(), this.basic, this.entityManager, criteria));
 	}
 
 }

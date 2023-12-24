@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,22 +33,22 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Parameter;
-import jakarta.persistence.Query;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Fetch;
-import jakarta.persistence.criteria.From;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.metamodel.Attribute;
-import jakarta.persistence.metamodel.Bindable;
-import jakarta.persistence.metamodel.ManagedType;
-import jakarta.persistence.metamodel.PluralAttribute;
-import jakarta.persistence.metamodel.SingularAttribute;
+import javax.persistence.EntityManager;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
+import javax.persistence.Parameter;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Fetch;
+import javax.persistence.criteria.From;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.metamodel.Attribute;
+import javax.persistence.metamodel.Bindable;
+import javax.persistence.metamodel.ManagedType;
+import javax.persistence.metamodel.PluralAttribute;
+import javax.persistence.metamodel.SingularAttribute;
 
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -59,14 +59,14 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import static jakarta.persistence.metamodel.Attribute.PersistentAttributeType.ELEMENT_COLLECTION;
-import static jakarta.persistence.metamodel.Attribute.PersistentAttributeType.MANY_TO_MANY;
-import static jakarta.persistence.metamodel.Attribute.PersistentAttributeType.MANY_TO_ONE;
-import static jakarta.persistence.metamodel.Attribute.PersistentAttributeType.ONE_TO_MANY;
-import static jakarta.persistence.metamodel.Attribute.PersistentAttributeType.ONE_TO_ONE;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
+import static javax.persistence.metamodel.Attribute.PersistentAttributeType.ELEMENT_COLLECTION;
+import static javax.persistence.metamodel.Attribute.PersistentAttributeType.MANY_TO_MANY;
+import static javax.persistence.metamodel.Attribute.PersistentAttributeType.MANY_TO_ONE;
+import static javax.persistence.metamodel.Attribute.PersistentAttributeType.ONE_TO_MANY;
+import static javax.persistence.metamodel.Attribute.PersistentAttributeType.ONE_TO_ONE;
 
 /**
  * .
@@ -494,7 +494,7 @@ public abstract class QueryUtils {
 	 * @return guaranteed to be not {@literal null}.
 	 * @deprecated use {@link DeclaredQuery#deriveCountQuery(String, String)} instead.
 	 */
-	@Deprecated
+	// @Deprecated
 	public static String createCountQueryFor(String originalQuery) {
 		return createCountQueryFor(originalQuery, null);
 	}
@@ -577,14 +577,14 @@ public abstract class QueryUtils {
 	}
 
 	/**
-	 * Turns the given {@link Sort} into {@link jakarta.persistence.criteria.Order}s.
+	 * Turns the given {@link Sort} into {@link javax.persistence.criteria.Order}s.
 	 * @param sort the {@link Sort} instance to be transformed into JPA
-	 * {@link jakarta.persistence.criteria.Order}s.
+	 * {@link javax.persistence.criteria.Order}s.
 	 * @param from must not be {@literal null}.
 	 * @param cb must not be {@literal null}.
-	 * @return a {@link List} of {@link jakarta.persistence.criteria.Order}s.
+	 * @return a {@link List} of {@link javax.persistence.criteria.Order}s.
 	 */
-	public static List<jakarta.persistence.criteria.Order> toOrders(Sort sort, From<?, ?> from, CriteriaBuilder cb) {
+	public static List<javax.persistence.criteria.Order> toOrders(Sort sort, From<?, ?> from, CriteriaBuilder cb) {
 
 		if (sort.isUnsorted()) {
 			return Collections.emptyList();
@@ -593,7 +593,7 @@ public abstract class QueryUtils {
 		Assert.notNull(from, "From must not be null!");
 		Assert.notNull(cb, "CriteriaBuilder must not be null!");
 
-		List<jakarta.persistence.criteria.Order> orders = new ArrayList<>();
+		List<javax.persistence.criteria.Order> orders = new ArrayList<>();
 
 		for (org.springframework.data.domain.Sort.Order order : sort) {
 			orders.add(toJpaOrder(order, from, cb));
@@ -645,18 +645,17 @@ public abstract class QueryUtils {
 	}
 
 	/**
-	 * Creates a criteria API {@link jakarta.persistence.criteria.Order} from the given
+	 * Creates a criteria API {@link javax.persistence.criteria.Order} from the given
 	 * {@link Sort.Order}.
 	 * @param order the order to transform into a JPA
-	 * {@link jakarta.persistence.criteria.Order}
+	 * {@link javax.persistence.criteria.Order}
 	 * @param from the {@link From} the {@link Sort.Order} expression is based on
 	 * @param cb the {@link CriteriaBuilder} to build the
-	 * {@link jakarta.persistence.criteria.Order} with
+	 * {@link javax.persistence.criteria.Order} with
 	 * @return guaranteed to be not {@literal null}.
 	 */
 	@SuppressWarnings("unchecked")
-	private static jakarta.persistence.criteria.Order toJpaOrder(Sort.Order order, From<?, ?> from,
-			CriteriaBuilder cb) {
+	private static javax.persistence.criteria.Order toJpaOrder(Sort.Order order, From<?, ?> from, CriteriaBuilder cb) {
 
 		PropertyPath property = PropertyPath.from(order.getProperty(), from.getJavaType());
 		Expression<?> expression = toExpressionRecursively(from, property);

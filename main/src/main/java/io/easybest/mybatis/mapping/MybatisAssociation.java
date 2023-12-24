@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumns;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
+import javax.persistence.ElementCollection;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumns;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -197,10 +197,9 @@ public class MybatisAssociation extends Association<MybatisPersistentPropertyImp
 		JoinColumn[] joinColumns = null;
 		JoinColumn[] inverseJoinColumns = null;
 
-		if (inverse.isAnnotationPresent(jakarta.persistence.JoinTable.class)) {
+		if (inverse.isAnnotationPresent(javax.persistence.JoinTable.class)) {
 
-			jakarta.persistence.JoinTable joinTableAnn = inverse
-					.getRequiredAnnotation(jakarta.persistence.JoinTable.class);
+			javax.persistence.JoinTable joinTableAnn = inverse.getRequiredAnnotation(javax.persistence.JoinTable.class);
 
 			if (StringUtils.hasText(joinTableAnn.name())) {
 				joinTableName = joinTableAnn.name();
@@ -291,11 +290,11 @@ public class MybatisAssociation extends Association<MybatisPersistentPropertyImp
 			return jcs;
 		}
 
-		if (inverse.isAnnotationPresent(jakarta.persistence.JoinColumn.class)) {
+		if (inverse.isAnnotationPresent(javax.persistence.JoinColumn.class)) {
 
 			JoinColumn jc = new JoinColumn();
 
-			jakarta.persistence.JoinColumn anno = inverse.getRequiredAnnotation(jakarta.persistence.JoinColumn.class);
+			javax.persistence.JoinColumn anno = inverse.getRequiredAnnotation(javax.persistence.JoinColumn.class);
 			jc.setColumnName(Optional.ofNullable(anno.name()).filter(StringUtils::hasText)
 					.map(this::createSqlIdentifier).orElse(this.createDerivedSqlIdentifier(inverse.getName() + '_'
 							+ targetEntity.getRequiredIdProperty().getColumnName().getReference())));
@@ -307,9 +306,9 @@ public class MybatisAssociation extends Association<MybatisPersistentPropertyImp
 
 		}
 		else if (inverse.isAnnotationPresent(JoinColumns.class)) {
-			jakarta.persistence.JoinColumn[] value = inverse.getRequiredAnnotation(JoinColumns.class).value();
+			javax.persistence.JoinColumn[] value = inverse.getRequiredAnnotation(JoinColumns.class).value();
 			if (value.length > 0) {
-				for (jakarta.persistence.JoinColumn anno : value) {
+				for (javax.persistence.JoinColumn anno : value) {
 					JoinColumn jc = new JoinColumn();
 					jc.setColumnName(this.createSqlIdentifier(anno.name()));
 					jc.setReferencedColumnName(this.createSqlIdentifier(anno.referencedColumnName()));

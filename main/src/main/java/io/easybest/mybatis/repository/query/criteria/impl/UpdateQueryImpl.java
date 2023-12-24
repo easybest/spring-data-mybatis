@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class UpdateQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> impl
 											String field = Predicate.convertFieldName(fv.field);
 											PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp = entityManager
 													.getPersistentPropertyPath(field, this.domainClass);
-											MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
+											MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
 											if (leaf.isAssociation()) {
 												// TODO MANY2ONE
 
@@ -189,8 +189,7 @@ public class UpdateQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> impl
 								})).toArray(Segment[]::new)), //
 				Where.of(//
 						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()), //
-						this.logicDeleteClause(entity, false), //
-						this.tenantIdClause(entity, false) //
+						this.logicDeleteClause(entity, false) //
 				)));
 
 		return builder.build();
