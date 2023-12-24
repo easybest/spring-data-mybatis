@@ -6,7 +6,7 @@ dependencies {
 
 	api("org.springframework.boot:spring-boot-autoconfigure:${springBootVersion}")
 	api("org.springframework.boot:spring-boot-starter-jdbc:${springBootVersion}")
-	api('org.mybatis.spring.boot:mybatis-spring-boot-starter:2.2.2')
+	api('org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3')
 
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:${springBootVersion}")
 

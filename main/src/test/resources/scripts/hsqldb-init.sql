@@ -201,6 +201,7 @@ create table ROLE
 (
 	id   integer not null,
 	name varchar(255),
+	tenant_id bigint not null,
 	primary key (id)
 );
 create table SampleEntity

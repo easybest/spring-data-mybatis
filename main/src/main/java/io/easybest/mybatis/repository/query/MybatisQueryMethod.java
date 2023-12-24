@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2019-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.repository.query.QueryMethod;
 import org.springframework.data.repository.util.QueryExecutionConverters;
 import org.springframework.data.util.Lazy;
@@ -164,10 +165,15 @@ public class MybatisQueryMethod extends QueryMethod {
 		return super.getDomainClass();
 	}
 
-	@Override
-	protected MybatisParameters createParameters(Method method) {
+	// @Override
+	// protected MybatisParameters createParameters(Method method) {
+	//
+	// return new MybatisParameters(method);
+	// }
 
-		return new MybatisParameters(method);
+	@Override
+	protected Parameters<?, ?> createParameters(ParametersSource parametersSource) {
+		return new MybatisParameters(parametersSource);
 	}
 
 	@Override

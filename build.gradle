@@ -1,6 +1,6 @@
 plugins {
 	id "org.jetbrains.kotlin.jvm" apply false
-	id "io.spring.nohttp" version "0.0.10"
+	id "io.spring.nohttp" version "0.0.11"
 }
 
 
@@ -47,12 +47,12 @@ configure(javaProjects) { project ->
 	apply plugin: "io.easybest.gradle.plugin.deployed"
 	apply plugin: "io.easybest.gradle.plugin.optional-dependencies"
 
-	sourceCompatibility = 1.8
-	targetCompatibility = 1.8
+	sourceCompatibility = 17
+	targetCompatibility = 17
 
 	java {
 		toolchain {
-			languageVersion = JavaLanguageVersion.of(8)
+			languageVersion = JavaLanguageVersion.of(17)
 		}
 	}
 }

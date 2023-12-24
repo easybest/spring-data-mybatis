@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2019-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import io.easybest.mybatis.mapping.EntityManager;
 import io.easybest.mybatis.mapping.MybatisAssociation;
@@ -192,14 +193,15 @@ public class Syntax {
 
 			PersistentPropertyPath<MybatisPersistentPropertyImpl> ppp = entityManager
 					.getPersistentPropertyPath(order.getProperty(), domainType);
-			MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+			MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 
 			SqlIdentifier columnName = leaf.getColumnName();
 			SqlIdentifier tableAlias = SqlIdentifier.unquoted(SQL.ROOT_ALIAS.getValue());
 
 			if (!basic) {
 				String tablePath = ppp.toDotPath(source -> source.isAssociation() ? source.getName() : null);
-				if (null != tablePath) {
+				// if (null != tablePath) {
+				if (StringUtils.hasText(tablePath)) {
 					tableAlias = SqlIdentifier.quoted(tablePath);
 				}
 			}
@@ -229,13 +231,13 @@ public class Syntax {
 			return;
 		}
 
-		MybatisPersistentPropertyImpl leaf = current.getRequiredLeafProperty();
+		MybatisPersistentPropertyImpl leaf = current.getLeafProperty();
 		PersistentPropertyPath<MybatisPersistentPropertyImpl> parent = current.getParentPath();
 
 		if (leaf.isAssociation()) {
 
 			MybatisAssociation association = leaf.getRequiredAssociation();
-			accumulated.add(association.connect(parent.getLength() == 0
+			accumulated.add(association.connect(null == parent || parent.getLength() == 0
 					? SqlIdentifier.unquoted(SQL.ROOT_ALIAS.getValue()) : SqlIdentifier.quoted(parent.toDotPath())));
 		}
 
@@ -285,7 +287,7 @@ public class Syntax {
 				return;
 			}
 
-			MybatisPersistentPropertyImpl leaf = ppp.getRequiredLeafProperty();
+			MybatisPersistentPropertyImpl leaf = ppp.getLeafProperty();
 
 			if (leaf.isVersionProperty()) {
 				return;

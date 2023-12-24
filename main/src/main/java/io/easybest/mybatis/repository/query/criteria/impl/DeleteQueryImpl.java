@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2019-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,6 @@ public class DeleteQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> impl
 		}
 
 		PredicateResult pr = this.toConditionSQL(entityManager, callback, true, false);
-
 		if (entity.getLogicDeleteColumn().isPresent()) {
 
 			Column col = Column.of(entity.getLogicDeleteColumn().get());
@@ -79,7 +78,8 @@ public class DeleteQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> impl
 					Include.TABLE_NAME_PURE, //
 					io.easybest.mybatis.mapping.precompile.Set.of(SQL.of(col + " = 1")), //
 					Where.of(//
-							null == pr ? SQL.EMPTY : SQL.of(pr.getSql()) //
+							null == pr ? SQL.EMPTY : SQL.of(pr.getSql()), //
+							this.tenantIdClause(entity, false) //
 					))).build();
 		}
 
@@ -87,7 +87,8 @@ public class DeleteQueryImpl<T, R, F, V> extends ConditionsImpl<T, R, F, V> impl
 				SQL.DELETE_FROM, //
 				Include.TABLE_NAME_PURE, //
 				Where.of(//
-						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()) //
+						null == pr ? SQL.EMPTY : SQL.of(pr.getSql()), //
+						this.tenantIdClause(entity, false) //
 				))).derived(derived).build();
 
 	}

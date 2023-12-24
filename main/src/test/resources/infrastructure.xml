@@ -23,11 +23,13 @@
 		<property name="dataSource" ref="dataSource"/>
 	</bean>
 
+	<bean id="tenantStrategy" class="io.easybest.mybatis.tenant.TestTenantStrategy"/>
 
 	<bean id="entityManager" class="io.easybest.mybatis.mapping.DefaultEntityManager">
 		<constructor-arg ref="sqlSessionTemplate"/>
 		<property name="entityPackages" value="io.easybest.mybatis.domain.sample"/>
 		<property name="namingStrategy" value="AS_IS"/>
+		<property name="tenantStrategy" ref="tenantStrategy"/>
 	</bean>
 
 	<!-- H2 Database -->

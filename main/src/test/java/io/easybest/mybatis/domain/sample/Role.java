@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2019-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package io.easybest.mybatis.domain.sample;
 
 import java.util.Optional;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 
 import io.easybest.mybatis.annotation.GetterOptional;
+import io.easybest.mybatis.annotation.Tenant;
 
 /**
  * Sample domain class representing roles. Mapped with XML.
@@ -31,6 +32,7 @@ import io.easybest.mybatis.annotation.GetterOptional;
  * @author Thomas Darimont
  */
 @Entity
+@Tenant
 public class Role {
 
 	private static final String PREFIX = "ROLE_";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2022 the original author or authors.
+ * Copyright 2019-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@
 
 package io.easybest.mybatis.repository.query;
 
-import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
-import javax.persistence.TemporalType;
+import jakarta.persistence.TemporalType;
 
 import org.apache.ibatis.type.JdbcType;
 import org.springframework.core.MethodParameter;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.repository.query.Parameter;
 import org.springframework.data.repository.query.Parameters;
+import org.springframework.data.repository.query.ParametersSource;
 import org.springframework.data.util.Lazy;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.lang.Nullable;
 
 import io.easybest.mybatis.annotation.TypeHandler;
@@ -43,18 +45,24 @@ import io.easybest.mybatis.repository.Temporal;
  */
 public class MybatisParameters extends Parameters<MybatisParameters, MybatisParameters.MybatisParameter> {
 
-	public MybatisParameters(Method method) {
-		super(method);
+	public MybatisParameters(ParametersSource parametersSource) {
+		super(parametersSource,
+				methodParameter -> new MybatisParameter(methodParameter, parametersSource.getDomainTypeInformation()));
+	}
+
+	public MybatisParameters(ParametersSource parametersSource,
+			Function<MethodParameter, MybatisParameter> parameterFactory) {
+		super(parametersSource, parameterFactory);
 	}
 
 	protected MybatisParameters(List<MybatisParameter> originals) {
 		super(originals);
 	}
 
-	@Override
-	protected MybatisParameter createParameter(MethodParameter parameter) {
-		return new MybatisParameter(parameter);
-	}
+	// @Override
+	// protected MybatisParameter createParameter(MethodParameter parameter) {
+	// return new MybatisParameter(parameter);
+	// }
 
 	@Override
 	protected MybatisParameters createFrom(List<MybatisParameter> parameters) {
@@ -71,13 +79,9 @@ public class MybatisParameters extends Parameters<MybatisParameters, MybatisPara
 
 		private final Lazy<Class<?>> typeHandler;
 
-		/**
-		 * Creates a new {@link Parameter} for the given {@link MethodParameter}.
-		 * @param parameter must not be {@literal null}.
-		 */
-		protected MybatisParameter(MethodParameter parameter) {
+		protected MybatisParameter(MethodParameter parameter, TypeInformation<?> domainType) {
 
-			super(parameter);
+			super(parameter, domainType);
 
 			this.annotation = parameter.getParameterAnnotation(Temporal.class);
 			this.temporalType = null;
